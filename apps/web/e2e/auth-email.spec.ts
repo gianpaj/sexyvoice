@@ -43,6 +43,54 @@ test.describe('Email auth links', () => {
     ).toBeVisible();
   });
 
+  test('confirmation links require email and browser consent before verification', async ({
+    page,
+  }) => {
+    await page.goto(
+      '/auth/confirm?token_hash=fixture-token&type=email&lang=en',
+    );
+    await expect(page).toHaveURL(/\/auth\/confirm$/);
+    await expect(
+      page.getByRole('heading', { name: 'Confirm your email link' }),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel('Email address', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel('Use this address and switch accounts if needed.'),
+    ).not.toBeChecked();
+    await expect(page.locator('form')).toHaveAttribute('method', 'post');
+    await expect(page.locator('input[name="csrf"]')).toHaveValue(
+      /^[A-Za-z0-9_-]{43}$/,
+    );
+    expect(await page.content()).not.toContain('fixture-token');
+
+    await page
+      .getByLabel('Email address', { exact: true })
+      .fill('fixture@example.test');
+    await page
+      .getByLabel('Use this address and switch accounts if needed.')
+      .check();
+    await page
+      .locator('input[name="csrf"]')
+      .evaluate((input: HTMLInputElement) => {
+        input.value = 'wrong';
+      });
+    const before = await page.context().cookies();
+    const submitted = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/auth/confirm') &&
+        response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Confirm and continue' }).click();
+    const response = await submitted;
+    expect(response.request().headers().origin).toBe(
+      new URL(page.url()).origin,
+    );
+    expect(response.status()).toBe(403);
+    expect(await page.context().cookies()).toEqual(before);
+  });
+
   test('malformed confirmation links return users to login', async ({
     page,
   }) => {

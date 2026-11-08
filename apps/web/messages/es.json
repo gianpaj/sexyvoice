@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "Confirma tu enlace de correo",
+      "description": "Introduce la dirección de correo que quieres confirmar.",
+      "email": "Correo electrónico",
+      "consent": "Usar esta dirección y cambiar de cuenta si es necesario.",
+      "submit": "Confirmar y continuar",
+      "failed": "No se pudo confirmar este enlace para esa dirección. Solicita un enlace nuevo.",
+      "emailChangeConfirmed": "Cambio de correo confirmado. Si recibiste un segundo correo de confirmación, abre también ese enlace.",
+      "backToLogin": "Volver a iniciar sesión"
+    },
     "login": {
       "title": "Bienvenido de nuevo",
       "subtitle": "Inicia sesión en tu cuenta",

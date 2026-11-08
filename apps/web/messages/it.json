@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "Conferma il link email",
+      "description": "Inserisci l'indirizzo email che vuoi confermare.",
+      "email": "Indirizzo email",
+      "consent": "Usa questo indirizzo e cambia account se necessario.",
+      "submit": "Conferma e continua",
+      "failed": "Non è stato possibile confermare il link per questo indirizzo. Richiedi un nuovo link.",
+      "emailChangeConfirmed": "Modifica dell'email confermata. Se hai ricevuto una seconda email di conferma, apri anche quel link.",
+      "backToLogin": "Torna all'accesso"
+    },
     "login": {
       "title": "Bentornato",
       "subtitle": "Accedi al tuo account",

@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "E-Mail-Link bestätigen",
+      "description": "Gib die E-Mail-Adresse ein, die du bestätigen möchtest.",
+      "email": "E-Mail-Adresse",
+      "consent": "Diese Adresse verwenden und bei Bedarf das Konto wechseln.",
+      "submit": "Bestätigen und weiter",
+      "failed": "Dieser Link konnte für diese Adresse nicht bestätigt werden. Fordere einen neuen Link an.",
+      "emailChangeConfirmed": "E-Mail-Änderung bestätigt. Falls eine zweite Bestätigungs-E-Mail gesendet wurde, öffne auch diesen Link.",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
     "login": {
       "title": "Willkommen zurück",
       "subtitle": "Melden Sie sich bei Ihrem Konto an",

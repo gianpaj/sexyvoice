@@ -197,9 +197,10 @@ without the column, the call page fails to load.
 ### Authentication
 
 - `API_KEY_HMAC_SECRET`: hashes external API keys.
-- `OAUTH_CALLBACK_MARKER_SECRET`: dedicated signing secret for the auth callback marker shared by OAuth and email confirmation.
+- `OAUTH_CALLBACK_MARKER_SECRET`: dedicated signing secret for the auth callback marker and pending email confirmations.
   The code can fall back to `API_KEY_HMAC_SECRET`, but separate secrets avoid
-  coupling their rotation.
+  coupling their rotation. Email confirmation requires one of these two secrets.
+  Pending confirmation signatures use a separate purpose from callback markers.
 
 Generate secrets with `openssl rand -hex 32`. Verify Supabase and OAuth provider
 redirect URLs for each deployment environment.
@@ -210,6 +211,13 @@ SSR auth uses `/auth/callback` for OAuth code exchanges. Email confirmation and
 password recovery links should use `/auth/confirm` with `token_hash`, so users
 can open links from email clients, webviews, or another browser without needing
 the original PKCE code verifier in local browser storage.
+
+Opening an email link prepares a ten-minute browser-bound confirmation and
+redirects to a URL without the token. The user enters the intended email address
+and consents to switching accounts if needed. A same-origin, CSRF-protected POST
+verifies the token in a nonpersistent client and checks the verified email before
+installing its session. Email-change confirmations that return no session leave
+the browser session intact. Tokens and sessions stay out of the rendered form.
 
 Configure the Supabase dashboard email templates like this:
 

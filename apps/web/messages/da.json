@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "Bekræft dit e-maillink",
+      "description": "Indtast den e-mailadresse, du vil bekræfte.",
+      "email": "E-mailadresse",
+      "consent": "Brug denne adresse, og skift konto om nødvendigt.",
+      "submit": "Bekræft og fortsæt",
+      "failed": "Linket kunne ikke bekræftes for den adresse. Bed om et nyt link.",
+      "emailChangeConfirmed": "Ændring af e-mail bekræftet. Hvis du har fået endnu en bekræftelsesmail, skal du også åbne det link.",
+      "backToLogin": "Tilbage til login"
+    },
     "login": {
       "title": "Velkommen tilbage",
       "subtitle": "Log ind på din konto",

@@ -107,8 +107,12 @@ export const getLocaleFromAuthHints = ({
   getLocaleFromAcceptLanguage(acceptLanguage) ??
   i18n.defaultLocale;
 
-export const createAuthRedirectResponse = (url: string, headers?: Headers) => {
-  const response = NextResponse.redirect(url, { headers });
+export const createAuthRedirectResponse = (
+  url: string,
+  headers?: Headers,
+  status: 303 | 307 = 307,
+) => {
+  const response = NextResponse.redirect(url, { headers, status });
   const markerValue = createAuthCallbackMarkerValue();
 
   if (markerValue) {

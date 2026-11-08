@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "Confirm your email link",
+      "description": "Enter the email address you intended to confirm.",
+      "email": "Email address",
+      "consent": "Use this address and switch accounts if needed.",
+      "submit": "Confirm and continue",
+      "failed": "This link could not be confirmed for that address. Request a new link.",
+      "emailChangeConfirmed": "Email change confirmed. If a second confirmation email was sent, open that link too.",
+      "backToLogin": "Back to sign in"
+    },
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to your account",

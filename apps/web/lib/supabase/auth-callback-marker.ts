@@ -4,7 +4,7 @@ import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 
 export const AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
 
-function getAuthCallbackMarkerSecret(): string | null {
+export function getAuthCallbackMarkerSecret(): string | null {
   return (
     process.env.OAUTH_CALLBACK_MARKER_SECRET ??
     process.env.API_KEY_HMAC_SECRET ??

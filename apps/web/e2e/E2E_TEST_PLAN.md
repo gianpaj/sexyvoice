@@ -33,6 +33,8 @@ The current suite covers the main dashboard surfaces with a mix of:
 
 ## Coverage Summary
 
+Confirmation links require an email address and explicit account-switch consent. The form posts a browser-bound CSRF nonce. The email-auth spec checks the secret-free confirmation page and rejects an invalid nonce without changing cookies.
+
 | Area       | Route                         | Spec                         | POM                      | Mocking                                              |            Tests |
 | ---------- | ----------------------------- | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
 | Generate   | `/en/dashboard/generate`      | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
@@ -42,7 +44,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | History    | `/en/dashboard/history`       | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
 | Usage      | `/en/dashboard/usage`         | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
 | Profile    | `/en/dashboard/profile`       | `profile-dashboard.spec.ts`  | `pages/profile.page.ts`  | one narrow auth-route passthrough in mismatch test   |               13 |
-| Email auth | `/en/signup`, `/auth/confirm` | `auth-email.spec.ts`         | none                     | server E2E signup fixture                            |                2 |
+| Email auth | `/en/signup`, `/auth/confirm` | `auth-email.spec.ts`         | none                     | server E2E signup fixture                            |                3 |
 
 ---
 
