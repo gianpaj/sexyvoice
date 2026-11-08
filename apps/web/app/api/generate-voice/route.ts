@@ -830,7 +830,13 @@ export async function POST(request: Request) {
           });
         } else if (responseOutcome === 'output_limit') {
           logger.warn('Gemini voice generation reached the output limit', {
-            extra: { model: modelUsed, textLength: text.length },
+            extra: {
+              model: modelUsed,
+              responseId: genAIResponse?.responseId,
+              textLength: text.length,
+              voice: voiceObj.name,
+            },
+            user: { id: user.id },
           });
         } else {
           logger.error('Gemini voice generation failed', {
@@ -1422,6 +1428,16 @@ function streamGeminiTtsResponse({
 
         const finishReason = chunk.candidates?.[0]?.finishReason;
         if (finishReason === FinishReason.MAX_TOKENS) {
+          logger.warn('Gemini voice generation reached the output limit', {
+            extra: {
+              model,
+              responseId: chunk.responseId,
+              stream: true,
+              textLength: text.length,
+              voice: voiceObj.name,
+            },
+            user: { id: user.id },
+          });
           const errorCode = ERROR_CODES.GEMINI_OUTPUT_LIMIT;
           throw new Error(getErrorMessage(errorCode, 'voice-generation'), {
             cause: errorCode,
@@ -1663,9 +1679,6 @@ function streamGeminiTtsResponse({
         Error.isError(error) &&
         error.cause === ERROR_CODES.GEMINI_OUTPUT_LIMIT
       ) {
-        logger.warn('Gemini voice generation reached the output limit', {
-          extra: { model: modelUsed, stream: true, textLength: text.length },
-        });
         errorPayload = { error: error.message, errorCode: error.cause };
         return;
       }
