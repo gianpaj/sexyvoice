@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { getDollarCost } from '@/lib/utils';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { resolveBaseCloneLocale } from './constants';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
@@ -95,6 +96,8 @@ export async function saveInworldVoice(
     provider: 'inworld',
     sample: {
       format: 'mp3',
+      model: INWORLD_TTS_MODEL,
+      dollarCost: getDollarCost('inworld', 0, CALL_VOICE_SAMPLE_TEXT),
       generate: () =>
         synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
     },

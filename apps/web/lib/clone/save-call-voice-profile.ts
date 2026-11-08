@@ -3,8 +3,10 @@ import { captureException } from '@sentry/nextjs';
 
 import { deleteFileFromR2, uploadFileToR2 } from '@/lib/storage/upload';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { insertUsageEvent } from '@/lib/supabase/queries';
 import type { CallCloneProvider } from './call-voice-config';
 import {
+  CALL_VOICE_SAMPLE_TEXT,
   type CallVoiceSampleFormat,
   createCallVoiceSampleKey,
   getCallVoiceSampleContentType,
@@ -12,8 +14,11 @@ import {
 
 /** The provider speaking `CALL_VOICE_SAMPLE_TEXT` in the new voice. */
 interface CallVoiceSample {
+  /** What the provider charges for the sample. */
+  dollarCost: number;
   format: CallVoiceSampleFormat;
   generate: () => Promise<Buffer>;
+  model: string;
 }
 
 export async function saveCallVoiceProfile({
@@ -37,6 +42,24 @@ export async function saveCallVoiceProfile({
   let sampleKey: string | undefined;
   try {
     const audio = await sample.generate();
+    // Saving is free, so the platform pays for the sample. The zero-credit
+    // event keeps that cost in usage reports.
+    await insertUsageEvent({
+      creditsUsed: 0,
+      dollarAmount: sample.dollarCost,
+      inputChars: CALL_VOICE_SAMPLE_TEXT.length,
+      metadata: {
+        operation: 'saved_voice_sample',
+        provider,
+        voiceName: name,
+      },
+      model: sample.model,
+      quantity: CALL_VOICE_SAMPLE_TEXT.length,
+      sourceId: id,
+      sourceType: 'voice_cloning',
+      unit: 'chars',
+      userId,
+    });
     if (!audio.length) throw new Error('Voice sample is empty');
     sampleKey = createCallVoiceSampleKey(id, sample.format);
     const sampleUrl = await uploadFileToR2(

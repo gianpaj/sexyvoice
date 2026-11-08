@@ -12,7 +12,8 @@ Both clone providers synthesize the exact English preview text using the saved
 provider voice ID. The shared persistence flow uploads the sample before
 inserting the profile, and cleans up the provider voice and R2 object on failure.
 Sample generation is included in voice creation without a user speech-credit
-deduction; it incurs provider synthesis and R2 storage costs.
+deduction; it incurs provider synthesis and R2 storage costs. A zero-credit
+`voice_cloning` usage event records the synthesis cost.
 
 Samples use an unguessable object name under a prefix scoped to the profile ID.
 The existing authenticated preview endpoint checks ownership before reading

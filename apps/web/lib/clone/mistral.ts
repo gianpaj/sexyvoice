@@ -3,6 +3,7 @@ import { Mistral } from '@mistralai/mistralai';
 import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
+import { getVoxtralDollarCost } from './voxtral';
 
 let client: Mistral | undefined;
 
@@ -26,6 +27,7 @@ export async function saveMistralVoice(
     sampleAudio: audio.toString('base64'),
     sampleFilename: 'reference.wav',
   });
+  const model = 'voxtral-mini-tts-3-0';
   return saveCallVoiceProfile({
     voiceId: voice.id,
     name,
@@ -34,9 +36,11 @@ export async function saveMistralVoice(
     provider: 'mistral',
     sample: {
       format: 'wav',
+      model,
+      dollarCost: getVoxtralDollarCost(model, CALL_VOICE_SAMPLE_TEXT),
       generate: async () => {
         const speech = await mistral.audio.speech.complete({
-          model: 'voxtral-mini-tts-3-0',
+          model,
           input: CALL_VOICE_SAMPLE_TEXT,
           voiceId: voice.id,
           responseFormat: 'wav',

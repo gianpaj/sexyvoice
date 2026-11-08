@@ -263,6 +263,8 @@ describe('Inworld saved voices', () => {
           provider,
           sample: {
             format: 'wav',
+            model: 'model',
+            dollarCost: 0,
             generate: async () => Buffer.from('RIFFsample'),
           },
           deleteVoice,

@@ -260,8 +260,10 @@ Mistral) to the dashboard R2 bucket under
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
 attempts to clean up the provider voice and any attempted R2 upload. The response contains
-`audioReferenceId` and `provider`. This action charges no speech
-credits; sample synthesis incurs provider costs. The reference is retained by
+`audioReferenceId` and `provider`. This action charges no speech credits. The
+platform pays for the sample: a zero-credit `voice_cloning` usage event with
+`metadata.operation = 'saved_voice_sample'` records its provider cost, which
+daily stats include. The reference is retained by
 the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.
 

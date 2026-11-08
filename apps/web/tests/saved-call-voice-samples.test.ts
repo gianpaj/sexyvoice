@@ -5,8 +5,12 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
-import type { CallVoiceSampleFormat } from '@/lib/clone/call-voice-sample';
+import {
+  CALL_VOICE_SAMPLE_TEXT,
+  type CallVoiceSampleFormat,
+} from '@/lib/clone/call-voice-sample';
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
+import { insertUsageEvent } from '@/lib/supabase/queries';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
 beforeEach(() => {
@@ -26,7 +30,7 @@ const save = (
     locale: 'en',
     userId: 'owner',
     provider: 'inworld',
-    sample: { format, generate },
+    sample: { format, model: 'inworld-tts-2', dollarCost: 0.003, generate },
     deleteVoice,
   });
 
@@ -51,6 +55,27 @@ describe('stored call voice samples', () => {
       );
     },
   );
+
+  it('records the free sample as a platform cost on the saved voice', async () => {
+    await save(async () => Buffer.from('sample'));
+    const row = mocks.insert.mock.calls[0][0];
+    expect(insertUsageEvent).toHaveBeenCalledWith({
+      creditsUsed: 0,
+      dollarAmount: 0.003,
+      inputChars: CALL_VOICE_SAMPLE_TEXT.length,
+      metadata: {
+        operation: 'saved_voice_sample',
+        provider: 'inworld',
+        voiceName: 'Mine',
+      },
+      model: 'inworld-tts-2',
+      quantity: CALL_VOICE_SAMPLE_TEXT.length,
+      sourceId: row.id,
+      sourceType: 'voice_cloning',
+      unit: 'chars',
+      userId: 'owner',
+    });
+  });
 
   it('rejects empty samples before uploading or saving a profile', async () => {
     const deleteVoice = vi.fn();
