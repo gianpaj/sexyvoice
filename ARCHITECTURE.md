@@ -252,8 +252,10 @@ mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
 `mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
 provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
 using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
-to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
-the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+to Mistral speech synthesis. Inworld clones carry the owner's user ID as their
+description, so a voice in the shared workspace names its owner.
+`saveCallVoiceProfile` uploads the generated WAV to the dashboard R2 bucket
+under `call-voice-samples/<profile-id>/<random-id>.wav`,
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
 attempts to clean up the provider voice and any attempted R2 upload. The response contains

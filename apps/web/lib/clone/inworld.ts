@@ -79,6 +79,8 @@ export async function saveInworldVoice(
     method: 'POST',
     body: JSON.stringify({
       displayName: name,
+      // Names the owner of a voice found in the shared workspace.
+      description: userId,
       languageCode: toInworldLanguage(locale),
       voiceSamples: [{ audioData: audio.toString('base64') }],
       audioProcessingConfig: { removeBackgroundNoise },

@@ -115,6 +115,7 @@ describe('Inworld saved voices', () => {
     expect(options.headers.Authorization).toBe('Basic encoded-credential');
     expect(JSON.parse(options.body)).toEqual({
       displayName: 'My voice',
+      description: 'owner',
       languageCode,
       voiceSamples: [
         { audioData: Buffer.from('reference audio').toString('base64') },
