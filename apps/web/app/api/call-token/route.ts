@@ -277,6 +277,7 @@ export async function POST(request: Request) {
       max_output_tokens: maxOutputTokens,
       // The account preference and an explicit per-call opt-out both apply.
       memory: memoryEnabled,
+      memory_scope: 'both',
       model,
       scene_id: selectedSceneId ?? null,
       scene_modified: sceneModified,

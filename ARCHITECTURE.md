@@ -476,6 +476,16 @@ resolution. A failed lookup logs a warning and starts the call without memory.
 An explicit request flag of `memory: false` also disables memory. This is a
 user preference, not an entitlement or authorization check.
 
+Call tokens send `memory_scope: "both"`. The agent retrieves shared user
+profiles under `__shared__` together with the active character's relationship
+and episode slots. `match_agent_memories_hybrid` returns each row's
+`character_id` and re-ranks its bounded candidate set with active-character
+and recency boosts. The migration resolves pgvector's installed schema for its argument type and
+cosine operators, supporting both `public` and `extensions` without relocating
+the extension. Both retrieval branches include shared rows for a character
+request; the agent makes one hybrid RPC call per search. Deploy the dual-scope
+agent before enabling the web metadata, with the RPC migration applied first.
+
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories
 remain until erased with the Profile page's delete action, which calls
