@@ -461,7 +461,9 @@ Call tokens send `memory_scope: "both"`. The agent retrieves shared user
 profiles under `__shared__` together with the active character's relationship
 and episode slots. `match_agent_memories_hybrid` returns each row's
 `character_id` and re-ranks its bounded candidate set with active-character
-and recency boosts. Both retrieval branches include shared rows for a character
+and recency boosts. The migration resolves pgvector's installed schema for its argument type and
+cosine operators, supporting both `public` and `extensions` without relocating
+the extension. Both retrieval branches include shared rows for a character
 request; the agent makes one hybrid RPC call per search. Deploy the dual-scope
 agent before enabling the web metadata, with the RPC migration applied first.
 
