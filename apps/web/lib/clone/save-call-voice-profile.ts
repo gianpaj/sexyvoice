@@ -43,7 +43,8 @@ export async function saveCallVoiceProfile({
   try {
     const audio = await sample.generate();
     // Saving is free, so the platform pays for the sample. The zero-credit
-    // event keeps that cost in usage reports.
+    // event keeps that cost in usage reports. It stays when a later step
+    // fails, so `sourceId` can name a profile that was never saved.
     await insertUsageEvent({
       creditsUsed: 0,
       dollarAmount: sample.dollarCost,
