@@ -2,7 +2,8 @@
 
 ## Decision
 
-`audio_references.sample_url` holds the R2 URL of a generated WAV preview.
+`audio_references.sample_url` holds the R2 URL of a generated preview: MP3 for
+Inworld and WAV for Mistral, named by the key's extension.
 The nullable column lets profiles without a stored sample keep their provider
 preview. The migration is prepared for the user to apply; agents must not
 apply it. Checked-in database types include this pending column.

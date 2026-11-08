@@ -32,18 +32,21 @@ export async function saveMistralVoice(
     locale,
     userId,
     provider: 'mistral',
-    generateSample: async () => {
-      const speech = await mistral.audio.speech.complete({
-        model: 'voxtral-mini-tts-3-0',
-        input: CALL_VOICE_SAMPLE_TEXT,
-        voiceId: voice.id,
-        responseFormat: 'wav',
-        stream: false,
-      });
-      if (!speech.audioData) throw new Error('Voice sample is missing');
-      return typeof speech.audioData === 'string'
-        ? Buffer.from(speech.audioData, 'base64')
-        : Buffer.from(speech.audioData);
+    sample: {
+      format: 'wav',
+      generate: async () => {
+        const speech = await mistral.audio.speech.complete({
+          model: 'voxtral-mini-tts-3-0',
+          input: CALL_VOICE_SAMPLE_TEXT,
+          voiceId: voice.id,
+          responseFormat: 'wav',
+          stream: false,
+        });
+        if (!speech.audioData) throw new Error('Voice sample is missing');
+        return typeof speech.audioData === 'string'
+          ? Buffer.from(speech.audioData, 'base64')
+          : Buffer.from(speech.audioData);
+      },
     },
     deleteVoice: () => deleteMistralVoice(voice.id),
   });

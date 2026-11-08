@@ -140,12 +140,12 @@ describe('Inworld saved voices', () => {
       text: "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?",
       voiceId: 'workspace__clone',
       modelId: 'inworld-tts-2',
-      audioConfig: { audioEncoding: 'LINEAR16' },
+      audioConfig: { audioEncoding: 'MP3' },
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.any(String),
+      expect.stringMatching(/\.mp3$/),
       Buffer.from('RIFFsample'),
-      'audio/wav',
+      'audio/mpeg',
     );
   });
   it('deletes a provider voice when saving its ownership record fails', async () => {
@@ -261,8 +261,11 @@ describe('Inworld saved voices', () => {
           locale: 'en',
           userId: 'owner',
           provider,
+          sample: {
+            format: 'wav',
+            generate: async () => Buffer.from('RIFFsample'),
+          },
           deleteVoice,
-          generateSample: async () => Buffer.from('RIFFsample'),
         }),
       ).rejects.toThrow('database unavailable');
       expect(deleteVoice).toHaveBeenCalledOnce();

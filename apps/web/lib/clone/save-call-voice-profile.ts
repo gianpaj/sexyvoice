@@ -4,7 +4,17 @@ import { captureException } from '@sentry/nextjs';
 import { deleteFileFromR2, uploadFileToR2 } from '@/lib/storage/upload';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { CallCloneProvider } from './call-voice-config';
-import { createCallVoiceSampleKey } from './call-voice-sample';
+import {
+  type CallVoiceSampleFormat,
+  createCallVoiceSampleKey,
+  getCallVoiceSampleContentType,
+} from './call-voice-sample';
+
+/** The provider speaking `CALL_VOICE_SAMPLE_TEXT` in the new voice. */
+interface CallVoiceSample {
+  format: CallVoiceSampleFormat;
+  generate: () => Promise<Buffer>;
+}
 
 export async function saveCallVoiceProfile({
   voiceId,
@@ -12,24 +22,28 @@ export async function saveCallVoiceProfile({
   locale,
   userId,
   provider,
+  sample,
   deleteVoice,
-  generateSample,
 }: {
   voiceId: string;
   name: string;
   locale: string;
   userId: string;
   provider: CallCloneProvider;
+  sample: CallVoiceSample;
   deleteVoice: () => Promise<unknown>;
-  generateSample: () => Promise<Buffer>;
 }) {
   const id = randomUUID();
   let sampleKey: string | undefined;
   try {
-    const sample = await generateSample();
-    if (!sample.length) throw new Error('Voice sample is empty');
-    sampleKey = createCallVoiceSampleKey(id);
-    const sampleUrl = await uploadFileToR2(sampleKey, sample, 'audio/wav');
+    const audio = await sample.generate();
+    if (!audio.length) throw new Error('Voice sample is empty');
+    sampleKey = createCallVoiceSampleKey(id, sample.format);
+    const sampleUrl = await uploadFileToR2(
+      sampleKey,
+      audio,
+      getCallVoiceSampleContentType(sampleKey),
+    );
     // Users cannot write saved voices: provider and voice_id name a voice
     // the server deletes and speaks with its own API key.
     const { data, error } = await createAdminClient()

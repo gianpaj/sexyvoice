@@ -2538,9 +2538,9 @@ describe('Saved voice generation', () => {
       userId: 'test-user-id',
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-/),
+      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-.+\.mp3$/),
       expect.any(Buffer),
-      'audio/wav',
+      'audio/mpeg',
     );
     await flushPromises();
     expect(queries.saveAudioFile).toHaveBeenCalledWith(

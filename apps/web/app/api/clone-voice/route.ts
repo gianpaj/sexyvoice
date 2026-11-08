@@ -36,6 +36,7 @@ import {
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import {
+  INWORLD_AUDIO_MIME_TYPE,
   INWORLD_TTS_MODEL,
   InworldRequestError,
   saveInworldVoice,
@@ -1370,7 +1371,11 @@ export async function POST(request: Request) {
       // never serves audio from the previous model.
       const voiceModel =
         provider === 'inworld' ? INWORLD_TTS_MODEL : VOXTRAL_MODEL;
-      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+      const [extension, mimeType] =
+        provider === 'inworld'
+          ? ['mp3', INWORLD_AUDIO_MIME_TYPE]
+          : ['wav', 'audio/wav'];
+      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.${extension}`;
       const cachedOutputUrl = await redis.get<string>(filename);
       if (cachedOutputUrl) {
         return NextResponse.json(
@@ -1407,12 +1412,8 @@ export async function POST(request: Request) {
           { voiceId: voice.voice_id },
         ));
       }
-      const outputUrl = await uploadGeneratedAudio(
-        buffer,
-        filename,
-        'audio/wav',
-      );
-      const audioDuration = (await getAudioDuration(buffer, 'audio/wav')) ?? 0;
+      const outputUrl = await uploadGeneratedAudio(buffer, filename, mimeType);
+      const audioDuration = (await getAudioDuration(buffer, mimeType)) ?? 0;
       reservedCredits = 0;
       const savedVoiceLocale = locale;
       const savedVoiceModel = modelUsed;

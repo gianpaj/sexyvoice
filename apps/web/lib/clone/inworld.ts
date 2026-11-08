@@ -93,8 +93,11 @@ export async function saveInworldVoice(
     locale,
     userId,
     provider: 'inworld',
-    generateSample: () =>
-      synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
+    sample: {
+      format: 'mp3',
+      generate: () =>
+        synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
+    },
     deleteVoice: () => deleteInworldVoice(voice.voiceId),
   });
 }
@@ -113,8 +116,11 @@ export async function countInworldWorkspaceVoices() {
   return listVoicesResponse.parse(await response.json()).totalSize;
 }
 
+/** Inworld speech is MP3, several times smaller than WAV. */
+export const INWORLD_AUDIO_MIME_TYPE = 'audio/mpeg';
+
 /**
- * Speaks `text` in a workspace voice and returns a WAV file. Without
+ * Speaks `text` in a workspace voice and returns an MP3 file. Without
  * `locale`, Inworld detects the language from the text. A voice can speak
  * languages other than the one it was cloned in, without its accent.
  */
@@ -130,7 +136,7 @@ export async function synthesizeInworldSpeech(
       voiceId,
       ...(locale && { language: toInworldLanguage(locale) }),
       modelId: INWORLD_TTS_MODEL,
-      audioConfig: { audioEncoding: 'LINEAR16' },
+      audioConfig: { audioEncoding: 'MP3' },
     }),
   });
   const { audioContent } = previewResponse.parse(await speech.json());
