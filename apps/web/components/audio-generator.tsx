@@ -237,7 +237,7 @@ interface AudioGeneratorProps {
 type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
 type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
 
-function throwGenerateVoiceError(
+function resolveGenerateVoiceErrorMessage(
   t: GenerateTranslator,
   translateErrorCode: ErrorCodesTranslator,
   data: {
@@ -246,33 +246,28 @@ function throwGenerateVoiceError(
     errorCode?: string;
     serverMessage?: string;
   },
-  response: Response,
-): never {
+): string {
   const serverFallback = data.error || data.serverMessage || t('error');
   if (data.errorCode === 'PROVIDER_UNAVAILABLE') {
-    throw new APIError(
-      resolveErrorMessage(
-        translateErrorCode,
-        data.errorCode,
-        data.details,
-        serverFallback,
-      ),
-      response,
+    return resolveErrorMessage(
+      translateErrorCode,
+      data.errorCode,
+      data.details,
+      serverFallback,
     );
   }
 
   if (data.errorCode) {
     const messageKey = data.errorCode as Parameters<typeof t>[0];
     if (t.has(messageKey)) {
-      const errorMessage = t(messageKey);
-      throw new APIError(
-        errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-        response,
+      return t(messageKey).replace(
+        '__COUNT__',
+        MAX_FREE_GENERATIONS.toString(),
       );
     }
   }
 
-  throw new APIError(serverFallback, response);
+  return serverFallback;
 }
 
 function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
@@ -481,7 +476,10 @@ export function AudioGenerator({
 
       const data = await response.json();
       if (!response.ok) {
-        throwGenerateVoiceError(t, translateErrorCode, data, response);
+        throw new APIError(
+          resolveGenerateVoiceErrorMessage(t, translateErrorCode, data),
+          response,
+        );
       }
 
       return { cached: data.cached === true, url: data.url as string };
@@ -529,7 +527,10 @@ export function AudioGenerator({
 
       if (!response.ok) {
         const data = await response.json();
-        throwGenerateVoiceError(t, translateErrorCode, data, response);
+        throw new APIError(
+          resolveGenerateVoiceErrorMessage(t, translateErrorCode, data),
+          response,
+        );
       }
 
       // The streaming player owns the Web Audio engine, peak accumulation, and
@@ -548,23 +549,16 @@ export function AudioGenerator({
             finalizeStream();
             resolve({ cached, url });
           },
-          onError: ({ details, error, errorCode, serverMessage }) => {
+          onError: (data) => {
             resetStream();
-            const isOutputLimit = errorCode === 'GEMINI_OUTPUT_LIMIT';
-            const message = isOutputLimit
-              ? t(errorCode)
-              : resolveErrorMessage(
-                  translateErrorCode,
-                  errorCode,
-                  details,
-                  error || serverMessage || t('error'),
-                );
+            const status =
+              data.errorCode === 'GEMINI_OUTPUT_LIMIT'
+                ? getErrorStatusCode(data.errorCode)
+                : 500;
             reject(
               new APIError(
-                message,
-                new Response(null, {
-                  status: isOutputLimit ? getErrorStatusCode(errorCode) : 500,
-                }),
+                resolveGenerateVoiceErrorMessage(t, translateErrorCode, data),
+                new Response(null, { status }),
               ),
             );
           },

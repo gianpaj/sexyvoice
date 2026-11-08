@@ -13,6 +13,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
+import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import esMessages from '@/messages/es.json';
 
@@ -1800,16 +1801,32 @@ describe('AudioGenerator', () => {
   const SHORT_TEXT = 'a'.repeat(10);
 
   it.each([
-    { transport: 'JSON', isPaidUser: false },
-    { transport: 'SSE', isPaidUser: true },
-  ])(
-    'localizes the Gemini output limit over $transport',
-    async ({ transport, isPaidUser }) => {
+    {
+      transport: 'JSON',
+      isPaidUser: false,
+      errorCode: 'GEMINI_OUTPUT_LIMIT',
+      status: 422,
+    },
+    {
+      transport: 'SSE',
+      isPaidUser: true,
+      errorCode: 'GEMINI_OUTPUT_LIMIT',
+      status: 422,
+    },
+    {
+      transport: 'SSE',
+      isPaidUser: true,
+      errorCode: 'dailyLimitError',
+      status: 500,
+    },
+  ] as const)(
+    'localizes $errorCode over $transport',
+    async ({ transport, isPaidUser, errorCode, status }) => {
       streamingOverride.enabled = transport === 'SSE';
       const user = userEvent.setup();
       const payload = {
         error: 'The voice reached its audio output limit.',
-        errorCode: 'GEMINI_OUTPUT_LIMIT',
+        errorCode,
       };
       const fetchMock = vi
         .fn()
@@ -1819,7 +1836,7 @@ describe('AudioGenerator', () => {
                 SSE_AUDIO_FRAME,
                 `event: error\ndata: ${JSON.stringify(payload)}\n\n`,
               ])
-            : { json: async () => payload, ok: false, status: 422 },
+            : { json: async () => payload, ok: false, status },
         );
       vi.stubGlobal('fetch', fetchMock);
       renderAudioGenerator({
@@ -1836,7 +1853,7 @@ describe('AudioGenerator', () => {
 
       await waitFor(() => {
         expect(mockToastFn.error).toHaveBeenCalledWith(
-          `${baseDict.GEMINI_OUTPUT_LIMIT} (422)`,
+          `${baseDict[errorCode].replace('__COUNT__', String(MAX_FREE_GENERATIONS))} (${status})`,
         );
       });
     },
