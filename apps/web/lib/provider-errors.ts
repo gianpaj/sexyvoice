@@ -4,10 +4,17 @@ const PROVIDER_STATUS_PROPERTIES = [
   'raw_status_code',
 ] as const;
 
-const PROVIDER_IDS = ['gemini', 'grok', 'mistral', 'replicate'] as const;
+const PROVIDER_IDS = [
+  'gemini',
+  'grok',
+  'inworld',
+  'mistral',
+  'replicate',
+] as const;
 const PROVIDER_DISPLAY_NAMES = [
   'Gemini',
   'Grok',
+  'Inworld',
   'Mistral',
   'Replicate',
 ] as const;

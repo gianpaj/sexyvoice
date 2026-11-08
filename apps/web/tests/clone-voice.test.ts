@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
+import { InworldRequestError } from '@/lib/clone/inworld';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 // biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
@@ -30,8 +31,8 @@ const {
   mockSaveInworldVoice: vi.fn(),
   mockSynthesizeInworldSpeech: vi.fn(),
 }));
-vi.mock('@/lib/clone/inworld', () => ({
-  INWORLD_TTS_MODEL: 'inworld-tts-2',
+vi.mock('@/lib/clone/inworld', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/clone/inworld')>()),
   saveInworldVoice: mockSaveInworldVoice,
   synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
 }));
@@ -216,6 +217,25 @@ describe('Clone Voice API Route', () => {
     });
     expect(mockReplicateRun).not.toHaveBeenCalled();
     expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
+
+  it('asks for a different recording when Inworld rejects the sample', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockRejectedValueOnce(
+      new InworldRequestError('Inworld voice request failed (400)', 400),
+    );
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.providerRequestRejected');
   });
 
   it('rejects saving the Chatterbox English option as a call voice', async () => {
@@ -2527,6 +2547,32 @@ describe('Saved voice generation', () => {
       expect.objectContaining({ model: 'inworld-tts-2' }),
     );
   });
+
+  it.each([
+    { inworld: 503, status: 503, code: 'PROVIDER_UNAVAILABLE' },
+    { inworld: 429, status: 503, code: 'PROVIDER_UNAVAILABLE' },
+    { inworld: 400, status: 400, code: 'errors.providerRequestRejected' },
+    { inworld: 403, status: 500, code: 'errors.internalError' },
+  ])(
+    'answers an Inworld $inworld with $status $code and refunds',
+    async ({ inworld, status, code }) => {
+      mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+      mockSynthesizeInworldSpeech.mockRejectedValueOnce(
+        new InworldRequestError('Inworld voice request failed', inworld),
+      );
+
+      const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
+      const json = await response.json();
+
+      expect(response.status).toBe(status);
+      expect(json.code).toBe(code);
+      if (status === 503) expect(json.details).toEqual({ provider: 'Inworld' });
+      expect(queries.restoreCredits).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 132, userId: 'test-user-id' }),
+      );
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects a language an Inworld voice cannot speak', async () => {
     mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));

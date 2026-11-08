@@ -28,6 +28,7 @@ export type CloneRouteErrorCode =
   | 'errors.invalidFileType'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
+  | 'errors.providerRequestRejected'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'

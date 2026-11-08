@@ -896,6 +896,7 @@
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
       "missingRequiredParameters": "Bitte geben Sie Text ein und wählen Sie eine Audiodatei aus.",
+      "providerRequestRejected": "Der Sprachanbieter konnte diese Aufnahme oder diesen Text nicht verarbeiten. Bitte versuchen Sie es mit einer anderen Aufnahme oder einem anderen Text.",
       "referenceAudioEnhancementInputTooLarge": "Das Referenz-Audio ist zu groß für die Verbesserung. Verwenden Sie eine kleinere Datei oder deaktivieren Sie die Audiobereinigung.",
       "referenceAudioEnhancementInputTooLong": "Die Bereinigung des Referenz-Audios unterstützt Clips bis zu __MAX__ Sekunden.",
       "textTooLong": "Der Text überschreitet die maximale Länge von __MAX__ Zeichen.",

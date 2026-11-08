@@ -37,6 +37,7 @@ import {
 } from '@/lib/clone/constants';
 import {
   INWORLD_TTS_MODEL,
+  InworldRequestError,
   saveInworldVoice,
   synthesizeInworldSpeech,
 } from '@/lib/clone/inworld';
@@ -57,6 +58,7 @@ import {
   getProviderStatusCode,
   getProviderUnavailableDetails,
   isTransientProviderFailure,
+  type ProviderId,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -195,15 +197,36 @@ function routeErrorResponse(
   );
 }
 
-function createProviderUnavailableRouteError(
-  provider: CloneProvider,
-): RouteError {
+function createProviderUnavailableRouteError(provider: ProviderId): RouteError {
   return createRouteError(
     getProviderUnavailableMessage(provider),
     503,
     'PROVIDER_UNAVAILABLE',
     { provider: getProviderUnavailableDetails(provider).provider },
   );
+}
+
+/**
+ * Busy or failing Inworld asks for a retry; a rejected sample or text asks for
+ * different input. Key and permission failures stay internal errors, since
+ * the user cannot fix them.
+ */
+function rethrowInworldError(error: unknown): never {
+  if (!(error instanceof InworldRequestError)) throw error;
+  logger.warn('Inworld rejected a voice request', {
+    extra: { errorMessage: error.message, status: error.status },
+  });
+  if (error.status === 429 || error.status >= 500) {
+    throw createProviderUnavailableRouteError('inworld');
+  }
+  if (error.status === 400 || error.status === 422) {
+    throw createRouteError(
+      'The voice provider could not use this recording or text. Please try a different one.',
+      400,
+      'errors.providerRequestRejected',
+    );
+  }
+  throw error;
 }
 
 // ============================================================================
@@ -1371,7 +1394,11 @@ export async function POST(request: Request) {
       let buffer: Buffer;
       let requestId: string;
       if (provider === 'inworld') {
-        buffer = await synthesizeInworldSpeech(voice.voice_id, text, locale);
+        buffer = await synthesizeInworldSpeech(
+          voice.voice_id,
+          text,
+          locale,
+        ).catch(rethrowInworldError);
         modelUsed = INWORLD_TTS_MODEL;
         requestId = randomUUID();
       } else {
@@ -1466,7 +1493,7 @@ export async function POST(request: Request) {
               locale,
               user.id,
               { removeBackgroundNoise: formInput.enhanceReferenceAudio },
-            )
+            ).catch(rethrowInworldError)
           : await saveMistralVoice(
               processedAudio.buffer,
               formInput.saveVoiceName,

@@ -892,6 +892,7 @@
       "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
       "missingLocale": "Vælg et sprog.",
       "missingRequiredParameters": "Indtast tekst, og vælg en lydfil.",
+      "providerRequestRejected": "Stemmeudbyderen kunne ikke bruge denne optagelse eller tekst. Prøv en anden.",
       "referenceAudioEnhancementInputTooLarge": "Referenceaudioen er for stor til at blive forbedret. Brug en mindre fil, eller slå lydrensning fra.",
       "referenceAudioEnhancementInputTooLong": "Rensning af referenceaudio understøtter klip på op til __MAX__ sekunder.",
       "textTooLong": "Teksten overskrider den maksimale længde på __MAX__ tegn.",

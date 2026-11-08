@@ -262,6 +262,11 @@ credits; sample synthesis incurs provider costs. The reference is retained by
 the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.
 
+Inworld failures map to clone error codes: 429 and 5xx return
+`PROVIDER_UNAVAILABLE`, 400 and 422 return `errors.providerRequestRejected`
+(try a different recording or text), and key or permission failures return
+`errors.internalError`.
+
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
 above the upload and recording form. Previews use the private sample endpoint.
 Selecting a voice replaces the reference audio: the form posts `text`, `locale`,

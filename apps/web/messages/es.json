@@ -896,6 +896,7 @@
       "invalidFileType": "Tipo de archivo no válido. Sube MP3, OGG, Opus, M4A, WAV o WebM.",
       "missingLocale": "Selecciona un idioma.",
       "missingRequiredParameters": "Ingresa texto y selecciona un archivo de audio.",
+      "providerRequestRejected": "El proveedor de voz no pudo usar esta grabación o este texto. Prueba con otro.",
       "referenceAudioEnhancementInputTooLarge": "El audio de referencia es demasiado grande para mejorarlo. Usa un archivo más pequeño o desactiva la limpieza de audio.",
       "referenceAudioEnhancementInputTooLong": "La limpieza del audio de referencia admite clips de hasta __MAX__ segundos.",
       "textTooLong": "El texto supera la longitud máxima de __MAX__ caracteres.",

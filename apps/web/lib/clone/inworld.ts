@@ -19,6 +19,17 @@ function toInworldLanguage(locale: string) {
   return language === 'no' ? 'nb' : language;
 }
 
+/** A request Inworld answered with an error; `status` is its HTTP status. */
+export class InworldRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'InworldRequestError';
+    this.status = status;
+  }
+}
+
 async function inworldRequest(path: string, init?: RequestInit) {
   const apiKey = process.env.INWORLD_API_KEY;
   if (!apiKey) throw new Error('INWORLD_API_KEY is not configured');
@@ -35,8 +46,9 @@ async function inworldRequest(path: string, init?: RequestInit) {
     !(response.ok || (init?.method === 'DELETE' && response.status === 404))
   ) {
     const reason = await inworldErrorMessage(response);
-    throw new Error(
+    throw new InworldRequestError(
       `Inworld voice request failed (${response.status})${reason ? `: ${reason}` : ''}`,
+      response.status,
     );
   }
   return response;

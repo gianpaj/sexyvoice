@@ -204,6 +204,10 @@ describe('Inworld saved voices', () => {
       `Inworld voice request failed (403): ${message}`,
     );
     await expect(save).rejects.not.toThrow('private');
+    await expect(save).rejects.toMatchObject({
+      name: 'InworldRequestError',
+      status: 403,
+    });
   });
   it('removes the cloned voice if sample synthesis fails', async () => {
     const fetchMock = vi
