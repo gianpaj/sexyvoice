@@ -776,7 +776,8 @@ function NewVoiceClientInner({
             dispatch({
               patch: {
                 selectedLocaleCode:
-                  voice.locale ?? resolveBaseCloneLocale(selectedLocaleCode),
+                  voice.locale ??
+                  resolveBaseCloneLocale(toCloneLocale(selectedLocaleCode)),
               },
               type: 'patch',
             });
