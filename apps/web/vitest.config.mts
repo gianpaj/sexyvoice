@@ -18,8 +18,10 @@ export default defineConfig({
     coverage: {
       include: [
         'lib/utils.ts',
+        'lib/tts/**/*.ts',
         'app/api/clone-voice/*.ts',
         'app/api/generate-voice/*.ts',
+        'app/api/v1/speech/route.ts',
         'app/api/stripe/webhook/route.ts',
       ],
       provider: 'v8',

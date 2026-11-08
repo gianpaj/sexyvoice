@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
-import { saveAudioFileAdmin } from '@/lib/supabase/queries';
+import { restoreCredits, saveAudioFileAdmin } from '@/lib/supabase/queries';
 import {
   mockReplicateRun,
   mockUploadFileToR2,
@@ -138,6 +138,43 @@ describe('V1 Speech API Route', () => {
       expect(json.error.code).toBe('rate_limit_exceeded');
     });
   });
+
+  it.each(['gemini', 'replicate'])(
+    'refunds a cancelled %s request without reporting a server error',
+    async (provider) => {
+      const controller = new AbortController();
+      const abort = () => {
+        controller.abort();
+        throw new DOMException('The request was aborted', 'AbortError');
+      };
+      const generateContent = vi.fn().mockImplementation(abort);
+      if (provider === 'gemini') {
+        setMockGoogleGenAIFactory(() => ({
+          models: { countTokens: vi.fn(), generateContent },
+        }));
+      } else {
+        mockReplicateRun.mockImplementationOnce(abort);
+      }
+      const request = new Request(
+        speechRequest({
+          input: 'Hello',
+          model: provider === 'gemini' ? 'gpro' : 'orpheus',
+          voice: provider === 'gemini' ? 'kore' : 'tara',
+        }),
+        { signal: controller.signal },
+      );
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(499);
+      expect(restoreCredits).toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(mockUpdateApiKeyLastUsed).toHaveBeenCalledWith('test-key-hash');
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      if (provider === 'gemini')
+        expect(generateContent).toHaveBeenCalledTimes(1);
+    },
+  );
 
   // -------------------------------------------------------------------------
   // Input validation
@@ -372,7 +409,10 @@ describe('V1 Speech API Route', () => {
       expect(response.status).toBe(200);
       expect(mockReplicateRun).toHaveBeenCalledWith(
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-        { input: { text: 'Hello from Orpheus', voice: 'tara' } },
+        {
+          input: { text: 'Hello from Orpheus', voice: 'tara' },
+          signal: expect.any(AbortSignal),
+        },
         expect.any(Function),
       );
       expect(json.url).toContain('.mp3');

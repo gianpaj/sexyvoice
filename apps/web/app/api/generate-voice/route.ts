@@ -8,11 +8,10 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
-import Replicate, { type Prediction } from 'replicate';
+import type { Prediction } from 'replicate';
 
 import {
   estimateTokenCount,
-  extractInlineAudio,
   GEMINI_STREAMING_ENABLED,
   getCharactersLimit,
   getGeminiCombinedTokenLimit,
@@ -48,6 +47,14 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsConfig,
+  classifyGeminiAudio,
+  GEMINI_FLASH_MODEL,
+  GeminiGenerationError,
+  generateGeminiAudio,
+  isAbortError,
+} from '@/lib/tts/gemini';
+import {
   buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
@@ -56,6 +63,7 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import { generateReplicateAudio } from '@/lib/tts/replicate';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -73,7 +81,6 @@ import {
   isGoogleTransientProviderError,
 } from '@/utils/google-rpc-status';
 import {
-  buildGeminiTtsConfig,
   convertAudioChunksToWav,
   createSseEvent,
   extractGeminiStreamAudioChunk,
@@ -85,18 +92,6 @@ const { logger, captureException } = Sentry;
 interface GenerationIdentity {
   email?: string;
   id: string;
-}
-
-/**
- * The Google AI SDK wraps native AbortError into a generic Error whose name
- * stays "Error" but whose message contains "AbortError" or "aborted".
- * This helper covers both the native case and the SDK-wrapped case.
- */
-function isAbortError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === 'AbortError') return true;
-  const msg = error.message.toLowerCase();
-  return /\babort(?:ed| ?error)\b/.test(msg);
 }
 
 function providerUnavailableResponse(provider: ProviderId): Response {
@@ -495,7 +490,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!userHasPaid && voiceObj.model === 'gpro') {
+    if (!userHasPaid && ['gpro', 'gpro31'].includes(voiceObj.model)) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (isOverLimit) {
         return NextResponse.json(
@@ -657,144 +652,107 @@ export async function POST(request: Request) {
         });
       }
 
-      if (userHasPaid) {
-        try {
-          modelUsed = resolveGeminiTtsModel({
-            model: voiceObj.model,
-            userHasPaid,
-          });
+      const primaryModel = resolveGeminiTtsModel({
+        model: voiceObj.model,
+        userHasPaid,
+      });
+      const geminiRequestContext = {
+        voice: voiceObj.name,
+        styleVariant,
+        provider,
+        textLength: text.length,
+        textPreview: text.slice(0, 500),
+        requestedOutputCodec: outputCodec || null,
+        responseModalities: geminiTTSConfig.responseModalities,
+        speechConfig: geminiTTSConfig.speechConfig,
+      };
 
-          genAIResponse = await ai.models.generateContent({
-            config: geminiTTSConfig,
-            contents: buildGeminiTtsContents({
-              model: voiceObj.model,
-              styleVariant,
-              text,
-            }),
-            model: modelUsed,
-          });
-        } catch (error) {
-          console.warn(error);
-          if (error instanceof Error && error.name === 'AbortError') {
-            console.info('Gemini voice generation aborted');
-            await refundReservedCredits({
-              amount: reservedCredits,
-              context: 'gemini_generate_abort',
-              userId: user.id,
-            });
-            reservedCredits = 0;
-            return APIErrorResponse('Request aborted', 499);
-          }
-
-          if (voiceObj.model === 'gpro38') throw error;
-
-          const proErrorMessage =
-            error instanceof Error ? error.message : String(error);
-          const geminiRequestContext = {
-            provider,
-            requestedOutputCodec: outputCodec || null,
-            responseModalities: geminiTTSConfig.responseModalities,
-            speechConfig: geminiTTSConfig.speechConfig,
-            styleVariant,
-            textLength: text.length,
-            textPreview: text.slice(0, 500),
-            voice: voiceObj.name,
-          };
-
-          logger.warn(
-            `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
-            {
-              extra: {
-                ...geminiRequestContext,
-                errorCause: error instanceof Error ? error.cause : undefined,
-                errorMessage: proErrorMessage,
-                model: modelUsed,
-              },
-              user: {
-                email: user.email,
-                id: user.id,
-              },
-            },
-          );
-          modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
-          try {
-            genAIResponse = await ai.models.generateContent({
-              config: geminiTTSConfig,
-              contents: buildGeminiTtsContents({
-                model: voiceObj.model,
-                styleVariant,
-                text,
-              }),
-              model: modelUsed,
-            });
-
-            logger.info('Gemini flash fallback succeeded after pro failure', {
-              extra: {
-                ...geminiRequestContext,
-                fallbackModel: modelUsed,
-                originalModel: resolveGeminiTtsModel({
-                  model: voiceObj.model,
-                  userHasPaid,
-                }),
-                proErrorMessage,
-              },
-              user: {
-                email: user.email,
-                id: user.id,
-              },
-            });
-          } catch (flashError) {
-            logger.error('Gemini flash fallback failed after pro failure', {
-              extra: {
-                ...geminiRequestContext,
-                fallbackModel: modelUsed,
-                flashErrorCause:
-                  flashError instanceof Error ? flashError.cause : undefined,
-                flashErrorMessage:
-                  flashError instanceof Error
-                    ? flashError.message
-                    : String(flashError),
-                originalModel: resolveGeminiTtsModel({
-                  model: voiceObj.model,
-                  userHasPaid,
-                }),
-                proErrorMessage,
-              },
-              user: {
-                email: user.email,
-                id: user.id,
-              },
-            });
-            throw flashError;
-          }
-        }
-      } else {
-        modelUsed = resolveGeminiTtsModel({
-          model: voiceObj.model,
-          userHasPaid,
-        });
-        genAIResponse = await ai.models.generateContent({
-          config: geminiTTSConfig,
+      modelUsed = primaryModel;
+      try {
+        const generation = await generateGeminiAudio({
+          ai,
+          primaryModel,
           contents: buildGeminiTtsContents({
             model: voiceObj.model,
             styleVariant,
             text,
           }),
-          model: modelUsed,
+          config: geminiTTSConfig,
         });
-      }
-      const { data, mimeType } = extractInlineAudio(genAIResponse);
-      const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
-      const blockReason = genAIResponse?.promptFeedback?.blockReason;
-      const responseOutcome = classifyGeminiTtsResponse({
-        blockReason,
-        finishReason,
-        hasAudio: Boolean(data && mimeType),
-      });
-      const isProhibitedContent = responseOutcome === 'content_blocked';
-      const isNoAudioData = responseOutcome === 'no_audio';
+        genAIResponse = generation.response;
+        modelUsed = generation.modelUsed;
 
-      if (responseOutcome !== 'success' || !data || !mimeType) {
+        if (generation.primaryError) {
+          const proErrorMessage =
+            generation.primaryError instanceof Error
+              ? generation.primaryError.message
+              : String(generation.primaryError);
+          logger.warn(
+            `${primaryModel} failed, retrying with ${GEMINI_FLASH_MODEL}`,
+            {
+              user: { id: user.id, email: user.email },
+              extra: {
+                ...geminiRequestContext,
+                model: primaryModel,
+                errorMessage: proErrorMessage,
+                errorCause:
+                  generation.primaryError instanceof Error
+                    ? generation.primaryError.cause
+                    : undefined,
+              },
+            },
+          );
+          logger.info('Gemini flash fallback succeeded after pro failure', {
+            user: { id: user.id, email: user.email },
+            extra: {
+              ...geminiRequestContext,
+              originalModel: primaryModel,
+              fallbackModel: modelUsed,
+              proErrorMessage,
+            },
+          });
+        }
+      } catch (error) {
+        if (error instanceof GeminiGenerationError) {
+          logger.error('Gemini flash fallback failed after pro failure', {
+            user: { id: user.id, email: user.email },
+            extra: {
+              ...geminiRequestContext,
+              originalModel: primaryModel,
+              fallbackModel: GEMINI_FLASH_MODEL,
+              proErrorMessage:
+                error.proError instanceof Error
+                  ? error.proError.message
+                  : String(error.proError),
+              flashErrorMessage:
+                error.flashError instanceof Error
+                  ? error.flashError.message
+                  : String(error.flashError),
+              flashErrorCause:
+                error.flashError instanceof Error
+                  ? error.flashError.cause
+                  : undefined,
+            },
+          });
+          // Rethrow the underlying flash error so the outer catch can map
+          // Google quota / transient provider errors exactly as before.
+          modelUsed = GEMINI_FLASH_MODEL;
+          throw error.flashError;
+        }
+        throw error;
+      }
+
+      const classification = classifyGeminiAudio(genAIResponse);
+      const {
+        data,
+        mimeType,
+        finishReason,
+        blockReason,
+        isProhibitedContent,
+        isNoAudioData,
+      } = classification;
+
+      if (classification.errorCode || !data || !mimeType) {
         if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
             extra: {
@@ -873,8 +831,7 @@ export async function POST(request: Request) {
             user: { id: user.id },
           });
         }
-        const errorCode =
-          geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
+        const errorCode = classification.errorCode ?? 'OTHER_GEMINI_BLOCK';
         throw new Error(getErrorMessage(errorCode, 'voice-generation'), {
           cause: errorCode,
         });
@@ -969,17 +926,18 @@ export async function POST(request: Request) {
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;
-      const replicate = new Replicate();
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
       };
-      let output: ReadableStream;
+      let audioBuffer: Buffer;
       try {
-        output = (await replicate.run(
-          voiceObj.model as `${string}/${string}`,
-          { input: { text, voice: voiceObj.name }, signal: request.signal },
+        ({ buffer: audioBuffer } = await generateReplicateAudio({
+          model: voiceObj.model,
+          text,
+          voice: voiceObj.name,
+          signal: request.signal,
           onProgress,
-        )) as ReadableStream;
+        }));
       } catch (error) {
         if (isTransientProviderFailure(error)) {
           logger.warn('Replicate voice generation provider unavailable', {
@@ -1002,8 +960,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Convert ReadableStream to Buffer before uploading
-      const audioBuffer = Buffer.from(await new Response(output).arrayBuffer());
       generatedAudioBuffer = audioBuffer;
       generatedAudioMimeType = 'audio/mpeg';
 
