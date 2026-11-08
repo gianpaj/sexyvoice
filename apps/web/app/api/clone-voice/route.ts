@@ -287,11 +287,10 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
   const saveVoiceName =
     typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  const voiceConsent = formData.get(CLONE_FORM_FIELDS.voiceConsent) === 'true';
   if (
     nameValue !== null &&
-    (!saveVoiceName ||
-      saveVoiceName.length > 50 ||
-      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+    (!saveVoiceName || saveVoiceName.length > 50 || !voiceConsent)
   ) {
     throw createRouteError(
       'A voice name and permission to save are required',
@@ -323,6 +322,13 @@ async function parseFormData(request: Request): Promise<FormInput> {
       'Invalid saved voice',
       400,
       'errors.missingRequiredParameters',
+    );
+  }
+  if (savedVoiceId && !voiceConsent) {
+    throw createRouteError(
+      'Confirm you have permission to use this voice',
+      400,
+      'errors.voiceConsentRequired',
     );
   }
 

@@ -903,6 +903,7 @@
       "unsupportedAudioFormat": "Formato audio non supportato per la clonazione vocale. Usa MP3, OGG/Opus, WebM o WAV.",
       "unsupportedLocale": "Questa lingua non è supportata per la clonazione vocale.",
       "userNotFound": "Accedi per clonare una voce.",
+      "voiceConsentRequired": "Conferma di avere il permesso di usare questa voce.",
       "voiceNameAndConsentRequired": "Inserisci un nome (fino a 50 caratteri) e conferma di avere il permesso di salvare la voce.",
       "savedVoiceRequiresPaid": "Per salvare le voci è necessario un account a pagamento.",
       "savedVoiceLocaleUnsupported": "Questa opzione di lingua non permette di salvare voci per le chiamate. Scegli un’altra lingua.",

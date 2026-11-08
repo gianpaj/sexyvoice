@@ -275,9 +275,11 @@ Inworld failures map to clone error codes: 429 and 5xx return
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
 above the upload and recording form. Previews use the private sample endpoint.
 Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
-and `savedVoiceId`, the route checks ownership, and generation charges credits
-and records an `audio_files` row like a one-off clone. Inworld speech is stored
-as MP3 and Mistral speech as WAV. Clicking the selected
+`savedVoiceId`, and `voiceConsent=true`. The consent checkbox stays on the form,
+and the route rejects a saved voice request without consent
+(`errors.voiceConsentRequired`). The route checks ownership, and generation
+charges credits and records an `audio_files` row like a one-off clone. Inworld
+speech is stored as MP3 and Mistral speech as WAV. Clicking the selected
 voice again returns to the recording form. An Inworld voice speaks the chosen
 language, defaulting to its own, which the route checks with
 `supportsCallCloneLocale()` and sends as Inworld's `language` field. Inworld

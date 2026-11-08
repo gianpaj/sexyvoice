@@ -899,6 +899,7 @@
       "unsupportedAudioFormat": "Ikke-understøttet lydformat til stemmekloning. Brug MP3, OGG/Opus, WebM eller WAV.",
       "unsupportedLocale": "Dette sprog understøttes ikke til stemmekloning.",
       "userNotFound": "Log ind for at klone en stemme.",
+      "voiceConsentRequired": "Bekræft, at du har tilladelse til at bruge stemmen.",
       "voiceNameAndConsentRequired": "Indtast et navn (op til 50 tegn), og bekræft, at du har tilladelse til at gemme stemmen.",
       "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
       "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog.",

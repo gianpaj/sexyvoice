@@ -454,7 +454,7 @@ function NewVoiceClientInner({
     }
 
     if (
-      !(selectedVoice || legalConsentChecked) ||
+      !legalConsentChecked ||
       (saveVoiceOnly && !(voiceName.trim() && canSaveVoice && userHasPaid))
     )
       return;
@@ -495,6 +495,7 @@ function NewVoiceClientInner({
             : selectedLocaleCode,
         );
         formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
+        formData.append(CLONE_FORM_FIELDS.voiceConsent, 'true');
       } else {
         let audioToProcess = file;
         if (micBlob && !file) {
@@ -718,7 +719,8 @@ function NewVoiceClientInner({
     Boolean(micBlob) &&
     micSeconds !== null &&
     micSeconds < minAudioSeconds;
-  let cleanup: ReferenceCleanup = 'paid';
+  // A saved voice has no reference recording to clean up.
+  let cleanup: ReferenceCleanup = selectedVoice ? 'none' : 'paid';
   if (saveVoiceOnly)
     cleanup = callCloneProvider === 'inworld' ? 'inworld' : 'none';
 
@@ -726,7 +728,8 @@ function NewVoiceClientInner({
     ? !text.trim() ||
       status === 'generating' ||
       !hasEnoughCredits ||
-      textIsOverLimit
+      textIsOverLimit ||
+      !legalConsentChecked
     : !(
         (file || micBlob) &&
         (saveVoiceOnly ? voiceName.trim() : text.trim())
@@ -962,17 +965,15 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
-            {!selectedVoice && (
-              <CloneConsentFields
-                cleanup={cleanup}
-                disabled={status === 'generating'}
-                dispatch={dispatch}
-                legalConsentChecked={legalConsentChecked}
-                referenceAudioEnhancementEnabled={
-                  referenceAudioEnhancementEnabled
-                }
-              />
-            )}
+            <CloneConsentFields
+              cleanup={cleanup}
+              disabled={status === 'generating'}
+              dispatch={dispatch}
+              legalConsentChecked={legalConsentChecked}
+              referenceAudioEnhancementEnabled={
+                referenceAudioEnhancementEnabled
+              }
+            />
 
             {savedVoiceId && (
               <div className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4">

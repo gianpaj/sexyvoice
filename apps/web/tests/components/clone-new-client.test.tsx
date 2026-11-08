@@ -407,16 +407,21 @@ describe('NewVoiceClient', () => {
         enMessages.clone.savedVoice.using.replace('{name}', 'My Inworld voice'),
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('clone-legal-consent')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(enMessages.clone.referenceAudioEnhancementLabel),
+    ).not.toBeInTheDocument();
     await user.type(
       screen.getByLabelText(enMessages.clone.textToConvertLabel),
       'Hello there',
     );
+    expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+    await user.click(screen.getByTestId('clone-legal-consent'));
     await user.click(screen.getByTestId('clone-generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get('savedVoiceId')).toBe('inworld-reference');
+    expect(body.get('voiceConsent')).toBe('true');
     expect(body.get('locale')).toBe('en');
     expect(body.get('text')).toBe('Hello there');
     expect(body.get('file')).toBeNull();
@@ -468,6 +473,7 @@ describe('NewVoiceClient', () => {
       screen.getByLabelText(enMessages.clone.textToConvertLabel),
       'Hola',
     );
+    await user.click(screen.getByTestId('clone-legal-consent'));
     await user.click(screen.getByTestId('clone-generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());

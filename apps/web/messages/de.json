@@ -903,6 +903,7 @@
       "unsupportedAudioFormat": "Nicht unterstütztes Audioformat für das Klonen von Stimmen. Bitte verwenden Sie MP3, OGG/Opus, WebM oder WAV.",
       "unsupportedLocale": "Diese Sprache wird für das Klonen von Stimmen nicht unterstützt.",
       "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
+      "voiceConsentRequired": "Bestätige, dass du diese Stimme verwenden darfst.",
       "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
       "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
       "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache.",

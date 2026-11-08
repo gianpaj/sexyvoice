@@ -10,6 +10,7 @@ export type RouteErrorDetails = Record<
 >;
 
 export type CloneRouteErrorCode =
+  | 'errors.voiceConsentRequired'
   | 'errors.voiceNameAndConsentRequired'
   | 'errors.savedVoiceRequiresPaid'
   | 'errors.savedVoiceLocaleUnsupported'

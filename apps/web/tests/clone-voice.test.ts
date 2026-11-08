@@ -2506,11 +2506,17 @@ describe('Saved voice generation', () => {
     sample_url: null,
     voice_id: `${provider}-voice`,
   });
-  const postSavedVoice = (text: string, id = savedVoiceId, locale = 'en') => {
+  const postSavedVoice = (
+    text: string,
+    id = savedVoiceId,
+    locale = 'en',
+    consent = 'true',
+  ) => {
     const form = new FormData();
     form.append('text', text);
     form.append('locale', locale);
     form.append('savedVoiceId', id);
+    form.append('voiceConsent', consent);
     return POST(
       new Request('http://localhost/api/clone-voice', {
         body: form,
@@ -2664,6 +2670,20 @@ describe('Saved voice generation', () => {
     expect(json.code).toBe('errors.textTooLong');
     expect(json.details).toEqual({ MAX: 2000 });
     expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('requires permission to use the saved voice before loading it', async () => {
+    const response = await postSavedVoice(
+      'Hello world',
+      savedVoiceId,
+      'en',
+      'false',
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.voiceConsentRequired');
+    expect(mockGetOwnedCallVoice).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
   });
 
   it('rejects a saved voice ID that is not a UUID', async () => {
