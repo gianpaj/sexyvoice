@@ -457,6 +457,11 @@ resolution. A failed lookup logs a warning and starts the call without memory.
 An explicit request flag of `memory: false` also disables memory. This is a
 user preference, not an entitlement or authorization check.
 
+Call tokens send `memory_scope: "both"`. The agent retrieves shared user
+profiles under `__shared__` together with the active character's relationship
+and episode slots. `match_agent_memories_hybrid` returns each row's
+`character_id` and boosts active-character and recent matches.
+
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories
 remain until erased with the Profile page's delete action, which calls
