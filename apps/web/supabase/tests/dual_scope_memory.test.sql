@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, aud, role, email)
 values ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'dual-scope-a@example.com'),
@@ -42,6 +42,18 @@ select is((select array_agg(content order by content) from public.match_agent_me
   ('[1' || repeat(',0', 1535) || ']')::extensions.vector, '',
   '22222222-2222-4222-8222-222222222222', 'character-a', 10)),
   array['moonlight story a', 'moonlight user a']::text[], 'vector search returns this user content');
+
+select is((select character_id from dual_results order by rrf_score desc limit 1),
+  'character-a', 'active character outranks an equally matched shared memory');
+
+insert into public.agent_memories (user_id, character_id, memory_type, content, updated_at)
+values
+  ('22222222-2222-4222-8222-222222222222', '__shared__', 'fact:older', 'sunset', now() - interval '60 days'),
+  ('22222222-2222-4222-8222-222222222222', '__shared__', 'fact:newer', 'sunset', now());
+select is((select memory_type from public.match_agent_memories_hybrid(
+  null, 'sunset', '22222222-2222-4222-8222-222222222222', '__shared__', 10)
+  order by rrf_score desc limit 1),
+  'fact:newer', 'recency boost favors the equally matched recent memory');
 
 select * from finish();
 rollback;
