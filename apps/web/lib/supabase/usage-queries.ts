@@ -48,6 +48,7 @@ export async function getUsageEventsPaginated(
     .from('usage_events')
     .select('*', { count: 'exact' })
     .eq('user_id', userId)
+    .eq('event_kind', 'customer_usage')
     .order('occurred_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
