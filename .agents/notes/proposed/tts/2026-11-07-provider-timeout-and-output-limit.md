@@ -1,7 +1,5 @@
 # Grok headers timeout and Gemini output limit
 
-The fixes are on the local `automation/fix-sentry-2026-11-07` branch for review.
-
 - Dashboard generation and API v1 treat Grok's nested
   `UND_ERR_HEADERS_TIMEOUT` as provider unavailability. The existing 503 path
   refunds the reservation and leaves retry timing to the caller. See
