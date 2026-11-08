@@ -460,7 +460,10 @@ user preference, not an entitlement or authorization check.
 Call tokens send `memory_scope: "both"`. The agent retrieves shared user
 profiles under `__shared__` together with the active character's relationship
 and episode slots. `match_agent_memories_hybrid` returns each row's
-`character_id` and boosts active-character and recent matches.
+`character_id` and re-ranks its bounded candidate set with active-character
+and recency boosts. Both retrieval branches include shared rows for a character
+request; the agent makes one hybrid RPC call per search. Deploy the dual-scope
+agent before enabling the web metadata, with the RPC migration applied first.
 
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories

@@ -2,6 +2,8 @@
 -- Upgrade match_agent_memories_hybrid to search both the active character_id
 -- and '__shared__' user-wide memories in one round-trip, and return character_id.
 
+-- Adding a result column requires DROP because CREATE OR REPLACE cannot
+-- change a table return type. Argument types and the first six columns stay stable.
 DROP FUNCTION IF EXISTS public.match_agent_memories_hybrid(
   extensions.vector, text, uuid, text, int
 );
@@ -33,6 +35,7 @@ AS $$
     WHERE m.user_id = p_user_id
       AND m.character_id IN (p_character_id, '__shared__')
       AND m.embedding IS NOT NULL
+      -- A null query vector must not rank arbitrary rows; use text matches only.
       AND query_embedding IS NOT NULL
     ORDER BY m.embedding OPERATOR(extensions.<=>) query_embedding ASC
     LIMIT least(greatest(match_count, 1) * 4, 50)
@@ -60,6 +63,10 @@ AS $$
     FROM vector_ranked v
     FULL OUTER JOIN text_ranked t ON v.id = t.id
   )
+  -- Re-rank only the bounded candidate set: 0.7 vector / 0.3 text RRF, k=60.
+  -- Active-character matches gain 15%; recency adds up to 10% with a 30-day
+  -- exponential decay (2,592,000 seconds). Shared-only requests get no scope boost.
+  -- Distance is null for text-only matches; branch ranks identify match provenance.
   SELECT m.memory_type,
          m.content,
          (m.embedding OPERATOR(extensions.<=>) query_embedding)::double precision AS cosine_distance,
