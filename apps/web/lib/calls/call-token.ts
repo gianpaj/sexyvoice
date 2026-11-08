@@ -34,6 +34,8 @@ interface AgentMetadata {
   language: CallLanguage;
   max_output_tokens: number | null;
   memory: boolean;
+  /** Shared user profiles plus the active character's history. */
+  memory_scope: 'both';
   model: CallModelId;
   scene_id: string | null;
   scene_modified: boolean;
@@ -77,6 +79,7 @@ export function buildAgentMetadata({
     language,
     max_output_tokens: sessionConfig.maxOutputTokens,
     memory,
+    memory_scope: 'both',
     model: sessionConfig.model,
     scene_id: sceneId,
     scene_modified: sceneId !== null && isSceneTextModified(sceneId, scene),

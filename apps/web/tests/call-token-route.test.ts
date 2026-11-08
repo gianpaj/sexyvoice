@@ -219,6 +219,7 @@ describe('call-token agent contract', () => {
       language: 'de',
       max_output_tokens: null,
       memory: true,
+      memory_scope: 'both',
       model: 'grok-voice-think-fast-1.0',
       scene_id: null,
       scene_modified: false,
