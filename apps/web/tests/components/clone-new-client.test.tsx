@@ -420,16 +420,21 @@ describe('NewVoiceClient', () => {
         enMessages.clone.savedVoice.using.replace('{name}', 'My Inworld voice'),
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('clone-legal-consent')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(enMessages.clone.referenceAudioEnhancementLabel),
+    ).not.toBeInTheDocument();
     await user.type(
       screen.getByLabelText(enMessages.clone.textToConvertLabel),
       'Hello there',
     );
+    expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+    await user.click(screen.getByTestId('clone-legal-consent'));
     await user.click(screen.getByTestId('clone-generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get('savedVoiceId')).toBe('inworld-reference');
+    expect(body.get('voiceConsent')).toBe('true');
     expect(body.get('locale')).toBe('en');
     expect(body.get('text')).toBe('Hello there');
     expect(body.get('file')).toBeNull();
@@ -481,12 +486,85 @@ describe('NewVoiceClient', () => {
       screen.getByLabelText(enMessages.clone.textToConvertLabel),
       'Hola',
     );
+    await user.click(screen.getByTestId('clone-legal-consent'));
     await user.click(screen.getByTestId('clone-generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get('savedVoiceId')).toBe('inworld-reference');
     expect(body.get('locale')).toBe('es');
+  });
+
+  it('offers Inworld accents only while a saved Inworld voice speaks', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      // New voices save with Mistral; the saved Inworld voice keeps Inworld.
+      callCloneProvider: 'mistral',
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice],
+      userHasPaid: true,
+    });
+    expect(renderedLocaleCodes()).not.toContain('pt-PT');
+
+    const voice = screen.getByRole('radio', { name: /My Inworld voice/ });
+    await user.click(voice);
+    const select = () =>
+      mockLanguageSelect.mock.lastCall?.[0] as {
+        dispatch: (action: unknown) => void;
+        selectedLocaleCode: string;
+        supportedLocales: { code: string; name: string }[];
+      };
+    expect(renderedLocaleCodes()).toEqual(
+      expect.arrayContaining(['pt', 'pt-PT', 'es-419', 'en-GB']),
+    );
+    expect(
+      select().supportedLocales.find(({ code }) => code === 'pt')?.name,
+    ).toBe('Portuguese (Brazil)');
+
+    act(() =>
+      select().dispatch({
+        patch: { selectedLocaleCode: 'pt-PT' },
+        type: 'patch',
+      }),
+    );
+    await user.click(voice);
+
+    expect(select().selectedLocaleCode).toBe('pt');
+    expect(renderedLocaleCodes()).not.toContain('pt-PT');
+  });
+
+  it('drops an Inworld accent for a saved voice without a language', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice, { ...mistralVoice, locale: null }],
+      userHasPaid: true,
+    });
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+    const select = () =>
+      mockLanguageSelect.mock.lastCall?.[0] as {
+        dispatch: (action: unknown) => void;
+        selectedLocaleCode: string;
+      };
+    act(() =>
+      select().dispatch({
+        patch: { selectedLocaleCode: 'pt-PT' },
+        type: 'patch',
+      }),
+    );
+
+    await user.click(screen.getByRole('radio', { name: /My Mistral voice/ }));
+    await user.type(
+      screen.getByLabelText(enMessages.clone.textToConvertLabel),
+      'Olá',
+    );
+    await user.click(screen.getByTestId('clone-legal-consent'));
+    await user.click(screen.getByTestId('clone-generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('savedVoiceId')).toBe('mistral-reference');
+    expect(body.get('locale')).toBe('pt');
   });
 
   it('never carries free noise removal over to paid cleanup', async () => {

@@ -10,6 +10,7 @@ export type RouteErrorDetails = Record<
 >;
 
 export type CloneRouteErrorCode =
+  | 'errors.voiceConsentRequired'
   | 'errors.voiceNameAndConsentRequired'
   | 'errors.savedVoiceRequiresPaid'
   | 'errors.savedVoiceLocaleUnsupported'
@@ -28,6 +29,7 @@ export type CloneRouteErrorCode =
   | 'errors.invalidFileType'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
+  | 'errors.providerRequestRejected'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'

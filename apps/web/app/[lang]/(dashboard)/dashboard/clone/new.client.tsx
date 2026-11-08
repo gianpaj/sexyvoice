@@ -38,9 +38,12 @@ import {
 } from '@/lib/clone/api-types';
 import {
   type CallCloneProvider,
+  INWORLD_EXTRA_ACCENT_CODES,
+  inworldAccent,
   MAX_SAVED_CALL_VOICES,
   savedVoiceProvider,
   supportsCallCloneLocale,
+  toCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
   CLONE_SUPPORTED_LOCALE_CODES,
@@ -343,6 +346,27 @@ function NewVoiceClientInner({
     }));
     return sortByPageLocale(locales, lang);
   })();
+  // Saved voices speak their provider's languages. Inworld adds regional
+  // accents, so each language is named after the accent Inworld speaks.
+  let callProvider = callCloneProvider;
+  if (selectedVoice)
+    callProvider = selectedVoice.provider === 'inworld' ? 'inworld' : 'mistral';
+  const callLocales =
+    callProvider === 'inworld'
+      ? sortByPageLocale(
+          getTranslatedLanguages(
+            lang,
+            [
+              ...CLONE_SUPPORTED_LOCALE_CODES,
+              ...INWORLD_EXTRA_ACCENT_CODES,
+            ].filter((code) => supportsCallCloneLocale('inworld', code)),
+            { languageDisplay: 'standard', nameOf: inworldAccent },
+          ).map(({ value: code, label: name }) => ({ code, name })),
+          lang,
+        )
+      : supportedLocales.filter(({ code }) =>
+          supportsCallCloneLocale(callProvider, code),
+        );
   const selectedLocaleName =
     supportedLocales.find(
       ({ code }) => code === resolveBaseCloneLocale(selectedLocaleCode),
@@ -409,7 +433,7 @@ function NewVoiceClientInner({
     }
 
     if (
-      !(selectedVoice || legalConsentChecked) ||
+      !legalConsentChecked ||
       (saveVoiceOnly && !(voiceName.trim() && canSaveVoice && userHasPaid))
     )
       return;
@@ -450,6 +474,7 @@ function NewVoiceClientInner({
             : selectedLocaleCode,
         );
         formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
+        formData.append(CLONE_FORM_FIELDS.voiceConsent, 'true');
       } else {
         let audioToProcess = file;
         if (micBlob && !file) {
@@ -650,7 +675,11 @@ function NewVoiceClientInner({
     setSaveVoiceOnly(on);
     setSavedVoiceId(null);
     dispatch({
-      patch: { referenceAudioEnhancementEnabled: false },
+      patch: {
+        referenceAudioEnhancementEnabled: false,
+        // One-off clones speak Clone page languages, not Inworld accents.
+        ...(!on && { selectedLocaleCode: toCloneLocale(selectedLocaleCode) }),
+      },
       type: 'patch',
     });
   };
@@ -663,7 +692,8 @@ function NewVoiceClientInner({
     Boolean(micBlob) &&
     micSeconds !== null &&
     micSeconds < minAudioSeconds;
-  let cleanup: ReferenceCleanup = 'paid';
+  // A saved voice has no reference recording to clean up.
+  let cleanup: ReferenceCleanup = selectedVoice ? 'none' : 'paid';
   if (saveVoiceOnly)
     cleanup = callCloneProvider === 'inworld' ? 'inworld' : 'none';
 
@@ -671,7 +701,8 @@ function NewVoiceClientInner({
     ? !text.trim() ||
       status === 'generating' ||
       !hasEnoughCredits ||
-      textIsOverLimit
+      textIsOverLimit ||
+      !legalConsentChecked
     : !(
         (file || micBlob) &&
         (saveVoiceOnly ? voiceName.trim() : text.trim())
@@ -695,12 +726,13 @@ function NewVoiceClientInner({
           onDelete={setVoiceToDelete}
           onSelect={(voice) => {
             setSelectedVoiceId(voice?.id ?? null);
-            if (!voice) return;
             changeSaveMode(false);
+            if (!voice) return;
             dispatch({
               patch: {
                 selectedLocaleCode:
-                  voice.locale ?? resolveBaseCloneLocale(selectedLocaleCode),
+                  voice.locale ??
+                  resolveBaseCloneLocale(toCloneLocale(selectedLocaleCode)),
               },
               type: 'patch',
             });
@@ -779,12 +811,7 @@ function NewVoiceClientInner({
                     selectedLocaleCode={selectedLocaleCode}
                     supportedLocales={
                       selectedVoice || saveVoiceOnly
-                        ? supportedLocales.filter(({ code }) =>
-                            supportsCallCloneLocale(
-                              selectedVoice ? 'inworld' : callCloneProvider,
-                              code,
-                            ),
-                          )
+                        ? callLocales
                         : supportedLocales
                     }
                   />
@@ -894,17 +921,15 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
-            {!selectedVoice && (
-              <CloneConsentFields
-                cleanup={cleanup}
-                disabled={status === 'generating'}
-                dispatch={dispatch}
-                legalConsentChecked={legalConsentChecked}
-                referenceAudioEnhancementEnabled={
-                  referenceAudioEnhancementEnabled
-                }
-              />
-            )}
+            <CloneConsentFields
+              cleanup={cleanup}
+              disabled={status === 'generating'}
+              dispatch={dispatch}
+              legalConsentChecked={legalConsentChecked}
+              referenceAudioEnhancementEnabled={
+                referenceAudioEnhancementEnabled
+              }
+            />
 
             {savedVoiceId && (
               <div className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4">

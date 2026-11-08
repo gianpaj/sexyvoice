@@ -741,9 +741,9 @@ exports[`blog post head > es hello-from-sexyvoice 1`] = `
 
 exports[`cliLogin head > da 1`] = `
 [
-  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid</title>",
+  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer</title>",
   "<meta name="description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta property="og:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -752,7 +752,7 @@ exports[`cliLogin head > da 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta name="twitter:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -763,9 +763,9 @@ exports[`cliLogin head > da 1`] = `
 
 exports[`cliLogin head > de 1`] = `
 [
-  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe</title>",
+  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen</title>",
   "<meta name="description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta property="og:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -774,7 +774,7 @@ exports[`cliLogin head > de 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta name="twitter:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -785,9 +785,9 @@ exports[`cliLogin head > de 1`] = `
 
 exports[`cliLogin head > en 1`] = `
 [
-  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls</title>",
+  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices</title>",
   "<meta name="description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta property="og:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -796,7 +796,7 @@ exports[`cliLogin head > en 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta name="twitter:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -807,9 +807,9 @@ exports[`cliLogin head > en 1`] = `
 
 exports[`cliLogin head > es 1`] = `
 [
-  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real</title>",
+  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas</title>",
   "<meta name="description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta property="og:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -818,7 +818,7 @@ exports[`cliLogin head > es 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta name="twitter:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -829,9 +829,9 @@ exports[`cliLogin head > es 1`] = `
 
 exports[`cliLogin head > fr 1`] = `
 [
-  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel</title>",
+  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions</title>",
   "<meta name="description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta property="og:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -840,7 +840,7 @@ exports[`cliLogin head > fr 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta name="twitter:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -851,9 +851,9 @@ exports[`cliLogin head > fr 1`] = `
 
 exports[`cliLogin head > it 1`] = `
 [
-  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale</title>",
+  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni</title>",
   "<meta name="description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta property="og:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -862,7 +862,7 @@ exports[`cliLogin head > it 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta name="twitter:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -873,7 +873,7 @@ exports[`cliLogin head > it 1`] = `
 
 exports[`landing head > da 1`] = `
 [
-  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid</title>",
+  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer</title>",
   "<meta name="description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta name="keywords" content="tekst til tale,AI stemmegenerator,stemmekloning,AI talesyntese,stemmegenerering,gratis TTS,udtryksfulde AI-stemmer,AI stemmeklon,talesyntese"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/da"/>",
@@ -884,7 +884,7 @@ exports[`landing head > da 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta property="og:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/da"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -895,7 +895,7 @@ exports[`landing head > da 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta name="twitter:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -906,7 +906,7 @@ exports[`landing head > da 1`] = `
 
 exports[`landing head > de 1`] = `
 [
-  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe</title>",
+  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen</title>",
   "<meta name="description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta name="keywords" content="Text zu Sprache,KI Stimmengenerator,Stimmklonen,KI Sprachsynthese,Stimmenerzeugung,kostenlose TTS,ausdrucksstarke KI-Stimmen,KI Stimmklon,Sprachsynthese"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/de"/>",
@@ -917,7 +917,7 @@ exports[`landing head > de 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta property="og:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/de"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -928,7 +928,7 @@ exports[`landing head > de 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta name="twitter:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -939,7 +939,7 @@ exports[`landing head > de 1`] = `
 
 exports[`landing head > en 1`] = `
 [
-  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls</title>",
+  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices</title>",
   "<meta name="description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta name="keywords" content="text to speech,AI voice generator,voice cloning,AI speech synthesis,voice generation,free TTS,expressive AI voices,AI voice clone,speech synthesis"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/en"/>",
@@ -950,7 +950,7 @@ exports[`landing head > en 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta property="og:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/en"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -961,7 +961,7 @@ exports[`landing head > en 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta name="twitter:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -972,7 +972,7 @@ exports[`landing head > en 1`] = `
 
 exports[`landing head > es 1`] = `
 [
-  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real</title>",
+  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas</title>",
   "<meta name="description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta name="keywords" content="texto a voz,generador de voz IA,clonación de voz,síntesis de voz IA,generación de voz,TTS gratis,voces IA expresivas,clonar voz IA,síntesis de habla"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/es"/>",
@@ -983,7 +983,7 @@ exports[`landing head > es 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta property="og:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/es"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -994,7 +994,7 @@ exports[`landing head > es 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta name="twitter:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1005,7 +1005,7 @@ exports[`landing head > es 1`] = `
 
 exports[`landing head > fr 1`] = `
 [
-  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel</title>",
+  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions</title>",
   "<meta name="description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta name="keywords" content="synthèse vocale,générateur de voix IA,clonage vocal,synthèse vocale IA,génération de voix,TTS gratuit,voix IA expressives,clone vocal IA,synthèse de la parole"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/fr"/>",
@@ -1016,7 +1016,7 @@ exports[`landing head > fr 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta property="og:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/fr"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -1027,7 +1027,7 @@ exports[`landing head > fr 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta name="twitter:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1038,7 +1038,7 @@ exports[`landing head > fr 1`] = `
 
 exports[`landing head > it 1`] = `
 [
-  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale</title>",
+  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni</title>",
   "<meta name="description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta name="keywords" content="sintesi vocale,generatore di voci IA,clonazione vocale,sintesi vocale IA,generazione vocale,TTS gratuito,voci IA espressive,clone vocale IA,sintesi del parlato"/>",
   "<link rel="canonical" href="https://sexyvoice.ai/it"/>",
@@ -1049,7 +1049,7 @@ exports[`landing head > it 1`] = `
   "<link rel="alternate" hrefLang="it" href="https://sexyvoice.ai/it"/>",
   "<link rel="alternate" hrefLang="fr" href="https://sexyvoice.ai/fr"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta property="og:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/it"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -1060,7 +1060,7 @@ exports[`landing head > it 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta name="twitter:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1431,9 +1431,9 @@ exports[`privacyPolicy head > it 1`] = `
 
 exports[`resetPassword head > da 1`] = `
 [
-  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid</title>",
+  "<title>SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer</title>",
   "<meta name="description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta property="og:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1442,7 +1442,7 @@ exports[`resetPassword head > da 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta name="twitter:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1453,9 +1453,9 @@ exports[`resetPassword head > da 1`] = `
 
 exports[`resetPassword head > de 1`] = `
 [
-  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe</title>",
+  "<title>SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen</title>",
   "<meta name="description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta property="og:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1464,7 +1464,7 @@ exports[`resetPassword head > de 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta name="twitter:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1475,9 +1475,9 @@ exports[`resetPassword head > de 1`] = `
 
 exports[`resetPassword head > en 1`] = `
 [
-  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls</title>",
+  "<title>SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices</title>",
   "<meta name="description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta property="og:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1486,7 +1486,7 @@ exports[`resetPassword head > en 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta name="twitter:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1497,9 +1497,9 @@ exports[`resetPassword head > en 1`] = `
 
 exports[`resetPassword head > es 1`] = `
 [
-  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real</title>",
+  "<title>SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas</title>",
   "<meta name="description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta property="og:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1508,7 +1508,7 @@ exports[`resetPassword head > es 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta name="twitter:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1519,9 +1519,9 @@ exports[`resetPassword head > es 1`] = `
 
 exports[`resetPassword head > fr 1`] = `
 [
-  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel</title>",
+  "<title>SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions</title>",
   "<meta name="description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta property="og:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1530,7 +1530,7 @@ exports[`resetPassword head > fr 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta name="twitter:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -1541,9 +1541,9 @@ exports[`resetPassword head > fr 1`] = `
 
 exports[`resetPassword head > it 1`] = `
 [
-  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale</title>",
+  "<title>SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni</title>",
   "<meta name="description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
-  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta property="og:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -1552,7 +1552,7 @@ exports[`resetPassword head > it 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta name="twitter:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2513,7 +2513,7 @@ exports[`wrapped head > da 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta property="og:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2522,7 +2522,7 @@ exports[`wrapped head > da 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Gratis AI tekst-til-tale &amp; stemmeopkald i realtid med realistiske og følelsesfulde stemmer"/>",
   "<meta name="twitter:description" content="Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2535,7 +2535,7 @@ exports[`wrapped head > de 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta property="og:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2544,7 +2544,7 @@ exports[`wrapped head > de 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Kostenlose KI-Text-zu-Sprache &amp; Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen"/>",
   "<meta name="twitter:description" content="Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung &amp; Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2557,7 +2557,7 @@ exports[`wrapped head > en 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta property="og:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2566,7 +2566,7 @@ exports[`wrapped head > en 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Free AI Text-to-Speech &amp; Real-Time Voice Calls with realistic and emotional voices"/>",
   "<meta name="twitter:description" content="Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning &amp; live voice calls. Start with free credits – no card required."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2579,7 +2579,7 @@ exports[`wrapped head > es 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta property="og:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2588,7 +2588,7 @@ exports[`wrapped head > es 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas"/>",
   "<meta name="twitter:description" content="Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2601,7 +2601,7 @@ exports[`wrapped head > fr 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta property="og:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2610,7 +2610,7 @@ exports[`wrapped head > fr 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Synthèse vocale IA gratuite &amp; appels vocaux en temps réel avec des voix réalistes et riches en émotions"/>",
   "<meta name="twitter:description" content="Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -2623,7 +2623,7 @@ exports[`wrapped head > it 1`] = `
 [
   "<title>SexyVoice.ai 2025 Wrapped - Platform Stats | SexyVoice.ai</title>",
   "<meta name="description" content="See the amazing stats from SexyVoice.ai in 2025. Total audio generated, voices used, and more!"/>",
-  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta property="og:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta property="og:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
   "<meta property="og:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
@@ -2632,7 +2632,7 @@ exports[`wrapped head > it 1`] = `
   "<meta property="og:image:alt" content="SexyVoice.ai"/>",
   "<meta property="og:type" content="website"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale"/>",
+  "<meta name="twitter:title" content="SexyVoice.ai – Sintesi vocale IA gratuita &amp; chiamate vocali in tempo reale con voci realistiche e ricche di emozioni"/>",
   "<meta name="twitter:description" content="Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.ai-og-image.jpg"/>",
   "<link rel="icon" href="/favicon.ico"/>",

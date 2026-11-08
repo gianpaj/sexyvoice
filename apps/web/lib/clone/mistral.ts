@@ -3,6 +3,7 @@ import { Mistral } from '@mistralai/mistralai';
 import { isWav } from '@/lib/audio';
 import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
+import { cloneProviderCost } from './pricing';
 import { CLONE_PROVIDERS } from './providers';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
@@ -69,8 +70,13 @@ export async function saveMistralVoice(
     locale,
     userId,
     provider: 'mistral',
-    generateSample: () =>
-      synthesizeMistralSpeech(CALL_VOICE_SAMPLE_TEXT, { voiceId: voice.id }),
+    sample: {
+      format: 'wav',
+      model: CLONE_PROVIDERS.mistral.model,
+      dollarCost: cloneProviderCost('mistral', CALL_VOICE_SAMPLE_TEXT),
+      generate: () =>
+        synthesizeMistralSpeech(CALL_VOICE_SAMPLE_TEXT, { voiceId: voice.id }),
+    },
     deleteVoice: () => deleteMistralVoice(voice.id),
   });
 }

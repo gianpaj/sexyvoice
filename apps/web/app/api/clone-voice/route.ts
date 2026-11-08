@@ -33,7 +33,12 @@ import {
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
 } from '@/lib/clone/constants';
-import { saveInworldVoice, synthesizeInworldSpeech } from '@/lib/clone/inworld';
+import {
+  INWORLD_AUDIO_MIME_TYPE,
+  InworldRequestError,
+  saveInworldVoice,
+  synthesizeInworldSpeech,
+} from '@/lib/clone/inworld';
 import { saveMistralVoice, synthesizeMistralSpeech } from '@/lib/clone/mistral';
 import { cloneProviderCost, estimateCloneCredits } from '@/lib/clone/pricing';
 import {
@@ -62,6 +67,7 @@ import {
   getProviderStatusCode,
   getProviderUnavailableDetails,
   isTransientProviderFailure,
+  type ProviderId,
 } from '@/lib/provider-errors';
 import { audioFolder } from '@/lib/storage/layout';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -191,9 +197,7 @@ function routeErrorResponse(
   );
 }
 
-function createProviderUnavailableRouteError(
-  provider: CloneProvider,
-): RouteError {
+function createProviderUnavailableRouteError(provider: ProviderId): RouteError {
   return createRouteError(
     getProviderUnavailableMessage(provider),
     503,
@@ -202,7 +206,12 @@ function createProviderUnavailableRouteError(
   );
 }
 
-/** Report a transient provider failure as PROVIDER_UNAVAILABLE. */
+/**
+ * Report a transient provider failure, or a busy Inworld, as
+ * PROVIDER_UNAVAILABLE. Inworld rejecting the recording or text asks for
+ * different input; key and permission failures stay internal errors, since
+ * the user cannot fix them.
+ */
 async function withProviderAvailability<T>(
   provider: CloneProvider,
   work: () => Promise<T>,
@@ -210,7 +219,20 @@ async function withProviderAvailability<T>(
   try {
     return await work();
   } catch (error) {
-    if (!(error instanceof RouteError) && isTransientProviderFailure(error)) {
+    if (error instanceof RouteError) throw error;
+    const inworldStatus =
+      error instanceof InworldRequestError ? error.status : null;
+    if (inworldStatus === 400 || inworldStatus === 422) {
+      logger.warn('Inworld rejected a voice request', {
+        extra: { errorMessage: getProviderErrorMessage(error), inworldStatus },
+      });
+      throw createRouteError(
+        'The voice provider could not use this recording or text. Please try a different one.',
+        400,
+        'errors.providerRequestRejected',
+      );
+    }
+    if (inworldStatus === 429 || isTransientProviderFailure(error)) {
       logger.warn('Voice cloning provider unavailable', {
         extra: {
           errorMessage: getProviderErrorMessage(error),
@@ -287,11 +309,12 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
   const saveVoiceName =
     typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  const voiceConsent = formData.get(CLONE_FORM_FIELDS.voiceConsent) === 'true';
   if (
     nameValue !== null &&
     (!saveVoiceName ||
       saveVoiceName.length > VOICE_NAME_MAX_LENGTH ||
-      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+      !voiceConsent)
   ) {
     throw createRouteError(
       'A voice name and permission to save are required',
@@ -323,6 +346,13 @@ async function parseFormData(request: Request): Promise<FormInput> {
       'Invalid saved voice',
       400,
       'errors.missingRequiredParameters',
+    );
+  }
+  if (savedVoiceId && !voiceConsent) {
+    throw createRouteError(
+      'Confirm you have permission to use this voice',
+      400,
+      'errors.voiceConsentRequired',
     );
   }
 
@@ -1316,7 +1346,8 @@ async function speakWithSavedVoice(
   let { locale } = formInput;
   if (provider === 'mistral') {
     locale = voice.locale ?? locale;
-  } else if (!supportsCallCloneLocale(provider, locale)) {
+  }
+  if (!supportsCallCloneLocale(provider, locale)) {
     return routeErrorResponse(
       'This language is not supported for saved voices',
       400,
@@ -1332,7 +1363,11 @@ async function speakWithSavedVoice(
   );
   // The model is in the key, like one-shot clones, so a model switch
   // never serves audio from the previous model.
-  const filename = `${audioFolder('clone', true)}/${locale}-${provider}-${CLONE_PROVIDERS[provider].model}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+  const [extension, mimeType] =
+    provider === 'inworld'
+      ? ['mp3', INWORLD_AUDIO_MIME_TYPE]
+      : ['wav', 'audio/wav'];
+  const filename = `${audioFolder('clone', true)}/${locale}-${provider}-${CLONE_PROVIDERS[provider].model}-${await generateHash(`${voice.voice_id}-${text}`)}.${extension}`;
   const cachedOutputUrl = await redis.get<string>(filename);
   if (cachedOutputUrl) {
     return cloneSuccessResponse(cachedOutputUrl, currentAmount, 0);
@@ -1357,12 +1392,8 @@ async function speakWithSavedVoice(
               requestId: randomUUID(),
             }
           : await generateVoiceWithMistral(text, { voiceId: voice.voice_id });
-      const outputUrl = await uploadGeneratedAudio(
-        buffer,
-        filename,
-        'audio/wav',
-      );
-      const audioDuration = (await getAudioDuration(buffer, 'audio/wav')) ?? 0;
+      const outputUrl = await uploadGeneratedAudio(buffer, filename, mimeType);
+      const audioDuration = (await getAudioDuration(buffer, mimeType)) ?? 0;
       await reservation.settle(estimate, 'clone_voice_success');
       after(async () => {
         await runBackgroundTasks(user.id, estimate, provider, {
@@ -1457,6 +1488,7 @@ async function cloneOnce(
   signal: AbortSignal,
 ): Promise<Response> {
   const { locale, text } = formInput;
+  validateLocale(locale);
   const provider = oneOffCloneProvider(locale);
   validateTextLength(text, provider, userHasPaid);
 
@@ -1691,8 +1723,6 @@ export async function POST(request: Request) {
     const formInput = await parseFormData(request);
     text = formInput.text;
     locale = formInput.locale;
-
-    validateLocale(locale);
 
     const { savedVoiceId, saveVoiceName } = formInput;
     if (savedVoiceId) {

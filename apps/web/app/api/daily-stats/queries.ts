@@ -41,6 +41,10 @@ export type DailyStatsProfile = Pick<
   Tables<'profiles'>,
   'created_at' | 'id' | 'username'
 >;
+export type DailyStatsCharacter = Pick<
+  Tables<'characters'>,
+  'created_at' | 'id'
+>;
 // `id` and `started_at` are not reported on; they carry the keyset cursor.
 export type DailyStatsCallSessionDuration = Pick<
   Tables<'call_sessions'>,
@@ -172,6 +176,29 @@ export function getProfilesInRange(
         data: (data as DailyStatsProfile[] | null) ?? null,
         error,
       }));
+  });
+}
+
+export function getCharactersInRange(
+  supabase: DailyStatsSupabaseClient,
+  start: Date,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+): Promise<DailyStatsCharacter[]> {
+  return fetchAllPages<DailyStatsCharacter>('created_at', (cursor) => {
+    let query = supabase
+      .from('characters')
+      .select('id, created_at')
+      .eq('is_public', false)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+    if (excludeUserIds.length > 0) {
+      query = query.notIn('user_id', excludeUserIds);
+    }
+    return applyPageCursor(query, cursor)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
   });
 }
 

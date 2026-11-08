@@ -844,7 +844,7 @@ exports[`landing page > structured data in de 1`] = `
         "isPartOf": {
           "@id": "https://sexyvoice.ai/#website",
         },
-        "name": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
+        "name": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen",
         "url": "https://sexyvoice.ai/de",
       },
       {
@@ -1073,7 +1073,7 @@ exports[`landing page > structured data in en 1`] = `
         "isPartOf": {
           "@id": "https://sexyvoice.ai/#website",
         },
-        "name": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+        "name": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls with realistic and emotional voices",
         "url": "https://sexyvoice.ai/en",
       },
       {

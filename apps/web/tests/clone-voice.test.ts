@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
+import { InworldRequestError } from '@/lib/clone/inworld';
 import { REFERENCE_AUDIO_MAX_BYTES } from '@/lib/clone/reference-audio';
 // biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
@@ -30,7 +31,8 @@ const {
   mockSaveInworldVoice: vi.fn(),
   mockSynthesizeInworldSpeech: vi.fn(),
 }));
-vi.mock('@/lib/clone/inworld', () => ({
+vi.mock('@/lib/clone/inworld', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/clone/inworld')>()),
   saveInworldVoice: mockSaveInworldVoice,
   synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
 }));
@@ -165,7 +167,7 @@ describe('Clone Voice API Route', () => {
     expect(mockSaveInworldVoice).not.toHaveBeenCalled();
   });
 
-  it.each(['en', 'pl', 'da'])(
+  it.each(['en', 'pl', 'da', 'pt-PT'])(
     'creates a new Inworld call clone for %s when configured',
     async (locale) => {
       vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
@@ -248,6 +250,25 @@ describe('Clone Voice API Route', () => {
     expect(queries.reduceCredits).not.toHaveBeenCalled();
   });
 
+  it('asks for a different recording when Inworld rejects the sample', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockRejectedValueOnce(
+      new InworldRequestError('Inworld voice request failed (400)', 400),
+    );
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.providerRequestRejected');
+  });
+
   it('rejects saving the Chatterbox English option as a call voice', async () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
     vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
@@ -286,6 +307,13 @@ describe('Clone Voice API Route', () => {
       paid: true,
       locale: 'en',
       consent: 'false',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'pt-PT',
+      consent: 'true',
       status: 400,
       provider: 'mistral',
     },
@@ -2542,11 +2570,17 @@ describe('Saved voice generation', () => {
     sample_url: null,
     voice_id: `${provider}-voice`,
   });
-  const postSavedVoice = (text: string, id = savedVoiceId, locale = 'en') => {
+  const postSavedVoice = (
+    text: string,
+    id = savedVoiceId,
+    locale = 'en',
+    consent = 'true',
+  ) => {
     const form = new FormData();
     form.append('text', text);
     form.append('locale', locale);
     form.append('savedVoiceId', id);
+    form.append('voiceConsent', consent);
     return POST(
       new Request('http://localhost/api/clone-voice', {
         body: form,
@@ -2581,9 +2615,9 @@ describe('Saved voice generation', () => {
       userId: 'test-user-id',
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-/),
+      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-.+\.mp3$/),
       expect.any(Buffer),
-      'audio/wav',
+      'audio/mpeg',
     );
     await flushPromises();
     expect(queries.saveAudioFile).toHaveBeenCalledWith(
@@ -2591,26 +2625,57 @@ describe('Saved voice generation', () => {
     );
   });
 
-  it('refunds and reports Inworld as unavailable when it fails with a 5xx', async () => {
-    const { captureException } = await import('@sentry/nextjs');
+  it.each([
+    { inworld: 503, status: 503, code: 'PROVIDER_UNAVAILABLE' },
+    { inworld: 429, status: 503, code: 'PROVIDER_UNAVAILABLE' },
+    { inworld: 400, status: 400, code: 'errors.providerRequestRejected' },
+    { inworld: 403, status: 500, code: 'errors.internalError' },
+  ])(
+    'answers an Inworld $inworld with $status $code and refunds',
+    async ({ inworld, status, code }) => {
+      mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+      mockSynthesizeInworldSpeech.mockRejectedValueOnce(
+        new InworldRequestError('Inworld voice request failed', inworld),
+      );
+
+      const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
+      const json = await response.json();
+
+      expect(response.status).toBe(status);
+      expect(json.code).toBe(code);
+      if (status === 503) expect(json.details).toEqual({ provider: 'Inworld' });
+      expect(queries.restoreCredits).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 132, userId: 'test-user-id' }),
+      );
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+    },
+  );
+
+  it('speaks a regional accent with a saved Inworld voice', async () => {
     mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
-    mockSynthesizeInworldSpeech.mockRejectedValueOnce(
-      Object.assign(new Error('Inworld voice request failed (503)'), {
-        status: 503,
+    mockSynthesizeInworldSpeech.mockResolvedValueOnce(Buffer.from('mp3'));
+
+    const response = await postSavedVoice('Olá', savedVoiceId, 'pt-PT');
+
+    expect(response.status).toBe(200);
+    expect(mockSynthesizeInworldSpeech).toHaveBeenCalledWith(
+      'inworld-voice',
+      'Olá',
+      'pt-PT',
+    );
+  });
+
+  it('keeps regional accents out of one-off clones', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        body: createFormDataWithAudio('Olá', createMockAudioFile(), 'pt-PT'),
+        method: 'POST',
       }),
     );
 
-    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
-    const json = await response.json();
-
-    expect(response.status).toBe(503);
-    expect(json.code).toBe('PROVIDER_UNAVAILABLE');
-    expect(json.details).toEqual({ provider: 'Inworld' });
-    expect(queries.restoreCredits).toHaveBeenCalledWith({
-      amount: 132,
-      userId: 'test-user-id',
-    });
-    expect(captureException).not.toHaveBeenCalled();
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.unsupportedLocale');
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
   });
 
   it('rejects a language an Inworld voice cannot speak', async () => {
@@ -2669,6 +2734,20 @@ describe('Saved voice generation', () => {
     expect(json.code).toBe('errors.textTooLong');
     expect(json.details).toEqual({ MAX: 2000 });
     expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('requires permission to use the saved voice before loading it', async () => {
+    const response = await postSavedVoice(
+      'Hello world',
+      savedVoiceId,
+      'en',
+      'false',
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.voiceConsentRequired');
+    expect(mockGetOwnedCallVoice).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
   });
 
   it('rejects a saved voice ID that is not a UUID', async () => {

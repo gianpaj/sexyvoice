@@ -227,7 +227,7 @@ URL canonico: https://sexyvoice.ai/it/blog
 
 exports[`landing.md > serves markdown in da 1`] = `
 {
-  "body": "# SexyVoice.ai – Gratis AI tekst-til-tale & stemmeopkald i realtid
+  "body": "# SexyVoice.ai – Gratis AI tekst-til-tale & stemmeopkald i realtid med realistiske og følelsesfulde stemmer
 
 Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet.
 
@@ -395,7 +395,7 @@ Kanonisk URL: https://sexyvoice.ai/da
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1646",
+    "x-markdown-tokens": "1656",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -404,7 +404,7 @@ Kanonisk URL: https://sexyvoice.ai/da
 
 exports[`landing.md > serves markdown in de 1`] = `
 {
-  "body": "# SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe
+  "body": "# SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen
 
 Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.
 
@@ -572,7 +572,7 @@ Kanonische URL: https://sexyvoice.ai/de
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1910",
+    "x-markdown-tokens": "1921",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -581,7 +581,7 @@ Kanonische URL: https://sexyvoice.ai/de
 
 exports[`landing.md > serves markdown in en 1`] = `
 {
-  "body": "# SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls
+  "body": "# SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls with realistic and emotional voices
 
 Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.
 
@@ -749,7 +749,7 @@ Canonical URL: https://sexyvoice.ai/en
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1603",
+    "x-markdown-tokens": "1612",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -758,7 +758,7 @@ Canonical URL: https://sexyvoice.ai/en
 
 exports[`landing.md > serves markdown in es 1`] = `
 {
-  "body": "# SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real
+  "body": "# SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas
 
 Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida.
 
@@ -926,7 +926,7 @@ URL canónica: https://sexyvoice.ai/es
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1701",
+    "x-markdown-tokens": "1709",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -935,7 +935,7 @@ URL canónica: https://sexyvoice.ai/es
 
 exports[`landing.md > serves markdown in fr 1`] = `
 {
-  "body": "# SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel
+  "body": "# SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel avec des voix réalistes et riches en émotions
 
 Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.
 
@@ -1103,7 +1103,7 @@ URL canonique : https://sexyvoice.ai/fr
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1893",
+    "x-markdown-tokens": "1904",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1112,7 +1112,7 @@ URL canonique : https://sexyvoice.ai/fr
 
 exports[`landing.md > serves markdown in it 1`] = `
 {
-  "body": "# SexyVoice.ai – Sintesi vocale IA gratuita & chiamate vocali in tempo reale
+  "body": "# SexyVoice.ai – Sintesi vocale IA gratuita & chiamate vocali in tempo reale con voci realistiche e ricche di emozioni
 
 Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta.
 
@@ -1280,7 +1280,7 @@ URL canonico: https://sexyvoice.ai/it
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1732",
+    "x-markdown-tokens": "1742",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
