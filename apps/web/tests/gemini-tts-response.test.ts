@@ -18,6 +18,18 @@ describe('geminiOutcomeToErrorCode', () => {
 });
 
 describe('classifyGeminiTtsResponse', () => {
+  it.each([false, true])(
+    'recognizes MAX_TOKENS with hasAudio=%s',
+    (hasAudio) => {
+      expect(
+        classifyGeminiTtsResponse({
+          finishReason: FinishReason.MAX_TOKENS,
+          hasAudio,
+        }),
+      ).toBe('output_limit');
+    },
+  );
+
   it('classifies a normal audio response as successful', () => {
     expect(
       classifyGeminiTtsResponse({
@@ -53,16 +65,15 @@ describe('classifyGeminiTtsResponse', () => {
     },
   );
 
-  it.each([
-    {},
-    { finishReason: FinishReason.MAX_TOKENS },
-    { blockReason: 'OTHER' },
-  ])('classifies an unhandled response as unexpected', (response) => {
-    expect(
-      classifyGeminiTtsResponse({
-        ...response,
-        hasAudio: false,
-      }),
-    ).toBe('unexpected');
-  });
+  it.each([{}, { blockReason: 'OTHER' }])(
+    'classifies an unhandled response as unexpected',
+    (response) => {
+      expect(
+        classifyGeminiTtsResponse({
+          ...response,
+          hasAudio: false,
+        }),
+      ).toBe('unexpected');
+    },
+  );
 });

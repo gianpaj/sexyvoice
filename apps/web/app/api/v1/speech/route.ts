@@ -59,7 +59,11 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  isTransientXaiTtsFailure,
+  normalizeXaiTtsCodec,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -688,19 +692,22 @@ export async function POST(request: Request) {
         finishReason,
         hasAudio: Boolean(data && mimeType),
       });
-      const isProhibitedContent = responseOutcome === 'content_blocked';
-
       if (responseOutcome !== 'success' || !data || !mimeType) {
-        const code = isProhibitedContent
-          ? 'content_policy_violation'
-          : 'server_error';
+        let code = 'server_error';
+        let refundContext = 'gemini_no_audio';
+        if (responseOutcome === 'content_blocked') {
+          code = 'content_policy_violation';
+          refundContext = 'gemini_content_blocked';
+        } else if (responseOutcome === 'output_limit') {
+          code = 'output_limit_exceeded';
+          refundContext = 'gemini_output_limit';
+        }
+        const isInputError = code !== 'server_error';
         const errorCode =
           geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
         const message = getErrorMessage(errorCode, 'voice-generation');
         const httpStatus = getErrorStatusCode(errorCode);
-        await refundReservedCredits(
-          isProhibitedContent ? 'gemini_content_blocked' : 'gemini_no_audio',
-        );
+        await refundReservedCredits(refundContext);
         await log({
           apiKeyId: authResult.apiKeyId,
           error: message,
@@ -716,10 +723,8 @@ export async function POST(request: Request) {
           createApiError({
             code,
             message,
-            param: isProhibitedContent ? 'input' : null,
-            type: isProhibitedContent
-              ? 'invalid_request_error'
-              : 'server_error',
+            param: isInputError ? 'input' : null,
+            type: isInputError ? 'invalid_request_error' : 'server_error',
           }),
           { status: httpStatus },
         );
@@ -749,7 +754,7 @@ export async function POST(request: Request) {
           voiceId: voice,
         });
       } catch (error) {
-        if (isTransientProviderFailure(error)) {
+        if (isTransientXaiTtsFailure(error)) {
           return respondWithProviderUnavailable(
             'xai_provider_unavailable',
             error,

@@ -482,6 +482,7 @@
     "downloadAudio": "Audio herunterladen",
     "enhanceTextTitle": "Text mit KI-Emotion-Tags verbessern",
     "error": "Audio konnte nicht generiert werden",
+    "GEMINI_OUTPUT_LIMIT": "Die Stimme hat ihr Ausgabelimit erreicht. Kürzen Sie den Text und versuchen Sie es erneut.",
     "errorEstimating": "Credits konnten nicht geschätzt werden",
     "estimateCreditsButton": "Credits schätzen",
     "fullscreenTitle": "Vollbild",

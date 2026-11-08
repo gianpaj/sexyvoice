@@ -480,6 +480,7 @@
     "downloadAudio": "Download Audio",
     "enhanceTextTitle": "Enhance text with AI emotion tags",
     "error": "Failed to generate audio",
+    "GEMINI_OUTPUT_LIMIT": "The voice reached its audio output limit. Shorten the text and try again.",
     "errorEstimating": "Failed to estimate credits",
     "estimateCreditsButton": "Estimate credits",
     "fullscreenTitle": "Fullscreen",

@@ -56,7 +56,11 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  isTransientXaiTtsFailure,
+  normalizeXaiTtsSpeed,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -824,6 +828,16 @@ export async function POST(request: Request) {
             },
             user: { email: user.email, id: user.id },
           });
+        } else if (responseOutcome === 'output_limit') {
+          logger.warn('Gemini voice generation reached the output limit', {
+            extra: {
+              model: modelUsed,
+              responseId: genAIResponse?.responseId,
+              textLength: text.length,
+              voice: voiceObj.name,
+            },
+            user: { id: user.id },
+          });
         } else {
           logger.error('Gemini voice generation failed', {
             extra: {
@@ -857,8 +871,7 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Capture only response shapes that the classifier does not recognize.
-        if (!(isProhibitedContent || isNoAudioData)) {
+        if (responseOutcome === 'unexpected') {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
               blockReason,
@@ -913,7 +926,7 @@ export async function POST(request: Request) {
           voiceId: voiceObj.name,
         });
       } catch (error) {
-        if (isTransientProviderFailure(error)) {
+        if (isTransientXaiTtsFailure(error)) {
           logger.warn('Grok TTS provider unavailable', {
             extra: {
               codec: outputCodec,
@@ -1180,6 +1193,15 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      Error.isError(error) &&
+      error.cause === ERROR_CODES.GEMINI_OUTPUT_LIMIT
+    ) {
+      return APIErrorResponse(error.message, getErrorStatusCode(error.cause), {
+        errorCode: error.cause,
+      });
+    }
+
     if (Error.isError(error) && error.cause === 'OTHER_GEMINI_BLOCK') {
       return APIErrorResponse(
         error.message || 'Voice generation failed, please retry',
@@ -1404,6 +1426,24 @@ function streamGeminiTtsResponse({
       for await (const chunk of stream) {
         if (requestSignal.aborted) return;
 
+        const finishReason = chunk.candidates?.[0]?.finishReason;
+        if (finishReason === FinishReason.MAX_TOKENS) {
+          logger.warn('Gemini voice generation reached the output limit', {
+            extra: {
+              model,
+              responseId: chunk.responseId,
+              stream: true,
+              textLength: text.length,
+              voice: voiceObj.name,
+            },
+            user: { id: user.id },
+          });
+          const errorCode = ERROR_CODES.GEMINI_OUTPUT_LIMIT;
+          throw new Error(getErrorMessage(errorCode, 'voice-generation'), {
+            cause: errorCode,
+          });
+        }
+
         const audioChunk = extractGeminiStreamAudioChunk(chunk);
         if (audioChunk) {
           audioStarted = true;
@@ -1417,7 +1457,6 @@ function streamGeminiTtsResponse({
         if (chunk.usageMetadata) {
           streamUsageMetadata = chunk.usageMetadata;
         }
-        const finishReason = chunk.candidates?.[0]?.finishReason;
         if (finishReason) {
           streamFinishReason = finishReason;
         }
@@ -1452,11 +1491,12 @@ function streamGeminiTtsResponse({
         }
 
         // NO_AUDIO_DATA stays retryable because STOP without chunks can be a
-        // transient model failure. Policy and unknown terminal blocks cannot.
+        // transient model failure. Terminal errors skip the fallback.
         if (
           Error.isError(primaryError) &&
           (primaryError.cause === 'PROHIBITED_CONTENT' ||
-            primaryError.cause === 'OTHER_GEMINI_BLOCK')
+            primaryError.cause === 'OTHER_GEMINI_BLOCK' ||
+            primaryError.cause === ERROR_CODES.GEMINI_OUTPUT_LIMIT)
         ) {
           throw primaryError;
         }
@@ -1632,6 +1672,14 @@ function streamGeminiTtsResponse({
         logger.info('Gemini stream aborted mid-flight', {
           user: { id: user.id },
         });
+        return;
+      }
+
+      if (
+        Error.isError(error) &&
+        error.cause === ERROR_CODES.GEMINI_OUTPUT_LIMIT
+      ) {
+        errorPayload = { error: error.message, errorCode: error.cause };
         return;
       }
 

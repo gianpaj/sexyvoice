@@ -478,6 +478,7 @@
     "downloadAudio": "Download lyd",
     "enhanceTextTitle": "Forbedr tekst med AI-følelsestags",
     "error": "Kunne ikke generere lyd",
+    "GEMINI_OUTPUT_LIMIT": "Stemmen nåede sin grænse for lydoutput. Forkort teksten, og prøv igen.",
     "errorEstimating": "Kunne ikke estimere credits",
     "estimateCreditsButton": "Estimér credits",
     "fullscreenTitle": "Fuld skærm",

@@ -483,6 +483,7 @@
     "enhanceTextTitle": "Mejorar texto con etiquetas de emoción de IA",
     "estimateCreditsButton": "Estimar créditos",
     "error": "Error al generar audio",
+    "GEMINI_OUTPUT_LIMIT": "La voz alcanzó su límite de salida de audio. Acorta el texto e inténtalo de nuevo.",
     "errorEstimating": "Error al estimar créditos",
     "fullscreenTitle": "Pantalla completa",
     "generating": "Generando",
