@@ -36,7 +36,9 @@ import {
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import {
+  INWORLD_AUDIO_MIME_TYPE,
   INWORLD_TTS_MODEL,
+  InworldRequestError,
   saveInworldVoice,
   synthesizeInworldSpeech,
 } from '@/lib/clone/inworld';
@@ -57,6 +59,7 @@ import {
   getProviderStatusCode,
   getProviderUnavailableDetails,
   isTransientProviderFailure,
+  type ProviderId,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -195,15 +198,36 @@ function routeErrorResponse(
   );
 }
 
-function createProviderUnavailableRouteError(
-  provider: CloneProvider,
-): RouteError {
+function createProviderUnavailableRouteError(provider: ProviderId): RouteError {
   return createRouteError(
     getProviderUnavailableMessage(provider),
     503,
     'PROVIDER_UNAVAILABLE',
     { provider: getProviderUnavailableDetails(provider).provider },
   );
+}
+
+/**
+ * Busy or failing Inworld asks for a retry; a rejected sample or text asks for
+ * different input. Key and permission failures stay internal errors, since
+ * the user cannot fix them.
+ */
+function rethrowInworldError(error: unknown): never {
+  if (!(error instanceof InworldRequestError)) throw error;
+  logger.warn('Inworld rejected a voice request', {
+    extra: { errorMessage: error.message, status: error.status },
+  });
+  if (error.status === 429 || error.status >= 500) {
+    throw createProviderUnavailableRouteError('inworld');
+  }
+  if (error.status === 400 || error.status === 422) {
+    throw createRouteError(
+      'The voice provider could not use this recording or text. Please try a different one.',
+      400,
+      'errors.providerRequestRejected',
+    );
+  }
+  throw error;
 }
 
 // ============================================================================
@@ -263,11 +287,10 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
   const saveVoiceName =
     typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  const voiceConsent = formData.get(CLONE_FORM_FIELDS.voiceConsent) === 'true';
   if (
     nameValue !== null &&
-    (!saveVoiceName ||
-      saveVoiceName.length > 50 ||
-      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+    (!saveVoiceName || saveVoiceName.length > 50 || !voiceConsent)
   ) {
     throw createRouteError(
       'A voice name and permission to save are required',
@@ -299,6 +322,13 @@ async function parseFormData(request: Request): Promise<FormInput> {
       'Invalid saved voice',
       400,
       'errors.missingRequiredParameters',
+    );
+  }
+  if (savedVoiceId && !voiceConsent) {
+    throw createRouteError(
+      'Confirm you have permission to use this voice',
+      400,
+      'errors.voiceConsentRequired',
     );
   }
 
@@ -1317,8 +1347,6 @@ export async function POST(request: Request) {
     locale = formInput.locale;
     referenceAudioFile = formInput.file;
 
-    validateLocale(locale);
-
     if (formInput.savedVoiceId) {
       const voice = await getOwnedCallVoice(formInput.savedVoiceId, user.id);
       if (!voice) {
@@ -1331,7 +1359,7 @@ export async function POST(request: Request) {
       const provider = voice.provider === 'inworld' ? 'inworld' : 'mistral';
       // Inworld voices speak any call language; Mistral voices keep theirs.
       if (provider === 'mistral') locale = voice.locale ?? locale;
-      else if (!supportsCallCloneLocale(provider, locale))
+      if (!supportsCallCloneLocale(provider, locale))
         return routeErrorResponse(
           'This language is not supported for saved voices',
           400,
@@ -1347,7 +1375,11 @@ export async function POST(request: Request) {
       // never serves audio from the previous model.
       const voiceModel =
         provider === 'inworld' ? INWORLD_TTS_MODEL : VOXTRAL_MODEL;
-      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+      const [extension, mimeType] =
+        provider === 'inworld'
+          ? ['mp3', INWORLD_AUDIO_MIME_TYPE]
+          : ['wav', 'audio/wav'];
+      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.${extension}`;
       const cachedOutputUrl = await redis.get<string>(filename);
       if (cachedOutputUrl) {
         return NextResponse.json(
@@ -1371,7 +1403,11 @@ export async function POST(request: Request) {
       let buffer: Buffer;
       let requestId: string;
       if (provider === 'inworld') {
-        buffer = await synthesizeInworldSpeech(voice.voice_id, text, locale);
+        buffer = await synthesizeInworldSpeech(
+          voice.voice_id,
+          text,
+          locale,
+        ).catch(rethrowInworldError);
         modelUsed = INWORLD_TTS_MODEL;
         requestId = randomUUID();
       } else {
@@ -1380,12 +1416,8 @@ export async function POST(request: Request) {
           { voiceId: voice.voice_id },
         ));
       }
-      const outputUrl = await uploadGeneratedAudio(
-        buffer,
-        filename,
-        'audio/wav',
-      );
-      const audioDuration = (await getAudioDuration(buffer, 'audio/wav')) ?? 0;
+      const outputUrl = await uploadGeneratedAudio(buffer, filename, mimeType);
+      const audioDuration = (await getAudioDuration(buffer, mimeType)) ?? 0;
       reservedCredits = 0;
       const savedVoiceLocale = locale;
       const savedVoiceModel = modelUsed;
@@ -1466,7 +1498,7 @@ export async function POST(request: Request) {
               locale,
               user.id,
               { removeBackgroundNoise: formInput.enhanceReferenceAudio },
-            )
+            ).catch(rethrowInworldError)
           : await saveMistralVoice(
               processedAudio.buffer,
               formInput.saveVoiceName,
@@ -1478,6 +1510,8 @@ export async function POST(request: Request) {
         provider: callProvider,
       });
     }
+    // Saved voices check their own languages, which include Inworld accents.
+    validateLocale(locale);
     validateTextLength(text, locale, userHasPaid);
 
     // Check credits
