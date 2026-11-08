@@ -1341,8 +1341,6 @@ export async function POST(request: Request) {
     locale = formInput.locale;
     referenceAudioFile = formInput.file;
 
-    validateLocale(locale);
-
     if (formInput.savedVoiceId) {
       const voice = await getOwnedCallVoice(formInput.savedVoiceId, user.id);
       if (!voice) {
@@ -1355,7 +1353,7 @@ export async function POST(request: Request) {
       const provider = voice.provider === 'inworld' ? 'inworld' : 'mistral';
       // Inworld voices speak any call language; Mistral voices keep theirs.
       if (provider === 'mistral') locale = voice.locale ?? locale;
-      else if (!supportsCallCloneLocale(provider, locale))
+      if (!supportsCallCloneLocale(provider, locale))
         return routeErrorResponse(
           'This language is not supported for saved voices',
           400,
@@ -1506,6 +1504,8 @@ export async function POST(request: Request) {
         provider: callProvider,
       });
     }
+    // Saved voices check their own languages, which include Inworld accents.
+    validateLocale(locale);
     validateTextLength(text, locale, userHasPaid);
 
     // Check credits

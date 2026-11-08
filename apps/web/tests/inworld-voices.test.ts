@@ -6,7 +6,11 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
-import { supportsCallCloneLocale } from '@/lib/clone/call-voice-config';
+import {
+  inworldAccent,
+  supportsCallCloneLocale,
+  toCloneLocale,
+} from '@/lib/clone/call-voice-config';
 import {
   countInworldWorkspaceVoices,
   deleteInworldVoice,
@@ -60,6 +64,7 @@ it.each([
 it.each([
   ['es', 'es'],
   ['no', 'nb'],
+  ['pt-PT', 'pt-PT'],
 ])('asks Inworld to speak %s as %s', async (locale, language) => {
   const request = vi
     .fn()
@@ -81,6 +86,18 @@ describe('call clone provider configuration', () => {
     expect(supportsCallCloneLocale('inworld', 'en-multi')).toBe(false);
     expect(supportsCallCloneLocale('mistral', 'da')).toBe(false);
   });
+  it('offers regional accents for Inworld voices only', () => {
+    expect(supportsCallCloneLocale('inworld', 'pt-PT')).toBe(true);
+    expect(supportsCallCloneLocale('inworld', 'es-419')).toBe(true);
+    expect(supportsCallCloneLocale('inworld', 'de-AT')).toBe(false);
+    expect(supportsCallCloneLocale('mistral', 'pt-PT')).toBe(false);
+    expect(inworldAccent('pt')).toBe('pt-BR');
+    expect(inworldAccent('de')).toBe('de');
+    expect(toCloneLocale('pt-PT')).toBe('pt');
+    expect(toCloneLocale('es-419')).toBe('es');
+    expect(toCloneLocale('en-multi')).toBe('en-multi');
+  });
+
   it('rejects invalid configuration instead of contacting another provider', () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'typo');
     expect(getCallCloneProvider).toThrow('CALL_CLONE_PROVIDER');
@@ -92,6 +109,7 @@ describe('Inworld saved voices', () => {
     ['pl', 'pl'],
     ['no', 'nb'],
     ['en-multi', 'en'],
+    ['es-MX', 'es-MX'],
   ])('creates and persists an owned %s clone', async (locale, languageCode) => {
     const fetchMock = vi
       .fn()

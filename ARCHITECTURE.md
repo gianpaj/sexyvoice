@@ -280,8 +280,12 @@ and records an `audio_files` row like a one-off clone. Inworld speech is stored
 as MP3 and Mistral speech as WAV. Clicking the selected
 voice again returns to the recording form. An Inworld voice speaks the chosen
 language, defaulting to its own, which the route checks with
-`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
-voice always speaks its saved locale. Newly saved voices join the list
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. Inworld
+voices also offer the regional accents in `INWORLD_ACCENTS`
+(`lib/clone/call-voice-config.ts`), such as `pt-PT` and `es-419`, when saving
+and generating. A bare code speaks Inworld's default accent, so the dropdown
+names `pt` as Portuguese (Brazil). One-off clones keep the base languages. A
+Mistral voice always speaks its saved locale. Newly saved voices join the list
 immediately. The dashboard form has no demo
 comparison card; the public voice-cloning page retains its examples.
 

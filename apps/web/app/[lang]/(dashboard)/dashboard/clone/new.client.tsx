@@ -38,8 +38,11 @@ import {
 } from '@/lib/clone/api-types';
 import {
   type CallCloneProvider,
+  INWORLD_EXTRA_ACCENT_CODES,
+  inworldAccent,
   MAX_SAVED_CALL_VOICES,
   supportsCallCloneLocale,
+  toCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
   CLONE_MIN_AUDIO_SECONDS,
@@ -351,6 +354,27 @@ function NewVoiceClientInner({
     }));
     return sortByPageLocale(locales, lang);
   })();
+  // Saved voices speak their provider's languages. Inworld adds regional
+  // accents, so each language is named after the accent Inworld speaks.
+  let callProvider = callCloneProvider;
+  if (selectedVoice)
+    callProvider = selectedVoice.provider === 'inworld' ? 'inworld' : 'mistral';
+  const callLocales =
+    callProvider === 'inworld'
+      ? sortByPageLocale(
+          getTranslatedLanguages(
+            lang,
+            [
+              ...CLONE_SUPPORTED_LOCALE_CODES,
+              ...INWORLD_EXTRA_ACCENT_CODES,
+            ].filter((code) => supportsCallCloneLocale('inworld', code)),
+            { languageDisplay: 'standard', nameOf: inworldAccent },
+          ).map(({ value: code, label: name }) => ({ code, name })),
+          lang,
+        )
+      : supportedLocales.filter(({ code }) =>
+          supportsCallCloneLocale(callProvider, code),
+        );
   const selectedLocaleName =
     supportedLocales.find(
       ({ code }) => code === resolveBaseCloneLocale(selectedLocaleCode),
@@ -678,7 +702,11 @@ function NewVoiceClientInner({
     setSaveVoiceOnly(on);
     setSavedVoiceId(null);
     dispatch({
-      patch: { referenceAudioEnhancementEnabled: false },
+      patch: {
+        referenceAudioEnhancementEnabled: false,
+        // One-off clones speak Clone page languages, not Inworld accents.
+        ...(!on && { selectedLocaleCode: toCloneLocale(selectedLocaleCode) }),
+      },
       type: 'patch',
     });
   };
@@ -740,8 +768,8 @@ function NewVoiceClientInner({
           onDelete={setVoiceToDelete}
           onSelect={(voice) => {
             setSelectedVoiceId(voice?.id ?? null);
-            if (!voice) return;
             changeSaveMode(false);
+            if (!voice) return;
             dispatch({
               patch: {
                 selectedLocaleCode:
@@ -824,12 +852,7 @@ function NewVoiceClientInner({
                     selectedLocaleCode={selectedLocaleCode}
                     supportedLocales={
                       selectedVoice || saveVoiceOnly
-                        ? supportedLocales.filter(({ code }) =>
-                            supportsCallCloneLocale(
-                              selectedVoice ? 'inworld' : callCloneProvider,
-                              code,
-                            ),
-                          )
+                        ? callLocales
                         : supportedLocales
                     }
                   />

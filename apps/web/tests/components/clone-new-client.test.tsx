@@ -476,6 +476,44 @@ describe('NewVoiceClient', () => {
     expect(body.get('locale')).toBe('es');
   });
 
+  it('offers Inworld accents only while a saved Inworld voice speaks', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      // New voices save with Mistral; the saved Inworld voice keeps Inworld.
+      callCloneProvider: 'mistral',
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice],
+      userHasPaid: true,
+    });
+    expect(renderedLocaleCodes()).not.toContain('pt-PT');
+
+    const voice = screen.getByRole('radio', { name: /My Inworld voice/ });
+    await user.click(voice);
+    const select = () =>
+      mockLanguageSelect.mock.lastCall?.[0] as {
+        dispatch: (action: unknown) => void;
+        selectedLocaleCode: string;
+        supportedLocales: { code: string; name: string }[];
+      };
+    expect(renderedLocaleCodes()).toEqual(
+      expect.arrayContaining(['pt', 'pt-PT', 'es-419', 'en-GB']),
+    );
+    expect(
+      select().supportedLocales.find(({ code }) => code === 'pt')?.name,
+    ).toBe('Portuguese (Brazil)');
+
+    act(() =>
+      select().dispatch({
+        patch: { selectedLocaleCode: 'pt-PT' },
+        type: 'patch',
+      }),
+    );
+    await user.click(voice);
+
+    expect(select().selectedLocaleCode).toBe('pt');
+    expect(renderedLocaleCodes()).not.toContain('pt-PT');
+  });
+
   it('never carries free noise removal over to paid cleanup', async () => {
     const user = userEvent.setup();
     renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });

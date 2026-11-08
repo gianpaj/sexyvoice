@@ -164,7 +164,7 @@ describe('Clone Voice API Route', () => {
     expect(mockSaveInworldVoice).not.toHaveBeenCalled();
   });
 
-  it.each(['en', 'pl', 'da'])(
+  it.each(['en', 'pl', 'da', 'pt-PT'])(
     'creates a new Inworld call clone for %s when configured',
     async (locale) => {
       vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
@@ -276,6 +276,13 @@ describe('Clone Voice API Route', () => {
       paid: true,
       locale: 'en',
       consent: 'false',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'pt-PT',
+      consent: 'true',
       status: 400,
       provider: 'mistral',
     },
@@ -2573,6 +2580,33 @@ describe('Saved voice generation', () => {
       expect(mockUploadFileToR2).not.toHaveBeenCalled();
     },
   );
+
+  it('speaks a regional accent with a saved Inworld voice', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+    mockSynthesizeInworldSpeech.mockResolvedValueOnce(Buffer.from('mp3'));
+
+    const response = await postSavedVoice('Olá', savedVoiceId, 'pt-PT');
+
+    expect(response.status).toBe(200);
+    expect(mockSynthesizeInworldSpeech).toHaveBeenCalledWith(
+      'inworld-voice',
+      'Olá',
+      'pt-PT',
+    );
+  });
+
+  it('keeps regional accents out of one-off clones', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        body: createFormDataWithAudio('Olá', createMockAudioFile(), 'pt-PT'),
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('errors.unsupportedLocale');
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
 
   it('rejects a language an Inworld voice cannot speak', async () => {
     mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
