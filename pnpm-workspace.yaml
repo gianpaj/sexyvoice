@@ -29,10 +29,10 @@ catalog:
   "@ai-sdk/react": "3.0.292"
   "@biomejs/biome": "2.5.14"
   "@supabase/supabase-js": "2.116.0"
-  "@tailwindcss/postcss": "4.2.2"
+  "@tailwindcss/postcss": "4.3.3"
   "@types/node": "24.10.4"
-  "@types/react": "19.2.16"
-  "@types/react-dom": "19.2.3"
+  "@types/react": "19.2.18"
+  "@types/react-dom": "19.2.4"
   "@upstash/redis": "1.37.0"
   "ai": "6.0.289"
   "effective-progress": "0.12.0"
@@ -42,7 +42,6 @@ catalog:
   "react": "19.2.7"
   "react-dom": "19.2.7"
   "tailwindcss": "4.2.2"
-  "tsx": "4.19.3"
   "typescript": "7.0.2"
   "zod": "4.6.6"
 
@@ -98,4 +97,4 @@ allowBuilds:
   sharp: true
 
 patchedDependencies:
-  '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch
+  "@ffmpeg/ffmpeg@0.12.15": patches/@ffmpeg__ffmpeg@0.12.15.patch

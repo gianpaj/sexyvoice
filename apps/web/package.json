@@ -8,7 +8,6 @@
     "build": "next build",
     "build:content": "contentlayer2 build",
     "check-translations": "node scripts/check-translations.mjs",
-    "clean": "knip",
     "dev": "PORTLESS_TLD=dev portless sv next dev",
     "dev:content": "contentlayer2 dev",
     "fixall": "biome check --write",
@@ -125,7 +124,7 @@
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.1",
+    "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "catalog:",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
@@ -134,7 +133,6 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitest/coverage-v8": "4.1.11",
-    "autoprefixer": "10.4.27",
     "dotenv": "16.6.1",
     "ioredis": "5.10.1",
     "jsdom": "28.1.0",
@@ -142,7 +140,6 @@
     "msw": "2.15.0",
     "postcss": "catalog:",
     "redis-memory-server": "0.16.0",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "4.1.11"
   },
