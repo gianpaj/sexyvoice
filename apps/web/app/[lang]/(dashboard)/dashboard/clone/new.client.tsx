@@ -78,8 +78,6 @@ import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
-export type { Status } from './clone-state';
-
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 

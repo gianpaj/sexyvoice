@@ -419,15 +419,6 @@ export const getErrorMessage = (
   return serviceMessages[service] || serviceMessages.default;
 };
 
-export function isWavFormat(buffer: Buffer): boolean {
-  // WAV files start with "RIFF" and have "WAVE" at byte 8
-  return (
-    buffer.length > 12 &&
-    buffer.toString('ascii', 0, 4) === 'RIFF' &&
-    buffer.toString('ascii', 8, 12) === 'WAVE'
-  );
-}
-
 // Inworld TTS-2 on the Builder plan.
 const INWORLD_DOLLARS_PER_CHARACTER = 17.5 / 1_000_000;
 

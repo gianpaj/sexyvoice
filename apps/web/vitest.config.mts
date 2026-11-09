@@ -3,7 +3,7 @@ import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
-loadEnvFile('.env.test');
+loadEnvFile(new URL('.env.test', import.meta.url));
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 

@@ -39,7 +39,7 @@ export const CLONED_VOICE_ID = '420c4014-7d6d-44ef-b87d-962a3124a170';
  * A deleted saved voice leaves a character without one until it is edited,
  * so it cannot call.
  */
-export function savedVoiceMissing(
+function savedVoiceMissing(
   config: Pick<SessionConfig, 'audioReferenceId'>,
   savedVoices: Pick<SavedCallVoice, 'id'>[],
 ) {

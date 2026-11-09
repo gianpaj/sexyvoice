@@ -66,36 +66,27 @@ export const GROK_WRAPPING_TAG_DEFINITIONS = GROK_WRAPPING_TAGS.map(
 export type GrokInstantTag = (typeof GROK_INSTANT_TAGS)[number];
 export type GrokWrapperOpenTag = (typeof GROK_WRAPPING_TAGS)[number][0];
 export type GrokWrapperCloseTag = (typeof GROK_WRAPPING_TAGS)[number][1];
-export type GrokWrapperTagPair = (typeof GROK_WRAPPING_TAGS)[number];
-export type GrokInstantTagDefinition =
-  (typeof GROK_INSTANT_TAG_DEFINITIONS)[number];
-export type GrokWrappingTagDefinition =
-  (typeof GROK_WRAPPING_TAG_DEFINITIONS)[number];
 export type GrokWrapperBoundaryKind = 'open' | 'close';
 export const GROK_EMPTY_WRAPPING_TEXT = '\u00a0';
-export type GrokTagText =
-  | GrokInstantTag
-  | GrokWrapperOpenTag
-  | GrokWrapperCloseTag;
 
-export interface GrokTextToken {
+interface GrokTextToken {
   type: 'text';
   value: string;
 }
 
-export interface GrokInstantTagToken {
+interface GrokInstantTagToken {
   tag: TtsInstantTag;
   type: 'instant-tag';
 }
 
-export interface GrokWrapperTagToken {
+interface GrokWrapperTagToken {
   children: GrokEditorToken[];
   closeTag: GrokWrapperCloseTag;
   openTag: GrokWrapperOpenTag;
   type: 'wrapper-tag';
 }
 
-export interface GrokWrapperOpenTagToken {
+interface GrokWrapperOpenTagToken {
   closeTag: GrokWrapperCloseTag;
   openTag: GrokWrapperOpenTag;
   type: 'wrapper-open-tag';
@@ -111,19 +102,19 @@ export interface GrokEditorParseResult {
   tokens: GrokEditorToken[];
 }
 
-export interface GrokTipTapTextNode {
+interface GrokTipTapTextNode {
   text: string;
   type: 'text';
 }
 
-export interface GrokTipTapInstantTagNode {
+interface GrokTipTapInstantTagNode {
   attrs: {
     tag: TtsInstantTag;
   };
   type: 'instantTag';
 }
 
-export interface GrokTipTapWrapperBoundaryNode {
+interface GrokTipTapWrapperBoundaryNode {
   attrs: {
     closeTag: GrokWrapperCloseTag;
     kind: GrokWrapperBoundaryKind;
@@ -132,12 +123,12 @@ export interface GrokTipTapWrapperBoundaryNode {
   type: 'wrapperBoundary';
 }
 
-export type GrokTipTapInlineNode =
+type GrokTipTapInlineNode =
   | GrokTipTapTextNode
   | GrokTipTapInstantTagNode
   | GrokTipTapWrapperBoundaryNode;
 
-export interface GrokTipTapParagraphNode {
+interface GrokTipTapParagraphNode {
   content?: GrokTipTapInlineNode[];
   type: 'paragraph';
 }
@@ -425,10 +416,6 @@ export function isKnownTtsTag(
     isInstantTag(tag, provider) ||
     (provider === 'grok' && (isWrapperOpenTag(tag) || isWrapperCloseTag(tag)))
   );
-}
-
-export function isKnownGrokTag(tag: string): tag is GrokTagText {
-  return isKnownTtsTag(tag, 'grok');
 }
 
 export function parseTtsText(

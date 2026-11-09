@@ -1,4 +1,3 @@
-import { NodeSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
 
 /**
@@ -74,40 +73,6 @@ export const isNodeInSchema = (
   if (!editor?.schema) return false;
   return editor.schema.spec.nodes.get(nodeName) !== undefined;
 };
-
-/**
- * Determines whether the current selection contains a node whose type matches
- * any of the provided node type names.
- */
-export function isNodeTypeSelected(
-  editor: Editor | null,
-  nodeTypeNames: string[] = [],
-  checkAncestorNodes = false,
-): boolean {
-  if (!editor?.state.selection) return false;
-
-  const { selection } = editor.state;
-  if (selection.empty) return false;
-
-  if (selection instanceof NodeSelection) {
-    const selectedNode = selection.node;
-    return selectedNode
-      ? nodeTypeNames.includes(selectedNode.type.name)
-      : false;
-  }
-
-  if (checkAncestorNodes) {
-    const { $from } = selection;
-    for (let depth = $from.depth; depth > 0; depth--) {
-      const ancestorNode = $from.node(depth);
-      if (nodeTypeNames.includes(ancestorNode.type.name)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 type OverflowPosition = 'none' | 'top' | 'bottom' | 'both';
 

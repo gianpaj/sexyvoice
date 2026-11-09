@@ -1,8 +1,6 @@
 const FEATURED_VOICE_SORT_ORDER = 0;
 
-export function isFeaturedVoice(
-  voice: Pick<Tables<'voices'>, 'sort_order'>,
-): boolean {
+function isFeaturedVoice(voice: Pick<Tables<'voices'>, 'sort_order'>): boolean {
   return voice.sort_order === FEATURED_VOICE_SORT_ORDER;
 }
 
@@ -59,19 +57,6 @@ export const MODEL_COLORS: Record<VoiceModel, string> = {
   Replicate: '#EEBB2D',
 };
 
-/** Minimal shape expected by VoicePicker — a subset of Tables<'voices'>. */
-export interface Voice {
-  description: string;
-  gender: VoiceGender;
-  id: string;
-  model: VoiceModel;
-  name: string;
-  sampleUrl?: string | null;
-}
-
-/** Fallback empty list; callers always pass real voices. */
-export const VOICES: Voice[] = [];
-
 /** Maps the raw DB model string to a human-readable VoiceModel label. */
 export function getDisplayModel(dbModel: string): VoiceModel {
   if (dbModel === 'gpro') return 'Gemini 2.5';
@@ -79,16 +64,4 @@ export function getDisplayModel(dbModel: string): VoiceModel {
   if (dbModel === 'gpro31') return 'Gemini 3.1';
   if (dbModel === 'xai') return 'Grok';
   return 'Replicate';
-}
-
-/** Converts a Supabase voices row to the VoicePicker Voice shape. */
-export function toVoice(voice: Tables<'voices'>): Voice {
-  return {
-    description: voice.description ?? '',
-    gender: (voice.type as VoiceGender | null) ?? 'Neutral',
-    id: voice.id,
-    model: getDisplayModel(voice.model),
-    name: voice.name,
-    sampleUrl: voice.sample_url,
-  };
 }

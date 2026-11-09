@@ -35,14 +35,14 @@ export interface R2ObjectMetadata extends R2Location {
   size: number;
 }
 
-export interface R2ListedObject {
+interface R2ListedObject {
   etag?: string;
   key?: string;
   lastModified?: Date;
   size?: number;
 }
 
-export interface R2ListPage {
+interface R2ListPage {
   nextContinuationToken?: string;
   objects: R2ListedObject[];
 }
@@ -53,7 +53,7 @@ export interface R2HeadObject {
   size?: number;
 }
 
-export interface R2DeleteError {
+interface R2DeleteError {
   code?: string;
   key: string;
   message?: string;

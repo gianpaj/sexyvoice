@@ -1,8 +1,4 @@
-import type messages from '@/messages/en.json';
-
-export type CloneDict = (typeof messages)['clone'];
-
-export type Status = 'idle' | 'generating' | 'complete' | 'error';
+type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 export interface CloneState {
   activeTab: 'upload' | 'preview';
