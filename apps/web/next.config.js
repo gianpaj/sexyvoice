@@ -84,6 +84,16 @@ let nextConfig = {
   reactCompiler: true,
   // images: { unoptimized: true },
 
+  async redirects() {
+    return [
+      {
+        destination: '/en',
+        permanent: true,
+        source: '/en/en',
+      },
+    ];
+  },
+
   async rewrites() {
     return {
       afterFiles: [
