@@ -8,6 +8,10 @@
 
 - Landing: add character images for each popular voice. Think about a way to generate avatar images
 
+## Maintenance
+
+- upgrade to "stripe": "^23.0.0",
+
 ## Agents
 
 - create CLI for API auth <https://github.com/helius-labs/helius-cli>
