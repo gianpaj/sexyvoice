@@ -91,6 +91,16 @@ let nextConfig = {
         permanent: true,
         source: '/en/en',
       },
+      {
+        destination: '/en/blog/complete-guide-ai-voice-cloning-technology',
+        permanent: true,
+        source: '/it/blog/complete-guide-ai-voice-cloning-technology',
+      },
+      {
+        destination: '/en',
+        permanent: true,
+        source: '/en/blog/does-sexyvoice-allow-nsfw-content',
+      },
     ];
   },
 
