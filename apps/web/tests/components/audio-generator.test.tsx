@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
+import esMessages from '@/messages/es.json';
 
 const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('@tanstack/react-query', () => ({
@@ -161,6 +162,7 @@ const errorCodesDict = {
 } as const;
 
 const baseDict = {
+  GEMINI_OUTPUT_LIMIT: esMessages.generate.GEMINI_OUTPUT_LIMIT,
   cancel: 'Cancel',
   ctaButton: 'Generate',
   ctaButtonPlural: 'Generate audios',
@@ -1746,6 +1748,35 @@ describe('AudioGenerator', () => {
 
   const R2_AUDIO_URL = 'https://files.sexyvoice.ai/audio.wav';
   const LONG_TEXT = 'a'.repeat(301);
+
+  it('localizes Gemini output-limit errors', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          error: 'The voice reached its audio output limit.',
+          errorCode: 'GEMINI_OUTPUT_LIMIT',
+        }),
+        ok: false,
+        status: 422,
+      }),
+    );
+    renderAudioGenerator({
+      selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: LONG_TEXT } },
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        `${baseDict.GEMINI_OUTPUT_LIMIT} (422)`,
+      );
+    });
+  });
 
   describe('Credit refresh', () => {
     it.each([

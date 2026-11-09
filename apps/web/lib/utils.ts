@@ -269,6 +269,7 @@ export function extractMetadata(
 export const ERROR_CODES = {
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   GEMINI_INPUT_TOO_LONG: 'GEMINI_INPUT_TOO_LONG',
+  GEMINI_OUTPUT_LIMIT: 'GEMINI_OUTPUT_LIMIT',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
   NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
@@ -281,13 +282,14 @@ export const ERROR_CODES = {
 
 /**
  * Maps error codes to appropriate HTTP status codes.
- * - 422: Client input issues (content policy violations)
+ * - 422: Content policy violations or output limits
  * - 500: Server/upstream errors (third-party API failures)
  * - 503: Service temporarily unavailable (quota exceeded / transient upstream)
  */
 const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   GEMINI_INPUT_TOO_LONG: 400,
+  GEMINI_OUTPUT_LIMIT: 422,
   INTERNAL_SERVER_ERROR: 500,
   NO_AUDIO_DATA: 503,
   OTHER_GEMINI_BLOCK: 500,
@@ -323,6 +325,10 @@ export const getErrorMessage = (
     GEMINI_INPUT_TOO_LONG: {
       default:
         'Your text is too long for this voice. Please shorten it or use Split mode.',
+    },
+    GEMINI_OUTPUT_LIMIT: {
+      default:
+        'The voice reached its audio output limit. Shorten the text and try again.',
     },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',
@@ -368,15 +374,6 @@ export const getErrorMessage = (
 
   return serviceMessages[service] || serviceMessages.default;
 };
-
-export function isWavFormat(buffer: Buffer): boolean {
-  // WAV files start with "RIFF" and have "WAVE" at byte 8
-  return (
-    buffer.length > 12 &&
-    buffer.toString('ascii', 0, 4) === 'RIFF' &&
-    buffer.toString('ascii', 8, 12) === 'WAVE'
-  );
-}
 
 // Inworld TTS-2 on the Builder plan.
 const INWORLD_DOLLARS_PER_CHARACTER = 17.5 / 1_000_000;

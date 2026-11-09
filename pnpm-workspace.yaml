@@ -29,21 +29,21 @@ catalog:
   "@ai-sdk/react": "3.0.292"
   "@biomejs/biome": "2.5.14"
   "@supabase/supabase-js": "2.116.0"
-  "@tailwindcss/postcss": "4.2.2"
+  "@tailwindcss/postcss": "4.3.4"
   "@types/node": "24.10.4"
-  "@types/react": "19.2.16"
-  "@types/react-dom": "19.2.3"
+  "@types/react": "19.2.18"
+  "@types/react-dom": "19.2.4"
   "@upstash/redis": "1.37.0"
   "ai": "6.0.289"
   "effective-progress": "0.12.0"
   "effect": "4.0.0"
-  "next": "16.4.3"
+  "next": "16.4.5"
   "postcss": "8.5.28"
-  "react": "19.2.7"
-  "react-dom": "19.2.7"
+  "react": "19.3.1"
+  "react-dom": "19.3.1"
   "tailwindcss": "4.2.2"
-  "tsx": "4.19.3"
   "typescript": "7.0.2"
+  "tsx": "4.19.3"
   "zod": "4.6.6"
 
 overrides:
@@ -73,14 +73,6 @@ overrides:
   "vite@>=7.0.0 <7.3.2": "7.3.7"
   "whatwg-url": "^14.0.0"
 
-packageExtensions:
-  # @hookform/resolvers imports zod without declaring it, so it resolves
-  # through pnpm's hoisted link. Vercel's cached node_modules can keep that
-  # link pointing at a removed zod version after an upgrade.
-  "@hookform/resolvers":
-    peerDependencies:
-      zod: "*"
-
 allowBuilds:
   "@google/genai": false
   "@parcel/watcher": true
@@ -98,4 +90,4 @@ allowBuilds:
   sharp: true
 
 patchedDependencies:
-  '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch
+  "@ffmpeg/ffmpeg@0.12.15": patches/@ffmpeg__ffmpeg@0.12.15.patch

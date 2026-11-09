@@ -33,6 +33,7 @@ import {
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
   getCallSessionsInRange,
+  getCharactersInRange,
   getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
   getInternalUserIds,
@@ -178,11 +179,17 @@ export async function GET(request: NextRequest) {
         error: unknown;
       }
     | undefined;
+  let characters14dResult:
+    | {
+        data: Awaited<ReturnType<typeof getCharactersInRange>>;
+        error: unknown;
+      }
+    | undefined;
   let loadedFromValidCache = false;
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 5 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 6 || typeof cached.reportDate !== 'string') {
       console.log(
         '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
@@ -198,6 +205,7 @@ export async function GET(request: NextRequest) {
       audio14dResult = cached.audio14dResult ?? cached.audioWeekResult;
       audioTotalCountResult = cached.audioTotalCountResult;
       clonesResult = cached.clonesResult;
+      characters14dResult = cached.characters14dResult;
       profilesRecentResult = cached.profilesRecentResult;
       profilesTotalCountResult = cached.profilesTotalCountResult;
       apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
@@ -354,6 +362,7 @@ export async function GET(request: NextRequest) {
       audioYesterdayResult,
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
+      characters14dResult,
     ] = await Promise.all([
       _timed(
         `usage_events:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
@@ -400,6 +409,15 @@ export async function GET(request: NextRequest) {
           error: null,
         })),
       ),
+      _timed(
+        `characters:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCharactersInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({ data, error: null })),
+      ),
     ]);
 
     // One all-time read feeds every reporting window below.
@@ -413,6 +431,12 @@ export async function GET(request: NextRequest) {
     );
   } // end of else (not using cache)
 
+  if (!characters14dResult) {
+    throw new Error(
+      'Character data was not loaded after cache validation/fetch',
+    );
+  }
+  if (characters14dResult.error) throw characters14dResult.error;
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
   if (audio14dResult?.error) throw audio14dResult.error;
   if (audioTotalCountResult?.error) throw audioTotalCountResult.error;
@@ -448,13 +472,14 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       callSessionsTotalCountResult,
       clonesResult,
+      characters14dResult,
       nextSubscriptionDueForPayment,
       profilesRecentResult,
       profilesTotalCountResult,
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 5,
+      version: 6,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -525,6 +550,16 @@ export async function GET(request: NextRequest) {
     'started_at',
     Tables<'call_sessions'>
   >(callSessions14dData, previousDay, today, 'started_at');
+  const characters14dData = characters14dResult.data.filter(
+    (character): character is typeof character & { created_at: string } =>
+      character.created_at !== null,
+  );
+  const newCharactersYesterday = countByDateRange(
+    characters14dData,
+    previousDay,
+    today,
+  );
+  const newCharacters14d = characters14dData.length;
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const calls14dCount = callSessions14dData.length;
   const completedCallsYesterday =
@@ -1380,6 +1415,7 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
+    `  - New characters: ${newCharactersYesterday} yesterday | ${newCharacters14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Cloned voices: ${clonedVoiceCallsYesterday} yesterday | ${clonedVoiceCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,

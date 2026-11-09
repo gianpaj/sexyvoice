@@ -13,6 +13,7 @@
 -- first, RRF order preserved).
 
 begin;
+set local search_path = public, extensions;
 
 select plan(11);
 
@@ -40,14 +41,14 @@ values
     '__shared__',
     'preferred_name',
     'Call me Alex',
-    ('[1' || repeat(',0', 1535) || ']')::extensions.vector
+    ('[1' || repeat(',0', 1535) || ']')::vector
   ),
   (
     '11111111-1111-4111-8111-111111111111',
     '__shared__',
     'hobby',
     'Enjoys hiking',
-    ('[0,1' || repeat(',0', 1534) || ']')::extensions.vector
+    ('[0,1' || repeat(',0', 1534) || ']')::vector
   ),
   (
     '11111111-1111-4111-8111-111111111111',
@@ -63,7 +64,7 @@ values
 create temporary table _res on commit drop as
 select *, row_number() over () as ord
 from public.match_agent_memories_hybrid(
-  ('[1' || repeat(',0', 1535) || ']')::extensions.vector,
+  ('[1' || repeat(',0', 1535) || ']')::vector,
   'blue',
   '11111111-1111-4111-8111-111111111111'::uuid,
   '__shared__',

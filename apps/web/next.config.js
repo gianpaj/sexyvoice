@@ -84,6 +84,27 @@ let nextConfig = {
   reactCompiler: true,
   // images: { unoptimized: true },
 
+  async redirects() {
+    return [
+      {
+        destination: '/en',
+        permanent: true,
+        source: '/en/en',
+      },
+      {
+        destination: '/en/blog/complete-guide-ai-voice-cloning-technology',
+        permanent: true,
+        source: '/it/blog/complete-guide-ai-voice-cloning-technology',
+      },
+      {
+        destination: '/:lang',
+        permanent: true,
+        source:
+          '/:lang(en|es|de|da|fr|it)/blog/does-sexyvoice-allow-nsfw-content',
+      },
+    ];
+  },
+
   async rewrites() {
     return {
       afterFiles: [

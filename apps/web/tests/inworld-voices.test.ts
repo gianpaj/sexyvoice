@@ -6,7 +6,11 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
-import { supportsCallCloneLocale } from '@/lib/clone/call-voice-config';
+import {
+  inworldAccent,
+  supportsCallCloneLocale,
+  toCloneLocale,
+} from '@/lib/clone/call-voice-config';
 import {
   countInworldWorkspaceVoices,
   deleteInworldVoice,
@@ -60,6 +64,7 @@ it.each([
 it.each([
   ['es', 'es'],
   ['no', 'nb'],
+  ['pt-PT', 'pt-PT'],
 ])('asks Inworld to speak %s as %s', async (locale, language) => {
   const request = vi
     .fn()
@@ -81,6 +86,18 @@ describe('call clone provider configuration', () => {
     expect(supportsCallCloneLocale('inworld', 'en-multi')).toBe(false);
     expect(supportsCallCloneLocale('mistral', 'da')).toBe(false);
   });
+  it('offers regional accents for Inworld voices only', () => {
+    expect(supportsCallCloneLocale('inworld', 'pt-PT')).toBe(true);
+    expect(supportsCallCloneLocale('inworld', 'es-419')).toBe(true);
+    expect(supportsCallCloneLocale('inworld', 'de-AT')).toBe(false);
+    expect(supportsCallCloneLocale('mistral', 'pt-PT')).toBe(false);
+    expect(inworldAccent('pt')).toBe('pt-BR');
+    expect(inworldAccent('de')).toBe('de');
+    expect(toCloneLocale('pt-PT')).toBe('pt');
+    expect(toCloneLocale('es-419')).toBe('es');
+    expect(toCloneLocale('en-multi')).toBe('en-multi');
+  });
+
   it('rejects invalid configuration instead of contacting another provider', () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'typo');
     expect(getCallCloneProvider).toThrow('CALL_CLONE_PROVIDER');
@@ -92,6 +109,7 @@ describe('Inworld saved voices', () => {
     ['pl', 'pl'],
     ['no', 'nb'],
     ['en-multi', 'en'],
+    ['es-MX', 'es-MX'],
   ])('creates and persists an owned %s clone', async (locale, languageCode) => {
     const fetchMock = vi
       .fn()
@@ -115,6 +133,7 @@ describe('Inworld saved voices', () => {
     expect(options.headers.Authorization).toBe('Basic encoded-credential');
     expect(JSON.parse(options.body)).toEqual({
       displayName: 'My voice',
+      description: 'owner',
       languageCode,
       voiceSamples: [
         { audioData: Buffer.from('reference audio').toString('base64') },
@@ -139,12 +158,12 @@ describe('Inworld saved voices', () => {
       text: "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?",
       voiceId: 'workspace__clone',
       modelId: 'inworld-tts-2',
-      audioConfig: { audioEncoding: 'LINEAR16' },
+      audioConfig: { audioEncoding: 'MP3' },
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.any(String),
+      expect.stringMatching(/\.mp3$/),
       Buffer.from('RIFFsample'),
-      'audio/wav',
+      'audio/mpeg',
     );
   });
   it('deletes a provider voice when saving its ownership record fails', async () => {
@@ -204,6 +223,10 @@ describe('Inworld saved voices', () => {
       `Inworld voice request failed (403): ${message}`,
     );
     await expect(save).rejects.not.toThrow('private');
+    await expect(save).rejects.toMatchObject({
+      name: 'InworldRequestError',
+      status: 403,
+    });
   });
   it('removes the cloned voice if sample synthesis fails', async () => {
     const fetchMock = vi
@@ -256,8 +279,13 @@ describe('Inworld saved voices', () => {
           locale: 'en',
           userId: 'owner',
           provider,
+          sample: {
+            format: 'wav',
+            model: 'model',
+            dollarCost: 0,
+            generate: async () => Buffer.from('RIFFsample'),
+          },
           deleteVoice,
-          generateSample: async () => Buffer.from('RIFFsample'),
         }),
       ).rejects.toThrow('database unavailable');
       expect(deleteVoice).toHaveBeenCalledOnce();

@@ -9,5 +9,3 @@ export const CALL_PERSONALITY_EXAMPLES = [
   'debate',
   'story',
 ] as const;
-
-export type CallPersonalityExample = (typeof CALL_PERSONALITY_EXAMPLES)[number];

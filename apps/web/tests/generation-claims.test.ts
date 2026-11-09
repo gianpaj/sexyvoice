@@ -325,9 +325,10 @@ describe('Generation route claims authentication', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(JSON.parse(mocks.token.mock.calls[0][2].metadata).memory).toBe(
-        enabled,
-      );
+      expect(JSON.parse(mocks.token.mock.calls[0][2].metadata)).toMatchObject({
+        memory: enabled,
+        memory_scope: 'both',
+      });
       expect(queries.hasUserPaid).not.toHaveBeenCalled();
       if (requested === false) expect(mocks.getUser).not.toHaveBeenCalled();
     },

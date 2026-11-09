@@ -47,7 +47,11 @@ import {
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
 import { isActiveTtsModel } from '@/lib/tts/models';
-import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  isTransientXaiTtsFailure,
+  normalizeXaiTtsSpeed,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -570,6 +574,16 @@ export async function POST(request: Request) {
             },
             user: { email: user.email, id: user.id },
           });
+        } else if (responseOutcome === 'output_limit') {
+          logger.warn('Gemini voice generation reached the output limit', {
+            extra: {
+              model: modelUsed,
+              responseId: genAIResponse?.responseId,
+              textLength: text.length,
+              voice: voiceObj.name,
+            },
+            user: { id: user.id },
+          });
         } else {
           logger.error('Gemini voice generation failed', {
             extra: {
@@ -603,8 +617,7 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Capture only response shapes that the classifier does not recognize.
-        if (!(isProhibitedContent || isNoAudioData)) {
+        if (responseOutcome === 'unexpected') {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
               blockReason,
@@ -659,7 +672,7 @@ export async function POST(request: Request) {
           voiceId: voiceObj.name,
         });
       } catch (error) {
-        if (isTransientProviderFailure(error)) {
+        if (isTransientXaiTtsFailure(error)) {
           logger.warn('Grok TTS provider unavailable', {
             extra: {
               codec: outputCodec,
@@ -920,6 +933,15 @@ export async function POST(request: Request) {
         error.message || 'Voice generation failed, please retry',
         getErrorStatusCode(error.cause),
       );
+    }
+
+    if (
+      Error.isError(error) &&
+      error.cause === ERROR_CODES.GEMINI_OUTPUT_LIMIT
+    ) {
+      return APIErrorResponse(error.message, getErrorStatusCode(error.cause), {
+        errorCode: error.cause,
+      });
     }
 
     if (Error.isError(error) && error.cause === 'OTHER_GEMINI_BLOCK') {

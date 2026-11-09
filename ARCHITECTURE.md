@@ -257,25 +257,43 @@ mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
 `mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
 provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
 using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
-to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
-the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+to Mistral speech synthesis. Inworld clones carry the owner's user ID as their
+description, so a voice in the shared workspace names its owner.
+`saveCallVoiceProfile` uploads the generated sample (MP3 for Inworld, WAV for
+Mistral) to the dashboard R2 bucket under
+`call-voice-samples/<profile-id>/<random-id>.<mp3|wav>`,
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
 attempts to clean up the provider voice and any attempted R2 upload. The response contains
-`audioReferenceId` and `provider`. This action charges no speech
-credits; sample synthesis incurs provider costs. The reference is retained by
+`audioReferenceId` and `provider`. This action charges no speech credits. The
+platform pays for the sample: a zero-credit `voice_cloning` usage event with
+`metadata.operation = 'saved_voice_sample'` records its provider cost, which
+daily stats include. The user's Usage page lists it as a free cloning
+operation. The reference is retained by
 the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.
+
+Inworld failures map to clone error codes: 429 and 5xx return
+`PROVIDER_UNAVAILABLE`, 400 and 422 return `errors.providerRequestRejected`
+(try a different recording or text), and key or permission failures return
+`errors.internalError`.
 
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
 above the upload and recording form. Previews use the private sample endpoint.
 Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
-and `savedVoiceId`, the route checks ownership, and generation charges credits
-and records an `audio_files` row like a one-off clone. Clicking the selected
+`savedVoiceId`, and `voiceConsent=true`. The consent checkbox stays on the form,
+and the route rejects a saved voice request without consent
+(`errors.voiceConsentRequired`). The route checks ownership, and generation
+charges credits and records an `audio_files` row like a one-off clone. Inworld
+speech is stored as MP3 and Mistral speech as WAV. Clicking the selected
 voice again returns to the recording form. An Inworld voice speaks the chosen
 language, defaulting to its own, which the route checks with
-`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
-voice always speaks its saved locale. Newly saved voices join the list
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. Inworld
+voices also offer the regional accents in `INWORLD_ACCENTS`
+(`lib/clone/call-voice-config.ts`), such as `pt-PT` and `es-419`, when saving
+and generating. A bare code speaks Inworld's default accent, so the dropdown
+names `pt` as Portuguese (Brazil). One-off clones keep the base languages. A
+Mistral voice always speaks its saved locale. Newly saved voices join the list
 immediately. The dashboard form has no demo
 comparison card; the public voice-cloning page retains its examples.
 
@@ -283,7 +301,8 @@ Saved voice samples are served through
 `GET /api/audio-references/[id]/sample`. The route authenticates the user,
 checks ownership and a supported call provider, and returns audio with private,
 non-cacheable headers. Provider IDs and sample URLs stay on the server.
-Profiles with `sample_url` return the saved R2 WAV without provider calls.
+Profiles with `sample_url` return the stored R2 sample, typed by its
+extension, without provider calls.
 Reads accept only sample object keys under the owned profile's prefix, never
 arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
 reference WAV audio or Inworld's MP3 preview. Preview playback does not create
@@ -461,6 +480,16 @@ and cannot override a saved opt-out. The lookup overlaps voice and character
 resolution. A failed lookup logs a warning and starts the call without memory.
 An explicit request flag of `memory: false` also disables memory. This is a
 user preference, not an entitlement or authorization check.
+
+Call tokens send `memory_scope: "both"`. The agent retrieves shared user
+profiles under `__shared__` together with the active character's relationship
+and episode slots. `match_agent_memories_hybrid` returns each row's
+`character_id` and re-ranks its bounded candidate set with active-character
+and recency boosts. The migration resolves pgvector's installed schema for its argument type and
+cosine operators, supporting both `public` and `extensions` without relocating
+the extension. Both retrieval branches include shared rows for a character
+request; the agent makes one hybrid RPC call per search. Deploy the dual-scope
+agent before enabling the web metadata, with the RPC migration applied first.
 
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories

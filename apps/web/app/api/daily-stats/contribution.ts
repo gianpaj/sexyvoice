@@ -36,7 +36,7 @@ export interface ContributionData {
   events: UsageEvent[];
   linkedCallIds: string[];
 }
-export function buildCostRecords(data: ContributionData): CostRecord[] {
+function buildCostRecords(data: ContributionData): CostRecord[] {
   const calls = new Map(data.calls.map((call) => [call.id, call]));
   const linked = new Set([
     ...data.linkedCallIds,

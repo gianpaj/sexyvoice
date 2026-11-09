@@ -900,6 +900,7 @@ declare type Database = {
           query_text: string;
         };
         Returns: {
+          character_id: string;
           content: string;
           cosine_distance: number;
           memory_type: string;

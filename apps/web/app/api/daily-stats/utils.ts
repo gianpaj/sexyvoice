@@ -136,7 +136,7 @@ export function subtractDays(date: Date, days: number): Date {
   return new Date(date.getTime() - days * 86_400_000);
 }
 
-export function isInDateRange(value: string, start: Date, end: Date): boolean {
+function isInDateRange(value: string, start: Date, end: Date): boolean {
   const itemTime = new Date(value).getTime();
   return itemTime >= start.getTime() && itemTime < end.getTime();
 }

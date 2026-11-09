@@ -1,71 +1,47 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": [
-    "contentlayer.config.ts",
-    "next.config.js",
-    "postcss.config.js",
-    "vitest.config.mts",
-    "sentry.server.config.ts",
-    "sentry.edge.config.ts"
-  ],
-  "project": [
-    "app/**/*.{ts,tsx}",
-    "components/**/*.{ts,tsx}",
-    "hooks/**/*.{ts,tsx}",
-    "lib/**/*.{ts,tsx}",
-    "utils/**/*.{ts,tsx}",
-    "scripts/**/*.{ts,tsx,js,sh,py}",
-    "tests/**/*.{ts,tsx}",
-    "supabase/**/*.ts",
-    "posts/**/*.{mdx,md}"
-  ],
-  "ignore": [
-    "scripts/**/*.{ts,tsx,js,sh,py}",
-    "supabase/functions/telegram-bot/index.ts",
-    ".next",
-    ".contentlayer",
-    ".claude",
-    ".cursor",
-    ".github",
-    ".husky",
-    ".vscode",
-    ".zed",
-    "backups",
-    "certificates",
-    "coverage",
-    "node_modules",
-    "public",
-    "*.csv",
-    "screenshot*.jpg",
-    "requirements.txt",
-    "prompts*.md",
-    "_instrumentation-client.ts_disable",
-    "deno.lock",
-    "pnpm-lock.yaml"
-  ],
-  "ignoreBinaries": [
-    "biome",
-    "husky",
-    "knip",
-    "lint-staged",
-    "tsx",
-    "ultracite"
-  ],
-  "ignoreDependencies": [
-    "@iconify-json/logos",
-    "@next/bundle-analyzer",
-    "autoprefixer",
-    "dotenv",
-    "husky",
-    "lint-staged",
-    "postcss",
-    "tsx",
-    "typescript",
-    "ultracite",
-    "ioredis",
-    "redis-memory-server",
-    "msw",
-    "@vitest/coverage-v8",
-    "vitest"
-  ]
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [".venv/**"],
+  "workspaces": {
+    ".": {
+      // react-doctor CLI config; react-doctor is not installed
+      "entry": ["doctor.config.ts"],
+      "ignoreDependencies": ["react-doctor"]
+    },
+    "apps/docs": {
+      // Components installed by the fumadocs and shadcn CLIs
+      "ignoreIssues": {
+        "src/components/ai/**": ["exports", "types"],
+        "src/components/ui/**": ["exports", "types"]
+      }
+    },
+    "apps/web": {
+      "entry": [
+        "contentlayer.config.ts",
+        // Playwright `setup` project (regex testMatch) and the Checkly browser check
+        "e2e/**/*.setup.ts",
+        "e2e/checkly.only.ts"
+      ],
+      "ignore": ["supabase/functions/**"],
+      // shadcn/ui files stay close to upstream, including unused exports
+      "ignoreIssues": { "components/ui/**": ["exports", "types"] },
+      // Global CLIs
+      "ignoreBinaries": ["portless", "supabase"],
+      "ignoreDependencies": [
+        // Loaded by `@plugin "@iconify/tailwind4"` in app/globals.css
+        "@iconify-json/logos",
+        // Hoisted for Sentry/OpenTelemetry (publicHoistPattern)
+        "import-in-the-middle",
+        "require-in-the-middle",
+        // Provided by Next.js; mocked in tests/setup.ts
+        "server-only"
+      ],
+      // next-intl plugin default; the file lives at src/i18n/request.ts
+      "ignoreUnresolved": ["./i18n/request.ts"]
+    },
+    "scripts": {
+      // One-off scripts run directly with node, not only via package.json
+      "entry": ["*.{mjs,mts}"],
+      "ignoreBinaries": ["ffmpeg", "ffprobe"]
+    }
+  }
 }

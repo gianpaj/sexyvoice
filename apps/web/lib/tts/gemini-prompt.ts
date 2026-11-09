@@ -7,6 +7,7 @@ import type { Content, VoiceConfig } from '@google/genai';
 // *same* model, otherwise the estimate counts tokens for a different request
 // than the one that actually runs and the two credit numbers diverge.
 
+/** @public Read via a default import in scripts/generate-gemini-speech-samples.mts */
 export const GEMINI_TTS_38 = 'gemini-3.8-flash-tts';
 
 function assertGeminiTtsModel(model: string): asserts model is 'gpro38' {

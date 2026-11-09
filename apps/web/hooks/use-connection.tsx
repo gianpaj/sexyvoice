@@ -13,7 +13,7 @@ import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';
 
-export type ConnectFn = () => Promise<void>;
+type ConnectFn = () => Promise<void>;
 
 const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
 

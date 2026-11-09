@@ -10,7 +10,7 @@ import {
 } from './utils';
 
 // Internal users excluded from daily stats aggregations.
-export const INTERNAL_USER_EMAILS = [
+const INTERNAL_USER_EMAILS = [
   'gianpa@gmail.com',
   'alex.kostinskyi@gmail.com',
 ] as const;
@@ -40,6 +40,10 @@ export type DailyStatsAudioFile = Pick<
 export type DailyStatsProfile = Pick<
   Tables<'profiles'>,
   'created_at' | 'id' | 'username'
+>;
+export type DailyStatsCharacter = Pick<
+  Tables<'characters'>,
+  'created_at' | 'id'
 >;
 // `id` and `started_at` are not reported on; they carry the keyset cursor.
 export type DailyStatsCallSessionDuration = Pick<
@@ -175,6 +179,29 @@ export function getProfilesInRange(
   });
 }
 
+export function getCharactersInRange(
+  supabase: DailyStatsSupabaseClient,
+  start: Date,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+): Promise<DailyStatsCharacter[]> {
+  return fetchAllPages<DailyStatsCharacter>('created_at', (cursor) => {
+    let query = supabase
+      .from('characters')
+      .select('id, created_at')
+      .eq('is_public', false)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+    if (excludeUserIds.length > 0) {
+      query = query.notIn('user_id', excludeUserIds);
+    }
+    return applyPageCursor(query, cursor)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
+  });
+}
+
 export function getCreditTransactionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
@@ -190,34 +217,6 @@ export function getCreditTransactionsInRange(
       .in('type', ['purchase', 'topup', 'refund'])
       .not('description', 'ilike', '%manual%')
       .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString());
-    if (excludeUserIds.length > 0) {
-      query = query.notIn('user_id', excludeUserIds);
-    }
-    return applyPageCursor(query, cursor)
-      .order('created_at', { ascending: true })
-      .order('id', { ascending: true })
-      .limit(PAGE_SIZE)
-      .then(({ data, error }) => ({
-        data: (data as DailyStatsCreditTransaction[] | null) ?? null,
-        error,
-      }));
-  });
-}
-
-export function getPurchaseTransactionsBefore(
-  supabase: DailyStatsSupabaseClient,
-  end: Date,
-  excludeUserIds: readonly string[] = [],
-): Promise<DailyStatsCreditTransaction[]> {
-  return fetchAllPages<DailyStatsCreditTransaction>('created_at', (cursor) => {
-    let query = supabase
-      .from('credit_transactions')
-      .select(
-        'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
-      )
-      .in('type', ['purchase', 'topup'])
-      .not('description', 'ilike', '%manual%')
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);

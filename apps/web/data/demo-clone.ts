@@ -12,7 +12,6 @@ import {
 } from './clone-demo-languages';
 
 export type { CloneDemoTakeId } from './clone-demo-config';
-export { CLONE_DEMO_TAKES } from './clone-demo-config';
 export type { DemoLanguageCode } from './clone-demo-languages';
 export {
   DEMO_FALLBACK_LANGUAGE,
@@ -21,13 +20,13 @@ export {
   resolveInitialDemoLanguageCode,
 } from './clone-demo-languages';
 
-export interface DemoCloneClip {
+interface DemoCloneClip {
   durationSeconds: number;
   peaks: number[][];
   src: string;
 }
 
-export interface DemoCloneTake extends DemoCloneClip {
+interface DemoCloneTake extends DemoCloneClip {
   id: CloneDemoTakeId;
   prompt: string;
 }

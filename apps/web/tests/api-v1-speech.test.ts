@@ -854,6 +854,51 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it('rejects Gemini MAX_TOKENS with audio and refunds once', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              { inlineData: { data: 'AAAAAA==', mimeType: 'audio/wav' } },
+            ],
+          },
+          finishReason: 'MAX_TOKENS',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({ models: { generateContent } }));
+
+    const response = await POST(
+      new Request('http://localhost/api/v1/speech', {
+        body: JSON.stringify({
+          input: 'Hello world',
+          model: 'gpro38',
+          voice: 'achernar',
+        }),
+        headers: {
+          authorization: TEST_AUTH_HEADER,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: 'output_limit_exceeded',
+        message: expect.stringContaining('output limit'),
+        param: 'input',
+        type: 'invalid_request_error',
+      },
+    });
+    expect(generateContent).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(mockUploadFileToR2).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
   it('returns 503 and refunds when Gemini returns no audio', async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
@@ -979,47 +1024,63 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
-  it('returns provider unavailable from transient Grok errors without capture', async () => {
-    server.use(
-      http.post('https://api.x.ai/v1/tts', () =>
-        HttpResponse.json(
-          { error: 'provider failure' },
-          {
-            status: 503,
-          },
-        ),
-      ),
-    );
+  it.each(['upstream 5xx', 'headers timeout'])(
+    'returns provider unavailable from transient Grok errors without capture (%s)',
+    async (failure) => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      if (failure === 'headers timeout') {
+        fetchSpy.mockRejectedValueOnce(
+          new TypeError('fetch failed', {
+            cause: Object.assign(new Error('Headers Timeout Error'), {
+              code: 'UND_ERR_HEADERS_TIMEOUT',
+            }),
+          }),
+        );
+      } else {
+        server.use(
+          http.post('https://api.x.ai/v1/tts', () =>
+            HttpResponse.json(
+              { error: 'provider failure' },
+              {
+                status: 503,
+              },
+            ),
+          ),
+        );
+      }
 
-    const request = new Request('http://localhost/api/v1/speech', {
-      body: JSON.stringify({
-        input: 'Hello world',
-        model: 'xai',
-        voice: 'eve',
-      }),
-      headers: {
-        authorization: TEST_AUTH_HEADER,
-        'content-type': 'application/json',
-      },
-      method: 'POST',
-    });
+      const request = new Request('http://localhost/api/v1/speech', {
+        body: JSON.stringify({
+          input: 'Hello world',
+          model: 'xai',
+          voice: 'eve',
+        }),
+        headers: {
+          authorization: TEST_AUTH_HEADER,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      });
 
-    const response = await POST(request);
-    const json = await response.json();
+      const response = await POST(request).finally(() => {
+        fetchSpy.mockRestore();
+      });
+      const json = await response.json();
 
-    expect(response.status).toBe(503);
-    expect(json.error.type).toBe('server_error');
-    expect(json.error.code).toBe('provider_unavailable');
-    expect(json.error.message).toBe(
-      'Grok is temporarily unavailable. Please retry.',
-    );
-    expect(restoreCredits).toHaveBeenCalledOnce();
-    expect(restoreCredits).toHaveBeenCalledWith({
-      amount: expect.any(Number),
-      userId: 'test-user-id',
-    });
-    expect(captureException).not.toHaveBeenCalled();
-  });
+      expect(response.status).toBe(503);
+      expect(json.error.type).toBe('server_error');
+      expect(json.error.code).toBe('provider_unavailable');
+      expect(json.error.message).toBe(
+        'Grok is temporarily unavailable. Please retry.',
+      );
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(captureException).not.toHaveBeenCalled();
+    },
+  );
 
   it('keeps Grok R2 failures on the platform error path', async () => {
     const uploadError = new Error('Internal Server Error');

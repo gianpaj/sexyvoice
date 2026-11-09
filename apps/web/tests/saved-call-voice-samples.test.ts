@@ -5,7 +5,12 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
+import {
+  CALL_VOICE_SAMPLE_TEXT,
+  type CallVoiceSampleFormat,
+} from '@/lib/clone/call-voice-sample';
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
+import { insertUsageEvent } from '@/lib/supabase/queries';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
 beforeEach(() => {
@@ -14,30 +19,62 @@ beforeEach(() => {
   mocks.single.mockResolvedValue({ data: { id: 'reference' }, error: null });
 });
 
-const save = (generateSample: () => Promise<Buffer>, deleteVoice = vi.fn()) =>
+const save = (
+  generate: () => Promise<Buffer>,
+  deleteVoice = vi.fn(),
+  format: CallVoiceSampleFormat = 'mp3',
+) =>
   saveCallVoiceProfile({
     voiceId: 'provider-voice',
     name: 'Mine',
     locale: 'en',
     userId: 'owner',
     provider: 'inworld',
-    generateSample,
+    sample: { format, model: 'inworld-tts-2', dollarCost: 0.003, generate },
     deleteVoice,
   });
 
 describe('stored call voice samples', () => {
-  it('uploads before saving the URL on the matching owned voice profile', async () => {
-    await save(async () => Buffer.from('RIFFsample'));
+  it.each([
+    ['mp3', 'audio/mpeg'],
+    ['wav', 'audio/wav'],
+  ] as const)(
+    'uploads a %s sample before saving the URL on the matching owned voice profile',
+    async (format, contentType) => {
+      await save(async () => Buffer.from('sample'), vi.fn(), format);
+      const row = mocks.insert.mock.calls[0][0];
+      const [key, , uploadedType] = mockUploadFileToR2.mock.calls[0];
+      expect(key).toMatch(
+        new RegExp(`^call-voice-samples/${row.id}/[0-9a-f-]+\\.${format}$`),
+      );
+      expect(uploadedType).toBe(contentType);
+      expect(row.sample_url).toBe(`https://files.sexyvoice.ai/${key}`);
+      expect(row.user_id).toBe('owner');
+      expect(mockUploadFileToR2.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.insert.mock.invocationCallOrder[0],
+      );
+    },
+  );
+
+  it('records the free sample as a platform cost on the saved voice', async () => {
+    await save(async () => Buffer.from('sample'));
     const row = mocks.insert.mock.calls[0][0];
-    const key = mockUploadFileToR2.mock.calls[0][0];
-    expect(key).toMatch(
-      new RegExp(`^call-voice-samples/${row.id}/[0-9a-f-]+\\.wav$`),
-    );
-    expect(row.sample_url).toBe(`https://files.sexyvoice.ai/${key}`);
-    expect(row.user_id).toBe('owner');
-    expect(mockUploadFileToR2.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.insert.mock.invocationCallOrder[0],
-    );
+    expect(insertUsageEvent).toHaveBeenCalledWith({
+      creditsUsed: 0,
+      dollarAmount: 0.003,
+      inputChars: CALL_VOICE_SAMPLE_TEXT.length,
+      metadata: {
+        operation: 'saved_voice_sample',
+        provider: 'inworld',
+        voiceName: 'Mine',
+      },
+      model: 'inworld-tts-2',
+      quantity: CALL_VOICE_SAMPLE_TEXT.length,
+      sourceId: row.id,
+      sourceType: 'voice_cloning',
+      unit: 'chars',
+      userId: 'owner',
+    });
   });
 
   it('rejects empty samples before uploading or saving a profile', async () => {

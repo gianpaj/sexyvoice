@@ -36,8 +36,7 @@ interface GenerationSettingsPanelProps {
 
 /**
  * Wraps a block of premium-only controls: for free users it dims and disables
- * the controls, overlays the Sparkles badge, and shows an "upgrade" tooltip —
- * mirroring the treatment in `premium-action-button.tsx`.
+ * the controls, overlays the Sparkles badge, and shows an "upgrade" tooltip.
  */
 function PremiumField({
   isPaidUser,

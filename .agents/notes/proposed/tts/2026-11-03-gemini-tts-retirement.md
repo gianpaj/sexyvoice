@@ -35,7 +35,7 @@ branch's API contract while generated pages keep their published schema ID.
 ## Verification
 
 Formatting, type checks, and translation parity pass. The full suite passes
-2,002 web tests and 131 script tests. Catalog tests cover retired aliases and
+2,031 web tests and 132 script tests. Catalog tests cover retired aliases and
 UUIDs, cache rejection, charging, and selection of a supported default. Gemini
 3.8 tests exercise free and paid users; historical pricing tests remain green.
 
@@ -47,6 +47,13 @@ voice name and returned HTTP 200 from R2. No database or storage writes ran.
 CI run `41738272130` passed all 119 Playwright tests on head `67e9a2a`, including
 the generate and history specs. Local browser runs require the test credentials
 from CI. Deployment and production telemetry checks remain release work.
+
+## Dependency compatibility
+
+The lockfile uses one `prosemirror-model` version (`1.25.12`) for Tiptap and
+its ProseMirror dependencies. Mixed model copies reject selected fragments
+when inserting wrapping tags. Tooltip tests assert visible provider copy;
+they do not require duplicate DOM text from Radix's accessibility internals.
 
 ## Review decisions
 

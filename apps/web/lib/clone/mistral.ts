@@ -3,6 +3,7 @@ import { Mistral } from '@mistralai/mistralai';
 import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
+import { getVoxtralDollarCost } from './voxtral';
 
 let client: Mistral | undefined;
 
@@ -26,24 +27,30 @@ export async function saveMistralVoice(
     sampleAudio: audio.toString('base64'),
     sampleFilename: 'reference.wav',
   });
+  const model = 'voxtral-mini-tts-3-0';
   return saveCallVoiceProfile({
     voiceId: voice.id,
     name,
     locale,
     userId,
     provider: 'mistral',
-    generateSample: async () => {
-      const speech = await mistral.audio.speech.complete({
-        model: 'voxtral-mini-tts-3-0',
-        input: CALL_VOICE_SAMPLE_TEXT,
-        voiceId: voice.id,
-        responseFormat: 'wav',
-        stream: false,
-      });
-      if (!speech.audioData) throw new Error('Voice sample is missing');
-      return typeof speech.audioData === 'string'
-        ? Buffer.from(speech.audioData, 'base64')
-        : Buffer.from(speech.audioData);
+    sample: {
+      format: 'wav',
+      model,
+      dollarCost: getVoxtralDollarCost(model, CALL_VOICE_SAMPLE_TEXT),
+      generate: async () => {
+        const speech = await mistral.audio.speech.complete({
+          model,
+          input: CALL_VOICE_SAMPLE_TEXT,
+          voiceId: voice.id,
+          responseFormat: 'wav',
+          stream: false,
+        });
+        if (!speech.audioData) throw new Error('Voice sample is missing');
+        return typeof speech.audioData === 'string'
+          ? Buffer.from(speech.audioData, 'base64')
+          : Buffer.from(speech.audioData);
+      },
     },
     deleteVoice: () => deleteMistralVoice(voice.id),
   });
