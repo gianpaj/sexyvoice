@@ -1,7 +1,7 @@
 import type { SessionConfig } from './session-config';
 import type { FeatureType } from './voices';
 
-export type PresetIconId = 'headphones';
+type PresetIconId = 'headphones';
 
 export interface Preset {
   iconId?: PresetIconId;

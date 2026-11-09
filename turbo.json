@@ -17,9 +17,6 @@
     "check-translations": {
       "outputs": []
     },
-    "clean": {
-      "outputs": []
-    },
     "dev": {
       "cache": false,
       "persistent": true

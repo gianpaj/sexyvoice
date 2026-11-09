@@ -263,7 +263,7 @@ Only one banner is shown at a time, and each banner has its own dismiss cookie.
 | `pnpm format`                      | Check web and docs formatting with Biome     |
 | `pnpm check-translations`          | Validate all locale files have matching keys |
 | `pnpm build:content`               | Build web app content layer                  |
-| `pnpm clean`                       | Check unused dependencies with Knip          |
+| `pnpm knip`                        | Find unused files, exports, and dependencies |
 | `pnpm fixall`                      | Apply Biome format, lint, and assist fixes   |
 
 ### Testing

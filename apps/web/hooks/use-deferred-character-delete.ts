@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import type { Preset } from '@/data/presets';
 import { usePlaygroundState } from './use-playground-state';
 
-export const DELETE_UNDO_MS = 6000;
+const DELETE_UNDO_MS = 6000;
 
 interface PendingDelete {
   index: number;

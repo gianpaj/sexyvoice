@@ -47,7 +47,7 @@ const JSON_SCHEMA_TEXT = JSON.stringify(
   2,
 );
 
-export function buildBatchPrompt(prompt: string): string {
+function buildBatchPrompt(prompt: string): string {
   return `${prompt}
 
 Respond with ONLY a JSON object (no markdown, no code blocks) that matches this JSON Schema:

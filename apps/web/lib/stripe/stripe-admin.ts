@@ -2,15 +2,6 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
-const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
-  'trialing',
-  'active',
-  'past_due',
-  'unpaid',
-  'paused',
-  'canceled',
-]);
-
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
@@ -239,14 +230,6 @@ async function hasMatchingSubscriptionHistory(
       return false;
     }
   }
-}
-
-export function hasEverHadRealSubscription(
-  customerId: string | null | undefined,
-): Promise<boolean> {
-  return hasMatchingSubscriptionHistory(customerId, (subscription) =>
-    REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
-  );
 }
 
 export function hasAnySubscriptionHistory(
