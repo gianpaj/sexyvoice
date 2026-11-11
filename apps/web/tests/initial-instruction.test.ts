@@ -18,7 +18,7 @@ describe('getInitialInstruction', () => {
     (model) => {
       const instruction = getInitialInstruction('de', model);
       expect(instruction).toBe(
-        'SYSTEM: Begrüße den Nutzer auf verführerische und kokette Weise. Wenn der Nutzer nicht viel spricht, sei proaktiv und versuche ihn zum Engagement zu bewegen.',
+        'SYSTEM: Beginne den Anruf als deine Figur. Wenn eine Szene festgelegt ist, steig direkt in ihr ein. Variiere deinen Einstieg: eine Begrüßung, eine Beobachtung, eine passende Frage oder ein Satz, der direkt in die Szene führt. Vermeide abgedroschene Floskeln. Halte es kurz, ein oder zwei Sätze, und sprich Deutsch. Wenn der Nutzer nicht viel spricht, sei proaktiv und versuche ihn zum Engagement zu bewegen.',
       );
       expect(instruction).not.toMatch(/[<>]/);
     },
