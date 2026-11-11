@@ -16,6 +16,7 @@ const sessionConfigSchema = z.object({
 });
 
 export const callTokenPlaygroundStateSchema = z.object({
+  clientTime: z.iso.datetime({ offset: true }).optional().catch(undefined),
   instructions: z.string(),
   language: z
     .enum([
@@ -50,6 +51,19 @@ export const callTokenPlaygroundStateSchema = z.object({
     .nullable()
     .optional(),
   sessionConfig: sessionConfigSchema,
+  timeZone: z
+    .string()
+    .max(100)
+    .refine((value) => {
+      try {
+        Intl.DateTimeFormat('en', { timeZone: value });
+        return true;
+      } catch {
+        return false;
+      }
+    })
+    .optional()
+    .catch(undefined),
 });
 
 export type CallTokenPlaygroundState = z.infer<

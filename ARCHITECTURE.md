@@ -466,6 +466,14 @@ it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters
 and custom scenes require a paid account.
 
+Every call-token request captures the browser clock as `clientTime`, an ISO
+timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
+these optional fields and forwards them as `client_time` and `time_zone` in
+LiveKit participant metadata. Invalid clock fields are ignored. SexyCall adds
+the caller's local date and time to the system prompt and exposes
+`get_current_time` for a fresh reading during the call. Clock context is
+independent of the selected language and long-term memory preference.
+
 Long-term memory is on by default for free and paid accounts. The Profile
 page's Voice Call Memory switch saves `call_memory_enabled` in Auth
 `user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
