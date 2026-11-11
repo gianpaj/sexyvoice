@@ -2,25 +2,41 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_MODEL_ID, ModelId } from '@/data/models';
 import {
+  type CallLanguage,
   getInitialInstruction,
   languageInitialInstructions,
 } from '@/data/playground-state';
 
-describe('getInitialInstruction', () => {
-  it('keeps the breathy cue for Grok realtime', () => {
-    expect(getInitialInstruction('en', DEFAULT_MODEL_ID)).toBe(
-      languageInitialInstructions.en,
-    );
-  });
+const languages = Object.keys(languageInitialInstructions) as CallLanguage[];
 
-  it.each([ModelId.INWORLD_TTS, ModelId.MISTRAL_TTS])(
-    'drops the angle-bracket cue for %s, which reads square tags',
-    (model) => {
-      const instruction = getInitialInstruction('de', model);
-      expect(instruction).toBe(
-        'SYSTEM: Begrüße den Nutzer auf verführerische und kokette Weise. Wenn der Nutzer nicht viel spricht, sei proaktiv und versuche ihn zum Engagement zu bewegen.',
+describe('getInitialInstruction', () => {
+  it.each(languages)(
+    'wraps the %s instruction in one breathy cue',
+    (language) => {
+      expect(languageInitialInstructions[language]).toMatch(
+        /^SYSTEM: <breathy>[^<>]+<\/breathy>$/,
       );
-      expect(instruction).not.toMatch(/[<>]/);
     },
   );
+
+  it.each(languages)(
+    'keeps the breathy cue for Grok realtime in %s',
+    (language) => {
+      expect(getInitialInstruction(language, DEFAULT_MODEL_ID)).toBe(
+        languageInitialInstructions[language],
+      );
+    },
+  );
+
+  it.each(
+    [ModelId.INWORLD_TTS, ModelId.MISTRAL_TTS].flatMap((model) =>
+      languages.map((language) => [model, language] as const),
+    ),
+  )('drops the angle-bracket cue for %s in %s', (model, language) => {
+    const instruction = getInitialInstruction(language, model);
+    expect(instruction).toBe(
+      languageInitialInstructions[language].replace(/<\/?breathy>/g, ''),
+    );
+    expect(instruction).toMatch(/^SYSTEM: [^<>]+$/);
+  });
 });
