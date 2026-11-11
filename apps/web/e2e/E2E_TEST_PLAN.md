@@ -100,6 +100,8 @@ Implemented mock/helper files:
 #### Authenticated
 
 - page renders heading, voice selector, textarea, and generate button
+- Gemini 3.8 is selected by default; retired Gemini 2.5 and 3.1 models have no
+  voice options or model filters
 - successful audio generation with mocked `/api/generate-voice`
 - Grok TTS flow with a featured Grok voice
 - disabled state when text is empty

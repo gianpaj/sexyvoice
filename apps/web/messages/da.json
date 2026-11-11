@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "Hvilke sprog kan jeg generere tale på?",
-              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.1-stemmer understøtter over 70 sprog, mens Gemini 2.5-stemmer understøtter 24. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
+              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.8-stemmer understøtter over 130 sprog. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -483,7 +483,6 @@
     "estimateCreditsButton": "Estimér credits",
     "fullscreenTitle": "Fuld skærm",
     "generating": "Genererer",
-    "gproLimitExceeded": "Du har nået gratisgrænsen på __COUNT__ genereringer med denne model. Køb kreditter for at fortsætte med den.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
@@ -546,7 +545,7 @@
       "multilingualGroupLabel": "Flersprogede 🌍",
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
-      "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS understøtter over 130 sprog. Stilinstruktioner styrer tone og tempo; indlejrede tags tilføjer stemmelyde.",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
       "featuredBadge": "Fremhævet",
       "selectVoicePlaceholder": "Vælg en stemme...",
@@ -598,13 +597,6 @@
         "description": "Fastlås et seed for reproducerbare resultater. Lad feltet stå tomt for et tilfældigt seed.",
         "placeholder": "Tilfældig",
         "randomize": "Tilfældigt seed"
-      },
-      "streaming": {
-        "label": "Streaming",
-        "description": "Stream lyd, mens den genereres (kun Gemini 3.1).",
-        "auto": "Auto",
-        "on": "Til",
-        "off": "Fra"
       },
       "temperature": {
         "label": "Temperatur",
@@ -1257,7 +1249,7 @@
       "ariaLabelDismiss": "Luk besked om opkald med klonet stemme"
     },
     "expressiveVoicesLaunch": {
-      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.8, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"

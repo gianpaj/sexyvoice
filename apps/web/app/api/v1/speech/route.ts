@@ -51,7 +51,6 @@ import {
 } from '@/lib/supabase/queries';
 import {
   buildGeminiTtsContents,
-  buildGeminiTtsPrompt,
   buildGeminiVoiceConfig,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -59,6 +58,7 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import { isActiveTtsModel } from '@/lib/tts/models';
 import {
   generateXaiTts,
   isTransientXaiTtsFailure,
@@ -91,18 +91,10 @@ interface GeminiProviderFailure {
   type: 'rate_limit_error' | 'server_error';
 }
 
-/**
- * Classify the errors from every Gemini attempt, in order. Quota is judged on
- * the final attempt only, since an earlier model hitting its quota while the
- * fallback still fails for another reason is not a quota outcome.
- */
 function getGeminiProviderFailure(
-  attemptErrors: unknown[],
+  error: unknown,
 ): GeminiProviderFailure | null {
-  const parsedErrors = attemptErrors
-    .map((error) => parseGoogleApiError(error))
-    .filter((error): error is NonNullable<typeof error> => error !== null);
-  const finalGoogleError = parseGoogleApiError(attemptErrors.at(-1));
+  const finalGoogleError = parseGoogleApiError(error);
 
   if (finalGoogleError && isGoogleQuotaError(finalGoogleError)) {
     return {
@@ -118,15 +110,11 @@ function getGeminiProviderFailure(
     };
   }
 
-  const transientError = parsedErrors.find((error) =>
-    isGoogleTransientProviderError(error),
-  );
-
-  if (transientError) {
+  if (finalGoogleError && isGoogleTransientProviderError(finalGoogleError)) {
     return {
       code: 'provider_unavailable',
-      googleCode: transientError.code,
-      googleStatus: getGoogleApiErrorStatus(transientError),
+      googleCode: finalGoogleError.code,
+      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
       message: getProviderUnavailableMessage('gemini'),
       status: 503,
       type: 'server_error',
@@ -385,7 +373,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!voiceObj) {
+    if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'voice_not_found',
@@ -437,19 +425,11 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    const finalText =
-      isGeminiVoice && style
-        ? buildGeminiTtsPrompt({
-            model: voiceObj.model,
-            styleVariant: style,
-            text: input,
-          })
-        : input;
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (
-      finalText.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
+      input.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
       maxLength
     ) {
       const lengthErrorMessage =
@@ -461,7 +441,7 @@ export async function POST(request: Request) {
         errorCode: 'input_too_long',
         model,
         status: 400,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -499,14 +479,14 @@ export async function POST(request: Request) {
     }
 
     const currentCredits = await getCreditsAdmin(userId);
-    const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
+    const estimatedCredits = estimateCredits(input, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'insufficient_credits',
         model,
         status: 402,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -533,7 +513,7 @@ export async function POST(request: Request) {
         errorCode: 'insufficient_credits',
         model,
         status: 402,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -574,7 +554,7 @@ export async function POST(request: Request) {
         model: modelUsed,
         provider,
         status: 503,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -607,10 +587,8 @@ export async function POST(request: Request) {
         },
       };
 
-      const respondToGeminiProviderFailure = async (
-        attemptErrors: unknown[],
-      ) => {
-        const providerFailure = getGeminiProviderFailure(attemptErrors);
+      const respondToGeminiProviderFailure = async (error: unknown) => {
+        const providerFailure = getGeminiProviderFailure(error);
         if (!providerFailure) return null;
 
         await refundReservedCredits('gemini_provider_failure');
@@ -624,7 +602,7 @@ export async function POST(request: Request) {
           providerCode: providerFailure.googleCode,
           providerStatus: providerFailure.googleStatus,
           status: providerFailure.status,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -640,48 +618,20 @@ export async function POST(request: Request) {
       };
 
       try {
-        modelUsed = resolveGeminiTtsModel({ model, userHasPaid: true });
+        modelUsed = resolveGeminiTtsModel({ model });
         geminiResponse = await ai.models.generateContent({
           config,
           contents: buildGeminiTtsContents({
             model,
             styleVariant: style,
-            text: finalText,
+            text: input,
           }),
           model: modelUsed,
         });
-      } catch (proError) {
-        if (model === 'gpro38') {
-          // No 2.5 fallback: it cannot serve the extended 3.8 voice ids.
-          const failureResponse = await respondToGeminiProviderFailure([
-            proError,
-          ]);
-          if (failureResponse) return failureResponse;
-          throw proError;
-        }
-        modelUsed = 'gemini-2.5-flash-preview-tts';
-        try {
-          geminiResponse = await ai.models.generateContent({
-            config,
-            contents: buildGeminiTtsContents({
-              model,
-              styleVariant: style,
-              text: finalText,
-            }),
-            model: modelUsed,
-          });
-        } catch (flashError) {
-          const failureResponse = await respondToGeminiProviderFailure([
-            proError,
-            flashError,
-          ]);
-          if (failureResponse) return failureResponse;
-
-          throw new Error(
-            `Both Gemini models failed. Pro error: ${proError instanceof Error ? proError.message : String(proError)}. Flash error: ${flashError instanceof Error ? flashError.message : String(flashError)}`,
-            { cause: flashError },
-          );
-        }
+      } catch (error) {
+        const failureResponse = await respondToGeminiProviderFailure(error);
+        if (failureResponse) return failureResponse;
+        throw error;
       }
 
       const { data, mimeType } = extractInlineAudio(geminiResponse);
@@ -715,7 +665,7 @@ export async function POST(request: Request) {
           isGeminiVoice,
           model: modelUsed,
           status: httpStatus,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -750,7 +700,7 @@ export async function POST(request: Request) {
           codec,
           language: voiceObj.language ?? 'en',
           speed,
-          text: finalText,
+          text: input,
           voiceId: voice,
         });
       } catch (error) {
@@ -775,7 +725,7 @@ export async function POST(request: Request) {
           model: modelUsed,
           provider,
           status: 500,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -805,7 +755,7 @@ export async function POST(request: Request) {
       try {
         output = (await replicate.run(
           voiceObj.model as `${string}/${string}`,
-          { input: { text: finalText, voice } },
+          { input: { text: input, voice } },
           (prediction: Prediction) => {
             replicateResponse = prediction;
           },
@@ -878,7 +828,7 @@ export async function POST(request: Request) {
         'candidatesTokenCount' in usageMetadata
           ? usageMetadata.candidatesTokenCount
           : null,
-      inputChars: finalText.length,
+      inputChars: input.length,
       model: modelUsed,
       promptTokenCount:
         isGeminiVoice && usageMetadata && 'promptTokenCount' in usageMetadata
@@ -895,7 +845,7 @@ export async function POST(request: Request) {
         isPublic: false,
         model: modelUsed,
         predictionId: replicateResponse?.id,
-        text: finalText,
+        text: input,
         url: uploadUrl,
         usage: {
           ...usageMetadata,
@@ -916,12 +866,12 @@ export async function POST(request: Request) {
       creditsUsed: creditsDebited,
       dollarAmount,
       durationSeconds,
-      inputChars: finalText.length,
+      inputChars: input.length,
       metadata: {
         ...usageMetadata,
         model: modelUsed,
-        textLength: finalText.length,
-        textPreview: finalText.slice(0, 100),
+        textLength: input.length,
+        textPreview: input.slice(0, 100),
         voiceId: voiceObj.id,
         voiceName: voice,
         ...(seed === undefined ? {} : { seed }),
@@ -931,7 +881,7 @@ export async function POST(request: Request) {
         userHasPaid,
       },
       model: modelUsed,
-      quantity: finalText.length,
+      quantity: input.length,
       requestId,
       sourceId: audioFileResult.data?.id ?? null,
       sourceType: 'api_tts',
@@ -951,7 +901,7 @@ export async function POST(request: Request) {
       model: modelUsed,
       provider,
       status: 200,
-      textLength: finalText.length,
+      textLength: input.length,
       userHasPaid,
       userId,
       voice,
@@ -964,7 +914,7 @@ export async function POST(request: Request) {
         credits_used: creditsDebited,
         url: uploadUrl,
         usage: {
-          input_characters: finalText.length,
+          input_characters: input.length,
           model: modelUsed,
         },
       },

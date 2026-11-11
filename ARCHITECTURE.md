@@ -45,7 +45,7 @@ The repository has three main workspaces:
   components, server actions, and route handlers.
 - **Supabase** provides Google OAuth, PostgreSQL, RLS-protected user data, and
   privileged server access through `SUPABASE_SECRET_KEY`.
-- **Google Generative AI** provides Gemini 2.5 and Gemini 3.1 TTS, text
+- **Google Generative AI** provides Gemini 3.8 TTS, text
   enhancement, and emotion tagging.
 - **xAI** provides Grok TTS, the real-time call model, and structured call
   transcript analysis.
@@ -67,16 +67,14 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature                  | Public or stored ID                                       | Runtime provider/model                                                   | Notes                                                                     |
-| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Dashboard TTS            | `gpro`                                                    | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
-| External API TTS         | `gpro`                                                    | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
-| Dashboard and API TTS    | `gpro31`                                                  | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
-| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
-| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
-| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
+| Feature                  | Public or stored ID                                       | Runtime provider/model                                              | Notes                                                           |
+| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Dashboard and API TTS    | `gpro38`                                                  | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                 |
+| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                |
+| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus` |
+| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                              |
+| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider    |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                 |
 
 ## External REST API
 
@@ -100,13 +98,13 @@ API-key provisioning; the external API does not issue OAuth tokens.
 
 ### Endpoints
 
-| Method | Path              | Description                                             |
-| ------ | ----------------- | ------------------------------------------------------- |
-| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
-| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
-| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
-| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
-| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
+| Method | Path              | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                      |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs       |
+| `GET`  | `/api/v1/models`  | List the `gpro38`, `xai`, and `orpheus` catalog  |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document           |
 
 Clients may select speech voices by `voiceId`, or by the `voice` and `model`
 pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
@@ -141,7 +139,7 @@ flowchart TD
     E --> F["Validate model, format, style, and input length"]
     F --> G["Check and reserve estimated credits"]
     G --> H{"Provider"}
-    H -->|"gpro / gpro31"| I["Generate with Gemini"]
+    H -->|"gpro38"| I["Generate with Gemini"]
     H -->|"xai"| J["Generate with xAI TTS"]
     H -->|"orpheus"| K["Generate with Replicate"]
     I --> L["Upload to external API R2 bucket"]
@@ -184,6 +182,13 @@ flowchart TD
     H -->|"Failure"| Q["Refund reserved credits"]
 ```
 
+`lib/tts/models.ts` excludes the retired `gpro` and `gpro31` catalogs from
+voice lists, lookups, generation, and estimates. Requests for retired model
+aliases fail validation; retired UUIDs return voice-not-found before cache
+access or charging. Historical voice rows remain public so history joins,
+playback, and downloads can resolve their names and audio. Provider-cost
+reporting retains the retired models' historical rates.
+
 The route enforces model- and tier-specific text limits: 500 characters by
 default and 1,000 for paid Gemini and Grok requests. Gemini accepts style,
 seed, and temperature; seed and temperature require a paid account. Grok
@@ -196,7 +201,7 @@ tags. Non-empty edits, including select-all replacement with unrelated text,
 preserve the flag. Clearing the text resets it, and Undo restores its prior
 value. Pending improvements are discarded if the text changes before they
 complete. The route stores the boolean in
-`audio_files.usage.textImproved` for JSON and streaming generations. Omitted or
+`audio_files.usage.textImproved` for generations. Omitted or
 non-boolean values resolve to `false`. Cache hits reuse the existing audio row
 and its original metadata; the flag does not affect cache keys.
 

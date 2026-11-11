@@ -83,6 +83,25 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     );
   });
 
+  test('should omit retired Gemini models from the voice picker', async ({
+    page,
+  }) => {
+    await expect(generatePage.voiceSelector).toContainText('Gemini 3.8');
+    await generatePage.voiceSelector.click();
+
+    await expect(
+      page.getByRole('button', { name: 'Gemini 3.8', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Gemini (2\.5|3\.1)/ }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('option', { name: /Gemini (2\.5|3\.1)/ }),
+    ).toHaveCount(0);
+
+    await page.keyboard.press('Escape');
+  });
+
   test('should support the Grok TTS flow', async () => {
     await generatePage.selectVoice('Eve|Rex|Sal');
     await expect(generatePage.styleInput).toHaveCount(0);

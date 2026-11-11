@@ -7,7 +7,6 @@ import { twMerge } from 'tailwind-merge';
 
 import type { CloneProvider } from '@/lib/clone/constants';
 import { getVoxtralDollarCost, type VoxtralModel } from '@/lib/clone/voxtral';
-import { GEMINI_TTS_31 } from '@/lib/tts/gemini-prompt';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,34 +41,8 @@ const GROK_CHAR_BUCKET = 100;
 const GROK_CREDITS_PER_BUCKET = 100;
 const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
-// Gemini 3.1 (`gpro31`) voices always run on the full Gemini 3.1 model, which
-// costs the provider twice as much per token ($1/$20 per 1M in/out) as the
-// Gemini 2.5 Flash model ($0.5/$10) that free users are downgraded to for
-// `gpro` (2.5) voices. Our base credit rates are calibrated to that 2.5 cost,
-// so free users get 3.1 audio for the price of 2.5. Charge them double for 3.1
-// voices to compensate. Paid users run 2.5 Pro for `gpro` (same cost as 3.1),
-// so they are not affected.
-// Gemini 3.8 (`gpro38`) has no free-tier surcharge, including after Google's
-// promotional rate ends on 2027-01-01. That is a product decision, not a gap.
-const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
-
-// `model` may be the stored voice token (`gpro31`), used by the estimate and the
-// upfront reservation, or the resolved provider model id, used when billing the
-// actual generation. Keying on both means the surcharge follows the audio that
-// was really produced: a free 3.1 request that errors out and falls back to
-// 2.5 Flash bills at 1×, not 2×.
-function getGemini31FreeMultiplier(
-  model?: string,
-  userHasPaid?: boolean,
-): number {
-  const isGemini31 = model === 'gpro31' || model === GEMINI_TTS_31;
-  return isGemini31 && userHasPaid === false
-    ? GEMINI_31_FREE_CREDIT_MULTIPLIER
-    : 1;
-}
-
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
+  if (model === 'gpro38') {
     return 'gemini';
   }
 
@@ -105,11 +78,7 @@ export function calculateReadingTime(
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-function getCreditMultiplier(
-  voice: string,
-  model?: string,
-  userHasPaid?: boolean,
-): number {
+function getCreditMultiplier(voice: string, model?: string): number {
   let multiplier: number;
   switch (voice) {
     case 'pietro':
@@ -128,18 +97,17 @@ function getCreditMultiplier(
       break;
   }
 
-  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
+  if (model === 'gpro38') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
-  return multiplier * getGemini31FreeMultiplier(model, userHasPaid);
+  return multiplier;
 }
 
 function calculateCredits(
   words: number,
   voice: string,
   model?: string,
-  userHasPaid?: boolean,
 ): number {
   if (!voice) {
     throw new Error('Voice is required');
@@ -151,7 +119,7 @@ function calculateCredits(
 
   // Using average speaking rate of 100 words per minute (middle of 120-150 range)
   const wordsPerSecond = 100 / 60; // 2.25 words per second
-  const multiplier = getCreditMultiplier(voice, model, userHasPaid);
+  const multiplier = getCreditMultiplier(voice, model);
 
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
@@ -217,7 +185,6 @@ export function estimateCredits(
   text: string,
   voice: string,
   model?: string,
-  userHasPaid?: boolean,
 ): number {
   const words = countWords(text);
 
@@ -229,27 +196,16 @@ export function estimateCredits(
     return estimateGrokCredits(text);
   }
 
-  return calculateCredits(words, voice, model, userHasPaid);
+  return calculateCredits(words, voice, model);
 }
 
-// Credit calculation constants for gpro voices
+// Credit calculation for Gemini audio tokens
 const CREDITS_PER_TOKEN = 1.1;
 
-export function calculateCreditsFromTokens(
-  tokenCount: number,
-  options?: { model?: string; userHasPaid?: boolean },
-): number {
+export function calculateCreditsFromTokens(tokenCount: number): number {
   const normalizedTokens = Math.max(0, tokenCount);
 
-  // Calculate estimated credits based on tokens
-  // Using a ratio that approximates the actual credit consumption. Free users
-  // on a Gemini 3.1 voice pay double (see GEMINI_31_FREE_CREDIT_MULTIPLIER).
-  const multiplier = getGemini31FreeMultiplier(
-    options?.model,
-    options?.userHasPaid,
-  );
-
-  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
+  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN);
 }
 
 /**

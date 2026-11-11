@@ -13,11 +13,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
-import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import esMessages from '@/messages/es.json';
 
-const streamingOverride = vi.hoisted(() => ({ enabled: false }));
 const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
@@ -131,13 +129,8 @@ vi.mock('@/components/grok-tts-editor', () => ({
 }));
 
 vi.mock('@/lib/ai', () => ({
-  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
-  GEMINI_CHARS_PER_TOKEN: 4,
-  get GEMINI_STREAMING_ENABLED() {
-    return streamingOverride.enabled;
-  },
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
-    if (model === 'gpro') {
+    if (model === 'gpro38') {
       return isPaidUser ? 1000 : 500;
     }
 
@@ -356,7 +349,6 @@ describe('AudioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockComplete.mockReset();
-    streamingOverride.enabled = false;
     mockToastFn.mockClear();
     mockToastFn.success.mockClear();
     mockToastFn.error.mockClear();
@@ -555,33 +547,21 @@ describe('AudioGenerator', () => {
     ).toBeInTheDocument();
   });
 
-  it.each([
-    { model: 'gpro31', visible: true },
-    { model: 'gpro38', visible: true },
-    { model: 'gpro', visible: false },
-  ])(
-    'shows the AI enhance button for $model voices: $visible',
-    async ({ model, visible }) => {
-      renderAudioGenerator({
-        selectedVoice: createVoice({
-          language: 'multiple',
-          model,
-          name: 'kore',
-        }),
-      });
+  it('shows the AI enhance button for Gemini 3.8 voices', async () => {
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        language: 'multiple',
+        model: 'gpro38',
+        name: 'kore',
+      }),
+    });
 
-      // The prompt editor is loaded with next/dynamic.
-      await screen.findByTestId('generate-textarea');
-      const enhanceButton = screen.queryByTitle(
-        'Enhance text with AI emotion tags',
-      );
-      if (visible) {
-        expect(enhanceButton).toBeInTheDocument();
-      } else {
-        expect(enhanceButton).not.toBeInTheDocument();
-      }
-    },
-  );
+    // The prompt editor is loaded with next/dynamic.
+    await screen.findByTestId('generate-textarea');
+    expect(
+      screen.getByTitle('Enhance text with AI emotion tags'),
+    ).toBeInTheDocument();
+  });
 
   it('hides the AI enhance button for Grok voices', () => {
     renderAudioGenerator({
@@ -744,7 +724,7 @@ describe('AudioGenerator', () => {
   it('disables split mode for free users', () => {
     renderAudioGenerator({
       isPaidUser: false,
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     expect(
@@ -764,7 +744,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       isPaidUser: false,
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -783,7 +763,7 @@ describe('AudioGenerator', () => {
     const user = userEvent.setup();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -922,7 +902,7 @@ describe('AudioGenerator', () => {
     ).join(' ');
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     await user.click(
@@ -966,7 +946,7 @@ describe('AudioGenerator', () => {
     renderAudioGenerator({
       selectedStyle: 'Read this in a dramatic whisper',
       selectedVoice: createVoice({
-        model: 'gpro',
+        model: 'gpro38',
         name: 'achernar',
       }),
     });
@@ -1012,7 +992,7 @@ describe('AudioGenerator', () => {
   });
 
   it.each([
-    { model: 'gpro', name: 'achernar', provider: 'Gemini' },
+    { model: 'gpro38', name: 'achernar', provider: 'Gemini' },
     { model: 'xai', name: 'eve', provider: 'Grok' },
     {
       model:
@@ -1074,7 +1054,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1125,7 +1105,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1194,7 +1174,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1259,7 +1239,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1299,7 +1279,7 @@ describe('AudioGenerator', () => {
     const firstSegment = `${'A'.repeat(300)}.`;
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
-    const selectedVoice = createVoice({ model: 'gpro', name: 'achernar' });
+    const selectedVoice = createVoice({ model: 'gpro38', name: 'achernar' });
     const fetchMock = vi.fn(async () => ({
       json: async () => ({
         url: `https://example.com/gemini-${fetchMock.mock.calls.length}.wav`,
@@ -1766,100 +1746,39 @@ describe('AudioGenerator', () => {
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
 
-  // ── Streaming tests ───────────────────────────────────────────────────────
-
-  function makeSseStreamResponse(frames: string[]) {
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream<Uint8Array>({
-      start(controller) {
-        for (const frame of frames) {
-          controller.enqueue(encoder.encode(frame));
-        }
-        controller.close();
-      },
-    });
-    return {
-      body: readable,
-      headers: new Headers({ 'content-type': 'text/event-stream' }),
-      json: async () => ({}),
-      ok: true,
-    };
-  }
-
-  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/generated-audio/kore.wav';
-  // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
-  const SSE_AUDIO_FRAME =
-    'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
-  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
-  const SSE_ERROR_FRAME = `event: error\ndata: ${JSON.stringify({
-    details: { provider: 'Gemini' },
-    error: 'Gemini is temporarily unavailable. Please retry.',
-    errorCode: 'PROVIDER_UNAVAILABLE',
-  })}\n\n`;
-
+  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/audio.wav';
   const LONG_TEXT = 'a'.repeat(301);
-  const SHORT_TEXT = 'a'.repeat(10);
 
-  it.each([
-    {
-      transport: 'JSON',
-      isPaidUser: false,
-      errorCode: 'GEMINI_OUTPUT_LIMIT',
-      status: 422,
-    },
-    {
-      transport: 'SSE',
-      isPaidUser: true,
-      errorCode: 'GEMINI_OUTPUT_LIMIT',
-      status: 422,
-    },
-    {
-      transport: 'SSE',
-      isPaidUser: true,
-      errorCode: 'dailyLimitError',
-      status: 500,
-    },
-  ] as const)(
-    'localizes $errorCode over $transport',
-    async ({ transport, isPaidUser, errorCode, status }) => {
-      streamingOverride.enabled = transport === 'SSE';
-      const user = userEvent.setup();
-      const payload = {
-        error: 'The voice reached its audio output limit.',
-        errorCode,
-      };
-      const fetchMock = vi
-        .fn()
-        .mockResolvedValue(
-          transport === 'SSE'
-            ? makeSseStreamResponse([
-                SSE_AUDIO_FRAME,
-                `event: error\ndata: ${JSON.stringify(payload)}\n\n`,
-              ])
-            : { json: async () => payload, ok: false, status },
-        );
-      vi.stubGlobal('fetch', fetchMock);
-      renderAudioGenerator({
-        isPaidUser,
-        selectedVoice: createVoice({ model: 'gpro31', name: 'achernar' }),
-      });
-      fireEvent.change(
-        await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
-        {
-          target: { value: LONG_TEXT },
-        },
+  it('localizes Gemini output-limit errors', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          error: 'The voice reached its audio output limit.',
+          errorCode: 'GEMINI_OUTPUT_LIMIT',
+        }),
+        ok: false,
+        status: 422,
+      }),
+    );
+    renderAudioGenerator({
+      selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: LONG_TEXT } },
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        `${baseDict.GEMINI_OUTPUT_LIMIT} (422)`,
       );
-      await user.click(screen.getByTestId('generate-button'));
+    });
+  });
 
-      await waitFor(() => {
-        expect(mockToastFn.error).toHaveBeenCalledWith(
-          `${baseDict[errorCode].replace('__COUNT__', String(MAX_FREE_GENERATIONS))} (${status})`,
-        );
-      });
-    },
-  );
-
-  describe.each(['JSON', 'SSE'])('%s credit refresh', (transport) => {
+  describe('Credit refresh', () => {
     it.each([
       { cached: true, refreshCount: 0 },
       { cached: false, refreshCount: 1 },
@@ -1867,7 +1786,6 @@ describe('AudioGenerator', () => {
     ])(
       'refreshes $refreshCount times when cached=$cached',
       async ({ cached, refreshCount }) => {
-        streamingOverride.enabled = transport === 'SSE';
         const user = userEvent.setup();
         const payload = {
           cached,
@@ -1876,16 +1794,10 @@ describe('AudioGenerator', () => {
         };
         const fetchMock = vi
           .fn()
-          .mockResolvedValue(
-            transport === 'SSE'
-              ? makeSseStreamResponse([
-                  `event: done\ndata: ${JSON.stringify(payload)}\n\n`,
-                ])
-              : { json: async () => payload, ok: true },
-          );
+          .mockResolvedValue({ ok: true, json: async () => payload });
         vi.stubGlobal('fetch', fetchMock);
         renderAudioGenerator({
-          selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+          selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
         });
         fireEvent.change(
           await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
@@ -1896,9 +1808,7 @@ describe('AudioGenerator', () => {
         await waitFor(() => {
           expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
         });
-        expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
-          transport === 'SSE' ? true : undefined,
-        );
+        expect(getFetchRequestBody(fetchMock, 0).stream).toBe(undefined);
         expect(invalidateQueries).toHaveBeenCalledTimes(refreshCount);
         expect(screen.getByTestId('audio-player')).toHaveAttribute(
           'data-url',
@@ -1908,62 +1818,11 @@ describe('AudioGenerator', () => {
     );
   });
 
-  function setupAudioContextMock() {
-    const mockStart = vi.fn();
-    const mockConnect = vi.fn();
-    const mockCreateBufferSource = vi.fn(() => ({
-      buffer: null as unknown,
-      connect: mockConnect,
-      start: mockStart,
-    }));
-    const mockCopyToChannel = vi.fn();
-    const mockCreateBuffer = vi.fn().mockReturnValue({
-      copyToChannel: mockCopyToChannel,
-      duration: 0.1,
-    });
-    const mockClose = vi.fn();
-
-    const MockAudioContext = vi.fn().mockImplementation(function (this: any) {
-      this.currentTime = 0;
-      this.destination = {};
-      this.createBuffer = mockCreateBuffer;
-      this.createBufferSource = mockCreateBufferSource;
-      this.close = mockClose;
-    });
-
-    vi.stubGlobal('AudioContext', MockAudioContext);
-
-    return {
-      MockAudioContext,
-      mockClose,
-      mockCreateBuffer,
-      mockCreateBufferSource,
-      mockStart,
-    };
-  }
-
-  it.each(['fetch', 'JSON body', 'SSE body'])(
+  it.each(['fetch', 'JSON body'])(
     'does not refresh credits when cancelled during %s',
     async (stage) => {
-      streamingOverride.enabled = stage === 'SSE body';
       const user = userEvent.setup();
       const fetchMock = vi.fn(async (_url: string, { signal }: RequestInit) => {
-        if (stage === 'SSE body') {
-          return {
-            body: new ReadableStream<Uint8Array>({
-              start(controller) {
-                signal?.addEventListener(
-                  'abort',
-                  () =>
-                    controller.error(new DOMException('Aborted', 'AbortError')),
-                  { once: true },
-                );
-              },
-            }),
-            ok: true,
-          };
-        }
-
         const pending = new Promise<never>((_resolve, reject) => {
           signal?.addEventListener(
             'abort',
@@ -1976,7 +1835,7 @@ describe('AudioGenerator', () => {
       vi.stubGlobal('fetch', fetchMock);
 
       renderAudioGenerator({
-        selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
       });
       fireEvent.change(
         await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
@@ -1985,9 +1844,7 @@ describe('AudioGenerator', () => {
       await user.click(screen.getByTestId('generate-button'));
 
       expect(fetchMock).toHaveBeenCalledOnce();
-      expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
-        stage === 'SSE body' ? true : undefined,
-      );
+      expect(getFetchRequestBody(fetchMock, 0).stream).toBe(undefined);
       expect(invalidateQueries).not.toHaveBeenCalled();
 
       await act(async () => {
@@ -2001,202 +1858,4 @@ describe('AudioGenerator', () => {
       expect(mockToastFn.success).not.toHaveBeenCalled();
     },
   );
-
-  // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
-  // client no longer requests the SSE path. Re-enable with the flag.
-  it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(makeSseStreamResponse([SSE_DONE_FRAME]));
-    vi.stubGlobal('fetch', fetchMock);
-    setupAudioContextMock();
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBe(true);
-    expect(body.voiceId).toBe('voice-id');
-  });
-
-  it('omits stream for Gemini voice when text is at or below threshold', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  it('omits stream for gpro (Gemini 2.5) voice even above threshold', async () => {
-    // Only gpro31 (Gemini 3.1) streams progressively; gpro returns the whole
-    // clip at once, so it must stay on the JSON path regardless of length.
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  it('omits stream for Grok voice regardless of text length', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
-    });
-
-    const textarea = screen.getByRole('textbox', {
-      name: baseDict.textAreaPlaceholder,
-    });
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
-  it.skip('schedules audio chunks via Web Audio and shows the streaming player', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
-      );
-    vi.stubGlobal('fetch', fetchMock);
-    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } =
-      setupAudioContextMock();
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(
-      () => expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success),
-      { timeout: 3000 },
-    );
-
-    // The streamed PCM chunk is decoded + scheduled through the Web Audio engine.
-    expect(MockAudioContext).toHaveBeenCalledOnce();
-    expect(mockCreateBuffer).toHaveBeenCalledOnce();
-    expect(mockCreateBufferSource).toHaveBeenCalledOnce();
-
-    // The single streaming player (waveform + play/pause) is shown — not the
-    // standard file player. After the `done` event the full clip exists, so it
-    // hands off to the seekable `file` phase immediately.
-    await waitFor(() => {
-      const player = screen.getByTestId('streaming-waveform-player');
-      expect(player).toHaveAttribute('data-phase', 'file');
-    });
-    expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
-  });
-
-  it('shows an error toast and refreshes credits on an SSE error event', async () => {
-    streamingOverride.enabled = true;
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
-      );
-    vi.stubGlobal('fetch', fetchMock);
-    setupAudioContextMock();
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() =>
-      expect(mockToastFn.error).toHaveBeenCalledWith(
-        'Gemini no está disponible temporalmente. Inténtalo de nuevo. (500)',
-      ),
-    );
-    expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
-      queryKey: ['credits'],
-    });
-  });
 });

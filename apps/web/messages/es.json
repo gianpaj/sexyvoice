@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "¿En qué idiomas puedo generar voz?",
-              "answer": "Los idiomas dependen de la voz y el modelo. Las voces Gemini 3.1 admiten más de 70 idiomas y las Gemini 2.5, 24. Otros modelos tienen sus propias opciones. Elige una voz para tu idioma y escucha una muestra. La clonación tiene su propia lista de idiomas más abajo."
+              "answer": "Los idiomas dependen de la voz y el modelo. Las voces Gemini 3.8 admiten más de 130 idiomas. Otros modelos tienen sus propias opciones. Elige una voz para tu idioma y escucha una muestra. La clonación tiene su propia lista de idiomas más abajo."
             },
             {
               "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
@@ -487,7 +487,6 @@
     "errorEstimating": "Error al estimar créditos",
     "fullscreenTitle": "Pantalla completa",
     "generating": "Generando",
-    "gproLimitExceeded": "Has alcanzado el límite gratuito de __COUNT__ generaciones con este modelo. Compra créditos para seguir usándolo.",
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "playAudio": "Escucha Audio",
     "resetPlayer": "Reiniciar reproductor",
@@ -550,7 +549,7 @@
       "multilingualGroupLabel": "Multilingüe 🌍",
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
-      "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).",
+      "geminiInfo": "Gemini 3.8 TTS admite más de 130 idiomas. Las instrucciones de estilo controlan el tono y el ritmo; las etiquetas insertadas añaden sonidos vocales.",
       "grokInfo": "Admite etiquetas expresivas como [laugh] y\netiquetas envolventes como <fast>...</fast> y admite 24 idiomas:\n🇪🇬 Árabe (Egipto, Arabia Saudí y EAU),\n🇧🇩 Bengalí,\n🇳🇱 Neerlandés (Países Bajos),\n🇨🇳 Chino (simplificado),\n🇺🇸 Inglés,\n🇫🇷 Francés,\n🇩🇪 Alemán,\n🇮🇳 Hindi,\n🇮🇩 Indonesio,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇰🇷 Coreano,\n🇧🇷 Portugués (Brasil, Portugal),\n🇷🇺 Ruso,\n🇪🇸 Español (México, España),\n🇹🇷 Turco,\n🇺🇦 Ucraniano,\n🇻🇳 Vietnamita",
       "featuredBadge": "Destacada",
       "selectVoicePlaceholder": "Seleccionar una voz...",
@@ -602,13 +601,6 @@
         "description": "Fija una semilla para obtener resultados reproducibles. Déjala vacía para una semilla aleatoria.",
         "placeholder": "Aleatoria",
         "randomize": "Semilla aleatoria"
-      },
-      "streaming": {
-        "label": "Transmisión",
-        "description": "Transmite el audio a medida que se genera (solo Gemini 3.1).",
-        "auto": "Automático",
-        "on": "Activado",
-        "off": "Desactivado"
       },
       "temperature": {
         "label": "Temperatura",
@@ -1261,7 +1253,7 @@
       "ariaLabelDismiss": "Cerrar anuncio de llamadas con voz clonada"
     },
     "expressiveVoicesLaunch": {
-      "text": "Llegan nuevas voces más expresivas, impulsadas por Gemini 3.1, con un control más preciso sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
+      "text": "Llegan nuevas voces más expresivas, impulsadas por Gemini 3.8, con un control más preciso sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
       "ctaLoggedIn": "Probar voces",
       "ctaLoggedOut": "Iniciar sesión",
       "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"
