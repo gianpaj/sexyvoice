@@ -97,6 +97,10 @@ lower bound on spend; missing components are not assumed free. Realtime
 subtotals are not added again to their component costs.
 Retried usage events for one call count once. A complete price takes precedence
 over an incomplete snapshot; equal-coverage snapshots use the latest event.
+The call agent's
+[`CallSessionStore.end_call_session`](https://github.com/gianpaj/sexycall/blob/main/src/call_session_store.py)
+writes one cumulative usage event per call, including replacement-session usage.
+Credit-metering heartbeats do not write usage events.
 Zero-duration calls can use a valid sub-second timestamp difference.
 Grok voice calls are estimated at $0.08 per minute. `grok-voice-think-fast-1.0`
 calls that started before 2026-09-13 06:00 UTC use $0.05, the rate xAI billed
