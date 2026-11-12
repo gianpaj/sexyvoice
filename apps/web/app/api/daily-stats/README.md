@@ -101,6 +101,9 @@ The call agent's
 [`CallSessionStore.end_call_session`](https://github.com/gianpaj/sexycall/blob/main/src/call_session_store.py)
 writes one cumulative usage event per call, including replacement-session usage.
 Credit-metering heartbeats do not write usage events.
+Usage-event INSERT access is server-only; users retain their owner-scoped
+history read access. Apply `20261112123500_restrict_usage_event_writes.sql`
+before deploying call retry deduplication.
 Zero-duration calls can use a valid sub-second timestamp difference.
 Grok voice calls are estimated at $0.08 per minute. `grok-voice-think-fast-1.0`
 calls that started before 2026-09-13 06:00 UTC use $0.05, the rate xAI billed
