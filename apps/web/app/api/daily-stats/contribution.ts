@@ -44,15 +44,36 @@ function buildCostRecords(data: ContributionData): CostRecord[] {
       .filter((event) => event.source_type === 'live_call')
       .map((event) => event.source_id),
   ]);
-  const records: CostRecord[] = data.events.map((event) => ({
-    at: event.occurred_at,
-    cost: resolveUsageCost(
-      event,
-      calls.get(event.source_id ?? ''),
-      data.audioUsage[event.source_id ?? ''],
-    ),
-    feature: event.source_type,
-  }));
+  const records: CostRecord[] = [];
+  const callRecords = new Map<string, CostRecord>();
+  const priority = { estimated: 1, recorded: 2, unknown: 0 };
+  for (const event of data.events) {
+    const record: CostRecord = {
+      at: event.occurred_at,
+      cost: resolveUsageCost(
+        event,
+        calls.get(event.source_id ?? ''),
+        data.audioUsage[event.source_id ?? ''],
+      ),
+      feature: event.source_type,
+    };
+    if (event.source_type !== 'live_call' || !event.source_id) {
+      records.push(record);
+      continue;
+    }
+    const previous = callRecords.get(event.source_id);
+    // Retried inserts are cumulative snapshots of one call. Prefer a complete
+    // price, then the most recent snapshot at the same coverage level.
+    if (
+      !previous ||
+      priority[record.cost.basis] > priority[previous.cost.basis] ||
+      (priority[record.cost.basis] === priority[previous.cost.basis] &&
+        Date.parse(record.at) >= Date.parse(previous.at))
+    ) {
+      callRecords.set(event.source_id, record);
+    }
+  }
+  records.push(...callRecords.values());
   for (const call of data.calls) {
     if (linked.has(call.id) || !isFinalCall(call)) continue;
     records.push({
