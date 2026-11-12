@@ -39,7 +39,7 @@ describe('incomplete call costs', () => {
         breakdown_usd: {
           llm_input: 0.1,
           llm_output: 0.2,
-          subtotal: 0.6,
+          subtotal: 99,
           tts: 0.3,
         },
         status: 'unpriced',
