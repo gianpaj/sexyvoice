@@ -26,5 +26,8 @@ Historical restoration uses retained numeric usage, never conversation text or
 cleanup timestamps as a substitute for missing provider measurements. Missing
 speech usage keeps totals NULL. Cached-input repricing changes provider-cost
 estimates, never customer credits. Database changes require user approval. All 82 pgTAP assertions pass against
-an isolated local database with the permission migration applied. Production
-migration and historical repair are pending separate approval.
+an isolated local database with the permission migration applied. The approved
+production migration is recorded in migration history. The historical repair
+restored four snapshots and repriced 22 entries, preserving unknown totals.
+Verification found unchanged balances, charged credits, call durations and
+statuses, enabled ledger guards, and no remaining repair targets.
