@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest';
 
-import { summarizeContribution } from '../app/api/daily-stats/contribution';
+import {
+  summarizeContribution,
+  type UsageEvent,
+} from '../app/api/daily-stats/contribution';
 import { resolveUsageCost, type UsageEventCostInput } from '../lib/usage-costs';
 
 function partialCall(strategy = 'inworld_pipeline_usage'): UsageEventCostInput {
@@ -19,6 +22,27 @@ function partialCall(strategy = 'inworld_pipeline_usage'): UsageEventCostInput {
     model: 'inworld-tts',
     source_type: 'live_call',
   };
+}
+
+function summarizeCalls(overrides: Partial<UsageEvent>[]) {
+  return summarizeContribution(
+    {
+      audioUsage: {},
+      calls: [],
+      events: overrides.map((value, index) => ({
+        ...partialCall(),
+        id: `event-${index}`,
+        occurred_at: '2026-11-10T02:48:21Z',
+        source_id: 'call-1',
+        user_id: 'user-1',
+        ...value,
+      })),
+      linkedCallIds: [],
+    },
+    [],
+    new Date('2026-11-10T00:00:00Z'),
+    new Date('2026-11-11T00:00:00Z'),
+  );
 }
 
 describe('incomplete call costs', () => {
@@ -111,5 +135,57 @@ describe('incomplete call costs', () => {
     expect(summary.bases.unknown).toBe(1);
     expect(summary.bases.recorded).toBe(0);
     expect(summary.bases.estimated).toBe(0);
+  });
+
+  test('retry events do not duplicate a call cost or its coverage gap', () => {
+    const summary = summarizeCalls([
+      {},
+      { occurred_at: '2026-11-10T02:48:22Z' },
+    ]);
+    expect(summary.totalCost).toBeCloseTo(0.002_357, 8);
+    expect(summary.bases.unknown).toBe(1);
+  });
+
+  test.each([false, true])(
+    'a complete recorded cost wins over a later incomplete retry, reversed=%s',
+    (reversed) => {
+      const events = [
+        { dollar_amount: 0.02 },
+        { occurred_at: '2026-11-10T02:48:22Z' },
+      ];
+      const summary = summarizeCalls(reversed ? events.reverse() : events);
+      expect(summary.totalCost).toBeCloseTo(0.02, 8);
+      expect(summary.bases.recorded).toBe(1);
+      expect(summary.bases.unknown).toBe(0);
+    },
+  );
+
+  test('the latest partial snapshot wins without adding the earlier snapshot', () => {
+    const summary = summarizeCalls([
+      {
+        metadata: {
+          provider_cost: {
+            breakdown_usd: { llm: 0.01 },
+            status: 'unpriced',
+            strategy: 'inworld_pipeline_usage',
+          },
+        },
+        occurred_at: '2026-11-10T02:48:22Z',
+      },
+      {},
+    ]);
+    expect(summary.totalCost).toBeCloseTo(0.01, 8);
+    expect(summary.bases.unknown).toBe(1);
+  });
+
+  test('different calls and events without a call link remain separate', () => {
+    const summary = summarizeCalls([
+      {},
+      { source_id: 'call-2' },
+      { source_id: null },
+      { source_id: null },
+    ]);
+    expect(summary.totalCost).toBeCloseTo(4 * 0.002_357, 8);
+    expect(summary.bases.unknown).toBe(4);
   });
 });
