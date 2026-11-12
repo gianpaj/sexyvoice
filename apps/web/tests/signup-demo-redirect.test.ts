@@ -16,7 +16,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe('signup demo continuation', () => {
-  it('includes the selected take in the email confirmation callback', async () => {
+  it('includes the selected take in the final email destination', async () => {
     const response = await POST(
       new Request('https://example.com/auth/signup', {
         method: 'POST',
@@ -28,10 +28,8 @@ describe('signup demo continuation', () => {
       }),
     );
     expect(response.status).toBe(201);
-    const callback = new URL(signUp.mock.calls[0][0].options.emailRedirectTo);
-    expect(callback.pathname).toBe('/auth/callback');
-    expect(callback.searchParams.get('redirect_to')).toBe(
-      '/de/dashboard/clone?demo=heike&take=calmSlow',
+    expect(signUp.mock.calls[0][0].options.emailRedirectTo).toBe(
+      'https://example.com/de/dashboard/clone?demo=heike&take=calmSlow',
     );
   });
 
@@ -42,7 +40,7 @@ describe('signup demo continuation', () => {
     '/en/dashboard/clone?demo=bad&take=natural',
     '/en/dashboard/clone?demo=kat&take=natural#evil',
   ])(
-    'uses the default callback for unsupported redirects: %s',
+    'uses the localized dashboard for unsupported redirects: %s',
     async (redirectTo) => {
       const response = await POST(
         new Request('https://example.com/auth/signup', {
@@ -50,13 +48,14 @@ describe('signup demo continuation', () => {
           body: JSON.stringify({
             email: 'voice@gmail.com',
             password: 'password123',
+            lang: 'es',
             redirectTo,
           }),
         }),
       );
       expect(response.status).toBe(201);
       expect(signUp.mock.calls[0][0].options.emailRedirectTo).toBe(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/es/dashboard`,
       );
     },
   );

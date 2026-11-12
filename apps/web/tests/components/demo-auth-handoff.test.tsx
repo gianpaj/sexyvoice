@@ -113,6 +113,7 @@ describe('demo auth handoff', () => {
           body: JSON.stringify({
             email: 'voice@example.com',
             password: 'password123',
+            lang: 'en',
             redirectTo: destination,
           }),
         }),

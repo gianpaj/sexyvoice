@@ -176,6 +176,12 @@ export default defineConfig({
     timeout: 300 * 1000,
     // Pin Node process TZ so RSC date formatting (date-fns runs in the
     // server process) matches the browser timezoneId pinned above.
-    env: { TZ: 'UTC' },
+    env: {
+      TZ: 'UTC',
+      OAUTH_CALLBACK_MARKER_SECRET:
+        process.env.OAUTH_CALLBACK_MARKER_SECRET ??
+        process.env.API_KEY_HMAC_SECRET ??
+        'test-secret',
+    },
   },
 });

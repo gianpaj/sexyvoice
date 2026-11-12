@@ -2,8 +2,8 @@ import { captureMessage } from '@sentry/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
-import { createOauthCallbackMarkerValue } from '@/lib/supabase/oauth-callback-marker';
+import { createAuthCallbackMarkerValue } from '@/lib/supabase/auth-callback-marker';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { updateSession } from '@/lib/supabase/proxy';
 
 vi.unmock('next/server');
@@ -236,39 +236,39 @@ describe('Supabase Proxy', () => {
   it('reports and clears a valid OAuth marker when dashboard claims are missing', async () => {
     process.env.API_KEY_HMAC_SECRET = 'test-oauth-marker-secret';
     mocks.getClaims.mockResolvedValue(unauthenticatedClaims);
-    const marker = createOauthCallbackMarkerValue();
+    const marker = createAuthCallbackMarkerValue();
     const request = createRequest('/en/dashboard');
-    request.cookies.set(OAUTH_CALLBACK_COOKIE_NAME, marker ?? '');
+    request.cookies.set(AUTH_CALLBACK_COOKIE_NAME, marker ?? '');
 
     const response = await updateSession(request, 'en');
 
     expect(captureMessage).toHaveBeenCalledWith(
-      'OAuth callback completed but dashboard session was missing.',
+      'Auth callback completed but dashboard session was missing.',
       expect.objectContaining({
         level: 'error',
         tags: {
           area: 'auth',
-          flow: 'oauth-callback',
+          flow: 'auth-callback',
         },
       }),
     );
     expect(redirectLocation(response)).toBe('https://example.com/en/login');
-    expect(response.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)).toEqual(
+    expect(response.cookies.get(AUTH_CALLBACK_COOKIE_NAME)).toEqual(
       expect.objectContaining({ maxAge: 0, value: '' }),
     );
   });
 
   it('clears the OAuth marker after authenticated dashboard navigation', async () => {
     process.env.API_KEY_HMAC_SECRET = 'test-oauth-marker-secret';
-    const marker = createOauthCallbackMarkerValue();
+    const marker = createAuthCallbackMarkerValue();
     const request = createRequest('/en/dashboard');
-    request.cookies.set(OAUTH_CALLBACK_COOKIE_NAME, marker ?? '');
+    request.cookies.set(AUTH_CALLBACK_COOKIE_NAME, marker ?? '');
 
     const response = await updateSession(request, 'en');
 
     expect(captureMessage).not.toHaveBeenCalled();
     expect(redirectLocation(response)).toBeNull();
-    expect(response.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)).toEqual(
+    expect(response.cookies.get(AUTH_CALLBACK_COOKIE_NAME)).toEqual(
       expect.objectContaining({ maxAge: 0, value: '' }),
     );
   });

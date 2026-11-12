@@ -202,12 +202,73 @@ without the column, the call page fails to load.
 ### Authentication
 
 - `API_KEY_HMAC_SECRET`: hashes external API keys.
-- `OAUTH_CALLBACK_MARKER_SECRET`: dedicated OAuth callback marker signing secret.
+- `OAUTH_CALLBACK_MARKER_SECRET`: dedicated signing secret for the auth callback marker and pending email confirmations.
   The code can fall back to `API_KEY_HMAC_SECRET`, but separate secrets avoid
-  coupling their rotation.
+  coupling their rotation. Email confirmation requires one of these two secrets.
+  Pending confirmation signatures use a separate purpose from callback markers.
 
 Generate secrets with `openssl rand -hex 32`. Verify Supabase and OAuth provider
 redirect URLs for each deployment environment.
+
+### Supabase Auth email templates
+
+SSR auth uses `/auth/callback` for OAuth code exchanges. Email confirmation and
+password recovery links should use `/auth/confirm` with `token_hash`, so users
+can open links from email clients, webviews, or another browser without needing
+the original PKCE code verifier in local browser storage.
+
+Opening an email link prepares a ten-minute browser-bound confirmation and
+redirects to a URL without the token. The user enters the intended email address
+and consents to switching accounts if needed. A same-origin, CSRF-protected POST
+verifies the token in a nonpersistent client and checks the verified email before
+installing its session. Email-change confirmations that return no session leave
+the browser session intact. Tokens and sessions stay out of the rendered form.
+
+Configure the Supabase dashboard email templates like this:
+
+Confirm signup:
+
+```html
+<a
+  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}"
+>
+  Confirm your email
+</a>
+```
+
+Reset password:
+
+```html
+<a
+  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&redirect_to={{ .RedirectTo }}"
+>
+  Reset your password
+</a>
+```
+
+Do not route email templates through `/auth/callback` and do not rely on
+`{{ .ConfirmationURL }}` for SSR email auth links. The app passes final
+same-origin destinations through Supabase `emailRedirectTo` / `redirectTo`, and
+`/auth/confirm` validates the destination before redirecting.
+
+Deployment order matters for these template changes:
+
+1. Pause signup and password-reset email generation for the rollout window.
+2. Deploy and verify the app version that serves `/auth/confirm`.
+3. Update the Supabase dashboard Confirm signup and Reset password templates,
+   then resume email generation.
+4. Before rollback, pause email generation and revert the templates. Keep
+   `/auth/confirm` available while issued confirmation and recovery links remain
+   valid. Resume email generation after verifying the rolled-back auth flow.
+
+Avoid generating production auth links while the dashboard templates and
+deployed app route support are intentionally out of sync.
+
+Before testing signup or recovery links, verify the Supabase Auth URL
+configuration allows every destination the app sends through
+`emailRedirectTo` / `redirectTo`, including localized dashboard URLs for `en`,
+`es`, `de`, `da`, `it`, and `fr`. If Supabase rejects the provided redirect, it
+can fall back to the Site URL and drop the intended `redirect_to` destination.
 
 ### Stripe
 

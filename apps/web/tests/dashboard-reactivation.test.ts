@@ -47,8 +47,8 @@ vi.mock('@/lib/supabase/ensure-user-application-state', () => ({
   ensureUserApplicationState: vi.fn(),
 }));
 
-vi.mock('@/lib/supabase/oauth-callback-marker', () => ({
-  verifyOauthCallbackMarkerValue: vi.fn(() => false),
+vi.mock('@/lib/supabase/auth-callback-marker', () => ({
+  verifyAuthCallbackMarkerValue: vi.fn(() => false),
 }));
 
 function createRequest(pathname: string) {

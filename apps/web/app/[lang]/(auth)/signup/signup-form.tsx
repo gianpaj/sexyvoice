@@ -70,6 +70,7 @@ export function SignUpForm({
         body: JSON.stringify({
           email,
           password,
+          lang,
           ...(redirectTo ? { redirectTo } : {}),
         }),
         headers: {

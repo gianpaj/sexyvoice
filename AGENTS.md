@@ -73,7 +73,9 @@ Google Generative AI, xAI Grok TTS, LiveKit, Stripe, Sentry, PostHog, Axiom,
 Contentlayer2, Inngest, and `next-intl`.
 
 Supabase access uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser clients
-and `SUPABASE_SECRET_KEY` for privileged server operations.
+and `SUPABASE_SECRET_KEY` for privileged server operations. Email confirmation
+requires `OAUTH_CALLBACK_MARKER_SECRET` or its `API_KEY_HMAC_SECRET` fallback
+for browser-bound pending confirmation signatures.
 
 Runtime and tooling:
 

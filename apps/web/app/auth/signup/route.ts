@@ -3,6 +3,9 @@ import z from 'zod';
 
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import { isDisposableEmail } from '@/lib/disposable-email';
+import { isE2E } from '@/lib/e2e-mode';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { getRequestOrigin } from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
 
 interface ParsedError {
@@ -49,9 +52,13 @@ function parseSignUpError(
   return { message: errorMessage };
 }
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
+const getSignupEmailRedirectTo = (
+  origin: string,
+  lang: Locale,
+  redirectTo: string | null,
+) => new URL(redirectTo ?? `/${lang}/dashboard`, origin).toString();
 
+export async function POST(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
@@ -65,6 +72,7 @@ export async function POST(request: Request) {
   const schema = z.object({
     email: z.email(),
     password: z.string().min(6).max(72),
+    lang: z.enum(i18n.locales).default(i18n.defaultLocale),
     redirectTo: z.string().max(500).optional(),
   });
 
@@ -79,9 +87,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const { email, password } = result.data;
+  const { email, password, lang } = result.data;
+  const origin = getRequestOrigin(request);
+  if (!origin) {
+    return NextResponse.json(
+      { error: { message: 'Server configuration error' } },
+      { status: 500 },
+    );
+  }
+
   const redirectTo = getCloneDemoRedirect(result.data.redirectTo);
-  const emailRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback${redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : ''}`;
+  const emailRedirectTo = getSignupEmailRedirectTo(origin, lang, redirectTo);
 
   if (isDisposableEmail(email)) {
     return NextResponse.json(
@@ -89,6 +105,15 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
+  if (isE2E()) {
+    return NextResponse.json(
+      { data: { message: 'User created', emailRedirectTo } },
+      { status: 201 },
+    );
+  }
+
+  const supabase = await createClient();
 
   const { error: signUpError, data } = await supabase.auth.signUp({
     email,
@@ -122,7 +147,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { data: { message: 'User created' } },
+    { data: { message: 'User created', emailRedirectTo } },
     { status: 201 },
   );
 }

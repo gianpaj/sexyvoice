@@ -3,7 +3,7 @@
 > **Status**: ✅ Implemented
 > **Last Updated**: 2026-05-10
 > **Scope**: `apps/web/e2e/*`
-> **Current Result**: 97 tests total — 96 passing, 1 intentionally skipped
+> **Validation**: See the latest Playwright run for current results
 
 ---
 
@@ -33,15 +33,18 @@ The current suite covers the main dashboard surfaces with a mix of:
 
 ## Coverage Summary
 
-| Area     | Route                    | Spec                         | POM                      | Mocking                                              |            Tests |
-| -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
-| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
-| Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
-| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
-| Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
-| History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
-| Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
-| Profile  | `/en/dashboard/profile`  | `profile-dashboard.spec.ts`  | `pages/profile.page.ts`  | one narrow auth-route passthrough in mismatch test   |               13 |
+Confirmation links require an email address and explicit account-switch consent. The form posts a browser-bound CSRF nonce. The email-auth spec checks the secret-free confirmation page and rejects an invalid nonce without changing cookies.
+
+| Area       | Route                         | Spec                         | POM                      | Mocking                                              |            Tests |
+| ---------- | ----------------------------- | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
+| Generate   | `/en/dashboard/generate`      | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
+| Call       | `/en/dashboard/call`          | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
+| Clone      | `/en/dashboard/clone`         | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
+| Credits    | `/en/dashboard/credits`       | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
+| History    | `/en/dashboard/history`       | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
+| Usage      | `/en/dashboard/usage`         | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
+| Profile    | `/en/dashboard/profile`       | `profile-dashboard.spec.ts`  | `pages/profile.page.ts`  | one narrow auth-route passthrough in mismatch test   |               13 |
+| Email auth | `/en/signup`, `/auth/confirm` | `auth-email.spec.ts`         | none                     | server E2E signup fixture                            |                3 |
 
 ---
 
@@ -57,6 +60,7 @@ Implemented behavior:
 - saves auth state to `.auth/user.json`
 - all authenticated specs depend on this setup project
 - unauthenticated specs override `storageState` with empty cookies/origins
+- server-side `/auth/confirm` verification is covered by Vitest route tests
 
 ### Page Object Models
 

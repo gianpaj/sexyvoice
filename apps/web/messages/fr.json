@@ -1,5 +1,15 @@
 {
   "auth": {
+    "confirm": {
+      "title": "Confirmez votre lien par e-mail",
+      "description": "Saisissez l'adresse e-mail que vous souhaitez confirmer.",
+      "email": "Adresse e-mail",
+      "consent": "Utiliser cette adresse et changer de compte si nécessaire.",
+      "submit": "Confirmer et continuer",
+      "failed": "Ce lien n'a pas pu être confirmé pour cette adresse. Demandez un nouveau lien.",
+      "emailChangeConfirmed": "Changement d'e-mail confirmé. Si vous avez reçu un second e-mail de confirmation, ouvrez aussi ce lien.",
+      "backToLogin": "Retour à la connexion"
+    },
     "login": {
       "title": "Bon retour",
       "subtitle": "Connectez-vous à votre compte",
