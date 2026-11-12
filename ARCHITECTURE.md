@@ -75,7 +75,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
 | Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
 | Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
-| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
+| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
@@ -551,7 +551,7 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 | Setting           | Current behavior                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
+| Model             | `grok-voice-think-fast-2.0`, `inworld-tts`, or `mistral-tts`                        |
 | Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
 | Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
 | Max output tokens | Nullable; defaults to the agent's model behavior                                    |

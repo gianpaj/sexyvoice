@@ -57,7 +57,7 @@ describe('call-token API validation', () => {
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
       expect(result.data?.sessionConfig.model).toBe(
-        'grok-voice-think-fast-1.0',
+        'grok-voice-think-fast-2.0',
       );
     });
 
@@ -76,7 +76,7 @@ describe('call-token API validation', () => {
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
       expect(result.data?.sessionConfig.model).toBe(
-        'grok-voice-think-fast-1.0',
+        'grok-voice-think-fast-2.0',
       );
     });
 
