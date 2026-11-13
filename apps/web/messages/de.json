@@ -1001,7 +1001,7 @@
       "deleteAccount": {
         "button": "Inhalte löschen",
         "confirmTitle": "Inhalte aus Ihrem Konto löschen?",
-        "confirmDescription": "Dadurch werden folgende Inhalte gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Wir behalten Ihre Anmeldedaten, Ihr Profil und Ihre verbleibenden Credits. Wenn Sie sich mit derselben E-Mail-Adresse erneut anmelden, erhalten Sie wieder Zugriff auf dasselbe Konto mit denselben Credits. Gelöschte Inhalte können nicht wiederhergestellt werden.",
+        "confirmDescription": "Dadurch werden folgende Inhalte gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Wir behalten Ihre Anmeldedaten, Ihr Profil und Ihre verbleibenden Credits. Ihr API-Nutzungsverlauf und Anruftranskripte bleiben ebenfalls erhalten. Aktive API-Schlüssel funktionieren weiterhin. Wenn Sie sich mit derselben E-Mail-Adresse erneut anmelden, erhalten Sie wieder Zugriff auf dasselbe Konto mit denselben Credits. Gelöschte Inhalte können nicht wiederhergestellt werden.",
         "alertTitle": "Inhalte aus Ihrem Konto löschen",
         "cancel": "Abbrechen",
         "continue": "Weiter",

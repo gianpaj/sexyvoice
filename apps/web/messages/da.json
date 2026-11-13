@@ -997,7 +997,7 @@
       "deleteAccount": {
         "button": "Slet indhold",
         "confirmTitle": "Vil du slette indhold fra din konto?",
-        "confirmDescription": "Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Vi beholder dit login, din profil og dine resterende credits. Hvis du logger ind igen med den samme e-mailadresse, får du adgang til den samme konto og de samme credits. Slettet indhold kan ikke gendannes.",
+        "confirmDescription": "Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Vi beholder dit login, din profil og dine resterende credits. Din API-forbrugshistorik og opkaldstransskriptioner bliver også gemt. Aktive API-nøgler virker fortsat. Hvis du logger ind igen med den samme e-mailadresse, får du adgang til den samme konto og de samme credits. Slettet indhold kan ikke gendannes.",
         "alertTitle": "Slet indhold fra din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt",
