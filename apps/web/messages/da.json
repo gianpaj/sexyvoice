@@ -284,8 +284,8 @@
               "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
             },
             {
-              "question": "Kan jeg ringe til en karakter med min egen stemme?",
-              "answer": "Ja. Et engangskøb af kreditter eller en abonnementsbetaling låser op for gemte stemmer. Opret en karakter og vælg \"Klon en stemme\", eller brug \"Gem en stemme til opkald\" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme, og vælg den som karakterens stemme."
+              "question": "Hvordan starter jeg et stemmeopkald med en klonet stemme?",
+              "answer": "Gå til opkaldssiden, opret en karakter, og vælg din gemte klonede stemme. Gem karakteren, og start opkaldet. Hvis du ikke har gemt en stemme endnu, så vælg \"Klon en stemme\", når du opretter karakteren, eller \"Gem en stemme til opkald\" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme. Et engangskøb af kreditter eller en abonnementsbetaling låser op for egne karakterer og gemte stemmer."
             },
             {
               "question": "Hvor meget koster det?",
