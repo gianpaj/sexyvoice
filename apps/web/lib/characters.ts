@@ -172,13 +172,16 @@ export function getPresetDescription(preset: Preset, language: string): string {
   );
 }
 
-/** The character's prompt in `language`, falling back to its default prompt. */
+/** The character's prompt in `language`, then English, then its default. */
 export function getPresetInstructions(
   preset: Preset | undefined,
   language: string,
 ): string {
   return (
-    preset?.localizedInstructions?.[language] ?? preset?.instructions ?? ''
+    preset?.localizedInstructions?.[language] ??
+    preset?.localizedInstructions?.en ??
+    preset?.instructions ??
+    ''
   );
 }
 

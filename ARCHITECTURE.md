@@ -461,10 +461,11 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-Predefined character prompt text never reaches the browser. The token route loads
-it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters
-and custom scenes require a paid account.
+The call page loads predefined character prompts with an admin query for paid
+users so the creator can prefill a private copy. Free users receive only prompt
+metadata. The token route independently loads the prompt, chooses the requested
+localized prompt or English fallback, and places it in LiveKit token metadata.
+Custom characters and custom scenes require a paid account.
 
 Every call-token request captures the browser clock as `clientTime`, an ISO
 timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
@@ -521,7 +522,9 @@ Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
-copies its name, description and voice, never its prompt. Free users see the
+copies its name, description, voice and database instructions. The creator uses
+the website locale for instructions, falling back to English and then the default
+prompt. Saving creates a private character. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next
 to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
 character can call, for both the panel and a card's Call. Deleting a

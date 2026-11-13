@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Loader2, PhoneCall } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -109,7 +109,7 @@ export function CharacterCreator({
   const t = useTranslations('call.creator');
   const { pgState, helpers } = usePlaygroundState();
   const player = useSamplePlayer();
-  const language = pgState.language;
+  const language = useLocale();
   const source =
     intent.kind === 'create'
       ? undefined
@@ -144,9 +144,7 @@ export function CharacterCreator({
     };
     return {
       description: getPresetDescription(source, language),
-      // Public prompts stay on the server, so a remix starts without one.
-      instructions:
-        intent.kind === 'remix' ? '' : getPresetInstructions(source, language),
+      instructions: getPresetInstructions(source, language),
       name: names[intent.kind].slice(0, MAX_NAME_LENGTH),
       sessionConfig: { ...source.sessionConfig },
     };
@@ -230,7 +228,7 @@ export function CharacterCreator({
       return;
     }
     setSaving(true);
-    // Public characters are never a base: their prompts stay on the server.
+    // A public character is saved as a private copy, never updated in place.
     const base =
       intent.kind !== 'remix' && !source?.isPublic ? source : undefined;
     const result = await saveCharacter(

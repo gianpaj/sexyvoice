@@ -9,10 +9,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CallExperience } from '@/components/call/call-experience';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
+import type { CallLanguage } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import type { SavedCallVoice } from '@/lib/call-voices';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import messages from '@/messages/en.json';
 
 const connection = vi.hoisted(() => ({
@@ -96,6 +98,10 @@ const featured: Preset = {
   instructions: '',
   isPublic: true,
   localizedDescriptions: { en: 'Shy, warm, and playful.' },
+  localizedInstructions: {
+    en: 'You are Lily, a warm conversation partner.',
+    es: 'Eres Lily, una compañera de conversación amable.',
+  },
   name: 'Lily',
   sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   voiceName: 'Ara',
@@ -140,18 +146,22 @@ let fetchMock: ReturnType<typeof vi.fn>;
 function renderExperience({
   customCharacters = [own],
   isPaidUser = true,
+  locale = 'en',
+  callLanguage = locale,
   returnFromClone = null,
 }: {
   customCharacters?: Preset[];
   isPaidUser?: boolean;
+  locale?: Locale;
+  callLanguage?: CallLanguage;
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <PlaygroundStateProvider
         defaultPresets={[featured]}
         initialCustomCharacters={customCharacters}
-        initialState={{ selectedPresetId: featured.id }}
+        initialState={{ language: callLanguage, selectedPresetId: featured.id }}
       >
         <CallExperience
           callVoices={callVoices}
@@ -403,22 +413,39 @@ describe('CallExperience panel', () => {
     expect(screen.getByTestId('call-panel')).toBeInTheDocument();
   });
 
-  it('starts a remix of a featured character without its prompt', async () => {
-    const user = userEvent.setup();
-    renderExperience();
+  it.each([
+    ['en', 'en', featured.localizedInstructions?.en],
+    ['es', 'en', featured.localizedInstructions?.es],
+    ['fr', 'fr', featured.localizedInstructions?.en],
+  ] as const)(
+    'prefills a featured copy in website locale %s with call language %s',
+    async (locale, callLanguage, instructions) => {
+      const user = userEvent.setup();
+      renderExperience({ callLanguage, locale });
 
-    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'Make your own version' }),
-    );
+      await user.click(screen.getByRole('button', { name: 'Open Lily' }));
+      await user.click(
+        await screen.findByRole('button', { name: 'Make your own version' }),
+      );
 
-    const creator = await screen.findByTestId('character-creator');
-    expect(within(creator).getByLabelText('Name')).toHaveValue('My Lily');
-    expect(
-      within(creator).getByRole('textbox', { name: 'Personality' }),
-    ).toHaveValue('');
-    expect(within(creator).getByRole('radio', { name: /Ara/ })).toBeChecked();
-  });
+      const creator = await screen.findByTestId('character-creator');
+      expect(within(creator).getByLabelText('Name')).toHaveValue('My Lily');
+      expect(
+        within(creator).getByRole('textbox', { name: 'Personality' }),
+      ).toHaveValue(instructions);
+      expect(within(creator).getByRole('radio', { name: /Ara/ })).toBeChecked();
+
+      await user.click(
+        within(creator).getByRole('button', { name: 'Save character' }),
+      );
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(lastPostBody()).not.toHaveProperty('id');
+      expect(lastPostBody()).toMatchObject({
+        localizedPrompts: { [locale]: instructions },
+        prompt: instructions,
+      });
+    },
+  );
 });
 
 describe('CallExperience creator', () => {

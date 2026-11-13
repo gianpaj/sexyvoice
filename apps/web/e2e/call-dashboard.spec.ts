@@ -299,6 +299,28 @@ for (const viewport of ['desktop', 'mobile'] as const) {
 }
 
 for (const locale of ['en', 'de'] as const) {
+  test(`prefills featured character instructions in ${locale} for paid users`, async ({
+    page,
+    baseURL,
+  }) => {
+    const labels = (locale === 'de' ? de : en).call;
+    const callPage = await setupCallPage(page, baseURL, 'paid', locale);
+    await callPage.openCharacter('Lily');
+    await callPage.panel
+      .getByRole('button', { name: labels.panel.makeYourOwn })
+      .click();
+
+    await expect(
+      callPage.creator.getByRole('textbox', {
+        name: labels.creator.personality,
+      }),
+    ).toHaveValue(
+      locale === 'de'
+        ? 'Du bist Lily, eine freundliche Gesprächspartnerin.'
+        : 'You are Lily, a warm conversation partner.',
+    );
+  });
+
   test(`creates, duplicates and edits characters in ${locale}`, async ({
     page,
     baseURL,

@@ -20,6 +20,21 @@ import type { MonthlyUsageSummary } from './supabase/usage-queries';
 
 export { E2E_PUBLIC_CALL_CHARACTERS } from './e2e-mocks-shared';
 
+// Synthetic prompts for the paid character creator, independent of production.
+export const E2E_PUBLIC_CALL_CHARACTER_PROMPTS = [
+  {
+    id: '00000000-0000-4000-a000-000000000202',
+    prompts: {
+      localized_prompts: {
+        de: 'Du bist Lily, eine freundliche Gesprächspartnerin.',
+        en: 'You are Lily, a warm conversation partner.',
+        es: 'Eres Lily, una compañera de conversación amable.',
+      },
+      prompt: 'You are Lily, a warm conversation partner.',
+    },
+  },
+];
+
 export const isE2E = isE2EMode;
 
 // Public query fields captured from the linked database on 2026-09-18.

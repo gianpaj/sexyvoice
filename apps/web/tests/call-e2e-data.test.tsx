@@ -25,6 +25,7 @@ import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
   getCreditTransactionAmounts,
+  getPublicCallCharacterPrompts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
@@ -67,6 +68,7 @@ vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
   getCreditTransactionAmounts: vi.fn(),
   getPublicCallCharacters: vi.fn(),
+  getPublicCallCharacterPrompts: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
 }));
@@ -142,6 +144,7 @@ function expectNoDataCalls() {
   for (const mock of [
     getCallVoices,
     getPublicCallCharacters,
+    getPublicCallCharacterPrompts,
     getUserCallCharacters,
     hasUserPaid,
     getCallInstructionConfig,
@@ -189,6 +192,7 @@ beforeEach(() => {
   >);
   vi.mocked(hasUserPaid).mockResolvedValue(true);
   vi.mocked(getPublicCallCharacters).mockResolvedValue([]);
+  vi.mocked(getPublicCallCharacterPrompts).mockResolvedValue([]);
   vi.mocked(getUserCallCharacters).mockResolvedValue([]);
   vi.mocked(getCallVoices).mockResolvedValue([]);
   vi.mocked(getCallInstructionConfig).mockResolvedValue({
@@ -250,6 +254,16 @@ describe('call E2E data', () => {
         userId,
       });
       expect(providerProps().initialCustomCharacters).toEqual([]);
+      expect(providerProps().defaultPresets?.[0]).toMatchObject(
+        isPaidUser
+          ? {
+              instructions: 'You are Lily, a warm conversation partner.',
+              localizedInstructions: {
+                de: 'Du bist Lily, eine freundliche Gesprächspartnerin.',
+              },
+            }
+          : { instructions: '', localizedInstructions: {} },
+      );
       expect(createClient).toHaveBeenCalledTimes(2);
       expect(getVerifiedClaims).toHaveBeenCalledTimes(2);
       expectNoDataCalls();
@@ -413,14 +427,16 @@ describe.each([
   });
 
   it('loads and maps public and paid custom characters with live instructions', async () => {
+    const prompts = {
+      localized_prompts: { de: 'Lokalisierte Anweisung' },
+      prompt: 'Public prompt',
+    };
     const publicCharacter = {
       ...E2E_PUBLIC_CALL_CHARACTERS[0],
       id: 'live-public',
       localized_descriptions: { de: 'Beschreibung', invalid: 42 },
       name: 'Live public',
       prompts: {
-        localized_prompts: { de: 'Lokalisierte Anweisung' },
-        prompt: 'Public prompt',
         type: 'call' as const,
       },
       session_config: {
@@ -435,9 +451,13 @@ describe.each([
       id: 'live-custom',
       is_public: false,
       name: 'Paid custom',
+      prompts,
       session_config: {},
     };
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
+    vi.mocked(getPublicCallCharacterPrompts).mockResolvedValue([
+      { id: publicCharacter.id, prompts },
+    ]);
     vi.mocked(getUserCallCharacters).mockResolvedValue([customCharacter]);
 
     renderToStaticMarkup(
@@ -449,11 +469,12 @@ describe.each([
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
+    expect(getPublicCallCharacterPrompts).toHaveBeenCalledOnce();
     const props = providerProps();
     expect(props.defaultPresets).toHaveLength(1);
     expect(props.defaultPresets?.[0]).toMatchObject({
       id: 'live-public',
-      instructions: 'Live preset override',
+      instructions: 'Public prompt',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
       localizedInstructions: { de: 'Lokalisierte Anweisung' },
@@ -487,6 +508,7 @@ describe.each([
 
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
+    expect(getPublicCallCharacterPrompts).not.toHaveBeenCalled();
     expect(providerProps()).toMatchObject({
       defaultPresets: [],
       initialCustomCharacters: [],
