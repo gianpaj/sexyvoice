@@ -253,6 +253,8 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   on the server and pass them to `CallExperience`.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- Call openers use `getInitialInstruction(language, model)` from
+  `apps/web/data/playground-state.ts`.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
   worker's registered agent name. See `docs/devops.md` for dispatch setup.
 - The call agent lives in the `gianpaj/sexycall` repo (Python, LiveKit

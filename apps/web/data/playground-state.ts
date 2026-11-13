@@ -1,4 +1,4 @@
-import { defaultSessionConfig, instructions } from './default-config';
+import { defaultSessionConfig } from './default-config';
 import { ModelId } from './models';
 import type { Preset } from './presets';
 import type { SessionConfig } from './session-config';
@@ -107,7 +107,6 @@ export interface PlaygroundState {
   /** User-created custom characters */
   customCharacters: Preset[];
   defaultPresets: Preset[];
-  initialInstruction: string;
   instructions: string;
   language: CallLanguage;
   /** Per-call memory flag. The server also applies the profile preference. */
@@ -118,14 +117,11 @@ export interface PlaygroundState {
   sessionConfig: SessionConfig;
 }
 
-export const initialInstruction = languageInitialInstructions[defaultLanguage];
-
 // Define the initial state
 export const defaultPlaygroundState: PlaygroundState = {
   customCharacters: [],
-  defaultPresets: [], // Now populated from DB via SSR props
-  initialInstruction,
-  instructions,
+  defaultPresets: [],
+  instructions: '',
   language: defaultLanguage,
   memory: true,
   sceneInstructions: '',
