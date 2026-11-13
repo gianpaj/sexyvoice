@@ -461,10 +461,15 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-Predefined character prompt text never reaches the browser. The token route loads
-it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters
-and custom scenes require a paid account.
+The call page loads predefined character prompts with a session-scoped query for
+paid users so the creator can prefill a private copy. The page supplies only prompt
+metadata to free users. Public prompt rows retain the catalog's public-read RLS;
+the paid gate controls creator access, custom-character writes and calls.
+The token route independently loads the prompt and uses `getPresetInstructions`
+from `lib/characters.ts`, shared with the creator, to choose the requested
+nonempty localized prompt, English, then the default. It places the result in
+LiveKit token metadata.
+Custom characters and custom scenes require a paid account.
 
 Every call-token request captures the browser clock as `clientTime`, an ISO
 timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
@@ -521,7 +526,13 @@ Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
-copies its name, description and voice, never its prompt. Free users see the
+copies its name, description, voice and database instructions in the website
+locale, falling back to English and then the default prompt. Saving creates a
+private character. Saves and voice cloning use the selected call language,
+including for public-character copies, so the next call uses the saved edits.
+Editing and duplicating custom characters also prefill in the call language. If the optional
+public prompt lookup fails, Sentry records the error and the page loads without
+public-character prefills. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next
 to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
 character can call, for both the panel and a card's Call. Deleting a

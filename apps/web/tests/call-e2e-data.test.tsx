@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { cookies } from 'next/headers';
 import type { ComponentProps, ReactNode } from 'react';
@@ -25,6 +26,7 @@ import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
   getCreditTransactionAmounts,
+  getPublicCallCharacterPrompts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
@@ -33,6 +35,10 @@ import { getCreditsQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('server-only', () => ({}));
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+}));
 vi.mock('@livekit/components-styles', () => ({}));
 vi.mock('next/headers', () => ({ cookies: vi.fn() }));
 vi.mock('@supabase-cache-helpers/postgrest-react-query', () => ({
@@ -67,6 +73,7 @@ vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
   getCreditTransactionAmounts: vi.fn(),
   getPublicCallCharacters: vi.fn(),
+  getPublicCallCharacterPrompts: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
 }));
@@ -114,6 +121,11 @@ vi.mock('@/components/call/call-faq', () => ({ CallFaq: () => null }));
 const userId = 'verified-call-user';
 const params = () => Promise.resolve({ lang: 'de' as const });
 const liveCredits = [{ amount: 321 }];
+const instructionConfigWithCharacterOverride = {
+  defaultInstructions: 'Live default instructions',
+  initialInstruction: 'Live initial instruction',
+  presetInstructions: { 'live-public': 'Live preset override' },
+};
 const cookieStore = {
   get: vi.fn(),
   getAll: vi.fn(() => []),
@@ -142,6 +154,7 @@ function expectNoDataCalls() {
   for (const mock of [
     getCallVoices,
     getPublicCallCharacters,
+    getPublicCallCharacterPrompts,
     getUserCallCharacters,
     hasUserPaid,
     getCallInstructionConfig,
@@ -189,13 +202,12 @@ beforeEach(() => {
   >);
   vi.mocked(hasUserPaid).mockResolvedValue(true);
   vi.mocked(getPublicCallCharacters).mockResolvedValue([]);
+  vi.mocked(getPublicCallCharacterPrompts).mockResolvedValue([]);
   vi.mocked(getUserCallCharacters).mockResolvedValue([]);
   vi.mocked(getCallVoices).mockResolvedValue([]);
-  vi.mocked(getCallInstructionConfig).mockResolvedValue({
-    defaultInstructions: 'Live default instructions',
-    initialInstruction: 'Live initial instruction',
-    presetInstructions: { 'live-public': 'Live preset override' },
-  });
+  vi.mocked(getCallInstructionConfig).mockResolvedValue(
+    instructionConfigWithCharacterOverride,
+  );
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -250,6 +262,16 @@ describe('call E2E data', () => {
         userId,
       });
       expect(providerProps().initialCustomCharacters).toEqual([]);
+      expect(providerProps().defaultPresets?.[0]).toMatchObject(
+        isPaidUser
+          ? {
+              instructions: 'You are Lily, a warm conversation partner.',
+              localizedInstructions: {
+                de: 'Du bist Lily, eine freundliche Gesprächspartnerin.',
+              },
+            }
+          : { instructions: '', localizedInstructions: {} },
+      );
       expect(createClient).toHaveBeenCalledTimes(2);
       expect(getVerifiedClaims).toHaveBeenCalledTimes(2);
       expectNoDataCalls();
@@ -413,14 +435,16 @@ describe.each([
   });
 
   it('loads and maps public and paid custom characters with live instructions', async () => {
+    const prompts = {
+      localized_prompts: { de: 'Lokalisierte Anweisung' },
+      prompt: 'Public prompt',
+    };
     const publicCharacter = {
       ...E2E_PUBLIC_CALL_CHARACTERS[0],
       id: 'live-public',
       localized_descriptions: { de: 'Beschreibung', invalid: 42 },
       name: 'Live public',
       prompts: {
-        localized_prompts: { de: 'Lokalisierte Anweisung' },
-        prompt: 'Public prompt',
         type: 'call' as const,
       },
       session_config: {
@@ -435,9 +459,13 @@ describe.each([
       id: 'live-custom',
       is_public: false,
       name: 'Paid custom',
+      prompts,
       session_config: {},
     };
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
+    vi.mocked(getPublicCallCharacterPrompts).mockResolvedValue([
+      { id: publicCharacter.id, prompts },
+    ]);
     vi.mocked(getUserCallCharacters).mockResolvedValue([customCharacter]);
 
     renderToStaticMarkup(
@@ -449,11 +477,12 @@ describe.each([
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
+    expect(getPublicCallCharacterPrompts).toHaveBeenCalledOnce();
     const props = providerProps();
     expect(props.defaultPresets).toHaveLength(1);
     expect(props.defaultPresets?.[0]).toMatchObject({
       id: 'live-public',
-      instructions: 'Live preset override',
+      instructions: 'Public prompt',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
       localizedInstructions: { de: 'Lokalisierte Anweisung' },
@@ -479,6 +508,49 @@ describe.each([
     });
   });
 
+  it('loads the call page when optional public prompt prefills fail', async () => {
+    const error = new Error('Public prompts unavailable');
+    vi.mocked(getPublicCallCharacterPrompts).mockRejectedValueOnce(error);
+    vi.mocked(getPublicCallCharacters).mockResolvedValue([
+      E2E_PUBLIC_CALL_CHARACTERS[0],
+    ]);
+
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
+
+    expectPageProps(liveCredits, [], true);
+    expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
+    expect(providerProps().defaultPresets?.[0]).toMatchObject({
+      id: E2E_PUBLIC_CALL_CHARACTERS[0].id,
+      instructions: '',
+      localizedInstructions: {},
+    });
+    expect(captureException).toHaveBeenCalledExactlyOnceWith(error, {
+      tags: { area: 'call-character-prefill' },
+    });
+  });
+
+  it('keeps Edge Config character instructions out of free-user presets', async () => {
+    vi.mocked(hasUserPaid).mockResolvedValue(false);
+    vi.mocked(getPublicCallCharacters).mockResolvedValue([
+      { ...E2E_PUBLIC_CALL_CHARACTERS[0], id: 'live-public' },
+    ]);
+
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
+
+    expect(getPublicCallCharacterPrompts).not.toHaveBeenCalled();
+    expect(providerProps().defaultPresets?.[0]).toMatchObject({
+      instructions: '',
+      localizedInstructions: {},
+    });
+    expect(JSON.stringify(providerProps())).not.toContain(
+      'Live preset override',
+    );
+  });
+
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
     vi.mocked(hasUserPaid).mockResolvedValue(false);
     renderToStaticMarkup(
@@ -487,6 +559,7 @@ describe.each([
 
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
+    expect(getPublicCallCharacterPrompts).not.toHaveBeenCalled();
     expect(providerProps()).toMatchObject({
       defaultPresets: [],
       initialCustomCharacters: [],

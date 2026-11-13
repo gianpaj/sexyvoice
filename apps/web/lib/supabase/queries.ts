@@ -36,7 +36,7 @@ export async function getCallVoices() {
 /**
  * Get public (predefined) call characters for SSR.
  * Joins with voices to get voice name + sample_url.
- * Does NOT include prompt text — predefined prompts never reach the client.
+ * Prompt text is loaded separately for paid users of the character creator.
  */
 export async function getPublicCallCharacters() {
   const supabase = await createClient();
@@ -52,10 +52,19 @@ export async function getPublicCallCharacters() {
       prompts ( type )
     `,
     )
-    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
-    // Only prompt metadata (type) is joined.
     .eq('is_public', true)
     .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/** Read public prompts with session RLS; the caller gates paid creator access. */
+export async function getPublicCallCharacterPrompts() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select('id, prompts ( prompt, localized_prompts )')
+    .eq('is_public', true);
   if (error) throw error;
   return data;
 }

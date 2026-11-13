@@ -227,8 +227,9 @@ redirect URLs for each deployment environment.
 ### Edge Config
 
 Set `EDGE_CONFIG` when using dynamic call instructions. The `call-instructions`
-payload contains `defaultInstructions`, `initialInstruction`, and
-`presetInstructions`. Keep private prompt contents server-side.
+payload contains `defaultInstructions` and `initialInstruction`. Character
+instructions come from PostgreSQL. The call page loads predefined character
+instructions only for paid users creating private copies.
 
 ### Monitoring, analytics, and support
 

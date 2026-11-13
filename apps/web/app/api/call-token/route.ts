@@ -16,6 +16,7 @@ import {
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
 import { callVoiceProvider } from '@/lib/call-voices';
+import { getPresetInstructions } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
@@ -177,22 +178,7 @@ export async function POST(request: Request) {
           return APIErrorResponse('Character not found', 404);
         }
 
-        if (character.is_public) {
-          // ── Predefined character ──
-          // Resolve localized prompt, falling back to English
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
-          // Client-sent instructions are IGNORED for predefined characters
-        } else {
+        if (!character.is_public) {
           // ── Custom character ──
           // Verify ownership
           if (character.user_id !== user.id) {
@@ -207,20 +193,24 @@ export async function POST(request: Request) {
               403,
             );
           }
-
-          // Resolve prompt from DB (not from client)
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
         }
+
+        const prompts = character.prompts as {
+          prompt: string;
+          localized_prompts: Record<string, string> | null;
+        } | null;
+
+        if (!prompts?.prompt) {
+          return APIErrorResponse('Character prompt not found', 404);
+        }
+
+        resolvedInstructions = getPresetInstructions(
+          {
+            instructions: prompts.prompt,
+            localizedInstructions: prompts.localized_prompts ?? {},
+          },
+          selectedLanguage,
+        );
       } catch (error) {
         captureException(error, {
           extra: {

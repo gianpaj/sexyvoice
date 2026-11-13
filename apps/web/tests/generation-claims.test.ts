@@ -515,6 +515,65 @@ describe('Generation route claims authentication', () => {
     },
   );
 
+  describe.each([true, false])(
+    'character prompt fallback, public=%s',
+    (isPublic) => {
+      it.each([
+        {
+          expected: 'French instructions',
+          language: 'fr',
+          localized: { en: 'English instructions', fr: 'French instructions' },
+        },
+        {
+          expected: 'English instructions',
+          language: 'fr',
+          localized: { en: 'English instructions' },
+        },
+        {
+          expected: 'English instructions',
+          language: 'fr',
+          localized: { en: 'English instructions', fr: '' },
+        },
+        {
+          expected: 'English instructions',
+          language: 'en',
+          localized: { en: 'English instructions' },
+        },
+        {
+          expected: 'Default instructions',
+          language: 'fr',
+          localized: {},
+        },
+      ])(
+        'resolves $language to $expected',
+        async ({ expected, language, localized }) => {
+          vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+          vi.mocked(queries.resolveCharacterPrompt).mockResolvedValueOnce({
+            ...character,
+            is_public: isPublic,
+            prompts: {
+              localized_prompts: localized,
+              prompt: 'Default instructions',
+            },
+          });
+
+          const response = await callToken(
+            jsonRequest('call-token', {
+              ...callBody,
+              language,
+              selectedPresetId: presetId,
+            }),
+          );
+
+          expect(response.status).toBe(200);
+          expect(
+            JSON.parse(mocks.token.mock.calls[0][2].metadata).instructions,
+          ).toBe(expected);
+        },
+      );
+    },
+  );
+
   it('rejects an empty unsaved personality before issuing a token', async () => {
     vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
     const response = await callToken(
