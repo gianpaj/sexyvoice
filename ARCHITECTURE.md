@@ -465,8 +465,10 @@ The call page loads predefined character prompts with a session-scoped query for
 paid users so the creator can prefill a private copy. The page supplies only prompt
 metadata to free users. Public prompt rows retain the catalog's public-read RLS;
 the paid gate controls creator access, custom-character writes and calls.
-The token route independently loads the prompt, chooses the requested
-localized prompt or English fallback, and places it in LiveKit token metadata.
+The token route independently loads the prompt and uses `getPresetInstructions`
+from `lib/characters.ts`, shared with the creator, to choose the requested
+nonempty localized prompt, English, then the default. It places the result in
+LiveKit token metadata.
 Custom characters and custom scenes require a paid account.
 
 Every call-token request captures the browser clock as `clientTime`, an ISO
