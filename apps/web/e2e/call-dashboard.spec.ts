@@ -305,7 +305,10 @@ for (const locale of ['en', 'de'] as const) {
   }) => {
     const labels = (locale === 'de' ? de : en).call;
     const callPage = await setupCallPage(page, baseURL, 'paid', locale);
-    await callPage.openCharacter('Lily');
+    await callPage.openCharacter(
+      'Lily',
+      labels.picker.open.replace('{name}', 'Lily'),
+    );
     await callPage.panel
       .getByRole('button', { name: labels.panel.makeYourOwn })
       .click();
