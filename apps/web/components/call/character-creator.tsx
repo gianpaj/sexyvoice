@@ -109,7 +109,8 @@ export function CharacterCreator({
   const t = useTranslations('call.creator');
   const { pgState, helpers } = usePlaygroundState();
   const player = useSamplePlayer();
-  const language = useLocale();
+  const locale = useLocale();
+  const language = intent.kind === 'remix' ? locale : pgState.language;
   const source =
     intent.kind === 'create'
       ? undefined

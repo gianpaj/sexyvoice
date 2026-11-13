@@ -415,6 +415,7 @@ describe('CallExperience panel', () => {
 
   it.each([
     ['en', 'en', featured.localizedInstructions?.en],
+    ['en', 'es', featured.localizedInstructions?.en],
     ['es', 'en', featured.localizedInstructions?.es],
     ['fr', 'fr', featured.localizedInstructions?.en],
   ] as const)(
@@ -574,6 +575,56 @@ describe('CallExperience creator', () => {
     });
     expect(toastMock.success).toHaveBeenCalledWith('Marco updated');
   });
+
+  it.each([
+    ['Edit', 'Save changes', true],
+    ['Duplicate', 'Save character', false],
+  ] as const)(
+    '%s uses the call language when it differs from the website locale',
+    async (action, saveLabel, updating) => {
+      const user = userEvent.setup();
+      renderExperience({
+        callLanguage: 'es',
+        customCharacters: [
+          {
+            ...own,
+            localizedInstructions: {
+              ...own.localizedInstructions,
+              es: 'Eres Marco, un profesor paciente.',
+            },
+          },
+        ],
+        locale: 'en',
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'More options for Marco' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: action }));
+      const creator = await screen.findByTestId('character-creator');
+      const personality = within(creator).getByRole('textbox', {
+        name: 'Personality',
+      });
+      expect(personality).toHaveValue('Eres Marco, un profesor paciente.');
+
+      await user.clear(personality);
+      await user.type(personality, 'Eres Marco, un profesor estricto.');
+      await user.click(
+        within(creator).getByRole('button', { name: saveLabel }),
+      );
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(lastPostBody()).toMatchObject({
+        localizedPrompts: {
+          en: own.instructions,
+          es: 'Eres Marco, un profesor estricto.',
+        },
+        prompt: own.instructions,
+      });
+      if (updating) expect(lastPostBody().id).toBe(own.id);
+      else expect(lastPostBody()).not.toHaveProperty('id');
+    },
+  );
 
   it('asks before discarding unsaved changes', async () => {
     const user = userEvent.setup();
