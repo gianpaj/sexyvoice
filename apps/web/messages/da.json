@@ -996,9 +996,9 @@
       "title": "Farezone",
       "deleteAccount": {
         "button": "Slet konto",
-        "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
-        "alertTitle": "Bekræft at du vil slette din konto",
+        "confirmTitle": "Vil du slette indhold fra din konto?",
+        "confirmDescription": "Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Vi beholder dit login, din profil og dine resterende credits. Hvis du logger ind igen med den samme e-mailadresse, får du adgang til den samme konto og de samme credits. Slettet indhold kan ikke gendannes.",
+        "alertTitle": "Slet indhold fra din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt",
         "errors": {

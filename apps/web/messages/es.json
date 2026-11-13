@@ -1000,9 +1000,9 @@
       "title": "Zona de Peligro",
       "deleteAccount": {
         "button": "Eliminar cuenta",
-        "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
-        "alertTitle": "Confirma que quieres eliminar tu cuenta",
+        "confirmTitle": "¿Eliminar contenido de tu cuenta?",
+        "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
+        "alertTitle": "Elimina contenido de tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar",
         "errors": {

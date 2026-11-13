@@ -998,9 +998,9 @@
       "title": "Danger Zone",
       "deleteAccount": {
         "button": "Delete account",
-        "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
-        "alertTitle": "Confirm you want to delete your account",
+        "confirmTitle": "Delete content from your account?",
+        "confirmDescription": "This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. We keep your login, profile and remaining credits. Signing in again with the same email restores the same account and credits. Deleted content cannot be restored.",
+        "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
         "continue": "Continue",
         "errors": {
