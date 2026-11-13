@@ -774,6 +774,16 @@ query retries. Direct browser reads remain single-attempt. The proxy's
 is best-effort. Read, Auth lookup, and restoration failures are reported to
 Sentry without blocking a claims-authenticated dashboard request.
 
+### Credit purchase information
+
+Paid credit validity and subscription renewal terms are defined in
+`apps/web/policies/terms.mdx`. Localized purchase questions live in the
+`landing.faq` message group `pricingAndAccess`. Both the landing FAQ and
+`CreditsFaq` on the credits page render that group. `FaqGroupAccordion` renders
+the individual questions for both `CreditsFaq` and `CallFaq`. `PricingCards` shows the
+billing commitment for the selected mode and displays the regular renewal
+price alongside an introductory monthly price.
+
 ### Credit balance sync
 
 `CreditsSection` displays the stored balance through `useCreditsQuery` and its

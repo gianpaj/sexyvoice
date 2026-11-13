@@ -8,8 +8,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { type PlanData, PricingCards } from '@/components/pricing-cards';
+import danishMessages from '@/messages/da.json';
+import germanMessages from '@/messages/de.json';
 import messages from '@/messages/en.json';
 import spanishMessages from '@/messages/es.json';
+import frenchMessages from '@/messages/fr.json';
+import italianMessages from '@/messages/it.json';
 
 vi.mock('@/app/[lang]/actions/stripe', () => ({
   createCheckoutSession: vi.fn(),
@@ -31,6 +35,110 @@ const plan: PlanData = {
 
 describe('pricing bonus presentation', () => {
   afterEach(cleanup);
+
+  it.each([
+    { locale: 'en' as const, translations: messages },
+    { locale: 'es' as const, translations: spanishMessages },
+    { locale: 'de' as const, translations: germanMessages },
+    { locale: 'da' as const, translations: danishMessages },
+    { locale: 'it' as const, translations: italianMessages },
+    { locale: 'fr' as const, translations: frenchMessages },
+  ])(
+    'localizes every monetary amount in $locale',
+    async ({ locale, translations }) => {
+      const user = userEvent.setup();
+      const discountedPlan = {
+        ...plan,
+        price: 2.5,
+        recurringPrice: 5,
+        pricePer1kCredits: '0.348',
+        saveFromPrevPlanPer1kCredits: 0.1,
+      };
+      render(
+        <NextIntlClientProvider locale={locale} messages={translations}>
+          <PricingCards
+            isPromoEnabled={false}
+            promoTheme="orange"
+            subscriptionPlans={[discountedPlan]}
+            topupPlans={[{ ...discountedPlan, price: 5 }]}
+          />
+        </NextIntlClientProvider>,
+      );
+      const currency = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: 'USD',
+      });
+      const rateCurrency = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 3,
+      });
+      const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
+      const priceLabel = translations.credits.plans.pricePer1kCredits.replace(
+        '{price}',
+        rateCurrency.format(0.348),
+      );
+      const savingsLabel = translations.credits.plans.savePer1kCredits.replace(
+        '{amount}',
+        currency.format(0.1),
+      );
+      const introductoryLabel = translations.credits.billing.introductoryPrice
+        .replace('{firstPrice}', currency.format(2.5))
+        .replace('{renewalPrice}', currency.format(5));
+
+      expect(screen.getByText(normalize(currency.format(2.5)))).toBeVisible();
+      expect(screen.getByText(normalize(introductoryLabel))).toBeVisible();
+      expect(screen.getByText(normalize(priceLabel))).toBeVisible();
+      expect(screen.getByText(normalize(savingsLabel))).toBeVisible();
+
+      await user.click(
+        screen.getByRole('button', {
+          name: translations.credits.plans.toggleOneTime,
+        }),
+      );
+      expect(screen.getByText(normalize(priceLabel))).toBeVisible();
+      expect(screen.getByText(normalize(savingsLabel))).toBeVisible();
+    },
+  );
+
+  it('shows the renewal price for an introductory offer and updates the commitment on toggle', async () => {
+    const user = userEvent.setup();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PricingCards
+          isPromoEnabled={false}
+          promoTheme="orange"
+          subscriptionPlans={[{ ...plan, price: 2.5, recurringPrice: 5 }]}
+          topupPlans={[plan]}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByText('Renews monthly. Cancel anytime.')).toBeVisible();
+    expect(screen.getByText('$2.50', { exact: true })).toBeVisible();
+    expect(
+      screen.getByText('$2.50 for your first month, then $5.00/month.'),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'One-time' }));
+    expect(screen.getByText('One payment. No subscription.')).toBeVisible();
+    expect(
+      screen.queryByText('$2.50 for your first month, then $5.00/month.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('omits introductory pricing when the monthly price stays the same', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PricingCards
+          isPromoEnabled={false}
+          promoTheme="orange"
+          subscriptionPlans={[{ ...plan, recurringPrice: plan.price }]}
+          topupPlans={[plan]}
+        />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.queryByText(/for your first month/)).not.toBeInTheDocument();
+  });
 
   it.each([
     { locale: 'en' as const, translations: messages },
