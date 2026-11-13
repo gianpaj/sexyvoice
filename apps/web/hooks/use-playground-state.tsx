@@ -15,7 +15,6 @@ import { defaultSessionConfig } from '@/data/default-config';
 import {
   type CallLanguage,
   defaultPlaygroundState,
-  languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
@@ -161,9 +160,6 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        initialInstruction:
-          languageInitialInstructions[newLanguage] ||
-          languageInitialInstructions.en,
         instructions: newInstructions,
         language: newLanguage,
       };

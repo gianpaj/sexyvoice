@@ -13,14 +13,12 @@ import CreditsSection from '@/components/credits-section';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
-  E2E_CALL_INSTRUCTION_CONFIG,
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
   E2E_SAVED_CALL_VOICES,
   isE2E,
 } from '@/lib/e2e-mocks';
-import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
@@ -69,12 +67,6 @@ vi.mock('@/lib/supabase/queries', () => ({
   getPublicCallCharacters: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
-}));
-vi.mock('@/lib/edge-config/call-instructions', async (importOriginal) => ({
-  ...(await importOriginal<
-    typeof import('@/lib/edge-config/call-instructions')
-  >()),
-  getCallInstructionConfig: vi.fn(),
 }));
 vi.mock('@/hooks/use-playground-state', () => ({
   PlaygroundStateProvider: vi.fn(
@@ -144,7 +136,6 @@ function expectNoDataCalls() {
     getPublicCallCharacters,
     getUserCallCharacters,
     hasUserPaid,
-    getCallInstructionConfig,
     getCreditTransactionAmounts,
     getCreditsQuery,
     prefetchQuery,
@@ -191,11 +182,6 @@ beforeEach(() => {
   vi.mocked(getPublicCallCharacters).mockResolvedValue([]);
   vi.mocked(getUserCallCharacters).mockResolvedValue([]);
   vi.mocked(getCallVoices).mockResolvedValue([]);
-  vi.mocked(getCallInstructionConfig).mockResolvedValue({
-    defaultInstructions: 'Live default instructions',
-    initialInstruction: 'Live initial instruction',
-    presetInstructions: { 'live-public': 'Live preset override' },
-  });
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -306,8 +292,6 @@ describe('call E2E data', () => {
       '',
     ]);
     expect(props.initialState).toEqual({
-      initialInstruction: E2E_CALL_INSTRUCTION_CONFIG.initialInstruction,
-      instructions: E2E_CALL_INSTRUCTION_CONFIG.defaultInstructions,
       language: 'de',
       selectedPresetId: E2E_PUBLIC_CALL_CHARACTERS[0].id,
     });
@@ -405,7 +389,6 @@ describe.each([
     expect(getCreditsQuery).toHaveBeenCalledExactlyOnceWith(supabase, userId);
     expect(prefetchQuery).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
-    expect(getCallInstructionConfig).toHaveBeenCalledOnce();
     expect(getCallVoices).toHaveBeenCalledOnce();
     expect(getUserCallCharacters).not.toHaveBeenCalled();
     expect(providerProps().initialCustomCharacters).toEqual([]);
@@ -445,7 +428,6 @@ describe.each([
     );
 
     expectAuthenticated();
-    expect(getCallInstructionConfig).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
@@ -453,7 +435,7 @@ describe.each([
     expect(props.defaultPresets).toHaveLength(1);
     expect(props.defaultPresets?.[0]).toMatchObject({
       id: 'live-public',
-      instructions: 'Live preset override',
+      instructions: 'Public prompt',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
       localizedInstructions: { de: 'Lokalisierte Anweisung' },
@@ -472,8 +454,6 @@ describe.each([
       sessionConfig: { maxOutputTokens: null, temperature: 0.8, voice: 'Ara' },
     });
     expect(props.initialState).toEqual({
-      initialInstruction: 'Live initial instruction',
-      instructions: 'Live default instructions',
       language: 'de',
       selectedPresetId: 'live-public',
     });
