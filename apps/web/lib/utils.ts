@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import type { CloneProvider } from '@/lib/clone/constants';
 import { getVoxtralDollarCost, type VoxtralModel } from '@/lib/clone/voxtral';
 import { GEMINI_TTS_31 } from '@/lib/tts/gemini-prompt';
@@ -40,7 +41,6 @@ const DEFAULT_CREDIT_MULTIPLIER = 4;
 const GEMINI_CREDIT_MULTIPLIER = 1.1;
 const GROK_CHAR_BUCKET = 100;
 const GROK_CREDITS_PER_BUCKET = 100;
-const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
 // Gemini 3.1 (`gpro31`) voices always run on the full Gemini 3.1 model, which
 // costs the provider twice as much per token ($1/$20 per 1M in/out) as the
@@ -156,8 +156,7 @@ function calculateCredits(
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
-// $4.20 / 1M characters
-// ~1 credit per character (~1,000 credits per minute of audio)
+// Charge 100 credits per started 100 input characters.
 export function estimateGrokCredits(text: string): number {
   if (!text.trim()) {
     return 0;
@@ -167,11 +166,12 @@ export function estimateGrokCredits(text: string): number {
 }
 
 export function calculateGrokTtsDollarAmount(text: string): number {
-  const normalizedLength = Math.max(0, text.length);
-  const rawAmount =
-    (normalizedLength / 1_000_000) * GROK_TTS_DOLLARS_PER_MILLION_CHARS;
-
-  return Number.parseFloat(rawAmount.toFixed(6));
+  return calculateGenerateApiDollarAmount({
+    inputChars: text.length,
+    model: 'xai',
+    provider: 'xai',
+    sourceType: 'tts',
+  });
 }
 
 const GEMINI_TTS_FLASH_INPUT_DOLLARS_PER_MILLION_TOKENS = 0.5;

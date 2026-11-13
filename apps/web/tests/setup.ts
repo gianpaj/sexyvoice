@@ -223,12 +223,45 @@ process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
 process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
 process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_DEMO_BUCKET_NAME = 'test-demo-bucket';
+process.env.R2_DEMO_PUBLIC_URL = 'https://demo-files.sexyvoice.ai';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
 process.env.FAL_ADMIN_KEY = 'test-fal-admin-key';
 process.env.CLI_LOGIN_ENCRYPTION_SECRET =
   'test-cli-login-secret-do-not-use-in-production';
+
+const mockCookieGet = vi.fn();
+const mockCookies = vi.fn(async () => ({
+  get: mockCookieGet,
+}));
+
+const serializeCookie = (
+  name: string,
+  value: string,
+  options: Record<string, unknown> = {},
+) => {
+  const parts = [`${name}=${value}`];
+
+  if (options.maxAge) {
+    parts.push(`Max-Age=${options.maxAge}`);
+  }
+  if (options.path) {
+    parts.push(`Path=${options.path}`);
+  }
+  if (options.sameSite) {
+    parts.push(`SameSite=${options.sameSite}`);
+  }
+  if (options.httpOnly) {
+    parts.push('HttpOnly');
+  }
+  if (options.secure) {
+    parts.push('Secure');
+  }
+
+  return parts.join('; ');
+};
 
 // Server-only modules are valid route dependencies but have no Vitest runtime.
 vi.mock('server-only', () => ({}));
@@ -273,16 +306,34 @@ vi.mock('next/server', () => ({
   },
   NextResponse: {
     json: (data: any, init?: any) => {
+      const headers = new Headers({
+        'content-type': 'application/json',
+        ...(init?.headers || {}),
+      });
       const response = new Response(JSON.stringify(data), {
         ...init,
-        headers: {
-          'content-type': 'application/json',
-          ...(init?.headers || {}),
+        headers,
+      });
+      Object.assign(response, {
+        cookies: {
+          set: (
+            name: string,
+            value: string,
+            options?: Record<string, unknown>,
+          ) =>
+            response.headers.append(
+              'set-cookie',
+              serializeCookie(name, value, options),
+            ),
         },
       });
       return response;
     },
   },
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: mockCookies,
 }));
 
 // Mock Sentry
@@ -596,6 +647,8 @@ vi.mock('@upstash/redis', () => ({
 vi.mock('@upstash/ratelimit', () => ({
   Ratelimit: class MockRatelimit {
     static tokenBucket = vi.fn(() => 'token_bucket_limiter');
+    static fixedWindow = vi.fn(() => 'fixed_window_limiter');
+
     constructor(_config: unknown) {}
     limit(identifier: string) {
       return mockRatelimitLimit(identifier);
@@ -605,6 +658,8 @@ vi.mock('@upstash/ratelimit', () => ({
 
 // Export mocks for test access
 export {
+  mockCookieGet,
+  mockCookies,
   mockRatelimitLimit,
   mockRedisDel,
   mockRedisExpire,
@@ -647,6 +702,14 @@ export { mockCheckUserPaidStatus };
 
 // Mock Google Generative AI module
 export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
+const mockCreateChallenge = vi.fn().mockResolvedValue({
+  algorithm: 'SHA-256',
+  challenge: 'test-challenge',
+  maxnumber: 50_000,
+  salt: 'test-salt',
+  signature: 'test-signature',
+});
+const mockVerifySolution = vi.fn().mockResolvedValue(true);
 
 const DEFAULT_MOCK_AUDIO_DATA =
   'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
@@ -719,7 +782,17 @@ export const resetMockGoogleGenAIFactory = () => {
   mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
 };
 
-export { createDefaultStreamChunk, DEFAULT_MOCK_AUDIO_DATA };
+vi.mock('altcha-lib', () => ({
+  createChallenge: mockCreateChallenge,
+  verifySolution: mockVerifySolution,
+}));
+
+export {
+  createDefaultStreamChunk,
+  DEFAULT_MOCK_AUDIO_DATA,
+  mockCreateChallenge,
+  mockVerifySolution,
+};
 
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');
@@ -740,6 +813,7 @@ vi.mock('@google/genai', async () => {
 // Mock crypto.subtle for filename hash generation
 Object.defineProperty(global, 'crypto', {
   value: {
+    randomUUID: vi.fn(() => 'test-demo-session-id'),
     subtle: {
       digest: vi.fn().mockImplementation((_algorithm, data) => {
         // Generate a simple hash based on the input data
