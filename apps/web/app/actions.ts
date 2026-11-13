@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { deleteSavedVoice } from '@/lib/clone/delete-saved-voice';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { evictAudioUrlCache } from '@/lib/redis/audio-url-cache';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
   AccountBillingError,
@@ -105,6 +106,30 @@ export const updatePasswordAction = async (formData: FormData) => {
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
 };
 
+type AudioFileObject = Pick<Tables<'audio_files'>, 'storage_key' | 'usage'>;
+
+// /api/v1/speech stores its audio in a separate bucket and never uses the
+// dashboard URL cache.
+const isExternalApiAudio = ({ usage }: AudioFileObject) =>
+  typeof usage === 'object' &&
+  usage !== null &&
+  !Array.isArray(usage) &&
+  usage.sourceType === 'api_tts';
+
+const deleteAudioFileObject = async (file: AudioFileObject) => {
+  if (!isExternalApiAudio(file)) {
+    await deleteFileFromR2(file.storage_key);
+    return;
+  }
+
+  // Without this guard, deleteFileFromR2 would fall back to the main bucket.
+  const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
+  if (!speechApiBucket) {
+    throw new Error('R2_SPEECH_API_BUCKET_NAME is not configured');
+  }
+  await deleteFileFromR2(file.storage_key, speechApiBucket);
+};
+
 export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   'use server';
 
@@ -177,7 +202,12 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .from('characters')
         .select('id, prompt_id')
         .eq('user_id', user.id),
-      supabase.from('api_keys').select().eq('user_id', user.id),
+      // Revoke every API key, as DELETE /api/api-keys/[id] does for one.
+      supabase
+        .from('api_keys')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .select('id'),
       supabase
         .from('usage_events')
         .select('id', { count: 'exact', head: true })
@@ -218,7 +248,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
     if (audio_files) {
       const deletionResults = await Promise.allSettled(
-        audio_files.map((file) => deleteFileFromR2(file.storage_key)),
+        audio_files.map((file) => deleteAudioFileObject(file)),
       );
 
       deletionResults.forEach((result, index) => {
@@ -241,6 +271,13 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
           );
         }
       });
+
+      await evictAudioUrlCache(
+        audio_files
+          .filter((file) => !isExternalApiAudio(file))
+          .map((file) => file.storage_key),
+        { email: user.email, id: user.id },
+      );
     }
 
     const sampleReferences = voiceReferences ?? [];
@@ -311,7 +348,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       throw new Error('User deletion failed');
     }
     logger.info('User deleted', {
-      apiKeysDeleted: apiKeys ? apiKeys.length : 0,
+      apiKeysDeactivated: apiKeys?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
@@ -322,7 +359,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     });
 
     console.log('User deleted', {
-      apiKeysDeleted: apiKeys?.length ?? 0,
+      apiKeysDeactivated: apiKeys?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,

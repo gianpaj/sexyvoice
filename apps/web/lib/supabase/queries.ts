@@ -414,8 +414,10 @@ export const getUserByIdWithError = async (userId: string) => {
   return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
+// Stripe webhooks and cron jobs have no user session, and RLS limits profile
+// reads to their owner.
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from('profiles')
@@ -428,9 +430,8 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
 
 /**
  * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
- * as "no prior credit" because `unique_reference_topup_idx` and
- * `unique_reference_purchase_idx` reject duplicate inserts (see
- * `isCreditTransactionReferenceConflict`).
+ * as "no prior credit" because `grant_purchased_credits` grants nothing for a
+ * payment that is already recorded.
  */
 const findCreditTransactionByReference = async (
   supabase: ReturnType<typeof createAdminClient>,
@@ -494,30 +495,25 @@ export const insertSubscriptionCreditTransaction = async (
   const isFirstSubscription =
     !existingSubscriptions || existingSubscriptions.length === 0;
 
-  // Insert the transaction with reference_id (payment_intent)
-  const { error } = await supabase.from('credit_transactions').insert({
-    amount: creditAmount,
-    description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
-    metadata: {
-      dollarAmount,
-      isFirstSubscription,
+  // Record the payment (reference_id = payment_intent) and add its credits in
+  // one database transaction
+  const { data: granted, error } = await supabase.rpc(
+    'grant_purchased_credits',
+    {
+      p_amount: creditAmount,
+      p_description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
+      p_metadata: {
+        dollarAmount,
+        isFirstSubscription,
+      },
+      p_reference_id: paymentIntentId,
+      p_subscription_id: subscriptionId,
+      p_type: 'purchase',
+      p_user_id: userId,
     },
-    reference_id: paymentIntentId,
-    subscription_id: subscriptionId,
-    type: 'purchase',
-    user_id: userId,
-  });
+  );
 
   if (error) {
-    if (isCreditTransactionReferenceConflict(error)) {
-      console.log('Subscription transaction already exists', {
-        paymentIntentId,
-        subscriptionId,
-        userId,
-      });
-      return;
-    }
-
     console.error('Error inserting subscription transaction:', {
       error: error.message,
       paymentIntentId,
@@ -527,8 +523,13 @@ export const insertSubscriptionCreditTransaction = async (
     throw error;
   }
 
-  // Update user's credit balance using the database function
-  await updateUserCredits(userId, creditAmount);
+  if (!granted) {
+    console.log('Subscription transaction already exists', {
+      paymentIntentId,
+      subscriptionId,
+      userId,
+    });
+  }
 };
 
 export const insertTopupCreditTransaction = async (
@@ -567,48 +568,34 @@ export const insertTopupCreditTransaction = async (
 
   const isFirstTopup = !existingTopup || existingTopup.length === 0;
 
-  // Insert the transaction
-  const { error } = await supabase.from('credit_transactions').insert({
-    amount: creditAmount,
-    description: `Credit top-up - $${dollarAmount}`,
-    metadata: {
-      dollarAmount,
-      isFirstTopup,
-      packageId,
-      ...(promo && { promo }),
+  // Record the payment and add its credits in one database transaction
+  const { data: granted, error } = await supabase.rpc(
+    'grant_purchased_credits',
+    {
+      p_amount: creditAmount,
+      p_description: `Credit top-up - $${dollarAmount}`,
+      p_metadata: {
+        dollarAmount,
+        isFirstTopup,
+        packageId,
+        ...(promo && { promo }),
+      },
+      p_reference_id: paymentIntentId,
+      p_type: 'topup',
+      p_user_id: userId,
     },
-    reference_id: paymentIntentId,
-    type: 'topup',
-    user_id: userId,
-  });
+  );
 
   if (error) {
-    if (isCreditTransactionReferenceConflict(error)) {
-      console.log('Topup transaction already exists', {
-        paymentIntentId,
-        userId,
-      });
-      return;
-    }
-
     throw error;
   }
 
-  // Update user's credit balance using the database function
-  await updateUserCredits(userId, creditAmount);
-};
-
-export const isCreditTransactionReferenceConflict = (error: {
-  code?: string;
-  details?: string;
-  message?: string;
-}): boolean => {
-  const conflictContext = `${error.message ?? ''} ${error.details ?? ''}`;
-
-  return (
-    error.code === '23505' &&
-    /unique_reference|reference_id/i.test(conflictContext)
-  );
+  if (!granted) {
+    console.log('Topup transaction already exists', {
+      paymentIntentId,
+      userId,
+    });
+  }
 };
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {

@@ -45,9 +45,12 @@ export const uploadFileToR2 = async (
   return `${publicBaseUrl}/${filename}`;
 };
 
-export const deleteFileFromR2 = async (filename: string) => {
+export const deleteFileFromR2 = async (
+  filename: string,
+  bucketName: string = R2_BUCKET_NAME,
+) => {
   const params = {
-    Bucket: R2_BUCKET_NAME,
+    Bucket: bucketName,
     Key: filename,
   };
 

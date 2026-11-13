@@ -247,6 +247,7 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 
 - `TELEGRAM_WEBHOOK_URL`
 - `CRON_SECRET`: authenticates the daily-stats and call-analysis batch crons.
+  In production both return 500 until it is set.
 - `INNGEST_EVENT_KEY`
 - `INNGEST_SIGNING_KEY`
 - `INNGEST_BASE_URL`

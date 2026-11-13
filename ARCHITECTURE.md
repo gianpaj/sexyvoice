@@ -608,7 +608,8 @@ scripts import the same modules, so every path writes identical rows.
 
 ### Core PostgreSQL Tables
 
-- `profiles` stores application users linked to Supabase Auth.
+- `profiles` stores application users linked to Supabase Auth. `username` holds
+  the sign-up email, so RLS lets users read only their own row.
 - `voices` stores catalog voices for speech generation and calls, including the
   shared cloned-audio row used by legacy foreign keys.
 - `audio_references` stores owned saved voices, provider IDs, locales, and preview
@@ -639,8 +640,8 @@ See `apps/web/supabase/migrations/` and
 - Browser and session-authenticated server code use
   `apps/web/lib/supabase/server.ts` or the browser client and rely on RLS.
 - Trusted server routes use `createAdminClient()` only when a service identity
-  must access another user's rows, such as resolving an API key owner or a
-  protected character prompt.
+  must access another user's rows, such as resolving an API key owner, the user
+  behind a Stripe customer, or a protected character prompt.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
   `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
 
@@ -693,6 +694,11 @@ and another deletion, even if cleanup outlasts the five-minute reservation.
 The action's `finally` releases its reservation and block after cleanup succeeds
 or fails; token checks prevent stale requests from releasing another request's
 block.
+
+After the commit, account deletion deactivates the user's API keys and deletes
+their generated audio from R2. External API audio (`usage.sourceType` is
+`api_tts`) lives in `R2_SPEECH_API_BUCKET_NAME`. Other audio lives in
+`R2_BUCKET_NAME`, and its dashboard cache entries are evicted after deletion.
 
 Auth users remain able to sign in and check out after deletion finishes.
 Inactive profiles removed by the retention script are restored on dashboard
@@ -763,6 +769,22 @@ query retries. Direct browser reads remain single-attempt. The proxy's
 is best-effort. Read, Auth lookup, and restoration failures are reported to
 Sentry without blocking a claims-authenticated dashboard request.
 
+### Stripe webhooks
+
+`POST /api/stripe/webhook` grants credits for top-ups and subscription payments
+and syncs subscription status to Redis. It returns 400 for a missing or invalid
+signature and 500 when a handled event fails, so Stripe retries the delivery.
+A paid event with an unknown price ID or customer counts as a failure because
+it granted no credits. A top-up session without the expected metadata is
+reported and acknowledged, since a retry cannot repair it. Ignored event types
+return 200. Each failure is reported to Sentry once.
+
+The `grant_purchased_credits` database function records the credit transaction
+and adds its credits in one transaction, so a failed balance update leaves no
+row behind to block the retry. It grants nothing for a payment intent
+(`credit_transactions.reference_id`) that is already recorded, so a retried
+event cannot grant twice.
+
 ### Credit balance sync
 
 `CreditsSection` displays the stored balance through `useCreditsQuery` and its
@@ -825,6 +847,10 @@ TTL. Cache hits return the existing URL and consume zero credits.
   enhancement mode.
 - Paid and free dashboard TTS outputs use separate R2 path prefixes.
 - `/api/v1/speech` bypasses this cache and always generates fresh audio.
+
+The Redis key of each entry is the output's main-bucket R2 key, stored as
+`audio_files.storage_key`. History and account deletion evict entries through
+`apps/web/lib/redis/audio-url-cache.ts`.
 
 External API rate limiting uses an Upstash token bucket with a capacity and
 refill rate of 60 requests per minute per API key hash.
