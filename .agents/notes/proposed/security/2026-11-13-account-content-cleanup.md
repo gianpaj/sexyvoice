@@ -16,6 +16,10 @@ profile, credit balance and internal cost history remain intact.
   key deletion.
 - Stop successful deletion and sign-out if transcript cleanup or revocation
   fails. Keep the existing billing reservation cleanup in `finally`.
+- Retain transcript-derived analysis and aggregate reports as internal analytics,
+  including topics, requests and summaries.
+- Leave active-call behavior unchanged. Cleanup clears the stored transcript
+  snapshot. A running call can save its transcript again and trigger analysis.
 
 ## Rejected options
 
