@@ -524,8 +524,9 @@ personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
 copies its name, description, voice and database instructions in the website
 locale, falling back to English and then the default prompt. Saving creates a
-private character. Creating, editing and duplicating custom characters use the
-selected call language so the next call uses the saved edits. If the optional
+private character. Saves and voice cloning use the selected call language,
+including for public-character copies, so the next call uses the saved edits.
+Editing and duplicating custom characters also prefill in the call language. If the optional
 public prompt lookup fails, Sentry records the error and the page loads without
 public-character prefills. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next

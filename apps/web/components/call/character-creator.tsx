@@ -110,7 +110,7 @@ export function CharacterCreator({
   const { pgState, helpers } = usePlaygroundState();
   const player = useSamplePlayer();
   const locale = useLocale();
-  const language = intent.kind === 'remix' ? locale : pgState.language;
+  const language = pgState.language;
   const source =
     intent.kind === 'create'
       ? undefined
@@ -118,6 +118,7 @@ export function CharacterCreator({
           .getAllPresets(pgState)
           .find((preset) => preset.id === intent.presetId);
   const editing = intent.kind === 'edit' ? source : undefined;
+  const prefillLanguage = source?.isPublic ? locale : language;
 
   const [form, setForm] = useState<CustomCallDraft>(() => {
     if (intent.kind === 'create') {
@@ -144,8 +145,8 @@ export function CharacterCreator({
       remix: t('remixName', { name: source.name }),
     };
     return {
-      description: getPresetDescription(source, language),
-      instructions: getPresetInstructions(source, language),
+      description: getPresetDescription(source, prefillLanguage),
+      instructions: getPresetInstructions(source, prefillLanguage),
       name: names[intent.kind].slice(0, MAX_NAME_LENGTH),
       sessionConfig: { ...source.sessionConfig },
     };
