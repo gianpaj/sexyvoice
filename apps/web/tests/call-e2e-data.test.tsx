@@ -116,6 +116,11 @@ vi.mock('@/components/call/call-faq', () => ({ CallFaq: () => null }));
 const userId = 'verified-call-user';
 const params = () => Promise.resolve({ lang: 'de' as const });
 const liveCredits = [{ amount: 321 }];
+const instructionConfigWithCharacterOverride = {
+  defaultInstructions: 'Live default instructions',
+  initialInstruction: 'Live initial instruction',
+  presetInstructions: { 'live-public': 'Live preset override' },
+};
 const cookieStore = {
   get: vi.fn(),
   getAll: vi.fn(() => []),
@@ -195,11 +200,9 @@ beforeEach(() => {
   vi.mocked(getPublicCallCharacterPrompts).mockResolvedValue([]);
   vi.mocked(getUserCallCharacters).mockResolvedValue([]);
   vi.mocked(getCallVoices).mockResolvedValue([]);
-  vi.mocked(getCallInstructionConfig).mockResolvedValue({
-    defaultInstructions: 'Live default instructions',
-    initialInstruction: 'Live initial instruction',
-    presetInstructions: { 'live-public': 'Live preset override' },
-  });
+  vi.mocked(getCallInstructionConfig).mockResolvedValue(
+    instructionConfigWithCharacterOverride,
+  );
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -498,6 +501,26 @@ describe.each([
       language: 'de',
       selectedPresetId: 'live-public',
     });
+  });
+
+  it('keeps Edge Config character instructions out of free-user presets', async () => {
+    vi.mocked(hasUserPaid).mockResolvedValue(false);
+    vi.mocked(getPublicCallCharacters).mockResolvedValue([
+      { ...E2E_PUBLIC_CALL_CHARACTERS[0], id: 'live-public' },
+    ]);
+
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
+
+    expect(getPublicCallCharacterPrompts).not.toHaveBeenCalled();
+    expect(providerProps().defaultPresets?.[0]).toMatchObject({
+      instructions: '',
+      localizedInstructions: {},
+    });
+    expect(JSON.stringify(providerProps())).not.toContain(
+      'Live preset override',
+    );
   });
 
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
