@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { cookies } from 'next/headers';
 import type { ComponentProps, ReactNode } from 'react';
@@ -34,6 +35,10 @@ import { getCreditsQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('server-only', () => ({}));
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+}));
 vi.mock('@livekit/components-styles', () => ({}));
 vi.mock('next/headers', () => ({ cookies: vi.fn() }));
 vi.mock('@supabase-cache-helpers/postgrest-react-query', () => ({
@@ -500,6 +505,29 @@ describe.each([
       instructions: 'Live default instructions',
       language: 'de',
       selectedPresetId: 'live-public',
+    });
+  });
+
+  it('loads the call page when optional public prompt prefills fail', async () => {
+    const error = new Error('Public prompts unavailable');
+    vi.mocked(getPublicCallCharacterPrompts).mockRejectedValueOnce(error);
+    vi.mocked(getPublicCallCharacters).mockResolvedValue([
+      E2E_PUBLIC_CALL_CHARACTERS[0],
+    ]);
+
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
+
+    expectPageProps(liveCredits, [], true);
+    expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
+    expect(providerProps().defaultPresets?.[0]).toMatchObject({
+      id: E2E_PUBLIC_CALL_CHARACTERS[0].id,
+      instructions: '',
+      localizedInstructions: {},
+    });
+    expect(captureException).toHaveBeenCalledExactlyOnceWith(error, {
+      tags: { area: 'call-character-prefill' },
     });
   });
 

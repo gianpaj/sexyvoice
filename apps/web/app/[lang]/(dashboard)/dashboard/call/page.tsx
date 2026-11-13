@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { getTranslations } from 'next-intl/server';
 
 import { CallExperience } from '@/components/call/call-experience';
@@ -92,7 +93,12 @@ export default async function Call(props: {
     !e2e && isPaidUser
       ? await Promise.all([
           getUserCallCharacters(userId),
-          getPublicCallCharacterPrompts(),
+          getPublicCallCharacterPrompts().catch((error) => {
+            captureException(error, {
+              tags: { area: 'call-character-prefill' },
+            });
+            return [];
+          }),
         ])
       : [[], e2e && isPaidUser ? E2E_PUBLIC_CALL_CHARACTER_PROMPTS : []];
   const promptsByCharacter = new Map(

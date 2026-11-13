@@ -525,7 +525,9 @@ saved before they are called. "Make your own version" of a featured character
 copies its name, description, voice and database instructions in the website
 locale, falling back to English and then the default prompt. Saving creates a
 private character. Creating, editing and duplicating custom characters use the
-selected call language so the next call uses the saved edits. Free users see the
+selected call language so the next call uses the saved edits. If the optional
+public prompt lookup fails, Sentry records the error and the page loads without
+public-character prefills. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next
 to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
 character can call, for both the panel and a card's Call. Deleting a
