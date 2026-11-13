@@ -67,7 +67,7 @@ export class ProfilePage {
       .or(page.getByText(/will be permanently/i))
       .first();
     this.deleteAccountButton = page.getByRole('button', {
-      name: /delete account/i,
+      name: /delete content/i,
     });
 
     // Confirmation dialog (appears when delete account is clicked)

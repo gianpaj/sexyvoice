@@ -999,7 +999,7 @@
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
-        "button": "Eliminar cuenta",
+        "button": "Eliminar contenido",
         "confirmTitle": "¿Eliminar contenido de tu cuenta?",
         "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
         "alertTitle": "Elimina contenido de tu cuenta",
@@ -1007,9 +1007,9 @@
         "continue": "Continuar",
         "errors": {
           "manageBilling": "Gestionar facturación",
-          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
-          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo.",
-          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
+          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu contenido.",
+          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu contenido no se ha eliminado. Inténtalo de nuevo.",
+          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu contenido. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
           "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
         }
       }
