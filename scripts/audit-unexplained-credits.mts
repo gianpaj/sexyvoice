@@ -1,17 +1,28 @@
 /// <reference path="../apps/web/lib/supabase/types.d.ts" />
 
 import { rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { parseArgs } from 'node:util';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { resolve } from 'node:path';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient } from './lib/supabase.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { toCsv } from './lib/csv.mts';
+import {
+  type CreditBalance,
+  expectedBalance,
+  readBalances,
+  readCreditTransactions,
+  readUsageEvents,
+} from './lib/ledger.mts';
+import {
+  createScriptAdminClient,
+  PAGE_SIZE,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
 
-const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-
-const PAGE_SIZE = 1000;
 const USER_BATCH_SIZE = 50;
 const DEFAULT_MIN_CREDITS = 50;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -35,22 +46,7 @@ interface CliOptions {
   output?: string;
 }
 
-type CreditBalanceRow = Pick<
-  Tables<'credits'>,
-  'amount' | 'updated_at' | 'user_id'
->;
-
-type CreditTransactionRow = Pick<
-  Tables<'credit_transactions'>,
-  'amount' | 'created_at' | 'id' | 'user_id'
->;
-
 type ProfileRow = Pick<Tables<'profiles'>, 'created_at' | 'id' | 'username'>;
-
-type UsageEventRow = Pick<
-  Tables<'usage_events'>,
-  'created_at' | 'credits_used' | 'id' | 'occurred_at' | 'user_id'
->;
 
 interface LedgerAggregate {
   lastTransactionAt: string | null;
@@ -110,11 +106,8 @@ export function reconcileCreditAccount(
 
   const currentBalance = Math.max(0, input.currentBalance);
   const recordedUsage = Math.max(0, input.recordedUsage);
-  const expectedBalance = Math.max(0, input.netLedgerCredits - recordedUsage);
-  const unexplainedGrants = Math.max(
-    0,
-    currentBalance + recordedUsage - input.netLedgerCredits,
-  );
+  const expected = expectedBalance(input.netLedgerCredits, recordedUsage);
+  const unexplainedGrants = Math.max(0, currentBalance - expected);
   const unexplainedRemaining = Math.min(currentBalance, unexplainedGrants);
   const minimumUnexplainedUsed = Math.max(
     0,
@@ -134,27 +127,10 @@ export function reconcileCreditAccount(
 
   return {
     classification,
-    expectedBalance,
+    expectedBalance: Math.max(0, expected),
     minimumUnexplainedUsed,
     unexplainedGrants,
     unexplainedRemaining,
-  };
-}
-
-type FetchLike = typeof fetch;
-
-export function createReadOnlyFetch(delegate: FetchLike = fetch): FetchLike {
-  return (input, init) => {
-    const requestMethod = input instanceof Request ? input.method : undefined;
-    const method = (init?.method ?? requestMethod ?? 'GET').toUpperCase();
-
-    if (method !== 'GET' && method !== 'HEAD') {
-      return Promise.reject(
-        new Error(`Read-only audit blocked HTTP ${method}`),
-      );
-    }
-
-    return delegate(input, init);
   };
 }
 
@@ -181,12 +157,8 @@ function parsePositiveNumber(
   return value;
 }
 
-function parseCliArgs(): CliOptions {
-  const rawArgs = process.argv.slice(2);
-  const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
-  const { values } = parseArgs({
-    allowPositionals: false,
-    args,
+function readOptions(): CliOptions {
+  const { values } = parseCliArgs({
     options: {
       days: {
         type: 'string',
@@ -233,7 +205,7 @@ function parseCliArgs(): CliOptions {
 function displayHelp(): void {
   console.log(`
 Usage:
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days <number> [options]
+  pnpm audit-unexplained-credits --days <number> [options]
 
 Find recently changed credit balances that cannot be explained by recorded
 credit transactions and usage events. This script is strictly read-only.
@@ -246,19 +218,19 @@ Options:
   -h, --help              Show this help message
 
 Examples:
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 3
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 7 --min-credits 100
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 25
+  pnpm audit-unexplained-credits --days 3
+  pnpm audit-unexplained-credits --days 7 --min-credits 100
+  pnpm audit-unexplained-credits --days 1 --limit 25
 `);
 }
 
 async function fetchRecentBalances(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   windowStart: string,
   auditAsOf: string,
   limit?: number,
-): Promise<CreditBalanceRow[]> {
-  const rows: CreditBalanceRow[] = [];
+): Promise<CreditBalance[]> {
+  const rows: CreditBalance[] = [];
   let lastUserId: string | undefined;
 
   while (limit === undefined || rows.length < limit) {
@@ -283,7 +255,7 @@ async function fetchRecentBalances(
       );
     }
 
-    const page = (data ?? []) as CreditBalanceRow[];
+    const page = (data ?? []) as CreditBalance[];
     rows.push(...page);
 
     if (page.length < pageSize) break;
@@ -303,7 +275,7 @@ function chunk<T>(values: T[], size: number): T[][] {
 }
 
 async function fetchProfiles(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
 ): Promise<Map<string, ProfileRow>> {
   const profiles = new Map<string, ProfileRow>();
@@ -326,32 +298,8 @@ async function fetchProfiles(
   return profiles;
 }
 
-async function fetchBalancesByUserIds(
-  supabase: SupabaseClient,
-  userIds: string[],
-): Promise<Map<string, CreditBalanceRow>> {
-  const balances = new Map<string, CreditBalanceRow>();
-
-  for (const userIdBatch of chunk(userIds, USER_BATCH_SIZE)) {
-    const { data, error } = await supabase
-      .from('credits')
-      .select('user_id, amount, updated_at')
-      .in('user_id', userIdBatch);
-
-    if (error) {
-      throw new Error(`Failed to recheck credit balances: ${error.message}`);
-    }
-
-    for (const balance of (data ?? []) as CreditBalanceRow[]) {
-      balances.set(balance.user_id, balance);
-    }
-  }
-
-  return balances;
-}
-
 async function fetchLedgerAggregates(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
   auditAsOf: string,
 ): Promise<Map<string, LedgerAggregate>> {
@@ -367,50 +315,26 @@ async function fetchLedgerAggregates(
   const batches = chunk(userIds, USER_BATCH_SIZE);
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const userIdBatch = batches[batchIndex];
-    let lastId: string | undefined;
 
     console.log(
       `  Credit transactions batch ${batchIndex + 1}/${batches.length}`,
     );
 
-    while (true) {
-      let query = supabase
-        .from('credit_transactions')
-        .select('id, user_id, amount, created_at')
-        .in('user_id', userIdBatch)
-        .lte('created_at', auditAsOf)
-        .order('id', { ascending: true })
-        .limit(PAGE_SIZE);
+    const transactions = await readCreditTransactions(supabase, userIdBatch, {
+      until: auditAsOf,
+    });
+    for (const transaction of transactions) {
+      const aggregate = aggregates.get(transaction.user_id);
+      if (!aggregate) continue;
 
-      if (lastId) {
-        query = query.gt('id', lastId);
+      aggregate.netCredits += transaction.amount;
+      aggregate.transactionCount += 1;
+      if (
+        aggregate.lastTransactionAt === null ||
+        transaction.created_at > aggregate.lastTransactionAt
+      ) {
+        aggregate.lastTransactionAt = transaction.created_at;
       }
-
-      const { data, error } = await query;
-      if (error) {
-        throw new Error(
-          `Failed to fetch credit transactions: ${error.message}`,
-        );
-      }
-
-      const page = (data ?? []) as CreditTransactionRow[];
-      for (const transaction of page) {
-        const aggregate = aggregates.get(transaction.user_id);
-        if (!aggregate) continue;
-
-        aggregate.netCredits += transaction.amount ?? 0;
-        aggregate.transactionCount += 1;
-        if (
-          aggregate.lastTransactionAt === null ||
-          transaction.created_at > aggregate.lastTransactionAt
-        ) {
-          aggregate.lastTransactionAt = transaction.created_at;
-        }
-      }
-
-      if (page.length < PAGE_SIZE) break;
-      lastId = page.at(-1)?.id;
-      if (!lastId) break;
     }
   }
 
@@ -418,7 +342,7 @@ async function fetchLedgerAggregates(
 }
 
 async function fetchUsageAggregates(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
   auditAsOf: string,
 ): Promise<Map<string, UsageAggregate>> {
@@ -434,63 +358,28 @@ async function fetchUsageAggregates(
   const batches = chunk(userIds, USER_BATCH_SIZE);
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const userIdBatch = batches[batchIndex];
-    let lastId: string | undefined;
 
     console.log(`  Usage events batch ${batchIndex + 1}/${batches.length}`);
 
-    while (true) {
-      let query = supabase
-        .from('usage_events')
-        .select('id, user_id, credits_used, occurred_at, created_at')
-        .in('user_id', userIdBatch)
-        .lte('created_at', auditAsOf)
-        .order('id', { ascending: true })
-        .limit(PAGE_SIZE);
+    const events = await readUsageEvents(supabase, userIdBatch, {
+      until: auditAsOf,
+    });
+    for (const event of events) {
+      const aggregate = aggregates.get(event.user_id);
+      if (!aggregate) continue;
 
-      if (lastId) {
-        query = query.gt('id', lastId);
+      aggregate.recordedCredits += event.credits_used;
+      aggregate.eventCount += 1;
+      if (
+        aggregate.lastUsageAt === null ||
+        event.occurred_at > aggregate.lastUsageAt
+      ) {
+        aggregate.lastUsageAt = event.occurred_at;
       }
-
-      const { data, error } = await query;
-      if (error) {
-        throw new Error(`Failed to fetch usage events: ${error.message}`);
-      }
-
-      const page = (data ?? []) as UsageEventRow[];
-      for (const event of page) {
-        const aggregate = aggregates.get(event.user_id);
-        if (!aggregate) continue;
-
-        aggregate.recordedCredits += event.credits_used ?? 0;
-        aggregate.eventCount += 1;
-        if (
-          aggregate.lastUsageAt === null ||
-          event.occurred_at > aggregate.lastUsageAt
-        ) {
-          aggregate.lastUsageAt = event.occurred_at;
-        }
-      }
-
-      if (page.length < PAGE_SIZE) break;
-      lastId = page.at(-1)?.id;
-      if (!lastId) break;
     }
   }
 
   return aggregates;
-}
-
-export function escapeCsv(value: number | string | null): string {
-  if (value === null) return '';
-
-  // Only text can carry a formula; numbers such as -50 must stay numeric.
-  const rawText = String(value);
-  const text =
-    typeof value === 'string' && /^[=+\-@\t\r]/.test(value)
-      ? `'${value}`
-      : rawText;
-  if (!/[",\n\r]/.test(text)) return text;
-  return `"${text.replaceAll('"', '""')}"`;
 }
 
 function createCsv(rows: AuditRow[]): string {
@@ -516,12 +405,10 @@ function createCsv(rows: AuditRow[]): string {
     'lastUsageAt',
   ];
 
-  const lines = [headers.join(',')];
-  for (const row of rows) {
-    lines.push(headers.map((header) => escapeCsv(row[header])).join(','));
-  }
-
-  return `${lines.join('\n')}\n`;
+  return toCsv(
+    headers,
+    rows.map((row) => headers.map((header) => row[header])),
+  );
 }
 
 function createDefaultOutputPath(days: number): string {
@@ -529,17 +416,8 @@ function createDefaultOutputPath(days: number): string {
   return resolve(`unexplained-credits-${days}d-${timestamp}.csv`);
 }
 
-function displayEnvironment(): void {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return;
-
-  const environment = url.includes('127.0.0.1') ? 'LOCAL' : 'PRODUCTION';
-  console.log(`Database: ${new URL(url).host} (${environment})`);
-  console.log('Mode: READ ONLY (SELECT requests only)\n');
-}
-
 function buildAuditRows(
-  balances: CreditBalanceRow[],
+  balances: CreditBalance[],
   profiles: Map<string, ProfileRow>,
   ledgers: Map<string, LedgerAggregate>,
   usage: Map<string, UsageAggregate>,
@@ -653,7 +531,7 @@ function displaySummary(
 }
 
 async function main(): Promise<void> {
-  const options = parseCliArgs();
+  const options = readOptions();
   if (options.help) {
     displayHelp();
     return;
@@ -664,19 +542,13 @@ async function main(): Promise<void> {
     throw new Error('--days is required');
   }
 
-  loadScriptEnv([
-    resolve(scriptDirectory, '.env.local'),
-    resolve(scriptDirectory, '../apps/web/.env.local'),
-    resolve(scriptDirectory, '.env'),
-    resolve(scriptDirectory, '../apps/web/.env'),
-  ]);
-  const supabase = createScriptAdminClient({ fetch: createReadOnlyFetch() });
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: true });
   const auditAsOf = new Date(Date.now() - AUDIT_SAFETY_LAG_MS).toISOString();
   const windowStart = new Date(
     new Date(auditAsOf).getTime() - days * MILLISECONDS_PER_DAY,
   ).toISOString();
 
-  displayEnvironment();
   console.log(`Window start: ${windowStart}`);
   console.log(`Audit cutoff: ${auditAsOf} (5-minute safety lag)`);
   console.log(`Minimum unexplained credits: ${options.minCredits}`);
@@ -704,7 +576,7 @@ async function main(): Promise<void> {
   const usage = await fetchUsageAggregates(supabase, userIds, auditAsOf);
 
   console.log('\nRechecking balances for concurrent changes...');
-  const currentBalances = await fetchBalancesByUserIds(supabase, userIds);
+  const currentBalances = await readBalances(supabase, userIds);
   const stableBalances = balances.filter((balance) => {
     const current = currentBalances.get(balance.user_id);
     return (
@@ -735,7 +607,7 @@ async function main(): Promise<void> {
   }
 
   const outputPath = options.output
-    ? resolve(options.output)
+    ? inputPath(options.output)
     : createDefaultOutputPath(days);
   // Create the report owner-only from the first byte: `mode` only applies to a
   // new file, so replace any existing one instead of writing through it.
@@ -754,15 +626,4 @@ async function main(): Promise<void> {
   );
 }
 
-const isMainModule =
-  process.argv[1] !== undefined &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
-if (isMainModule) {
-  main().catch((error: unknown) => {
-    console.error(
-      `Audit failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-    process.exitCode = 1;
-  });
-}
+runScript(import.meta.url, main);

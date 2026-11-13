@@ -192,7 +192,7 @@ test('reports FFmpeg failures for missing or invalid audio', options, (t) => {
   for (const source of [join(path, 'missing.wav'), invalid]) {
     assert.throws(
       () => normalizeCloneDemoAudio(source, destination),
-      /FFmpeg loudness measurement of .* failed/,
+      /ffmpeg failed to measure the loudness of /,
     );
     assert.equal(existsSync(destination), false);
   }

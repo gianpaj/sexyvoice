@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import {
   constants,
   copyFileSync,
@@ -9,22 +8,19 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { runAudioTool } from './ffmpeg.mts';
+
 const LOUDNORM = 'loudnorm=I=-14:TP=-1.5:LRA=11';
 const MAX_ENCODINGS = 4;
 
-function ffmpeg(args: string[], stage: string): string {
-  const result = spawnSync(
+/** Run ffmpeg without overwriting outputs; returns stdout and stderr text. */
+function ffmpeg(args: string[], task: string): string {
+  const { stderr, stdout } = runAudioTool(
     'ffmpeg',
     ['-hide_banner', '-nostdin', '-nostats', '-n', ...args],
-    { encoding: 'utf8', timeout: 120_000, maxBuffer: 1024 * 1024 },
+    { task },
   );
-  if (result.error || result.status !== 0) {
-    throw new Error(
-      `FFmpeg ${stage} failed (${result.error?.message ?? `exit ${result.status}, signal ${result.signal}`}): ${result.stderr ?? ''}`,
-      { cause: result.error },
-    );
-  }
-  return `${result.stdout}\n${result.stderr}`;
+  return `${stdout}\n${stderr}`;
 }
 
 function measure(source: string) {
@@ -40,7 +36,7 @@ function measure(source: string) {
       'null',
       '-',
     ],
-    `loudness measurement of ${source}`,
+    `to measure the loudness of ${source}`,
   );
   let report: Record<string, unknown>;
   try {
@@ -107,7 +103,7 @@ export function normalizeCloneDemoAudio(
           '128k',
           output,
         ],
-        `normalization of ${source}`,
+        `to normalize ${source}`,
       );
       // Dynamic fallback and MP3 encoding can miss the measured target.
       const encoded = measure(output);

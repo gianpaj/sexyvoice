@@ -3,53 +3,61 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { describe, expect, it } from 'vitest';
 
-import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
-import { WrapperBoundary } from '@/components/grok-tts/extensions/grok-wrapper-boundary';
-import { InstantTag } from '@/components/grok-tts/extensions/instant-tag';
-import { findUnsupportedGrokTagMatches } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
+import { AutoConvertTags } from '@/components/speech-tags/auto-convert-tags';
 import {
-  type TtsEditorProvider,
-  ttsTextToTipTapDoc,
-  ttsTipTapDocToText,
-} from '@/lib/tts-editor';
-import { VOXTRAL_EMOTIONS, VOXTRAL_TAGS } from '@/lib/voxtral-tags';
+  instantTags,
+  TAG_CATALOGS,
+  type TagProvider,
+} from '@/components/speech-tags/catalog';
+import { InstantTag } from '@/components/speech-tags/instant-tag';
+import {
+  docToTaggedText,
+  taggedTextToDoc,
+} from '@/components/speech-tags/text';
+import { findUnknownTagMatches } from '@/components/speech-tags/unknown-tag-highlight';
+import { WrapperBoundary } from '@/components/speech-tags/wrapper-boundary';
 
 describe('Voxtral tags', () => {
-  it('includes all 34 unique documented emotions', () => {
-    expect(VOXTRAL_EMOTIONS).toHaveLength(34);
-    expect(new Set(VOXTRAL_EMOTIONS).size).toBe(34);
+  it('lists the 34 documented emotions, 5 paces and 14 vocal sounds', () => {
+    const [emotions, paces, sounds] = TAG_CATALOGS.voxtral.groups.map(
+      ({ tags }) => tags,
+    );
+    expect(new Set(emotions).size).toBe(34);
+    expect(paces).toHaveLength(5);
+    expect(sounds).toHaveLength(14);
+    expect(TAG_CATALOGS.voxtral.wrappers).toEqual([]);
   });
 
-  it.each(VOXTRAL_TAGS)(
+  it.each(instantTags('voxtral'))(
     'round-trips %s as a chip with multiline text',
     (tag) => {
       const text = `Before ${tag} after\nNext line`;
-      const doc = ttsTextToTipTapDoc(text, 'voxtral');
+      const doc = taggedTextToDoc(text, 'voxtral');
       expect(doc.content[0].content).toContainEqual({
         attrs: { tag },
         type: 'instantTag',
       });
-      expect(ttsTipTapDocToText(doc, 'voxtral')).toBe(text);
+      expect(docToTaggedText(doc, 'voxtral')).toBe(text);
     },
   );
 
   it('keeps unknown and Grok-only tags as literal text for Voxtral', () => {
     const text = '[emotion=ecstatic] [pause] <soft>Hi</soft>';
-    expect(ttsTextToTipTapDoc(text, 'voxtral').content[0].content).toEqual([
+    expect(taggedTextToDoc(text, 'voxtral').content[0].content).toEqual([
       { type: 'text', text },
     ]);
     expect(
-      findUnsupportedGrokTagMatches(text, 'voxtral').map(({ text }) => text),
+      findUnknownTagMatches(text, 'voxtral').map(({ text }) => text),
     ).toEqual(['[emotion=ecstatic]', '[pause]', '<soft>', '</soft>']);
   });
 
   it('recognizes assignment tags and vocal sounds in provider-aware highlighting', () => {
     const text = '[emotion=sarcastic][pace=slow][throat clearing]';
-    expect(findUnsupportedGrokTagMatches(text, 'voxtral')).toEqual([]);
-    expect(findUnsupportedGrokTagMatches(text, 'grok')).toHaveLength(3);
+    expect(findUnknownTagMatches(text, 'voxtral')).toEqual([]);
+    expect(findUnknownTagMatches(text, 'grok')).toHaveLength(3);
   });
 
-  it.each<TtsEditorProvider>(['grok', 'voxtral'])(
+  it.each<TagProvider>(['grok', 'voxtral'])(
     'copies %s tags with exact syntax and newlines',
     (provider) => {
       const text =
@@ -57,7 +65,7 @@ describe('Voxtral tags', () => {
           ? '[emotion=sarcastic] Hi\n[pace=slow][sigh] Again'
           : '<soft>Hi</soft>\n[pause] Again';
       const editor = new Editor({
-        content: ttsTextToTipTapDoc(text, provider),
+        content: taggedTextToDoc(text, provider),
         coreExtensionOptions: {
           clipboardTextSerializer: { blockSeparator: '\n' },
         },
@@ -83,18 +91,18 @@ describe('Voxtral tags', () => {
 
   it('keeps text typed after a converted emotion tag after the chip', () => {
     const editor = new Editor({
-      content: ttsTextToTipTapDoc('', 'voxtral'),
+      content: taggedTextToDoc('', 'voxtral'),
       extensions: [
         StarterKit,
         InstantTag.configure({ provider: 'voxtral' }),
-        AutoConvertGrokTags.configure({ provider: 'voxtral' }),
+        AutoConvertTags.configure({ provider: 'voxtral' }),
       ],
     });
     try {
       for (const character of '[emotion=sarcastic] Hello') {
         editor.commands.insertContent(character);
       }
-      expect(ttsTipTapDocToText(editor.getJSON(), 'voxtral')).toBe(
+      expect(docToTaggedText(editor.getJSON(), 'voxtral')).toBe(
         '[emotion=sarcastic] Hello',
       );
     } finally {

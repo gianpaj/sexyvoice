@@ -3,22 +3,17 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config } from 'dotenv';
+
+import { generateXaiTts } from '../apps/web/lib/tts/xai.ts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..');
 const scriptStartedAt = new Date().toISOString().replace(/[:.]/g, '-');
-
-config({
-  path: [
-    path.join(repoRoot, '.env.local'),
-    path.join(repoRoot, '.env'),
-    path.join(repoRoot, 'apps/web/.env.local'),
-    path.join(repoRoot, 'apps/web/.env'),
-    path.join(scriptDir, '.env.local'),
-    path.join(scriptDir, '.env'),
-  ],
-});
 
 // Voice IDs from https://docs.x.ai/docs/api-reference#tts
 const VOICES = [
@@ -29,123 +24,6 @@ const VOICES = [
     language: 'en',
     voice_id: 'yis75yfp',
   },
-  // { voice_id: 'om17cury', display_name: 'Irina', language: 'ru', gender: 'female', age: 'young' },
-  // { voice_id: 'hqxr4yub', display_name: 'Luca', language: 'it', gender: 'female', age: 'middle-aged' },
-  // { voice_id: '73xd5dum', display_name: 'Ananya', language: 'hi', gender: 'female', age: 'young' },
-  // { voice_id: '69smp8rm', display_name: 'Camille', language: 'fr', gender: 'female', age: 'middle-aged' },
-  // { voice_id: '97zmdc6s', display_name: 'Ida', language: 'da', gender: 'female', age: 'middle-aged' },
-  // {
-  //   "voice_id": "f8cf5c2c78d4",
-  //   "name": "Grace",
-  //   "language": "en",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "d634b6da3d3b",
-  //   "name": "Aylin",
-  //   "language": "tr",
-  //   "gender": "female",
-  //   "age": "old"
-  // },
-  // {
-  //   "voice_id": "d0cb9ff07d95",
-  //   "name": "Sakura",
-  //   "language": "ja",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "c3a2c594479e",
-  //   "name": "Helmi",
-  //   "language": "fi",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "97fabd54445f",
-  //   "name": "Katarzyna",
-  //   "language": "pl",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "79f3a8b96d43",
-  //   "name": "Claire",
-  //   "language": "en",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "6da5baee46d0",
-  //   "name": "Beatriz",
-  //   "language": "pt",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "58d27475085e",
-  //   "name": "Femke",
-  //   "language": "nl",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "490ea3be50b1",
-  //   "name": "Saga",
-  //   "language": "sv-SE",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "458705c07139",
-  //   "name": "Clara",
-  //   "language": "de",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "3a7889066fa2",
-  //   "name": "Lena",
-  //   "language": "de",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "35c8d7f60dc8",
-  //   "name": "Layla",
-  //   "language": "ar",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "34fd4dce1ba3",
-  //   "name": "Elina",
-  //   "language": "fi",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "247783ebdd51",
-  //   "name": "Noor",
-  //   "language": "nl",
-  //   "gender": "female",
-  //   "age": "middle-aged"
-  // },
-  // {
-  //   "voice_id": "1b12d5daee6b",
-  //   "name": "Aleksandra",
-  //   "language": "pl",
-  //   "gender": "female",
-  //   "age": "young"
-  // },
-  // {
-  //   "voice_id": "0895a5b8ce5c",
-  //   "name": "Mai",
-  //   "language": "vi",
-  //   "gender": "female",
-  //   "age": "young"
-  // }
 ];
 
 const VOICE_MAP = Object.fromEntries(VOICES.map((v) => [v.voice_id, v]));
@@ -177,10 +55,10 @@ const LANGUAGE_TEXTS = {
 };
 
 function printHelp() {
-  console.log(`Generate xAI TTS speech samples via the xAI TTS API.
+  console.log(`Generate xAI speech samples with the web app's xAI TTS request.
 
 Usage:
-  node generate-xai-speech-samples.mjs -- --voices yis75yfp,abc123 --text "Hello" --language es-MX
+  pnpm generate-xai-speech-samples --voices yis75yfp,abc123 --text "Hello" --language es-MX
 
 Environment:
   XAI_API_KEY   Required Bearer API key
@@ -190,30 +68,26 @@ Options:
   --language <lang>       BCP-47 language tag (default: en-US)
   --voices <a,b,c>        Comma-separated voice IDs
   --out <dir>             Output directory (default: scripts/generated-speech)
-  --sample-rate <hz>      Audio sample rate (default: 44100)
-  --bit-rate <bps>        Audio bit rate in bps (default: 128000)
   --api-key <key>         Override XAI_API_KEY
   -h, --help              Show this help`);
 }
 
-function readFlag(args, name) {
-  const equalsPrefix = `${name}=`;
-  const equalsValue = args.find((arg) => arg.startsWith(equalsPrefix));
-  if (equalsValue) {
-    return equalsValue.slice(equalsPrefix.length);
-  }
-  const index = args.indexOf(name);
-  if (index === -1) return;
-  return args[index + 1];
-}
-
-function parseArgs(args) {
-  if (args.includes('--help') || args.includes('-h')) {
-    printHelp();
-    process.exit(0);
+function readOptions() {
+  const { values } = parseCliArgs({
+    options: {
+      'api-key': { type: 'string' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      language: { type: 'string' },
+      out: { type: 'string' },
+      text: { type: 'string' },
+      voices: { type: 'string' },
+    },
+  });
+  if (values.help) {
+    return { help: true };
   }
 
-  const voicesFlag = readFlag(args, '--voices');
+  const voicesFlag = values.voices;
   const useNativeText = !voicesFlag;
   const voices = voicesFlag
     ? voicesFlag
@@ -226,28 +100,14 @@ function parseArgs(args) {
     throw new Error('--voices must contain at least one voice ID');
   }
 
-  const sampleRateFlag = readFlag(args, '--sample-rate');
-  const sampleRate =
-    sampleRateFlag === undefined ? 44_100 : Number(sampleRateFlag);
-  if (!Number.isInteger(sampleRate) || sampleRate <= 0) {
-    throw new Error('--sample-rate must be a positive integer');
-  }
-
-  const bitRateFlag = readFlag(args, '--bit-rate');
-  const bitRate = bitRateFlag === undefined ? 128_000 : Number(bitRateFlag);
-  if (!Number.isInteger(bitRate) || bitRate <= 0) {
-    throw new Error('--bit-rate must be a positive integer');
-  }
-
   return {
-    apiKey: readFlag(args, '--api-key') ?? process.env.XAI_API_KEY,
-    bitRate,
-    language: readFlag(args, '--language') ?? DEFAULT_LANGUAGE,
-    outDir: path.resolve(
-      readFlag(args, '--out') ?? path.join(scriptDir, 'generated-speech'),
-    ),
-    sampleRate,
-    text: readFlag(args, '--text') ?? DEFAULT_TEXT,
+    apiKey: values['api-key'],
+    help: false,
+    language: values.language ?? DEFAULT_LANGUAGE,
+    outDir: values.out
+      ? inputPath(values.out)
+      : path.join(scriptDir, 'generated-speech'),
+    text: values.text ?? DEFAULT_TEXT,
     useNativeText,
     voices,
   };
@@ -263,7 +123,7 @@ function slugify(value) {
 
 async function generateForVoice(options, voiceId) {
   const voiceMeta = VOICE_MAP[voiceId];
-  const displayName = voiceMeta?.display_name ?? voiceMeta?.name ?? voiceId;
+  const displayName = voiceMeta?.display_name ?? voiceId;
   const basename = `${scriptStartedAt}-xai_${slugify(displayName)}`;
   const mp3Path = path.join(options.outDir, `${basename}.mp3`);
 
@@ -277,40 +137,29 @@ async function generateForVoice(options, voiceId) {
 
   console.log(`\n▶ Generating ${displayName} (${voiceId}, ${language})`);
 
-  const res = await fetch('https://api.x.ai/v1/tts', {
-    body: JSON.stringify({
-      language,
-      output_format: {
-        bit_rate: options.bitRate,
-        codec: 'mp3',
-        sample_rate: options.sampleRate,
-      },
-      text,
-      voice_id: voiceId,
-    }),
-    headers: {
-      Authorization: `Bearer ${options.apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
+  const { audioBuffer } = await generateXaiTts({
+    codec: 'mp3',
+    language,
+    text,
+    voiceId,
   });
-
-  if (!res.ok) {
-    throw new Error(
-      `TTS error for ${voiceId} (${res.status}): ${await res.text()}`,
-    );
-  }
-
-  const buf = Buffer.from(await res.arrayBuffer());
-  await writeFile(mp3Path, buf);
+  await writeFile(mp3Path, audioBuffer);
 
   console.log(`  MP3: ${mp3Path}`);
   return { mp3Path, voiceId };
 }
 
 async function main() {
-  const options = parseArgs(process.argv.slice(2));
-  if (!options.apiKey) {
+  const options = readOptions();
+  if (options.help) {
+    printHelp();
+    return;
+  }
+  loadScriptEnv();
+  if (options.apiKey) {
+    process.env.XAI_API_KEY = options.apiKey;
+  }
+  if (!process.env.XAI_API_KEY) {
     throw new Error(
       'Missing XAI_API_KEY. Set it in your env or pass --api-key.',
     );
@@ -333,7 +182,4 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+runScript(import.meta.url, main);

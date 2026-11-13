@@ -1,8 +1,21 @@
 import type { PolicyPage, Post } from 'contentlayer/generated';
+import { createTranslator, hasLocale } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
+import {
+  BLOG_INDEX_LIMIT,
+  getPolicy,
+  getPost,
+  isPolicySlug,
+  listPosts,
+  postPath,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sexyvoice.ai';
+import { type FaqQuestion, getLandingContent } from '@/lib/landing-content';
+import type { MarkdownPage } from '@/lib/public-routes';
+import { localeUrl } from '@/lib/site';
+import { splitHeroTitle } from '@/lib/text';
+import { routing } from '@/src/i18n/routing';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 
@@ -12,118 +25,153 @@ export function estimateMarkdownTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
-export function buildMarkdownResponse(
-  body: string,
-  init: ResponseInit = {},
-): Response {
-  const tokens = estimateMarkdownTokens(body);
-  const headers = new Headers(init.headers);
-  headers.set('Content-Type', MARKDOWN_CONTENT_TYPE);
-  headers.set('x-markdown-tokens', String(tokens));
-  headers.set('X-Robots-Tag', 'noindex, nofollow');
-  const existingVary = headers.get('Vary');
-  headers.set('Vary', existingVary ? `${existingVary}, Accept` : 'Accept');
-  if (!headers.has('Cache-Control')) {
-    headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-  }
-  return new Response(body, { ...init, headers });
+export function buildMarkdownResponse(body: string): Response {
+  return new Response(body, {
+    headers: {
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+      'Content-Type': MARKDOWN_CONTENT_TYPE,
+      Vary: 'Accept',
+      'X-Robots-Tag': 'noindex, nofollow',
+      'x-markdown-tokens': String(estimateMarkdownTokens(body)),
+    },
+  });
 }
 
-type LandingMessages = IntlMessages['landing'];
+/** A markdown page, or a blog post at `/blog/{slug}`. */
+type MarkdownPath = MarkdownPage | `/blog/${string}`;
 
-function renderHeroSection(lang: Locale, landing: LandingMessages): string[] {
-  const lines: string[] = [];
-  const heroTitle = landing.hero?.title?.replace(/\s*,\s*/g, ' — ') ?? '';
-  if (heroTitle) {
-    lines.push('', `## ${heroTitle}`);
-  }
-  if (landing.hero?.subtitle) {
-    lines.push('', landing.hero.subtitle);
-  }
-  if (landing.hero?.buttonCTA) {
-    const cta =
-      `[${landing.hero.buttonCTA}](${SITE_URL}/${lang}/signup) — ${landing.hero.noCreditCard ?? ''}`.trim();
-    lines.push('', cta);
-  }
-  return lines;
-}
-
-function renderFeaturesSection(landing: LandingMessages): string[] {
-  const features = landing.features;
-  if (!features) return [];
-  const lines: string[] = ['', '## Features'];
-  for (const key of Object.keys(features) as Array<keyof typeof features>) {
-    const feature = features[key];
-    if (feature?.title) {
-      lines.push('', `### ${feature.title}`);
-    }
-    if (feature?.description) {
-      lines.push('', feature.description);
-    }
-  }
-  return lines;
-}
-
-function renderFaqSection(landing: LandingMessages): string[] {
-  if (!landing.faq?.title) return [];
-  const lines: string[] = ['', `## ${landing.faq.title}`];
-  if (landing.faq.subtitle) {
-    lines.push('', landing.faq.subtitle);
-  }
-  for (const group of landing.faq.groups ?? []) {
-    if (group.category) {
-      lines.push('', `### ${group.category}`);
-    }
-    for (const q of group.questions ?? []) {
-      if (q.question) {
-        lines.push('', `#### ${q.question}`);
-      }
-      if (q.answer) {
-        lines.push('', q.answer);
-      }
-    }
-  }
-  return lines;
-}
-
-function renderCtaSection(lang: Locale, landing: LandingMessages): string[] {
-  if (!landing.cta?.title) return [];
-  const lines: string[] = ['', `## ${landing.cta.title}`];
-  if (landing.cta.subtitle) {
-    lines.push('', landing.cta.subtitle);
-  }
-  if (landing.cta.action) {
-    lines.push('', `[${landing.cta.action}](${SITE_URL}/${lang}/signup)`);
-  }
-  return lines;
-}
-
-export function renderLandingMarkdown(
+async function renderPageMarkdown(
   lang: Locale,
-  messages: IntlMessages,
-): string {
-  const landing = messages.landing as LandingMessages;
-  const siteTitle = messages.pages?.defaultTitle ?? 'SexyVoice.ai';
-  const description = messages.pages?.description ?? '';
-  const lines: string[] = [`# ${siteTitle}`];
-
-  if (description) {
-    lines.push('', description);
+  path: MarkdownPath,
+): Promise<string | null> {
+  if (path === '/') {
+    return renderLandingMarkdown(lang, await getMessages({ locale: lang }));
   }
-
-  lines.push(...renderHeroSection(lang, landing));
-  lines.push(...renderFeaturesSection(landing));
-
-  if (landing.popular?.trySamplesTitle) {
-    lines.push('', `## ${landing.popular.trySamplesTitle}`);
-    if (landing.popular.trySamplesSubtitle) {
-      lines.push('', landing.popular.trySamplesSubtitle);
-    }
+  if (path === '/blog') {
+    return renderBlogListMarkdown(
+      lang,
+      await getMessages({ locale: lang }),
+      listPosts(lang, BLOG_INDEX_LIMIT),
+    );
   }
+  const policySlug = path.slice(1);
+  if (isPolicySlug(policySlug)) {
+    const policy = getPolicy(lang, policySlug);
+    return policy
+      ? renderPolicyMarkdown(policy, lang, await getMessages({ locale: lang }))
+      : null;
+  }
+  const post = getPost(lang, path.slice('/blog/'.length));
+  return post
+    ? renderBlogPostMarkdown(post, await getMessages({ locale: lang }))
+    : null;
+}
 
-  lines.push(...renderFaqSection(landing));
-  lines.push(...renderCtaSection(lang, landing));
-  lines.push('', '---', '', `Canonical URL: ${SITE_URL}/${lang}`);
+/** The markdown of a page for agents, or 404 for an unknown locale or post. */
+export async function markdownResponse(
+  lang: string,
+  path: MarkdownPath,
+): Promise<Response> {
+  const body = hasLocale(routing.locales, lang)
+    ? await renderPageMarkdown(lang, path)
+    : null;
+  return body === null
+    ? new Response('Not Found', { status: 404 })
+    : buildMarkdownResponse(body);
+}
+
+export const markdownStaticParams = () =>
+  routing.locales.map((lang) => ({ lang }));
+
+/**
+ * The GET handler of a page's `.md` route. The proxy also rewrites requests
+ * that ask for `Accept: text/markdown` to these routes.
+ */
+export function markdownRoute(path: MarkdownPage) {
+  return async (
+    _request: Request,
+    { params }: { params: Promise<{ lang: string }> },
+  ) => markdownResponse((await params).lang, path);
+}
+
+/** Dates in agent markdown stay machine-readable: `2025-04-28`. */
+function isoDay(date: string): string {
+  return date.slice(0, 10);
+}
+
+/** The labels around the content, in the page language. */
+function markdownLabels(lang: Locale, messages: IntlMessages) {
+  const t = createTranslator({ locale: lang, messages });
+  return {
+    by: t('blogPost.by'),
+    canonicalUrl: (url: string) => t('markdown.canonicalUrl', { url }),
+    features: t('markdown.features'),
+    published: (date: string) => t('blogPost.published', { date }),
+    updated: (date: string) => t('policy.updated', { date }),
+  };
+}
+
+function faqAnswerMarkdown({ answer, linked }: FaqQuestion): string {
+  return linked
+    ? `${linked.before}[${linked.text}](${linked.url})${linked.after}`
+    : answer;
+}
+
+/** The landing page as markdown, with the sections and order of the page. */
+function renderLandingMarkdown(lang: Locale, messages: IntlMessages): string {
+  const { cta, faq, features, hero, samples } = getLandingContent(
+    messages.landing,
+  );
+  const [heroFirst, heroRest] = splitHeroTitle(hero.title);
+  const labels = markdownLabels(lang, messages);
+  const signupUrl = localeUrl(lang, '/signup');
+  const lines = [
+    `# ${messages.pages.defaultTitle}`,
+    '',
+    messages.pages.description,
+    '',
+    `## ${heroRest ? `${heroFirst.trim()} — ${heroRest.trim()}` : heroFirst}`,
+    '',
+    hero.subtitle,
+    '',
+    `[${hero.buttonCTA}](${signupUrl}) — ${hero.noCreditCard}`,
+    '',
+    `## ${labels.features}`,
+    ...features.flatMap((feature) => [
+      '',
+      `### ${feature.title}`,
+      '',
+      feature.description,
+    ]),
+    '',
+    `## ${samples.title}`,
+    '',
+    samples.subtitle,
+    '',
+    `## ${faq.title}`,
+    '',
+    faq.subtitle,
+    ...faq.groups.flatMap((group) => [
+      '',
+      `### ${group.category}`,
+      ...group.questions.flatMap((question) => [
+        '',
+        `#### ${question.question}`,
+        '',
+        faqAnswerMarkdown(question),
+      ]),
+    ]),
+    '',
+    `## ${cta.title}`,
+    '',
+    cta.subtitle,
+    '',
+    `[${cta.action}](${signupUrl})`,
+    '',
+    '---',
+    '',
+    labels.canonicalUrl(localeUrl(lang, '/')),
+  ];
   return `${lines.join('\n').trim()}\n`;
 }
 
@@ -132,45 +180,47 @@ export function renderBlogListMarkdown(
   messages: IntlMessages,
   posts: readonly Post[],
 ): string {
-  const landing = messages.landing as LandingMessages;
-  const title = landing.latestPosts ?? 'Latest Posts';
-  const description = landing.blogDescription ?? '';
-  const lines: string[] = [];
-
-  lines.push(`# ${title}`);
-  if (description) {
-    lines.push('', description);
-  }
+  const { blogDescription, latestPosts, noPostsAvailable } = messages.landing;
+  const lines = [`# ${latestPosts}`, '', blogDescription];
 
   if (posts.length === 0) {
-    lines.push('', landing.noPostsAvailable ?? 'No posts available yet.');
+    lines.push('', noPostsAvailable);
   } else {
     for (const post of posts) {
-      const url = `${SITE_URL}/${lang}/blog/${post.slugAsParams}`;
-      lines.push('', `## [${post.title}](${url})`);
-      lines.push('', `_${post.date}_`);
+      lines.push('', `## [${post.title}](${localeUrl(lang, postPath(post))})`);
+      lines.push('', `_${isoDay(post.date)}_`);
       if (post.description) {
         lines.push('', post.description);
       }
     }
   }
 
-  lines.push('', '---', '', `Canonical URL: ${SITE_URL}/${lang}/blog`);
+  lines.push(
+    '',
+    '---',
+    '',
+    markdownLabels(lang, messages).canonicalUrl(localeUrl(lang, '/blog')),
+  );
   return `${lines.join('\n').trim()}\n`;
 }
 
-export function renderBlogPostMarkdown(post: Post): string {
+export function renderBlogPostMarkdown(
+  post: Post,
+  messages: IntlMessages,
+): string {
+  const lang = post.locale as Locale;
+  const labels = markdownLabels(lang, messages);
   const lines: string[] = [];
-  const url = `${SITE_URL}/${post.locale}/blog/${post.slugAsParams}`;
+  const url = localeUrl(lang, postPath(post));
 
   lines.push(`# ${post.title}`);
   if (post.description) {
     lines.push('', `> ${post.description}`);
   }
   const meta: string[] = [];
-  if (post.date) meta.push(`Published: ${post.date.slice(0, 10)}`);
-  if (post.author) meta.push(`Author: ${post.author}`);
-  meta.push(`Canonical: ${url}`);
+  if (post.date) meta.push(labels.published(isoDay(post.date)));
+  if (post.author) meta.push(`${labels.by} ${post.author}`);
+  meta.push(labels.canonicalUrl(url));
   lines.push('', meta.join(' · '));
 
   lines.push('', post.body.raw.trim());
@@ -178,18 +228,24 @@ export function renderBlogPostMarkdown(post: Post): string {
   return `${lines.join('\n').trim()}\n`;
 }
 
-export function renderPolicyMarkdown(policy: PolicyPage): string {
+/** A policy as markdown, labeled in `lang` even when the text is English. */
+export function renderPolicyMarkdown(
+  policy: PolicyPage,
+  lang: Locale,
+  messages: IntlMessages,
+): string {
+  const labels = markdownLabels(lang, messages);
   const lines: string[] = [];
-  const url = `${SITE_URL}/${policy.locale}/${policy.slug}`;
+  const url = localeUrl(policy.locale as Locale, `/${policy.slug}`);
 
   lines.push(`# ${policy.title}`);
   if (policy.updated) {
-    lines.push('', `_Updated: ${policy.updated}_`);
+    lines.push('', `_${labels.updated(policy.updated)}_`);
   }
   if (policy.description) {
     lines.push('', policy.description);
   }
   lines.push('', policy.body.raw.trim());
-  lines.push('', '---', '', `Canonical URL: ${url}`);
+  lines.push('', '---', '', labels.canonicalUrl(url));
   return `${lines.join('\n').trim()}\n`;
 }

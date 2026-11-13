@@ -2,81 +2,102 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { normalizeModelId } from '@/data/models';
-import { CLONED_VOICE_ID, callVoiceProvider } from '@/lib/call-voices';
-import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
+import {
+  deleteCustomCharacters,
+  MAX_CHARACTER_DESCRIPTION_LENGTH,
+  MAX_CHARACTER_NAME_LENGTH,
+  MAX_CHARACTER_PROMPT_LENGTH,
+  MAX_CUSTOM_CHARACTERS,
+  OWN_CHARACTER_COLUMNS,
+  type SaveCharacterPayload,
+} from '@/lib/calls/characters';
+import { callVoiceProvider, normalizeCallModel } from '@/lib/calls/models';
+import { CLONED_VOICE_ID } from '@/lib/calls/voices';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 import { countUserCallCharacters, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const MAX_NAME_LENGTH = 50;
-const MAX_PROMPT_LENGTH = 5000;
+const required = (label: string) => (issue: { input: unknown }) =>
+  issue.input === undefined ? `${label} is required` : undefined;
 
-// ── Zod Schemas ──
+const sessionConfigSchema = z.object(
+  {
+    audioReferenceId: z.uuid().optional(),
+    maxOutputTokens: z.number().int().positive().nullable(),
+    // Normalized before it is spread into the session_config JSONB, so a
+    // stale client cannot write an unknown model id into a saved character.
+    model: z.string().min(1, 'Model is required').transform(normalizeCallModel),
+    temperature: z.number().min(0).max(1.2),
+    voice: z.string().min(1, 'Voice is required'),
+  },
+  { error: required('Session config') },
+);
 
-const sessionConfigSchema = z.object({
-  audioReferenceId: z.uuid().optional(),
-  maxOutputTokens: z.number().nullable(),
-  // Normalized before it is spread into the session_config JSONB, so a stale
-  // client cannot write a retired model id back into a row that was just
-  // cleaned up.
-  model: z.string().min(1, 'Model is required').transform(normalizeModelId),
-  temperature: z.number().min(0).max(1.2),
-  voice: z.string().min(1, 'Voice is required'),
-});
+const localizedText = (label: string, max: number) =>
+  z
+    .record(
+      z.string(),
+      z.string().max(max, `${label} must be ${max} characters or fewer`),
+    )
+    .default({});
 
-const createOrUpdateSchema = z.object({
+const saveSchema = z.object({
   id: z.uuid().optional(),
-  localizedDescriptions: z.record(z.string(), z.string()).optional(),
-  localizedPrompts: z.record(z.string(), z.string()).optional(),
+  localizedDescriptions: localizedText(
+    'Description',
+    MAX_CHARACTER_DESCRIPTION_LENGTH,
+  ),
+  localizedPrompts: localizedText('Prompt', MAX_CHARACTER_PROMPT_LENGTH),
   name: z
     .string()
     .trim()
     .min(1, 'Name is required')
     .max(
-      MAX_NAME_LENGTH,
-      `Name must be ${MAX_NAME_LENGTH} characters or fewer`,
+      MAX_CHARACTER_NAME_LENGTH,
+      `Name must be ${MAX_CHARACTER_NAME_LENGTH} characters or fewer`,
     ),
   prompt: z
     .string({ message: 'Prompt is required' })
     .max(
-      MAX_PROMPT_LENGTH,
-      `Prompt must be ${MAX_PROMPT_LENGTH} characters or fewer`,
+      MAX_CHARACTER_PROMPT_LENGTH,
+      `Prompt must be ${MAX_CHARACTER_PROMPT_LENGTH} characters or fewer`,
     ),
   sessionConfig: sessionConfigSchema,
-  voiceName: z.string().min(1, 'Voice name is required'),
 });
 
 const deleteSchema = z.object({
-  id: z.uuid(),
+  id: z.uuid({ error: required('Character ID') }),
 });
 
-type CreateOrUpdateBody = z.infer<typeof createOrUpdateSchema>;
+const validationError = (error: z.ZodError) =>
+  APIErrorResponse(error.issues[0]?.message ?? 'Validation error', 400);
 
-/** Human-readable labels for top-level body fields. */
-const fieldLabels: Record<string, string> = {
-  id: 'Character ID',
-  sessionConfig: 'Session config',
-};
+type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-function formatZodError(error: z.ZodError): string {
-  const issue = error.issues[0];
-  if (!issue) return 'Validation error';
-
-  // For "expected X, received undefined" on a top-level key, produce a
-  // friendlier "<Label> is required" message.
-  if (
-    issue.code === 'invalid_type' &&
-    issue.message.includes('received undefined') &&
-    issue.path.length === 1
-  ) {
-    const label = fieldLabels[String(issue.path[0])];
-    if (label) return `${label} is required`;
+/** The user's own custom character, or the response that refuses it. */
+async function findOwnCharacter(
+  supabase: Supabase,
+  id: string,
+  userId: string,
+  predefinedError: string,
+) {
+  const { data: character } = await supabase
+    .from('characters')
+    .select('id, prompt_id, user_id, is_public')
+    .eq('id', id)
+    .maybeSingle();
+  if (!character) {
+    return { response: APIErrorResponse('Character not found', 404) };
   }
-
-  return issue.message;
+  if (character.is_public) {
+    return { response: APIErrorResponse(predefinedError, 403) };
+  }
+  if (character.user_id !== userId) {
+    return { response: APIErrorResponse('Character not found', 404) };
+  }
+  return { character };
 }
 
 export async function POST(request: Request) {
@@ -88,7 +109,6 @@ export async function POST(request: Request) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
-    // Check if user has paid
     const isPaid = await hasUserPaid(claims.sub);
     if (!isPaid) {
       return APIErrorResponse('Custom characters require a paid account', 403);
@@ -101,55 +121,36 @@ export async function POST(request: Request) {
       return APIErrorResponse('Invalid JSON in request body', 400);
     }
 
-    const parsed = createOrUpdateSchema.safeParse(rawBody);
+    const parsed = saveSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return APIErrorResponse(formatZodError(parsed.error), 400);
+      return validationError(parsed.error);
     }
 
-    const body: CreateOrUpdateBody = parsed.data;
+    const body: SaveCharacterPayload = parsed.data;
+    const { localizedDescriptions, localizedPrompts, name, sessionConfig } =
+      body;
 
-    const resolvedVoice = await resolveCallVoice(
-      { ...body.sessionConfig, voice: body.voiceName },
-      claims.sub,
-    );
+    const resolvedVoice = await resolveCallVoice(sessionConfig, claims.sub);
     if (!resolvedVoice)
       return APIErrorResponse('Voice no longer available', 400);
-    const voiceObj = {
-      id: callVoiceProvider(body.sessionConfig.model)
-        ? CLONED_VOICE_ID
-        : resolvedVoice.id,
-    };
+    const voiceId = callVoiceProvider(sessionConfig.model)
+      ? CLONED_VOICE_ID
+      : resolvedVoice.id;
 
-    const isUpdate = !!body.id;
+    if (body.id) {
+      const found = await findOwnCharacter(
+        supabase,
+        body.id,
+        claims.sub,
+        'Cannot modify predefined characters',
+      );
+      if (found.response) return found.response;
 
-    if (isUpdate) {
-      // ── UPDATE existing character ──
-
-      // Verify character exists, is not predefined, and belongs to user
-      const { data: existingCharacter, error: fetchError } = await supabase
-        .from('characters')
-        .select('id, prompt_id, user_id, is_public')
-        .eq('id', body.id!)
-        .single();
-
-      if (fetchError || !existingCharacter) {
-        return APIErrorResponse('Character not found', 404);
-      }
-      if (existingCharacter.is_public) {
-        return APIErrorResponse('Cannot modify predefined characters', 403);
-      }
-      if (existingCharacter.user_id !== claims.sub) {
-        return APIErrorResponse('Character not found', 404);
-      }
-
-      // Update prompt
+      // The prompt and the character are updated in two statements.
       const { error: promptUpdateError } = await supabase
         .from('prompts')
-        .update({
-          localized_prompts: body.localizedPrompts ?? {},
-          prompt: body.prompt,
-        })
-        .eq('id', existingCharacter.prompt_id);
+        .update({ localized_prompts: localizedPrompts, prompt: body.prompt })
+        .eq('id', found.character.prompt_id);
 
       if (promptUpdateError) {
         captureException(promptUpdateError, {
@@ -158,28 +159,16 @@ export async function POST(request: Request) {
         return APIErrorResponse('Failed to update prompt', 500);
       }
 
-      // Update character
       const { data: updatedCharacter, error: charUpdateError } = await supabase
         .from('characters')
         .update({
-          localized_descriptions: body.localizedDescriptions ?? {},
-          name: body.name,
-          session_config: {
-            ...body.sessionConfig,
-            voice: body.voiceName,
-          },
-          voice_id: voiceObj.id,
+          localized_descriptions: localizedDescriptions,
+          name,
+          session_config: { ...sessionConfig },
+          voice_id: voiceId,
         })
-        .eq('id', body.id!)
-        .select(
-          `
-          id, name, localized_descriptions, image, session_config, sort_order, is_public,
-          voice_id,
-          voices ( name, sample_url ),
-          prompt_id,
-          prompts ( prompt, localized_prompts )
-        `,
-        )
+        .eq('id', body.id)
+        .select(OWN_CHARACTER_COLUMNS)
         .single();
 
       if (charUpdateError) {
@@ -192,9 +181,8 @@ export async function POST(request: Request) {
       return NextResponse.json(updatedCharacter);
     }
 
-    // ── CREATE new character ──
-
-    // Check limit
+    // The count and the insert are separate statements, so two concurrent
+    // creates can pass the limit.
     const currentCount = await countUserCallCharacters(claims.sub);
     if (currentCount >= MAX_CUSTOM_CHARACTERS) {
       return APIErrorResponse(
@@ -203,12 +191,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert prompt first
     const { data: newPrompt, error: promptInsertError } = await supabase
       .from('prompts')
       .insert({
         is_public: false,
-        localized_prompts: body.localizedPrompts ?? {},
+        localized_prompts: localizedPrompts,
         prompt: body.prompt,
         type: 'call' as const,
         user_id: claims.sub,
@@ -223,39 +210,27 @@ export async function POST(request: Request) {
       return APIErrorResponse('Failed to create prompt', 500);
     }
 
-    // Insert character
     const { data: newCharacter, error: charInsertError } = await supabase
       .from('characters')
       .insert({
         is_public: false,
-        localized_descriptions: body.localizedDescriptions ?? {},
-        name: body.name,
+        localized_descriptions: localizedDescriptions,
+        name,
         prompt_id: newPrompt.id,
-        session_config: {
-          ...body.sessionConfig,
-          voice: body.voiceName,
-        },
+        session_config: { ...sessionConfig },
         sort_order: currentCount,
         user_id: claims.sub,
-        voice_id: voiceObj.id,
+        voice_id: voiceId,
       })
-      .select(
-        `
-        id, name, localized_descriptions, image, session_config, sort_order, is_public,
-        voice_id,
-        voices ( name, sample_url ),
-        prompt_id,
-        prompts ( prompt, localized_prompts )
-      `,
-      )
+      .select(OWN_CHARACTER_COLUMNS)
       .single();
 
     if (charInsertError || !newCharacter) {
       captureException(charInsertError, {
         extra: { promptId: newPrompt.id, userId: claims.sub },
       });
-      // Clean up orphaned prompt
-      await supabase.from('prompts').delete().eq('id', newPrompt.id);
+      // A prompt without its character is never shown; remove it.
+      await deleteCustomCharacters(supabase, claims.sub, newPrompt.id);
       return APIErrorResponse('Failed to create character', 500);
     }
 
@@ -284,60 +259,33 @@ export async function DELETE(request: Request) {
 
     const parsed = deleteSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return APIErrorResponse(formatZodError(parsed.error), 400);
+      return validationError(parsed.error);
     }
 
     const { id } = parsed.data;
+    const found = await findOwnCharacter(
+      supabase,
+      id,
+      claims.sub,
+      'Cannot delete predefined characters',
+    );
+    if (found.response) return found.response;
 
-    // Fetch character to get prompt_id and verify ownership
-    const { data: character, error: fetchError } = await supabase
-      .from('characters')
-      .select('id, prompt_id, user_id, is_public')
-      .eq('id', id)
-      .single();
+    const { data: deleted, error: deleteError } = await deleteCustomCharacters(
+      supabase,
+      claims.sub,
+      found.character.prompt_id,
+    );
 
-    if (fetchError || !character) {
-      return APIErrorResponse('Character not found', 404);
-    }
-    if (character.is_public) {
-      return APIErrorResponse('Cannot delete predefined characters', 403);
-    }
-    if (character.user_id !== claims.sub) {
-      return APIErrorResponse('Character not found', 404);
-    }
-
-    // Delete character first
-    const { error: charDeleteError } = await supabase
-      .from('characters')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', claims.sub)
-      .eq('is_public', false);
-
-    if (charDeleteError) {
-      captureException(charDeleteError, {
-        extra: { characterId: id, userId: claims.sub },
-      });
-      return APIErrorResponse('Failed to delete character', 500);
-    }
-
-    // Delete the orphaned prompt
-    const { error: promptDeleteError } = await supabase
-      .from('prompts')
-      .delete()
-      .eq('id', character.prompt_id)
-      .eq('user_id', claims.sub);
-
-    if (promptDeleteError) {
-      // Non-critical: log but don't fail the request
-      captureException(promptDeleteError, {
+    if (deleteError || !deleted?.length) {
+      captureException(deleteError ?? new Error('Character prompt not owned'), {
         extra: {
           characterId: id,
-          context: 'orphaned prompt cleanup',
-          promptId: character.prompt_id,
+          promptId: found.character.prompt_id,
           userId: claims.sub,
         },
       });
+      return APIErrorResponse('Failed to delete character', 500);
     }
 
     return NextResponse.json({ success: true });

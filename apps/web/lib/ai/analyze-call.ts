@@ -2,7 +2,7 @@ import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-// `Json` is a global ambient type from lib/supabase/types.d.ts.
+// `Json` and `Tables` are global ambient types from lib/supabase/types.d.ts.
 //
 // This module is shared with the operational scripts in `scripts/` (imported
 // via Node's native type stripping), so it must only import npm packages and
@@ -12,6 +12,9 @@ import { z } from 'zod';
 // the batch drain job and the scripts so every path agrees on what counts as
 // analysable.
 export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120;
+
+/** The failure for a transcript with no usable messages; it is never retried. */
+export const NO_TRANSCRIPT_MESSAGES = 'No messages in transcript';
 
 // xAI flagship; supports structured outputs (generateObject). Override via env.
 const DEFAULT_MODEL = 'grok-4.3';
@@ -88,16 +91,18 @@ export const callAnalysisSchema = z.object({
 
 export type CallAnalysis = z.infer<typeof callAnalysisSchema>;
 
-export interface CallSessionForAnalysis {
-  duration_seconds?: number | null;
-  end_reason?: string | null;
-  id: string;
-  started_at?: string | null;
-  transcript: Json | null;
-  user_id?: string | null;
-}
+/** The call_sessions columns an analysis reads (`CALL_ANALYSIS_SESSION_COLUMNS`). */
+export type CallSessionForAnalysis = Pick<
+  Tables<'call_sessions'>,
+  | 'duration_seconds'
+  | 'end_reason'
+  | 'id'
+  | 'started_at'
+  | 'transcript'
+  | 'user_id'
+>;
 
-export interface ConversationMessage {
+interface ConversationMessage {
   content: string;
   role: 'user' | 'assistant';
   timestamp: string | null;
@@ -214,7 +219,7 @@ export function buildConversationSummary(
   return summary;
 }
 
-export interface CallAnalysisPrompt {
+interface CallAnalysisPrompt {
   /** Set when the transcript has no user turns; appended to notable_patterns. */
   assistantOnlyNote: string | null;
   messageCount: number;
@@ -315,7 +320,7 @@ export async function analyzeTranscript(
 ): Promise<CallAnalysis> {
   const input = buildCallAnalysisPrompt(session);
   if (!input) {
-    throw new Error('No messages in transcript');
+    throw new Error(NO_TRANSCRIPT_MESSAGES);
   }
 
   const { object } = await generateObject({

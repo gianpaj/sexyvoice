@@ -4,42 +4,17 @@ import { Pause, PhoneCall } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
-import { TranscriptDisplay } from '@/app/[lang]/tools/transcribe/components/transcript-display';
+import { characterImageSrc } from '@/components/call/character-avatar';
+import { TranscriptDisplay } from '@/components/transcript/transcript-display';
 import { Button } from '@/components/ui/button';
-import { demoCallData } from '@/data/demo-transcripts';
 import { useAudioAnalyser } from '@/hooks/use-audio-analyser';
+import { formatClock } from '@/lib/clock';
 import { DemoCharacterAvatar } from './demo-character-avatar';
+import { DEMO_CHARACTERS } from './demo-characters';
 import { DemoWaveform } from './demo-waveform';
 
-const demoCharacters = [
-  {
-    accent: 'from-red-500 to-pink-500',
-    glowColor: '239, 68, 68',
-    id: 'ramona',
-    image: 'ramona.webp',
-    name: 'Ramona',
-  },
-  {
-    accent: 'from-amber-400 to-orange-500',
-    glowColor: '251, 191, 36',
-    id: 'lily',
-    image: 'lily.webp',
-    name: 'Lily',
-  },
-  {
-    accent: 'from-violet-500 to-fuchsia-500',
-    glowColor: '139, 92, 246',
-    id: 'rafal',
-    image: 'rafal.webp',
-    name: 'Rafal',
-  },
-] as const;
-
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
+/** Average band level above which the demo character shows as speaking. */
+const SPEAKING_LEVEL = 0.15;
 
 interface DemoCallPlayerProps {
   pickCharacterLabel: string;
@@ -52,7 +27,7 @@ export function DemoCallPlayer({
   stopLabel,
   pickCharacterLabel,
 }: DemoCallPlayerProps) {
-  const [selectedCharId, setSelectedCharId] = useState<string>('ramona');
+  const [selectedCharId, setSelectedCharId] = useState(DEMO_CHARACTERS[0].id);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
     null,
   );
@@ -66,9 +41,9 @@ export function DemoCallPlayer({
 
   const frequencyBands = useAudioAnalyser(audioElement);
 
-  const selectedChar = demoCharacters.find((c) => c.id === selectedCharId)!;
-  const charData = demoCallData[selectedCharId];
-  const duration = charData.durationSeconds;
+  const selectedChar =
+    DEMO_CHARACTERS.find(({ id }) => id === selectedCharId) ??
+    DEMO_CHARACTERS[0];
 
   // Compute average energy from frequency bands for speaking detection
   const avgEnergy =
@@ -77,9 +52,8 @@ export function DemoCallPlayer({
         frequencyBands.length
       : 0;
 
-  const hasAudioEnergy = avgEnergy > 0.15;
+  const hasAudioEnergy = avgEnergy > SPEAKING_LEVEL;
 
-  // Stop and tear down current audio
   const stopAudio = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -103,16 +77,14 @@ export function DemoCallPlayer({
     setCurrentTime(0);
   };
 
-  // Start playback for a given character
   const playCharacter = (charId: string) => {
-    // Clean up any existing audio first
     stopAudio();
 
-    const data = demoCallData[charId];
-    if (!data) return;
+    const character = DEMO_CHARACTERS.find(({ id }) => id === charId);
+    if (!character) return;
 
     // Create a fresh Audio element (required for createMediaElementSource)
-    const audio = new Audio(data.audioSrc);
+    const audio = new Audio(character.audioSrc);
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audioRef.current = audio;
@@ -168,7 +140,6 @@ export function DemoCallPlayer({
     });
   };
 
-  // Handle play/stop toggle
   const handlePlayStop = () => {
     if (isPlaying) {
       stopAudio();
@@ -177,10 +148,8 @@ export function DemoCallPlayer({
     }
   };
 
-  // Handle character selection
   const handleCharacterSelect = (charId: string) => {
     if (charId === selectedCharId && !isPlaying) {
-      // Same character, not playing — just play
       playCharacter(charId);
       return;
     }
@@ -213,7 +182,7 @@ export function DemoCallPlayer({
       {/* Character picker */}
       <fieldset className="flex items-center justify-center gap-4 border-none p-0">
         <legend className="sr-only">{pickCharacterLabel}</legend>
-        {demoCharacters.map((char) => {
+        {DEMO_CHARACTERS.map((char) => {
           const isSelected = char.id === selectedCharId;
           return (
             <label
@@ -245,7 +214,7 @@ export function DemoCallPlayer({
                       }`}
                       fill
                       sizes="48px"
-                      src={`/characters/${char.image}`}
+                      src={characterImageSrc(char.image)}
                     />
                   </div>
                 </div>
@@ -303,7 +272,7 @@ export function DemoCallPlayer({
       <TranscriptDisplay
         allowCopy={false}
         currentTime={currentTime}
-        transcript={charData.transcript}
+        transcript={selectedChar.transcript}
       />
 
       {/* Timer */}
@@ -311,7 +280,8 @@ export function DemoCallPlayer({
         aria-live="off"
         className="font-mono text-muted-foreground text-sm tabular-nums"
       >
-        {formatTime(currentTime)} / {formatTime(duration)}
+        {formatClock(currentTime, { padMinutes: true })} /{' '}
+        {formatClock(selectedChar.durationSeconds, { padMinutes: true })}
       </div>
     </div>
   );

@@ -1,27 +1,19 @@
 #!/usr/bin/env node
-import { createHash, randomUUID } from 'node:crypto';
-import {
-  readFileSync,
-  renameSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { basename, isAbsolute, resolve } from 'node:path';
-import { parseArgs } from 'node:util';
 
+import { CLONE_DEMO_ASSET_DIR } from '../apps/web/data/clone-demo-config.ts';
 import {
   assertWaveformPoints,
   DEFAULT_WAVEFORM_POINTS,
   extractAudioWaveform,
 } from './lib/audio-waveform-peaks.mts';
+import { inputPath, parseCliArgs, runScript } from './lib/cli.mts';
+import { replaceJson, sha256 } from './lib/files.mts';
+import { isRecord } from './lib/guards.mts';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function sha256(path: string): string {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
+function hashFile(path: string): string {
+  return sha256(readFileSync(path));
 }
 
 function isCurrent(
@@ -55,8 +47,8 @@ function isCurrent(
   );
 }
 
-function main() {
-  const { values, positionals } = parseArgs({
+async function main(): Promise<void> {
+  const { values, positionals } = parseCliArgs({
     allowPositionals: true,
     options: {
       'audio-dir': { type: 'string' },
@@ -74,7 +66,7 @@ pnpm generate-audio-waveforms [options] [audio files...]
 With no files, process every asset already listed in the manifest.
 Explicit files add or update entries keyed by filename; duplicate filenames are rejected.
 
---audio-dir <dir>   Directory for manifest-listed files (default: apps/web/public/demo-clones/voxtral-3)
+--audio-dir <dir>   Directory for manifest-listed files (default: apps/web/public/${CLONE_DEMO_ASSET_DIR})
 --manifest <file>   Existing JSON manifest with an assets object (default: apps/web/data/clone-demo-assets.json)
 --points <number>  Peaks per channel, 1–4096 (default: ${DEFAULT_WAVEFORM_POINTS})
 --force            Recompute even when the audio hash and peak count match
@@ -90,13 +82,12 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       : Number(values.points);
   assertWaveformPoints(points);
   const root = resolve(import.meta.dirname, '..');
-  const audioDirectory = resolve(
-    values['audio-dir'] ??
-      resolve(root, 'apps/web/public/demo-clones/voxtral-3'),
-  );
-  const manifestPath = resolve(
-    values.manifest ?? resolve(root, 'apps/web/data/clone-demo-assets.json'),
-  );
+  const audioDirectory = values['audio-dir']
+    ? inputPath(values['audio-dir'])
+    : resolve(root, 'apps/web/public', CLONE_DEMO_ASSET_DIR);
+  const manifestPath = values.manifest
+    ? inputPath(values.manifest)
+    : resolve(root, 'apps/web/data/clone-demo-assets.json');
   const original = readFileSync(manifestPath, 'utf8');
   const manifest: unknown = JSON.parse(original);
   if (!(isRecord(manifest) && isRecord(manifest.assets))) {
@@ -104,7 +95,10 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   }
   const assets = manifest.assets;
   const files = positionals.length
-    ? positionals.map((path) => ({ path: resolve(path), key: basename(path) }))
+    ? positionals.map((path) => ({
+        path: inputPath(path),
+        key: basename(path),
+      }))
     : Object.keys(assets).map((key) => {
         if (
           isAbsolute(key) ||
@@ -134,7 +128,7 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   let updated = 0;
   let skipped = 0;
   for (const file of files) {
-    const hash = sha256(file.path);
+    const hash = hashFile(file.path);
     const entry = assets[file.key];
     const previous = isRecord(entry) ? entry : {};
     if (!values.force && isCurrent(previous, hash, points)) {
@@ -143,7 +137,7 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       continue;
     }
     const waveform = extractAudioWaveform(file.path, points);
-    if (sha256(file.path) !== hash) {
+    if (hashFile(file.path) !== hash) {
       throw new Error(
         `Audio changed during extraction; rerun for ${file.path}`,
       );
@@ -168,22 +162,10 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       'Manifest changed during extraction; rerun without overwriting the concurrent edit',
     );
   }
-  const output = `${JSON.stringify(manifest, null, 2)}\n`;
-  const temporary = `${manifestPath}.${randomUUID()}.tmp`;
-  try {
-    writeFileSync(temporary, output, { flag: 'wx' });
-    renameSync(temporary, manifestPath);
-  } finally {
-    rmSync(temporary, { force: true });
-  }
+  const bytes = await replaceJson(manifestPath, manifest);
   console.log(
-    `Updated ${updated} waveform(s) in ${manifestPath} (${Buffer.byteLength(output)} bytes); skipped ${skipped}.`,
+    `Updated ${updated} waveform(s) in ${manifestPath} (${bytes} bytes); skipped ${skipped}.`,
   );
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-}
+runScript(import.meta.url, main);

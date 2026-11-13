@@ -57,6 +57,11 @@ export function isCallCloneProvider(value: string): value is CallCloneProvider {
   return (CALL_CLONE_PROVIDERS as readonly string[]).includes(value);
 }
 
+/** Provider of a saved voice row; saved voices are Inworld or Mistral. */
+export function savedVoiceProvider(provider: string): CallCloneProvider {
+  return provider === 'inworld' ? 'inworld' : 'mistral';
+}
+
 export function supportsCallCloneLocale(
   provider: CallCloneProvider,
   locale: string,

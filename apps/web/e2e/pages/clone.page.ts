@@ -82,7 +82,9 @@ export class ClonePage {
       .locator('button')
       .filter({ hasText: /upload|drag.*drop|drop.*file/i })
       .first();
-    this.fileInput = page.locator('input[aria-label="Upload audio file"]');
+    this.fileInput = page
+      .getByTestId('clone-upload-dropzone')
+      .locator('input[type="file"]');
 
     // Language selector — the combobox for language selection
     this.languageSelector = page.getByTestId('clone-language-select');

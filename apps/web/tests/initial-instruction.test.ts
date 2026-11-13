@@ -1,42 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_MODEL_ID, ModelId } from '@/data/models';
-import {
-  type CallLanguage,
-  getInitialInstruction,
-  languageInitialInstructions,
-} from '@/data/playground-state';
-
-const languages = Object.keys(languageInitialInstructions) as CallLanguage[];
+import { getInitialInstruction } from '@/lib/calls/greetings';
+import { CALL_LANGUAGES } from '@/lib/calls/languages';
+import { DEFAULT_CALL_MODEL } from '@/lib/calls/models';
 
 describe('getInitialInstruction', () => {
-  it.each(languages)(
-    'wraps the %s instruction in one breathy cue',
+  it.each(CALL_LANGUAGES)(
+    'wraps the %s instruction in one breathy cue for Grok realtime',
     (language) => {
-      expect(languageInitialInstructions[language]).toMatch(
+      expect(getInitialInstruction(language, DEFAULT_CALL_MODEL)).toMatch(
         /^SYSTEM: <breathy>[^<>]+<\/breathy>$/,
       );
     },
   );
 
-  it.each(languages)(
-    'keeps the breathy cue for Grok realtime in %s',
-    (language) => {
-      expect(getInitialInstruction(language, DEFAULT_MODEL_ID)).toBe(
-        languageInitialInstructions[language],
-      );
-    },
-  );
+  it('opens in character in the call language', () => {
+    expect(getInitialInstruction('en', DEFAULT_CALL_MODEL)).toBe(
+      'SYSTEM: <breathy>Start the call as your character. If a scene is set, open from inside it. Vary your opening: a greeting, an observation, a question that fits, or a line that drops straight into the scene. Avoid generic catchphrases. Keep it brief, one or two sentences, and speak English. If the user is not talking much, be proactive and get them to engage.</breathy>',
+    );
+  });
 
   it.each(
-    [ModelId.INWORLD_TTS, ModelId.MISTRAL_TTS].flatMap((model) =>
-      languages.map((language) => [model, language] as const),
+    (['inworld-tts', 'mistral-tts'] as const).flatMap((model) =>
+      CALL_LANGUAGES.map((language) => [model, language] as const),
     ),
-  )('drops the angle-bracket cue for %s in %s', (model, language) => {
-    const instruction = getInitialInstruction(language, model);
-    expect(instruction).toBe(
-      languageInitialInstructions[language].replace(/<\/?breathy>/g, ''),
-    );
-    expect(instruction).toMatch(/^SYSTEM: [^<>]+$/);
-  });
+  )(
+    'drops the angle-bracket cue for %s in %s, which reads square tags',
+    (model, language) => {
+      const instruction = getInitialInstruction(language, model);
+      expect(instruction).toBe(
+        getInitialInstruction(language, DEFAULT_CALL_MODEL).replace(
+          /<\/?breathy>/g,
+          '',
+        ),
+      );
+      expect(instruction).toMatch(/^SYSTEM: [^<>]+$/);
+    },
+  );
 });

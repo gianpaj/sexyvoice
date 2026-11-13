@@ -1,10 +1,9 @@
 import 'next-intl';
 
-import type { i18n } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import type messages from '@/messages/en.json';
 
 type Messages = typeof messages;
-type AppLocales = (typeof i18n)['locales'][number];
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -13,13 +12,13 @@ declare global {
 
 declare module 'next-intl' {
   interface AppConfig {
-    Locale: AppLocales;
+    Locale: Locale;
     Messages: Messages;
   }
 }
 
 declare module 'next-intl/navigation' {
   interface LocaleOverrides {
-    locales: AppLocales;
+    locales: Locale;
   }
 }

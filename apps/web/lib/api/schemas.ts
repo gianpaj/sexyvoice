@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import { SPEECH_SETTINGS } from '@/lib/tts/generation-input';
+import { TTS_MODEL_IDS } from '@/lib/tts/models';
+
+const { speed: SPEED, temperature: TEMPERATURE } = SPEECH_SETTINGS;
+
 export const ErrorTypeSchema = z.enum([
   'invalid_request_error',
   'authentication_error',
@@ -22,13 +27,7 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 
-const ExternalApiModelSchema = z.enum([
-  'gpro',
-  'gpro31',
-  'gpro38',
-  'orpheus',
-  'xai',
-]);
+const ExternalApiModelSchema = z.enum(TTS_MODEL_IDS);
 
 export const VoiceGenerationRequestSchema = z
   .strictObject({
@@ -37,7 +36,7 @@ export const VoiceGenerationRequestSchema = z
       .min(1)
       .max(1000)
       .describe(
-        'The text to synthesize (max 1000 chars for gpro/gpro31/gpro38/xai, 500 for orpheus)',
+        'The text to synthesize (max 1000 chars for gpro38/xai, 500 for orpheus)',
       ),
     model: ExternalApiModelSchema.optional().describe(
       'The voice model to use when selecting a voice by name. Omit when using voiceId.',
@@ -55,11 +54,11 @@ export const VoiceGenerationRequestSchema = z
       ),
     speed: z
       .number()
-      .min(0.7)
-      .max(1.5)
+      .min(SPEED.min)
+      .max(SPEED.max)
       .optional()
       .describe(
-        'Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.',
+        `Speech speed multiplier for Grok (xai) voices. Range ${SPEED.min}-${SPEED.max}. Ignored by other models.`,
       ),
     style: z
       .string()
@@ -67,11 +66,11 @@ export const VoiceGenerationRequestSchema = z
       .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
     temperature: z
       .number()
-      .min(0)
-      .max(2)
+      .min(TEMPERATURE.min)
+      .max(TEMPERATURE.max)
       .optional()
       .describe(
-        'Sampling temperature for Gemini voices (gpro/gpro31/gpro38). Range 0-2; higher is more expressive. Ignored by other models.',
+        `Sampling temperature for Gemini voices (gpro38). Range ${TEMPERATURE.min}-${TEMPERATURE.max}; higher is more expressive. Ignored by other models.`,
       ),
     voice: z
       .string()
@@ -141,7 +140,7 @@ const VoiceInfoSchema = z.object({
   formats: z.array(z.enum(['wav', 'mp3'])),
   id: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'gpro31', 'gpro38', 'orpheus', 'xai']),
+  model: ExternalApiModelSchema,
   name: z.string(),
   supports_style: z
     .boolean()
@@ -153,7 +152,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'gpro31', 'gpro38', 'orpheus', 'xai']),
+  id: ExternalApiModelSchema,
   max_input_length: z.number().int().positive(),
   name: z.string(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),

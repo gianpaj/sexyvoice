@@ -10,7 +10,7 @@ interface ApplicationStateUser {
   id: string;
 }
 
-export type ApplicationStateStatus = 'existing' | 'restored';
+type ApplicationStateStatus = 'existing' | 'restored';
 
 const MANUAL_USERNAME_CONFLICT_MESSAGE =
   'Inactive user profile restoration requires manual username conflict resolution';

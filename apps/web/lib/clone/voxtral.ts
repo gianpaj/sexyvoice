@@ -4,7 +4,7 @@ const VOXTRAL_DOLLARS_PER_MILLION_CHARACTERS = {
   'voxtral-mini-tts-3-0': 13,
 } as const;
 
-export type VoxtralModel = keyof typeof VOXTRAL_DOLLARS_PER_MILLION_CHARACTERS;
+type VoxtralModel = keyof typeof VOXTRAL_DOLLARS_PER_MILLION_CHARACTERS;
 
 export function getVoxtralDollarCost(
   model: VoxtralModel,

@@ -1,17 +1,25 @@
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from 'next-intl/server';
 
-import { Providers } from '@/app/providers';
+import { Toaster } from '@/components/ui/sonner';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { siteMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+
+/** How long a toast stays up unless it sets its own duration. */
+const TOAST_DURATION_MS = 6000;
 
 interface Props {
   children: React.ReactNode;
@@ -22,93 +30,15 @@ export async function generateStaticParams() {
   return routing.locales.map((lang) => ({ lang }));
 }
 
-export async function generateMetadata(
-  { params }: Pick<Props, 'params'>,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: Pick<Props, 'params'>): Promise<Metadata> {
   const { lang } = await params;
-  const { alternates, openGraph, title: parentTitle } = await parent;
-
-  const pathname = alternates?.canonical?.url
-    ? new URL(alternates.canonical.url).pathname
-    : '/';
-  const pagePath = pathname.replace(`/${lang}`, '') || '/';
-
-  if (!routing.locales.includes(lang)) {
-    return {
-      title:
-        'SexyVoice.ai – Free AI Text-to-Speech, Voice Cloning & Real-Time Voice Calls',
-    };
-  }
-
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const pages = messages.pages;
-  const pageTitle =
-    pagePath in pages ? pages[pagePath as keyof typeof pages] : undefined;
-  const title = pageTitle || pages.defaultTitle;
-  const descriptionOverrides: Partial<Record<string, string>> = {
-    '/login': pages.descriptionLogin,
-    '/signup': pages.descriptionSignup,
-  };
-  const description = descriptionOverrides[pagePath] || pages.description;
-  const keywords =
-    pagePath === '/' && pages.keywordsLanding
-      ? pages.keywordsLanding.split(',').map((keyword) => keyword.trim())
-      : undefined;
-
-  return {
-    description,
-    icons: {
-      apple: '/apple-touch-icon.png',
-      icon: '/favicon.ico',
-    },
-    metadataBase: new URL(
-      process.env.NODE_ENV === 'production'
-        ? 'https://sexyvoice.ai'
-        : 'http://localhost:3000',
-    ),
-    title: {
-      default: title,
-      template: parentTitle?.template || '%s | SexyVoice.ai',
-    },
-    ...(keywords ? { keywords } : {}),
-    alternates: {
-      canonical: './',
-      languages: {
-        'x-default': './',
-        ...Object.fromEntries(
-          routing.locales.map((locale) => [locale, `./${locale}`]),
-        ),
-      },
-    },
-    openGraph: {
-      description,
-      siteName: 'SexyVoice.ai',
-      title: {
-        default: pages.defaultTitle,
-        template: '%s | SexyVoice.ai',
-      },
-      ...(openGraph?.url ? { url: openGraph.url } : {}),
-      images: openGraph?.images ?? [
-        {
-          alt: 'SexyVoice.ai',
-          height: 670,
-          url: '/sexyvoice.ai-og-image.jpg',
-          width: 1200,
-        },
-      ],
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      images: ['/sexyvoice.ai-og-image.jpg'],
-      title: {
-        default: pages.defaultTitle,
-        template: '%s | SexyVoice.ai',
-      },
-    },
-  };
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return siteMetadata({
+    description: t('description'),
+    title: t('defaultTitle'),
+  });
 }
 
 export default async function LangLayout({
@@ -143,7 +73,8 @@ export default async function LangLayout({
           </>
         )}
         <NextIntlClientProvider locale={lang} messages={messages}>
-          <Providers>{children}</Providers>
+          {children}
+          <Toaster duration={TOAST_DURATION_MS} />
         </NextIntlClientProvider>
       </body>
     </html>

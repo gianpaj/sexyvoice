@@ -20,10 +20,12 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(5);
-    expect(json.data[0].id).toBe('gpro');
-    expect(json.data[1].id).toBe('gpro31');
-    expect(json.data[2].id).toBe('gpro38');
+    expect(json.data).toHaveLength(3);
+    expect(json.data.map((model: { id: string }) => model.id)).toEqual([
+      'gpro38',
+      'orpheus',
+      'xai',
+    ]);
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
@@ -49,6 +51,14 @@ describe('/api/v1 metadata endpoints', () => {
         },
         {
           feature: 'tts',
+          id: 'voice-38-id',
+          is_public: true,
+          language: 'en',
+          model: 'gpro38',
+          name: 'kore',
+        },
+        {
+          feature: 'tts',
           id: 'voice-tara-id',
           is_public: true,
           language: 'en',
@@ -67,11 +77,13 @@ describe('/api/v1 metadata endpoints', () => {
       ],
       eq: vi.fn(),
       error: null,
+      not: vi.fn(),
       order: vi.fn(),
       select: vi.fn(),
     };
     voicesQuery.select.mockReturnValue(voicesQuery);
     voicesQuery.eq.mockReturnValue(voicesQuery);
+    voicesQuery.not.mockReturnValue(voicesQuery);
     voicesQuery.order.mockReturnValue(voicesQuery);
 
     vi.mocked(createClient).mockResolvedValueOnce({
@@ -87,18 +99,24 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(4);
-    expect(json.data[0].model).toBe('gpro');
-    expect(json.data[1].model).toBe('gpro31');
-    expect(json.data[2].model).toBe('orpheus');
+    expect(json.data).toHaveLength(3);
+    expect(json.data.map((voice: { model: string }) => voice.model)).toEqual([
+      'gpro38',
+      'orpheus',
+      'xai',
+    ]);
     expect(json.data[0].supports_style).toBe(true);
-    expect(json.data[1].supports_style).toBe(true);
-    expect(json.data[2].supports_style).toBe(false);
-    expect(json.data[3]).toMatchObject({
+    expect(json.data[1].supports_style).toBe(false);
+    expect(json.data[2]).toMatchObject({
       formats: ['mp3', 'wav'],
       model: 'xai',
       supports_style: false,
     });
+    expect(voicesQuery.not).toHaveBeenCalledWith(
+      'model',
+      'in',
+      '(gpro,gpro31)',
+    );
     expect(voicesQuery.order).toHaveBeenNthCalledWith(1, 'sort_order');
     expect(voicesQuery.order).toHaveBeenNthCalledWith(2, 'name');
     expect(response.headers.get('request-id')).toBeTruthy();
@@ -118,7 +136,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
-    ).toBe('gpro');
+    ).toBe('gpro38');
     const voicesExample =
       json.paths['/api/v1/voices'].get.responses[200].content[
         'application/json'

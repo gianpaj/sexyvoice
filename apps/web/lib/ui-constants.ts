@@ -1,5 +1,3 @@
-export const TOAST_DURATION = 6000;
-
 /**
  * Extra characters accepted above a text field's character limit before input
  * is cut off. Every limited textarea on the generate and clone pages uses this

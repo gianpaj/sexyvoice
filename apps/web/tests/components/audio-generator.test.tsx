@@ -13,11 +13,12 @@ import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
-import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import esMessages from '@/messages/es.json';
 
-const streamingOverride = vi.hoisted(() => ({ enabled: false }));
+const ORPHEUS_MODEL =
+  'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f';
+
 const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
@@ -43,7 +44,7 @@ vi.mock('@ai-sdk/react', () => ({
   }),
 }));
 
-vi.mock('@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner', () => ({
+vi.mock('@/hooks/use-ffmpeg-joiner', () => ({
   useFFmpegJoiner: () => ({
     cancel: vi.fn(),
     error: null,
@@ -60,7 +61,7 @@ vi.mock('@/components/audio-provider', () => ({
   }),
 }));
 
-vi.mock('@/components/services/toast', () => ({
+vi.mock('sonner', () => ({
   toast: mockToastFn,
 }));
 
@@ -83,42 +84,49 @@ vi.mock('@/components/streaming-waveform-player', () => ({
   ),
 }));
 
-vi.mock('@/components/grok-tts-editor', () => ({
-  GrokTTSEditor: ({
+vi.mock('@/components/grok-language-select', () => ({
+  GrokLanguageSelect: ({
+    onChange,
+    value,
+  }: {
+    onChange: (language: string) => void;
+    value: string;
+  }) => (
+    <div className="space-y-2 sm:w-1/3">
+      <label className="font-medium text-sm" htmlFor="grok-language">
+        Language
+      </label>
+      <select
+        id="grok-language"
+        onChange={(event) => onChange(event.currentTarget.value)}
+        value={value}
+      >
+        <option value="auto">Automatic</option>
+        <option value="en">English</option>
+        <option value="ar-EG">Arabic (Egypt)</option>
+        <option value="ar-SA">Arabic (Saudi Arabia)</option>
+      </select>
+    </div>
+  ),
+}));
+
+vi.mock('@/components/speech-tags/tag-editor', () => ({
+  TagEditor: ({
     charactersLimit,
     enforceCharactersLimit = true,
     onChange,
     placeholder,
-    selectedGrokLanguage,
-    setSelectedGrokLanguage,
+    toolbarEnd,
     value,
   }: {
     charactersLimit: number;
     enforceCharactersLimit?: boolean;
     onChange: (text: string) => void;
     placeholder?: string;
-    selectedGrokLanguage: string;
-    setSelectedGrokLanguage: (text: string) => void;
+    toolbarEnd?: React.ReactNode;
     value: string;
   }) => (
     <>
-      <div className="space-y-2 sm:w-1/3">
-        <label className="font-medium text-sm" htmlFor="grok-language">
-          Language
-        </label>
-        <select
-          id="grok-language"
-          onChange={(event) =>
-            setSelectedGrokLanguage(event.currentTarget.value)
-          }
-          value={selectedGrokLanguage}
-        >
-          <option value="auto">Automatic</option>
-          <option value="en">English</option>
-          <option value="ar-EG">Arabic (Egypt)</option>
-          <option value="ar-SA">Arabic (Saudi Arabia)</option>
-        </select>
-      </div>
       <textarea
         aria-label={placeholder}
         maxLength={enforceCharactersLimit ? charactersLimit : undefined}
@@ -126,36 +134,13 @@ vi.mock('@/components/grok-tts-editor', () => ({
         value={value}
       />
       <button type="button">Insert tags</button>
+      {toolbarEnd}
     </>
   ),
 }));
 
-vi.mock('@/lib/ai', () => ({
-  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
-  GEMINI_CHARS_PER_TOKEN: 4,
-  get GEMINI_STREAMING_ENABLED() {
-    return streamingOverride.enabled;
-  },
-  getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
-    if (model === 'gpro') {
-      return isPaidUser ? 1000 : 500;
-    }
-
-    if (model === 'xai') {
-      return isPaidUser ? 1000 : 500;
-    }
-
-    return 500;
-  }),
-  getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 8192 : 400,
-  ),
-  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 2500 : 1000,
-  ),
-}));
-
-vi.mock('@/lib/download', () => ({
+vi.mock('@/lib/download', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/download')>()),
   downloadUrl: vi.fn(),
 }));
 
@@ -164,16 +149,16 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
 }));
 
 const errorCodesDict = {
+  GEMINI_OUTPUT_LIMIT: esMessages.errorCodes.GEMINI_OUTPUT_LIMIT,
   PROVIDER_UNAVAILABLE:
     '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
 } as const;
 
 const baseDict = {
-  GEMINI_OUTPUT_LIMIT: esMessages.generate.GEMINI_OUTPUT_LIMIT,
   cancel: 'Cancel',
   ctaButton: 'Generate',
   ctaButtonPlural: 'Generate audios',
-  dailyLimitError: 'Daily limit reached (__COUNT__)',
+  dailyLimitError: 'Daily limit reached ({COUNT})',
   downloadAudio: 'Download audio',
   enhanceTextTitle: 'Enhance text with AI emotion tags',
   error: 'Something went wrong',
@@ -234,20 +219,21 @@ const baseDict = {
   playAudio: 'Play audio',
   resetPlayer: 'Reset player',
   split: {
+    characterCount: '{characters} chars -> {segments} segments',
     downloadAll: 'Download all',
     downloadAllFailed: 'Failed to download all segments',
     joiningWav: 'Joining audio',
     preparingJoiner: 'Preparing joiner',
-    progressSegment: 'Segment __CURRENT__/__TOTAL__',
+    progressSegment: 'Segment {CURRENT}/{TOTAL}',
     progressTitle: 'Audio generation',
-    progressTitleWithVoice: '__VOICE__ generation',
+    progressTitleWithVoice: '{VOICE} generation',
     retry: 'Retry',
     segmentCannotBeEmpty: 'Segment cannot be empty',
-    segmentFailed: 'Segment __INDEX__ failed',
-    segmentGenerated: 'Segment __INDEX__ generated',
-    segmentLabel: 'Segment __INDEX__',
+    segmentFailed: 'Segment {INDEX} failed',
+    segmentGenerated: 'Segment {INDEX} generated',
+    segmentLabel: 'Segment {INDEX}',
     segmentPreviews: 'Segment previews',
-    segmentRetryFailed: 'Retry failed for segment __INDEX__',
+    segmentRetryFailed: 'Retry failed for segment {INDEX}',
     splitToggleDisabled: 'Split text audios is available for paid users.',
     splitToggleLabel: 'Split long text',
     statusFailed: 'Failed',
@@ -255,7 +241,7 @@ const baseDict = {
     statusGenerating: 'Generating',
     statusPending: 'Pending',
     tooManySegments:
-      'Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.',
+      'Split text can have at most {COUNT} segments. Shorten the text or combine segments before generating.',
   },
   success: 'Success',
   textAreaPlaceholder: 'Enter text',
@@ -356,7 +342,6 @@ describe('AudioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockComplete.mockReset();
-    streamingOverride.enabled = false;
     mockToastFn.mockClear();
     mockToastFn.success.mockClear();
     mockToastFn.error.mockClear();
@@ -555,33 +540,21 @@ describe('AudioGenerator', () => {
     ).toBeInTheDocument();
   });
 
-  it.each([
-    { model: 'gpro31', visible: true },
-    { model: 'gpro38', visible: true },
-    { model: 'gpro', visible: false },
-  ])(
-    'shows the AI enhance button for $model voices: $visible',
-    async ({ model, visible }) => {
-      renderAudioGenerator({
-        selectedVoice: createVoice({
-          language: 'multiple',
-          model,
-          name: 'kore',
-        }),
-      });
+  it('shows the AI enhance button for Gemini 3.8 voices', async () => {
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        language: 'multiple',
+        model: 'gpro38',
+        name: 'kore',
+      }),
+    });
 
-      // The prompt editor is loaded with next/dynamic.
-      await screen.findByTestId('generate-textarea');
-      const enhanceButton = screen.queryByTitle(
-        'Enhance text with AI emotion tags',
-      );
-      if (visible) {
-        expect(enhanceButton).toBeInTheDocument();
-      } else {
-        expect(enhanceButton).not.toBeInTheDocument();
-      }
-    },
-  );
+    // The prompt editor is loaded with next/dynamic.
+    await screen.findByTestId('generate-textarea');
+    expect(
+      screen.getByTitle('Enhance text with AI emotion tags'),
+    ).toBeInTheDocument();
+  });
 
   it('hides the AI enhance button for Grok voices', () => {
     renderAudioGenerator({
@@ -744,7 +717,7 @@ describe('AudioGenerator', () => {
   it('disables split mode for free users', () => {
     renderAudioGenerator({
       isPaidUser: false,
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     expect(
@@ -764,7 +737,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       isPaidUser: false,
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -783,7 +756,7 @@ describe('AudioGenerator', () => {
     const user = userEvent.setup();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -922,7 +895,7 @@ describe('AudioGenerator', () => {
     ).join(' ');
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     await user.click(
@@ -966,7 +939,7 @@ describe('AudioGenerator', () => {
     renderAudioGenerator({
       selectedStyle: 'Read this in a dramatic whisper',
       selectedVoice: createVoice({
-        model: 'gpro',
+        model: 'gpro38',
         name: 'achernar',
       }),
     });
@@ -1012,7 +985,7 @@ describe('AudioGenerator', () => {
   });
 
   it.each([
-    { model: 'gpro', name: 'achernar', provider: 'Gemini' },
+    { model: 'gpro38', name: 'achernar', provider: 'Gemini' },
     { model: 'xai', name: 'eve', provider: 'Grok' },
     {
       model:
@@ -1074,7 +1047,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1125,7 +1098,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1194,7 +1167,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1259,7 +1232,7 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+      selectedVoice: createVoice({ model: 'gpro38', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1299,7 +1272,7 @@ describe('AudioGenerator', () => {
     const firstSegment = `${'A'.repeat(300)}.`;
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
-    const selectedVoice = createVoice({ model: 'gpro', name: 'achernar' });
+    const selectedVoice = createVoice({ model: 'gpro38', name: 'achernar' });
     const fetchMock = vi.fn(async () => ({
       json: async () => ({
         url: `https://example.com/gemini-${fetchMock.mock.calls.length}.wav`,
@@ -1766,100 +1739,39 @@ describe('AudioGenerator', () => {
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
 
-  // ── Streaming tests ───────────────────────────────────────────────────────
-
-  function makeSseStreamResponse(frames: string[]) {
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream<Uint8Array>({
-      start(controller) {
-        for (const frame of frames) {
-          controller.enqueue(encoder.encode(frame));
-        }
-        controller.close();
-      },
-    });
-    return {
-      body: readable,
-      headers: new Headers({ 'content-type': 'text/event-stream' }),
-      json: async () => ({}),
-      ok: true,
-    };
-  }
-
-  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/generated-audio/kore.wav';
-  // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
-  const SSE_AUDIO_FRAME =
-    'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
-  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
-  const SSE_ERROR_FRAME = `event: error\ndata: ${JSON.stringify({
-    details: { provider: 'Gemini' },
-    error: 'Gemini is temporarily unavailable. Please retry.',
-    errorCode: 'PROVIDER_UNAVAILABLE',
-  })}\n\n`;
-
+  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/audio.wav';
   const LONG_TEXT = 'a'.repeat(301);
-  const SHORT_TEXT = 'a'.repeat(10);
 
-  it.each([
-    {
-      transport: 'JSON',
-      isPaidUser: false,
-      errorCode: 'GEMINI_OUTPUT_LIMIT',
-      status: 422,
-    },
-    {
-      transport: 'SSE',
-      isPaidUser: true,
-      errorCode: 'GEMINI_OUTPUT_LIMIT',
-      status: 422,
-    },
-    {
-      transport: 'SSE',
-      isPaidUser: true,
-      errorCode: 'dailyLimitError',
-      status: 500,
-    },
-  ] as const)(
-    'localizes $errorCode over $transport',
-    async ({ transport, isPaidUser, errorCode, status }) => {
-      streamingOverride.enabled = transport === 'SSE';
-      const user = userEvent.setup();
-      const payload = {
-        error: 'The voice reached its audio output limit.',
-        errorCode,
-      };
-      const fetchMock = vi
-        .fn()
-        .mockResolvedValue(
-          transport === 'SSE'
-            ? makeSseStreamResponse([
-                SSE_AUDIO_FRAME,
-                `event: error\ndata: ${JSON.stringify(payload)}\n\n`,
-              ])
-            : { json: async () => payload, ok: false, status },
-        );
-      vi.stubGlobal('fetch', fetchMock);
-      renderAudioGenerator({
-        isPaidUser,
-        selectedVoice: createVoice({ model: 'gpro31', name: 'achernar' }),
-      });
-      fireEvent.change(
-        await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
-        {
-          target: { value: LONG_TEXT },
-        },
+  it('localizes Gemini output-limit errors', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          error: 'The voice reached its audio output limit.',
+          errorCode: 'GEMINI_OUTPUT_LIMIT',
+        }),
+        ok: false,
+        status: 422,
+      }),
+    );
+    renderAudioGenerator({
+      selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: LONG_TEXT } },
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        `${errorCodesDict.GEMINI_OUTPUT_LIMIT} (422)`,
       );
-      await user.click(screen.getByTestId('generate-button'));
+    });
+  });
 
-      await waitFor(() => {
-        expect(mockToastFn.error).toHaveBeenCalledWith(
-          `${baseDict[errorCode].replace('__COUNT__', String(MAX_FREE_GENERATIONS))} (${status})`,
-        );
-      });
-    },
-  );
-
-  describe.each(['JSON', 'SSE'])('%s credit refresh', (transport) => {
+  describe('Credit refresh', () => {
     it.each([
       { cached: true, refreshCount: 0 },
       { cached: false, refreshCount: 1 },
@@ -1867,7 +1779,6 @@ describe('AudioGenerator', () => {
     ])(
       'refreshes $refreshCount times when cached=$cached',
       async ({ cached, refreshCount }) => {
-        streamingOverride.enabled = transport === 'SSE';
         const user = userEvent.setup();
         const payload = {
           cached,
@@ -1876,16 +1787,10 @@ describe('AudioGenerator', () => {
         };
         const fetchMock = vi
           .fn()
-          .mockResolvedValue(
-            transport === 'SSE'
-              ? makeSseStreamResponse([
-                  `event: done\ndata: ${JSON.stringify(payload)}\n\n`,
-                ])
-              : { json: async () => payload, ok: true },
-          );
+          .mockResolvedValue({ ok: true, json: async () => payload });
         vi.stubGlobal('fetch', fetchMock);
         renderAudioGenerator({
-          selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+          selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
         });
         fireEvent.change(
           await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
@@ -1896,9 +1801,7 @@ describe('AudioGenerator', () => {
         await waitFor(() => {
           expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
         });
-        expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
-          transport === 'SSE' ? true : undefined,
-        );
+        expect(getFetchRequestBody(fetchMock, 0).stream).toBe(undefined);
         expect(invalidateQueries).toHaveBeenCalledTimes(refreshCount);
         expect(screen.getByTestId('audio-player')).toHaveAttribute(
           'data-url',
@@ -1908,62 +1811,11 @@ describe('AudioGenerator', () => {
     );
   });
 
-  function setupAudioContextMock() {
-    const mockStart = vi.fn();
-    const mockConnect = vi.fn();
-    const mockCreateBufferSource = vi.fn(() => ({
-      buffer: null as unknown,
-      connect: mockConnect,
-      start: mockStart,
-    }));
-    const mockCopyToChannel = vi.fn();
-    const mockCreateBuffer = vi.fn().mockReturnValue({
-      copyToChannel: mockCopyToChannel,
-      duration: 0.1,
-    });
-    const mockClose = vi.fn();
-
-    const MockAudioContext = vi.fn().mockImplementation(function (this: any) {
-      this.currentTime = 0;
-      this.destination = {};
-      this.createBuffer = mockCreateBuffer;
-      this.createBufferSource = mockCreateBufferSource;
-      this.close = mockClose;
-    });
-
-    vi.stubGlobal('AudioContext', MockAudioContext);
-
-    return {
-      MockAudioContext,
-      mockClose,
-      mockCreateBuffer,
-      mockCreateBufferSource,
-      mockStart,
-    };
-  }
-
-  it.each(['fetch', 'JSON body', 'SSE body'])(
+  it.each(['fetch', 'JSON body'])(
     'does not refresh credits when cancelled during %s',
     async (stage) => {
-      streamingOverride.enabled = stage === 'SSE body';
       const user = userEvent.setup();
       const fetchMock = vi.fn(async (_url: string, { signal }: RequestInit) => {
-        if (stage === 'SSE body') {
-          return {
-            body: new ReadableStream<Uint8Array>({
-              start(controller) {
-                signal?.addEventListener(
-                  'abort',
-                  () =>
-                    controller.error(new DOMException('Aborted', 'AbortError')),
-                  { once: true },
-                );
-              },
-            }),
-            ok: true,
-          };
-        }
-
         const pending = new Promise<never>((_resolve, reject) => {
           signal?.addEventListener(
             'abort',
@@ -1976,7 +1828,7 @@ describe('AudioGenerator', () => {
       vi.stubGlobal('fetch', fetchMock);
 
       renderAudioGenerator({
-        selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
       });
       fireEvent.change(
         await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
@@ -1985,9 +1837,7 @@ describe('AudioGenerator', () => {
       await user.click(screen.getByTestId('generate-button'));
 
       expect(fetchMock).toHaveBeenCalledOnce();
-      expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
-        stage === 'SSE body' ? true : undefined,
-      );
+      expect(getFetchRequestBody(fetchMock, 0).stream).toBe(undefined);
       expect(invalidateQueries).not.toHaveBeenCalled();
 
       await act(async () => {
@@ -2002,201 +1852,670 @@ describe('AudioGenerator', () => {
     },
   );
 
-  // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
-  // client no longer requests the SSE path. Re-enable with the flag.
-  it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(makeSseStreamResponse([SSE_DONE_FRAME]));
-    vi.stubGlobal('fetch', fetchMock);
-    setupAudioContextMock();
+  describe('Keyboard shortcut', () => {
+    it('generates with Cmd/Ctrl+Enter only when Generate is enabled', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ url: 'https://example.com/audio.wav' }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        isPaidUser: false,
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const input = await screen.findByTestId('generate-textarea');
 
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      fireEvent.change(input, { target: { value: 'a'.repeat(501) } });
+      await user.keyboard('{Meta>}{Enter}{/Meta}');
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      fireEvent.change(input, { target: { value: 'Hello' } });
+      await user.keyboard('{Meta>}{Enter}{/Meta}');
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(getFetchRequestBody(fetchMock, 0)).toMatchObject({
+        text: 'Hello',
+      });
     });
 
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+    it('ignores Cmd/Ctrl+Enter without credits or while generating', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn(() => new Promise(() => undefined));
+      vi.stubGlobal('fetch', fetchMock);
+      const view = renderAudioGenerator({
+        hasEnoughCredits: false,
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: 'Hello' },
+      });
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      expect(fetchMock).not.toHaveBeenCalled();
 
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBe(true);
-    expect(body.voiceId).toBe('voice-id');
-  });
-
-  it('omits stream for Gemini voice when text is at or below threshold', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  it('omits stream for gpro (Gemini 2.5) voice even above threshold', async () => {
-    // Only gpro31 (Gemini 3.1) streams progressively; gpro returns the whole
-    // clip at once, so it must stay on the JSON path regardless of length.
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro', name: 'kore' }),
-    });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  it('omits stream for Grok voice regardless of text length', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({ url: R2_AUDIO_URL }),
-      ok: true,
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
-    });
-
-    const textarea = screen.getByRole('textbox', {
-      name: baseDict.textAreaPlaceholder,
-    });
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.stream).toBeUndefined();
-  });
-
-  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
-  it.skip('schedules audio chunks via Web Audio and shows the streaming player', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
+      view.rerender(
+        <NextIntlClientProvider
+          locale="es"
+          messages={{ errorCodes: errorCodesDict, generate: baseDict }}
+        >
+          <AudioGenerator
+            hasEnoughCredits
+            isPaidUser
+            selectedVoice={createVoice({ model: 'gpro38', name: 'kore' })}
+          />
+        </NextIntlClientProvider>,
       );
-    vi.stubGlobal('fetch', fetchMock);
-    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } =
-      setupAudioContextMock();
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      expect(fetchMock).toHaveBeenCalledOnce();
     });
-
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(
-      () => expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success),
-      { timeout: 3000 },
-    );
-
-    // The streamed PCM chunk is decoded + scheduled through the Web Audio engine.
-    expect(MockAudioContext).toHaveBeenCalledOnce();
-    expect(mockCreateBuffer).toHaveBeenCalledOnce();
-    expect(mockCreateBufferSource).toHaveBeenCalledOnce();
-
-    // The single streaming player (waveform + play/pause) is shown — not the
-    // standard file player. After the `done` event the full clip exists, so it
-    // hands off to the seekable `file` phase immediately.
-    await waitFor(() => {
-      const player = screen.getByTestId('streaming-waveform-player');
-      expect(player).toHaveAttribute('data-phase', 'file');
-    });
-    expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
   });
 
-  it('shows an error toast and refreshes credits on an SSE error event', async () => {
-    streamingOverride.enabled = true;
-    const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
-      );
-    vi.stubGlobal('fetch', fetchMock);
-    setupAudioContextMock();
+  describe('Text limits', () => {
+    it.each([
+      { isPaidUser: false, limit: 500, model: 'gpro38' },
+      { isPaidUser: true, limit: 1000, model: 'gpro38' },
+      { isPaidUser: false, limit: 500, model: ORPHEUS_MODEL },
+      { isPaidUser: true, limit: 500, model: ORPHEUS_MODEL },
+    ])(
+      'counts $model text against $limit characters when paid=$isPaidUser',
+      async ({ isPaidUser, limit, model }) => {
+        renderAudioGenerator({
+          isPaidUser,
+          selectedVoice: createVoice({ model, name: 'kore' }),
+        });
+        const input = await screen.findByTestId('generate-textarea');
 
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+        expect(
+          screen.getByTestId('generate-character-count'),
+        ).toHaveTextContent(`0 / ${limit}`);
+        expect(input).toHaveAttribute(
+          'maxlength',
+          String(limit + CHARACTERS_LIMIT_GRACE),
+        );
+      },
+    );
+
+    it.each([
+      { isPaidUser: false, limit: 500 },
+      { isPaidUser: true, limit: 1000 },
+    ])(
+      'limits Grok text to $limit characters when paid=$isPaidUser',
+      ({ isPaidUser, limit }) => {
+        renderAudioGenerator({
+          isPaidUser,
+          selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+        });
+
+        expect(
+          screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        ).toHaveAttribute('maxlength', String(limit));
+      },
+    );
+
+    it('blocks generation and estimates while the style is over its limit', async () => {
+      renderAudioGenerator({
+        isPaidUser: false,
+        selectedStyle: 's'.repeat(1001),
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: 'Hello' },
+      });
+
+      expect(screen.getByTestId('generate-button')).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      ).toBeDisabled();
+    });
+  });
+
+  describe('Advanced settings', () => {
+    const settings = { seed: 42, speed: 1.2, temperature: 0.8 };
+
+    it.each([
+      {
+        expected: { seed: 42, styleVariant: 'calm', temperature: 0.8 },
+        model: 'gpro38',
+      },
+      {
+        expected: { language: 'auto', speed: 1.2, styleVariant: '' },
+        model: 'xai',
+      },
+      { expected: { styleVariant: '' }, model: ORPHEUS_MODEL },
+    ])(
+      'sends only the settings a $model voice honours',
+      async ({ expected, model }) => {
+        const user = userEvent.setup();
+        const fetchMock = vi.fn().mockResolvedValue({
+          json: async () => ({ url: 'https://example.com/audio.wav' }),
+          ok: true,
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderAudioGenerator({
+          selectedStyle: 'calm',
+          selectedVoice: createVoice({ model, name: 'kore' }),
+          settings,
+        });
+
+        const input =
+          model === 'xai'
+            ? screen.getByRole('textbox', {
+                name: baseDict.textAreaPlaceholder,
+              })
+            : await screen.findByTestId('generate-textarea');
+        fireEvent.change(input, { target: { value: 'Hello' } });
+        await user.click(screen.getByTestId('generate-button'));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+        expect(getFetchRequestBody(fetchMock, 0)).toEqual({
+          split: false,
+          text: 'Hello',
+          textImproved: false,
+          voiceId: 'voice-id',
+          ...expected,
+        });
+      },
+    );
+
+    it.each([
+      { model: 'gpro38', usesSeed: true },
+      { model: 'xai', usesSeed: false },
+      { model: ORPHEUS_MODEL, usesSeed: false },
+    ])(
+      'retries a failed $model segment with a fresh seed when the model uses seeds',
+      async ({ model, usesSeed }) => {
+        const user = userEvent.setup();
+        const firstSegment = `${'A'.repeat(300)}.`;
+        const secondSegment = `${'B'.repeat(300)}.`;
+        const fetchMock = vi
+          .fn()
+          .mockResolvedValueOnce({
+            json: async () => ({ error: 'Server error' }),
+            ok: false,
+            status: 500,
+          })
+          .mockResolvedValue({
+            json: async () => ({ url: 'https://example.com/retry.wav' }),
+            ok: true,
+          });
+        vi.stubGlobal('fetch', fetchMock);
+        renderAudioGenerator({
+          selectedVoice: createVoice({ model, name: 'kore' }),
+          settings: { seed: 42, speed: null, temperature: null },
+        });
+
+        const input =
+          model === 'xai'
+            ? screen.getByRole('textbox', {
+                name: baseDict.textAreaPlaceholder,
+              })
+            : await screen.findByTestId('generate-textarea');
+        fireEvent.change(input, {
+          target: { value: `${firstSegment} ${secondSegment}` },
+        });
+        await user.click(
+          screen.getByRole('checkbox', {
+            name: baseDict.split.splitToggleLabel,
+          }),
+        );
+        await waitFor(() => {
+          expect(
+            screen.getByText(baseDict.split.segmentPreviews),
+          ).toBeVisible();
+        });
+        await user.click(screen.getByTestId('generate-button'));
+        await user.click(
+          await screen.findByRole('button', { name: baseDict.split.retry }),
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        const retrySeed = getFetchRequestBody(fetchMock, 1).seed;
+        expect(getFetchRequestBody(fetchMock, 1).text).toBe(firstSegment);
+        if (!usesSeed) {
+          expect(getFetchRequestBody(fetchMock, 0).seed).toBeUndefined();
+          expect(retrySeed).toBeUndefined();
+          return;
+        }
+        expect(getFetchRequestBody(fetchMock, 0).seed).toBe(42);
+        expect(Number.isInteger(retrySeed)).toBe(true);
+        expect(retrySeed).toBeGreaterThanOrEqual(1_000_000);
+        expect(retrySeed).toBeLessThan(10_000_000);
+      },
+    );
+  });
+
+  describe('Estimate errors', () => {
+    it.each([
+      {
+        body: { error: 'Text exceeds the maximum length of 500 characters' },
+        message: 'Text exceeds the maximum length of 500 characters (400)',
+        status: 400,
+      },
+      { body: {}, message: `${baseDict.errorEstimating} (500)`, status: 500 },
+    ])(
+      'shows "$message" when the estimate answers $status',
+      async ({ body, message, status }) => {
+        const user = userEvent.setup();
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue({
+            json: async () => body,
+            ok: false,
+            status,
+          }),
+        );
+        renderAudioGenerator({
+          selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+        });
+        fireEvent.change(
+          screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+          { target: { value: 'Hello' } },
+        );
+
+        await user.click(
+          screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+        );
+
+        await waitFor(() =>
+          expect(mockToastFn.error).toHaveBeenCalledWith(message),
+        );
+      },
+    );
+
+    it('shows the estimate error when the request fails', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fail')));
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+      });
+      fireEvent.change(
+        screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        { target: { value: 'Hello' } },
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      );
+
+      await waitFor(() =>
+        expect(mockToastFn.error).toHaveBeenCalledWith(
+          baseDict.errorEstimating,
+        ),
+      );
     });
 
-    const textarea = await screen.findByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    );
-    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+    it('sums the segment estimates in split mode', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: async () => ({ estimatedCredits: 300 }),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: async () => ({ estimatedCredits: 400 }),
+          ok: true,
+        });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+      });
+      fireEvent.change(
+        screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        { target: { value: `${'A'.repeat(300)}. ${'B'.repeat(300)}.` } },
+      );
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await waitFor(() => {
+        expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+      });
 
-    await waitFor(() =>
-      expect(screen.getByTestId('generate-button')).toBeEnabled(),
-    );
-    await user.click(screen.getByTestId('generate-button'));
+      await user.click(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      );
 
-    await waitFor(() =>
-      expect(mockToastFn.error).toHaveBeenCalledWith(
-        'Gemini no está disponible temporalmente. Inténtalo de nuevo. (500)',
-      ),
-    );
-    expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
-      queryKey: ['credits'],
+      expect(await screen.findByText('~700')).toBeInTheDocument();
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/estimate-credits',
+        '/api/estimate-credits',
+      ]);
+      expect(getFetchRequestBody(fetchMock, 0)).toEqual({
+        styleVariant: '',
+        text: `${'A'.repeat(300)}.`,
+        voiceId: 'voice-id',
+      });
+    });
+  });
+
+  describe('Split sessions', () => {
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+
+    async function generateTwoSegments(
+      props: Partial<React.ComponentProps<typeof AudioGenerator>>,
+    ) {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn(async () => ({
+        json: async () => ({
+          url: `https://example.com/segment-${fetchMock.mock.calls.length}.wav`,
+        }),
+        ok: true,
+      }));
+      vi.stubGlobal('fetch', fetchMock);
+      const view = renderAudioGenerator({ selectedStyle: 'calm', ...props });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await waitFor(() => {
+        expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+      });
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(baseDict.split.statusGenerated),
+        ).toHaveLength(2);
+      });
+      return { fetchMock, user, view };
+    }
+
+    function rerenderGenerator(
+      view: ReturnType<typeof render>,
+      props: Partial<React.ComponentProps<typeof AudioGenerator>>,
+    ) {
+      view.rerender(
+        <NextIntlClientProvider
+          locale="es"
+          messages={{ errorCodes: errorCodesDict, generate: baseDict }}
+        >
+          <AudioGenerator
+            hasEnoughCredits
+            isPaidUser
+            selectedStyle="calm"
+            {...props}
+          />
+        </NextIntlClientProvider>,
+      );
+    }
+
+    it('stops a run when the text changes', async () => {
+      const user = userEvent.setup();
+      // Each request waits until it is aborted.
+      const fetchMock = vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () =>
+              reject(new DOMException('Aborted', 'AbortError')),
+            );
+          }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        selectedStyle: 'calm',
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const textarea = await screen.findByTestId('generate-textarea');
+      fireEvent.change(textarea, {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+      fireEvent.change(textarea, {
+        target: { value: `${secondSegment} ${firstSegment}` },
+      });
+
+      await waitFor(() => {
+        expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+      });
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(mockToastFn.success).not.toHaveBeenCalled();
+      expect(mockToastFn.error).not.toHaveBeenCalled();
+    });
+
+    it('starts over when the voice changes', async () => {
+      const { view } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+
+      rerenderGenerator(view, {
+        selectedVoice: createVoice({
+          id: 'voice-zephyr',
+          model: 'gpro38',
+          name: 'zephyr',
+        }),
+      });
+
+      await waitFor(() => {
+        expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(
+          2,
+        );
+      });
+    });
+
+    it('starts over when an advanced setting the voice uses changes', async () => {
+      const selectedVoice = createVoice({ model: 'gpro38', name: 'kore' });
+      const { fetchMock, user, view } = await generateTwoSegments({
+        selectedVoice,
+      });
+
+      rerenderGenerator(view, {
+        selectedVoice,
+        settings: { seed: null, speed: 1.2, temperature: null },
+      });
+      expect(screen.getAllByText(baseDict.split.statusGenerated)).toHaveLength(
+        2,
+      );
+
+      rerenderGenerator(view, {
+        selectedVoice,
+        settings: { seed: 7, speed: null, temperature: null },
+      });
+      await waitFor(() => {
+        expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(
+          2,
+        );
+      });
+
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+      expect(getFetchRequestBody(fetchMock, 2)).toMatchObject({ seed: 7 });
+    });
+
+    it('restores generated segments when split mode is toggled back on', async () => {
+      const { user } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const toggle = screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      });
+
+      await user.click(toggle);
+      expect(
+        screen.queryByText(baseDict.split.segmentPreviews),
+      ).not.toBeInTheDocument();
+      await user.click(toggle);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(baseDict.split.statusGenerated),
+        ).toHaveLength(2);
+      });
+    });
+
+    it('downloads all generated Gemini segments as one wav', async () => {
+      const { fetchMock, user } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fetchMock.mockResolvedValue({
+        blob: async () => new Blob(['segment'], { type: 'audio/wav' }),
+        ok: true,
+      } as never);
+      stubAudioMetadata(2);
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: vi.fn(() => 'blob:joined-audio'),
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      const downloads: string[] = [];
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+        function (this: HTMLAnchorElement) {
+          downloads.push(this.download);
+        },
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: baseDict.split.downloadAll }),
+      );
+
+      await waitFor(() => expect(downloads).toEqual(['generated-audio.wav']));
+      expect(mockJoinSegments).toHaveBeenCalledWith(
+        [
+          { endSec: 2, file: expect.any(File), startSec: 0 },
+          { endSec: 2, file: expect.any(File), startSec: 0 },
+        ],
+        'wav',
+      );
+    });
+
+    it('restores the latest session after a reload and keeps one entry', async () => {
+      const selectedVoice = createVoice({ model: 'gpro38', name: 'kore' });
+      const { user, view } = await generateTwoSegments({ selectedVoice });
+      view.unmount();
+
+      renderAudioGenerator({ selectedStyle: 'calm', selectedVoice });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(baseDict.split.statusGenerated),
+        ).toHaveLength(2);
+      });
+      fireEvent.change(screen.getByTestId('generate-textarea'), {
+        target: { value: `${secondSegment} ${firstSegment}` },
+      });
+      await waitFor(() => {
+        expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(
+          2,
+        );
+      });
+      expect(Object.keys(window.localStorage)).toEqual([
+        'generate-split-session',
+      ]);
+    });
+
+    it('keeps repeated segments apart', async () => {
+      const consoleError = vi.spyOn(console, 'error');
+      const user = userEvent.setup();
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${firstSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Segment 2')).toBeVisible();
+      });
+      fireEvent.change(screen.getAllByDisplayValue(firstSegment)[1], {
+        target: { value: secondSegment },
+      });
+      expect(screen.getByDisplayValue(firstSegment)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(secondSegment)).toBeInTheDocument();
+      expect(
+        consoleError.mock.calls.some(([message]) =>
+          String(message).includes('same key'),
+        ),
+      ).toBe(false);
+    });
+
+    it('retries a segment without the progress toast', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: async () => ({ error: 'Server error' }),
+          ok: false,
+          status: 500,
+        })
+        .mockResolvedValue({
+          json: async () => ({ url: 'https://example.com/retry.wav' }),
+          ok: true,
+        });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await user.click(await screen.findByTestId('generate-button'));
+      const retry = await screen.findByRole('button', {
+        name: baseDict.split.retry,
+      });
+      mockToastFn.loading.mockClear();
+
+      await user.click(retry);
+
+      await waitFor(() => {
+        expect(mockToastFn.success).toHaveBeenCalledWith('Segment 1 generated');
+      });
+      expect(mockToastFn.loading).not.toHaveBeenCalled();
+    });
+
+    it('clears an estimate once the request it priced changes', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          json: async () => ({ estimatedCredits: 42 }),
+          ok: true,
+        }),
+      );
+      const selectedVoice = createVoice({ model: 'gpro38', name: 'kore' });
+      const view = renderAudioGenerator({
+        selectedStyle: 'calm',
+        selectedVoice,
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      );
+      expect(await screen.findByText('~42')).toBeInTheDocument();
+
+      rerenderGenerator(view, { selectedStyle: 'warm', selectedVoice });
+      expect(screen.queryByText('~42')).not.toBeInTheDocument();
+
+      rerenderGenerator(view, { selectedStyle: 'calm', selectedVoice });
+      expect(screen.getByText('~42')).toBeInTheDocument();
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      expect(screen.queryByText('~42')).not.toBeInTheDocument();
     });
   });
 });

@@ -2,10 +2,29 @@ import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { parseCsv } from './lib/csv.mts';
+import { adjustCredits, findRefund } from './lib/ledger.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
 
-loadScriptEnv();
+const HELP = `Add credits back for double-billed voice calls, one CSV row at a time.
+
+Usage: pnpm batch-refund-credits <dupes.csv> [--dry-run]
+
+The CSV needs source_id, user_id, event_count and duplicate_credits columns;
+rows whose duplicate_credits is not a positive integer are skipped. A call
+that already has its refund row is skipped, so a rerun refunds nothing twice.
+
+  --dry-run   List the refunds without changing the database
+  -h, --help  Show this help`;
 
 interface DupeRow {
   duplicateCredits: number;
@@ -20,120 +39,96 @@ interface RefundResult {
   credits: number;
   reason?: string;
   sourceId: string;
-  status: 'ok' | 'skipped' | 'error';
+  status: 'duplicate' | 'error' | 'ok' | 'skipped';
   userId: string;
 }
 
-function parseCsv(filePath: string): DupeRow[] {
-  const content = readFileSync(filePath, 'utf-8');
-  const lines = content.trim().split('\n');
-  const header = lines[0].split(',');
+const REQUIRED_COLUMNS = [
+  'source_id',
+  'user_id',
+  'event_count',
+  'duplicate_credits',
+] as const;
 
-  const idx = (name: string) => header.indexOf(name);
-  const iSourceId = idx('source_id');
-  const iUserId = idx('user_id');
-  const iEventCount = idx('event_count');
-  const iFirstEvent = idx('first_event_at');
-  const iLastEvent = idx('last_event_at');
-  const iDupCredits = idx('duplicate_credits');
-
-  if ([iSourceId, iUserId, iEventCount, iDupCredits].some((i) => i === -1)) {
+function readDupes(filePath: string): DupeRow[] {
+  const { columns, rows: records } = parseCsv(readFileSync(filePath, 'utf8'));
+  if (REQUIRED_COLUMNS.some((column) => !columns.includes(column))) {
     throw new Error(
-      'CSV missing required columns: source_id, user_id, event_count, duplicate_credits',
+      `CSV missing required columns: ${REQUIRED_COLUMNS.join(', ')}`,
     );
   }
 
   const rows: DupeRow[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    // Split on commas but respect quoted fields
-    const fields: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    for (const ch of line) {
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
-        fields.push(current);
-        current = '';
-      } else {
-        current += ch;
-      }
-    }
-    fields.push(current);
-
-    const duplicateCredits = Number.parseInt(fields[iDupCredits], 10);
-
+  for (const [index, record] of records.entries()) {
+    const duplicateCredits = Number.parseInt(record.duplicate_credits, 10);
     if (Number.isNaN(duplicateCredits) || duplicateCredits <= 0) {
       console.warn(
-        `  Row ${i}: skipping — invalid duplicate_credits: ${fields[iDupCredits]}`,
+        `  Row ${index + 1}: skipping — invalid duplicate_credits: ${record.duplicate_credits}`,
       );
       continue;
     }
 
     rows.push({
       duplicateCredits,
-      eventCount: Number.parseInt(fields[iEventCount], 10),
-      firstEventAt: fields[iFirstEvent],
-      lastEventAt: fields[iLastEvent],
-      sourceId: fields[iSourceId],
-      userId: fields[iUserId],
+      eventCount: Number.parseInt(record.event_count, 10),
+      firstEventAt: record.first_event_at ?? '',
+      lastEventAt: record.last_event_at ?? '',
+      sourceId: record.source_id,
+      userId: record.user_id,
     });
   }
 
   return rows;
 }
 
+const REFUND_REASON = 'Double billing - voice call';
+
 async function applyPlatformBugRefund(
+  supabase: ScriptSupabaseClient,
   userId: string,
   refundCredits: number,
   sourceId: string,
-): Promise<void> {
-  const supabase = createAdminClient();
-
-  const description = `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`;
-
-  const { error: txError } = await supabase.from('credit_transactions').insert({
+): Promise<'applied' | 'duplicate'> {
+  // Every refund this command has written carries this reason and sourceId.
+  if (await findRefund(supabase, userId, { reason: REFUND_REASON, sourceId })) {
+    return 'duplicate';
+  }
+  await adjustCredits(supabase, {
     amount: refundCredits,
-    description,
-    metadata: { reason: 'Double billing - voice call', sourceId },
-    reference_id: null,
-    type: 'refund',
-    user_id: userId,
+    description: `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`,
+    metadata: { sourceId },
+    reason: REFUND_REASON,
+    userId,
   });
-
-  if (txError) {
-    throw new Error(`insert credit_transactions: ${txError.message}`);
-  }
-
-  const { error: creditsError } = await supabase.rpc('increment_user_credits', {
-    credit_amount_var: refundCredits,
-    user_id_var: userId,
-  });
-
-  if (creditsError) {
-    throw new Error(`increment_user_credits: ${creditsError.message}`);
-  }
+  return 'applied';
 }
 
 async function main() {
-  const csvPath = process.argv[2];
-  if (!csvPath) {
-    console.error('Usage: tsx batch-refund-credits.mts <path-to-dupes.csv>');
-    process.exit(1);
+  const { positionals, values } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      'dry-run': { default: false, type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+    },
+  });
+  if (values.help) {
+    console.log(HELP);
+    return;
+  }
+  const [csvArgument, ...extra] = positionals;
+  if (!csvArgument || extra.length > 0) {
+    throw new Error(`Expected one CSV path.\n\n${HELP}`);
   }
 
-  const isDryRun = process.argv.includes('--dry-run');
+  const isDryRun = values['dry-run'];
+  const csvPath = inputPath(csvArgument);
 
   console.log(`Parsing CSV: ${csvPath}`);
-  const rows = parseCsv(csvPath);
+  const rows = readDupes(csvPath);
 
   if (rows.length === 0) {
     console.log('No valid rows to process.');
-    process.exit(0);
+    return;
   }
 
   const totalCredits = rows.reduce((s, r) => s + r.duplicateCredits, 0);
@@ -141,20 +136,23 @@ async function main() {
   console.log('\n=== Batch Refund Summary ===');
   console.log(`Rows to process : ${rows.length}`);
   console.log(`Total credits   : ${totalCredits.toLocaleString()}`);
-  console.log(`Supabase URL    : ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
   if (isDryRun) console.log('\n[DRY RUN — no changes will be made]');
   console.log('');
 
-  const rl = createInterface({ input, output });
+  let supabase: ScriptSupabaseClient | undefined;
+  if (!isDryRun) {
+    loadScriptEnv();
+    supabase = createScriptAdminClient();
+    const rl = createInterface({ input, output });
+    const confirm = (await rl.question('Proceed? (yes/no): '))
+      .trim()
+      .toLowerCase();
+    rl.close();
 
-  const confirm = (await rl.question('Proceed? (yes/no): '))
-    .trim()
-    .toLowerCase();
-  rl.close();
-
-  if (confirm !== 'yes') {
-    console.log('Cancelled.');
-    process.exit(0);
+    if (confirm !== 'yes') {
+      console.log('Cancelled.');
+      return;
+    }
   }
 
   const results: RefundResult[] = [];
@@ -168,7 +166,7 @@ async function main() {
       `${prefix} user=${row.userId.slice(0, 8)} credits=${row.duplicateCredits} ... `,
     );
 
-    if (isDryRun) {
+    if (!supabase) {
       console.log('(dry run)');
       results.push({
         credits: row.duplicateCredits,
@@ -181,11 +179,22 @@ async function main() {
     }
 
     try {
-      await applyPlatformBugRefund(
+      const status = await applyPlatformBugRefund(
+        supabase,
         row.userId,
         row.duplicateCredits,
         row.sourceId,
       );
+      if (status === 'duplicate') {
+        console.log('already refunded');
+        results.push({
+          credits: row.duplicateCredits,
+          sourceId: row.sourceId,
+          status: 'duplicate',
+          userId: row.userId,
+        });
+        continue;
+      }
       console.log('OK');
       okCount++;
       results.push({
@@ -210,6 +219,9 @@ async function main() {
 
   console.log('\n=== Done ===');
   console.log(`OK     : ${okCount}`);
+  console.log(
+    `Skipped: ${results.filter((r) => r.status === 'duplicate').length} already refunded`,
+  );
   console.log(`Errors : ${errCount}`);
 
   if (errCount > 0) {
@@ -219,11 +231,8 @@ async function main() {
         `  source=${r.sourceId} user=${r.userId} credits=${r.credits} — ${r.reason}`,
       );
     }
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 
-main().catch((err) => {
-  console.error('\nFatal:', err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+runScript(import.meta.url, main);

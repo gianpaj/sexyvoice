@@ -2,31 +2,45 @@ import { writeFile } from 'node:fs/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+import storageLayout from '../apps/web/lib/storage/layout.ts';
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import {
+  type CreditTransaction,
+  dollarAmount,
+  readBalances,
+  readCreditTransactions,
+  readUsageEvents,
+  summarizeLedger,
+} from './lib/ledger.mts';
+import {
+  createScriptAdminClient,
+  PAGE_SIZE,
+  readAllRows,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
-loadScriptEnv();
+const { AUDIO_FOLDERS } = storageLayout;
+const FREE_FOLDERS = new Set<string>([
+  AUDIO_FOLDERS.clone.free,
+  AUDIO_FOLDERS.speech.free,
+]);
+const PAID_FOLDERS = new Set<string>([
+  AUDIO_FOLDERS.clone.paid,
+  AUDIO_FOLDERS.speech.paid,
+]);
+
+const HELP = `Compile one user's account, payments, usage and ledger reconciliation
+for a Stripe dispute. Reads only; writes dispute-<user-id>-<date>.md to the
+working directory.
+
+Usage: pnpm compile-dispute-evidence [user-id]
+
+Prompts for the user ID when it is not given.`;
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface CreditTransaction {
-  amount: number;
-  created_at: string;
-  description: string;
-  id: string;
-  metadata: {
-    dollarAmount?: number;
-    priceId?: string;
-    chargeId?: string;
-    [key: string]: unknown;
-  } | null;
-  reference_id: string | null;
-  subscription_id: string | null;
-  type: 'purchase' | 'topup' | 'freemium' | 'refund';
-  user_id: string;
-}
 
 interface Account {
   created_at: string | null;
@@ -91,15 +105,11 @@ interface DisputeReport {
 }
 
 // ---------------------------------------------------------------------------
-// Supabase
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Data gathering (read-only, no side effects)
 // ---------------------------------------------------------------------------
 
 async function getAccount(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<Account> {
   const { data, error } = await supabase
@@ -118,60 +128,19 @@ async function getAccount(
   return data as Account;
 }
 
-async function getCreditTransactions(
-  supabase: ReturnType<typeof createAdminClient>,
-  userId: string,
-): Promise<CreditTransaction[]> {
-  const { data, error } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch credit_transactions: ${error.message}`);
-  }
-
-  return (data ?? []) as CreditTransaction[];
-}
-
 async function getCurrentBalance(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<number> {
-  const { data, error } = await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Failed to fetch credits: ${error.message}`);
-  }
-
-  return data?.amount ?? 0;
+  const balances = await readBalances(supabase, [userId]);
+  return balances.get(userId)?.amount ?? 0;
 }
 
 async function getUsageSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<UsageSummaryRow[]> {
-  const { data, error } = await supabase
-    .from('usage_events')
-    .select('source_type, quantity, credits_used, occurred_at')
-    .eq('user_id', userId)
-    .order('occurred_at', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch usage_events: ${error.message}`);
-  }
-
-  const rows = (data ?? []) as {
-    source_type: string;
-    quantity: number | null;
-    credits_used: number | null;
-    occurred_at: string;
-  }[];
+  const rows = await readUsageEvents(supabase, [userId]);
 
   const bySource = new Map<string, UsageSummaryRow>();
   for (const row of rows) {
@@ -199,27 +168,25 @@ async function getUsageSummary(
 }
 
 async function getAudioFilesSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<AudioFilesSummary> {
-  const { data, error } = await supabase
-    .from('audio_files')
-    .select('duration, credits_used, created_at, model, storage_key, usage')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch audio_files: ${error.message}`);
-  }
-
-  const rows = (data ?? []) as {
-    duration: number | null;
-    credits_used: number | null;
-    created_at: string;
-    model: string | null;
-    storage_key: string | null;
-    usage: { userHasPaid?: boolean } | null;
-  }[];
+  const rows = (
+    await readAllRows('audio_files', (afterId) => {
+      let query = supabase
+        .from('audio_files')
+        .select(
+          'id, duration, credits_used, created_at, model, storage_key, usage',
+        )
+        .eq('user_id', userId)
+        .order('id')
+        .limit(PAGE_SIZE);
+      if (afterId) query = query.gt('id', afterId);
+      return query;
+    })
+  ).sort((left, right) =>
+    (left.created_at ?? '').localeCompare(right.created_at ?? ''),
+  );
 
   const models = [
     ...new Set(rows.map((r) => r.model).filter((m): m is string => !!m)),
@@ -228,17 +195,21 @@ async function getAudioFilesSummary(
   // Paid/free reflects whether the user was a paying customer when the file was
   // generated — NOT whether credits were consumed (credits_used is set for free
   // users too). The signal is captured at generation time as usage.userHasPaid,
-  // and mirrored in the storage_key folder (generated-audio/ vs
-  // generated-audio-free/), used as a fallback for rows predating the flag.
+  // and mirrored in the storage_key folder (AUDIO_FOLDERS), used as a fallback
+  // for rows predating the flag.
   const isPaidRow = (r: (typeof rows)[number]): boolean | null => {
-    if (typeof r.usage?.userHasPaid === 'boolean') {
-      return r.usage.userHasPaid;
+    const userHasPaid =
+      r.usage && typeof r.usage === 'object' && !Array.isArray(r.usage)
+        ? r.usage.userHasPaid
+        : undefined;
+    if (typeof userHasPaid === 'boolean') {
+      return userHasPaid;
     }
-    const key = r.storage_key ?? '';
-    if (key.startsWith('generated-audio-free/')) {
+    const folder = (r.storage_key ?? '').split('/')[0];
+    if (FREE_FOLDERS.has(folder)) {
       return false;
     }
-    if (key.startsWith('generated-audio/')) {
+    if (PAID_FOLDERS.has(folder)) {
       return true;
     }
     return null;
@@ -266,7 +237,7 @@ async function getAudioFilesSummary(
 }
 
 async function getVoiceCloneCount(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<number> {
   const { count, error } = await supabase
@@ -282,23 +253,19 @@ async function getVoiceCloneCount(
 }
 
 async function getCallSessionsSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<CallSessionsSummary> {
-  const { data, error } = await supabase
-    .from('call_sessions')
-    .select('billed_minutes, duration_seconds, credits_used')
-    .eq('user_id', userId);
-
-  if (error) {
-    throw new Error(`Failed to fetch call_sessions: ${error.message}`);
-  }
-
-  const rows = (data ?? []) as {
-    billed_minutes: number | null;
-    duration_seconds: number | null;
-    credits_used: number | null;
-  }[];
+  const rows = await readAllRows('call_sessions', (afterId) => {
+    let query = supabase
+      .from('call_sessions')
+      .select('id, billed_minutes, duration_seconds, credits_used')
+      .eq('user_id', userId)
+      .order('id')
+      .limit(PAGE_SIZE);
+    if (afterId) query = query.gt('id', afterId);
+    return query;
+  });
 
   return {
     count: rows.length,
@@ -314,15 +281,10 @@ async function getCallSessionsSummary(
 /**
  * Fetch all data once into a single typed report object.
  */
-async function gatherReport(userId: string): Promise<DisputeReport> {
-  const supabase = createAdminClient();
-
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.warn('Using local Supabase URL');
-  } else {
-    console.warn('Using production Supabase URL');
-  }
-
+async function gatherReport(
+  supabase: ScriptSupabaseClient,
+  userId: string,
+): Promise<DisputeReport> {
   const account = await getAccount(supabase, userId);
 
   const [
@@ -333,7 +295,7 @@ async function gatherReport(userId: string): Promise<DisputeReport> {
     voiceCloneCount,
     callSessions,
   ] = await Promise.all([
-    getCreditTransactions(supabase, userId),
+    readCreditTransactions(supabase, [userId]),
     getCurrentBalance(supabase, userId),
     getUsageSummary(supabase, userId),
     getAudioFilesSummary(supabase, userId),
@@ -364,61 +326,29 @@ function computeTotals(
   usageSummary: UsageSummaryRow[],
   currentBalance: number,
 ): Totals {
-  const isPaid = (t: CreditTransaction) =>
-    t.type === 'purchase' || t.type === 'topup';
-
-  // Gross amount charged via purchase/topup rows (positive dollarAmount).
-  const totalChargedUSD = transactions
-    .filter(isPaid)
-    .reduce((sum, t) => sum + (t.metadata?.dollarAmount ?? 0), 0);
-
-  // USD refunded back to the user. refund-credits.mts stores a NEGATIVE
-  // metadata.dollarAmount on `type: 'refund'` rows for cash refunds (platform-
-  // bug refunds are credits-only and carry no dollarAmount). Report as positive.
-  const totalRefundedUSD =
-    transactions
-      .filter((t) => t.type === 'refund')
-      .reduce((sum, t) => sum + Math.min(0, t.metadata?.dollarAmount ?? 0), 0) *
-    -1;
-
-  const netPaidUSD = totalChargedUSD - totalRefundedUSD;
-
-  const totalPurchasedCredits = transactions
-    .filter(isPaid)
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalFreemiumCredits = transactions
-    .filter((t) => t.type === 'freemium')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // refund amounts are signed (negative = credits taken back, positive = added)
-  const totalRefundedCredits = transactions
-    .filter((t) => t.type === 'refund')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalCreditsUsed = usageSummary.reduce(
-    (sum, r) => sum + r.totalCreditsUsed,
-    0,
+  const ledger = summarizeLedger(
+    transactions,
+    usageSummary.reduce((sum, r) => sum + r.totalCreditsUsed, 0),
+    currentBalance,
   );
 
-  const expectedBalance =
-    totalPurchasedCredits +
-    totalFreemiumCredits +
-    totalRefundedCredits -
-    totalCreditsUsed;
-
   return {
-    balanceDelta: currentBalance - expectedBalance,
+    balanceDelta: ledger.delta,
     currentBalance,
-    expectedBalance,
-    netPaidUSD,
-    totalChargedUSD,
-    totalCreditsUsed,
-    totalFreemiumCredits,
-    totalPurchasedCredits,
-    totalRefundedCredits,
-    totalRefundedUSD,
+    expectedBalance: ledger.expected,
+    netPaidUSD: ledger.charged - ledger.cashRefunded,
+    totalChargedUSD: ledger.charged,
+    totalCreditsUsed: ledger.creditsUsed,
+    totalFreemiumCredits: ledger.freemium,
+    totalPurchasedCredits: ledger.purchased,
+    totalRefundedCredits: ledger.refundsAdded - ledger.refundsRemoved,
+    totalRefundedUSD: ledger.cashRefunded,
   };
+}
+
+function formatPaymentDollars(transaction: CreditTransaction): string {
+  const dollars = dollarAmount(transaction);
+  return dollars === undefined ? 'N/A' : fmtUSD(dollars);
 }
 
 // ---------------------------------------------------------------------------
@@ -449,11 +379,7 @@ function renderConsole(report: DisputeReport): void {
     console.log('  (no purchase/topup/refund transactions)');
   } else {
     for (const t of payments) {
-      const usd =
-        t.metadata?.dollarAmount === undefined ||
-        t.metadata?.dollarAmount === null
-          ? 'N/A'
-          : fmtUSD(t.metadata.dollarAmount);
+      const usd = formatPaymentDollars(t);
       console.log(
         `  ${fmtDate(t.created_at)} | ${t.type.toUpperCase().padEnd(8)} | ${String(t.amount).padStart(7)} credits | ${usd.padStart(9)} | PI: ${t.reference_id ?? 'N/A'}${t.subscription_id ? ` | Sub: ${t.subscription_id}` : ''}`,
       );
@@ -539,11 +465,7 @@ function renderMarkdown(report: DisputeReport): string {
     );
     lines.push('| --- | --- | ---: | ---: | --- | --- |');
     for (const t of payments) {
-      const usd =
-        t.metadata?.dollarAmount === undefined ||
-        t.metadata?.dollarAmount === null
-          ? 'N/A'
-          : fmtUSD(t.metadata.dollarAmount);
+      const usd = formatPaymentDollars(t);
       lines.push(
         `| ${fmtDate(t.created_at)} | ${t.type} | ${t.amount} | ${usd} | \`${t.reference_id ?? 'N/A'}\` | ${t.subscription_id ? `\`${t.subscription_id}\`` : 'N/A'} |`,
       );
@@ -619,20 +541,21 @@ function renderMarkdown(report: DisputeReport): string {
 // Input
 // ---------------------------------------------------------------------------
 
-async function getUserId(
-  rl: ReturnType<typeof createInterface>,
-): Promise<string> {
-  let userId = process.argv[2];
-
+async function getUserId(argument: string | undefined): Promise<string> {
+  let userId = argument;
   if (!userId) {
-    userId = (await rl.question('Enter user ID: ')).trim();
+    const rl = createInterface({ input, output });
+    try {
+      userId = (await rl.question('Enter user ID: ')).trim();
+    } finally {
+      rl.close();
+    }
   }
 
-  if (!userId) {
-    throw new Error('User ID is required');
+  if (!(userId && UUID_PATTERN.test(userId))) {
+    throw new Error('Provide the user ID as a UUID');
   }
-
-  return userId.replace(/[^a-zA-Z0-9-_]/g, '_');
+  return userId;
 }
 
 // ---------------------------------------------------------------------------
@@ -640,32 +563,31 @@ async function getUserId(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const rl = createInterface({ input, output });
-
-  try {
-    const userId = await getUserId(rl);
-    rl.close();
-
-    console.log(`\nCompiling dispute evidence for user: ${userId}\n`);
-
-    const report = await gatherReport(userId);
-
-    renderConsole(report);
-
-    const fileName = `dispute-${userId}-${report.generatedAt.slice(0, 10)}.md`;
-    await writeFile(fileName, renderMarkdown(report), 'utf8');
-    console.log(`📄 Markdown evidence written to: ${fileName}\n`);
-  } catch (error) {
-    console.error(
-      '\n❌ Error:',
-      Error.isError(error) ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
-  } finally {
-    rl.close();
+  const { positionals, values } = parseCliArgs({
+    allowPositionals: true,
+    options: { help: { default: false, short: 'h', type: 'boolean' } },
+  });
+  if (values.help) {
+    console.log(HELP);
+    return;
   }
+  if (positionals.length > 1) {
+    throw new Error(`Expected at most one user ID.\n\n${HELP}`);
+  }
+
+  const userId = await getUserId(positionals[0]);
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: true });
+
+  console.log(`\nCompiling dispute evidence for user: ${userId}\n`);
+
+  const report = await gatherReport(supabase, userId);
+
+  renderConsole(report);
+
+  const fileName = `dispute-${userId}-${report.generatedAt.slice(0, 10)}.md`;
+  await writeFile(fileName, renderMarkdown(report), 'utf8');
+  console.log(`📄 Markdown evidence written to: ${fileName}\n`);
 }
 
-// Run the script
-await main();
+runScript(import.meta.url, main);

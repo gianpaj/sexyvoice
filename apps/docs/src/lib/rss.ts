@@ -1,18 +1,17 @@
 import { Feed } from 'feed';
 
+import { appName, docsUrl, siteUrl } from '@/lib/shared';
 import { source } from '@/lib/source';
-
-const baseUrl = 'https://docs.sexyvoice.ai';
 
 export function getRSS() {
   const feed = new Feed({
-    title: 'SexyVoice Docs',
-    id: `${baseUrl}`,
-    link: `${baseUrl}`,
+    title: appName,
+    id: docsUrl,
+    link: docsUrl,
     language: 'en',
 
-    image: `${baseUrl}/banner.png`,
-    favicon: `${baseUrl}/icon.png`,
+    image: `${siteUrl}/web-app-manifest-512x512.png`,
+    favicon: `${siteUrl}/favicon.ico`,
     copyright: 'All rights reserved 2026, SexyVoice.ai',
   });
 
@@ -21,7 +20,7 @@ export function getRSS() {
       id: page.url,
       title: page.data.title,
       description: page.data.description,
-      link: `${baseUrl}${page.url}`,
+      link: `${docsUrl}${page.url}`,
       // FIXME:
       date: new Date(),
       // date: new Date(page.data.lastModified),

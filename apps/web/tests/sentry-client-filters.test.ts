@@ -3,6 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { shouldDropClientSentryEvent } from '@/lib/sentry/client-filters';
 
 describe('shouldDropClientSentryEvent', () => {
+  it('drops events from pages browser extensions open over app://', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        message: 'Unexpected token',
+        request: { url: 'app://extension/index.html' },
+      }),
+    ).toBe(true);
+    expect(
+      shouldDropClientSentryEvent({
+        message: 'Unexpected token',
+        request: { url: 'https://sexyvoice.ai/en' },
+      }),
+    ).toBe(false);
+  });
+
   it('drops known React DOM mutation noise with React internals frames', () => {
     expect(
       shouldDropClientSentryEvent({
@@ -675,7 +690,7 @@ describe('shouldDropClientSentryEvent', () => {
               stacktrace: {
                 frames: [
                   {
-                    filename: 'apps/web/components/grok-tts-editor.tsx',
+                    filename: 'apps/web/components/tts-editor.tsx',
                     function: 'restoreSelection',
                   },
                 ],

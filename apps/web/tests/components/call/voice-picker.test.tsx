@@ -6,23 +6,18 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SavedCallVoices, VoicePicker } from '@/components/call/voice-picker';
-import { defaultSessionConfig } from '@/data/default-config';
-import type { DBVoice } from '@/data/voices';
 import { SamplePlayerProvider } from '@/hooks/use-sample-player';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import type { CallVoice, SavedCallVoice } from '@/lib/calls/voices';
 import messages from '@/messages/en.json';
 
 const builtIn = Array.from(
   { length: 9 },
-  (_, i): DBVoice => ({
+  (_, i): CallVoice => ({
     description: null,
-    feature: 'call',
     id: `built-in-${i + 1}`,
-    language: 'en',
-    model: 'grok',
     name: `Voice ${i + 1}`,
     sample_url: null,
-    sort_order: i,
     type: null,
   }),
 );
@@ -43,7 +38,7 @@ function renderPicker(voice = 'Voice 1', savedVoices: SavedCallVoice[] = []) {
       <SamplePlayerProvider>
         <VoicePicker
           callVoices={builtIn}
-          config={{ ...defaultSessionConfig, voice }}
+          config={{ ...DEFAULT_SESSION_CONFIG, voice }}
           onChange={vi.fn()}
           onCloneVoice={vi.fn()}
           savedVoices={savedVoices}

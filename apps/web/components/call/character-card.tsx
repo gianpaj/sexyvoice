@@ -17,13 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Preset } from '@/data/presets';
-import { getPresetSampleUrl } from '@/lib/characters';
+import { type Character, characterSampleUrl } from '@/lib/calls/characters';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
 import { ListenButton } from './listen-button';
 
 interface CharacterCardProps {
+  character: Character;
   /** This character's call is starting. */
   connecting?: boolean;
   description: string;
@@ -42,7 +42,6 @@ interface CharacterCardProps {
   /** Opens the call panel. */
   onOpen: () => void;
   playing: boolean;
-  preset: Preset;
 }
 
 export function CharacterCard({
@@ -55,11 +54,11 @@ export function CharacterCard({
   onListen,
   onOpen,
   playing,
-  preset,
+  character,
 }: CharacterCardProps) {
   const t = useTranslations('call.picker');
   const tCall = useTranslations('call');
-  const { name } = preset;
+  const { name } = character;
 
   return (
     <article
@@ -69,7 +68,7 @@ export function CharacterCard({
           ? 'border-violet-400 shadow-[0_0_0_4px_rgba(167,139,250,0.25)]'
           : 'border-slate-800',
       )}
-      data-character-id={preset.id}
+      data-character-id={character.id}
     >
       <button
         aria-label={t('open', { name })}
@@ -77,7 +76,11 @@ export function CharacterCard({
         onClick={onOpen}
         type="button"
       >
-        <CharacterAvatar image={preset.image} name={name} seed={preset.id} />
+        <CharacterAvatar
+          image={character.image}
+          name={name}
+          seed={character.id}
+        />
         <span className="flex flex-col gap-0.5">
           <span className="font-semibold text-[17px] text-slate-50">
             {name}
@@ -92,7 +95,7 @@ export function CharacterCard({
       <div className="flex items-center justify-between gap-2">
         <ListenButton
           ariaLabel={t(playing ? 'stopName' : 'listenTo', { name })}
-          disabled={!getPresetSampleUrl(preset)}
+          disabled={!characterSampleUrl(character)}
           label={t(playing ? 'stop' : 'listen')}
           onClick={onListen}
           playing={playing}

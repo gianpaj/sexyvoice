@@ -57,7 +57,13 @@ Don't take shortcuts by just adding local logic to solve a problem.
 - Web app package: `apps/web` (`@sexyvoice/web`).
 - Fumadocs docs app: `apps/docs` (`@sexyvoice/docs`) - deployed to
   `docs.sexyvoice.ai`.
-- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`).
+- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`). See
+  `scripts/README.md` for commands and safety rules.
+- Scripts import some web modules through Node type stripping (`lib/ai/`,
+  parts of `lib/tts/`, `lib/storage/layout.ts`, `lib/clone/voxtral.ts`,
+  `data/clone-demo-config.ts`). Those modules use relative imports with `.ts`
+  extensions and no `@/` aliases. Under `tsx` they load as CommonJS, so a
+  script default-imports the module and destructures it.
 - Workspace config: `pnpm-workspace.yaml` (declares `apps/*`, `packages/*`,
   and `scripts`, plus the shared dependency `catalog:`).
 - Root commands are orchestrated with Turborepo (`turbo.json`).
@@ -87,10 +93,19 @@ Runtime and tooling:
 - `apps/web/app/[lang]/` - localized App Router pages and layouts.
 - `apps/web/app/api/` - route handlers, including dashboard APIs and external API v1.
 - `apps/web/components/` - reusable UI and feature components.
-- `apps/web/hooks/` - client hooks, including LiveKit call state.
+- `apps/web/hooks/` - shared client hooks: FFmpeg, recording, uploads, and
+  audio levels.
+- `apps/web/lib/calls/` and `apps/web/components/call/` - AI voice calls:
+  characters, models, languages, scenes, call-token metadata, voices, memory,
+  and the call setup and session providers.
 - `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
   pricing, and OpenAPI generation.
 - `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.
+- `apps/web/lib/site.ts`, `lib/page-metadata.ts`, `lib/structured-data.ts`,
+  `lib/content.ts`, `lib/public-routes.ts` and `components/marketing-page.tsx` -
+  the public site: identity, per-page metadata, JSON-LD, posts and policies,
+  the sitemap registry and the marketing shell. `tests/public-site/` pins
+  their output.
 - `apps/web/lib/supabase/` - Supabase clients, typed queries, and admin access.
 - `apps/web/lib/storage/` - Cloudflare R2 upload/delete helpers.
 - `apps/web/supabase/migrations/` - database migrations.
@@ -162,7 +177,9 @@ Use package filters when you only want one app, e.g.
 ## Internationalization
 
 - UI copy must use `next-intl`; do not hardcode user-facing English strings.
-- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
+- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`, defined once
+  in `apps/web/src/i18n/routing.ts`. `pnpm check-translations` fails when a
+  locale has no message file.
 - Async Server Components use `getTranslations()` for UI text.
   Non-async components can use `useTranslations()`, including on the server.
 - Prefer passing server-translated labels or content to Client Components
@@ -179,7 +196,8 @@ Use package filters when you only want one app, e.g.
 - Match the form of address of the section you edit: German, for example,
   uses `du` in some sections and `Sie` in others.
 - Voice cloning copy says "your voice" or mentions the rights to a voice, and
-  gives the minimum as 10 seconds (`CLONE_MIN_AUDIO_SECONDS`).
+  gives the minimum as 10 seconds (`minReferenceSeconds` in
+  `apps/web/lib/clone/providers.ts`).
 
 ## Supabase and Database
 
@@ -204,21 +222,24 @@ Use package filters when you only want one app, e.g.
 - Do not add migrations for one-off data backfills or production data fixes unless
   explicitly requested; provide the SQL for the user to run instead.
 - Enable RLS on new tables and add granular policies.
+- Operator scripts change credits only through `adjustCredits` in
+  `scripts/lib/ledger.mts`, which writes the `refund` ledger row together with
+  the balance change.
 
 ## External API v1
 
 Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 `/api/v1/openapi`.
 
-- Validate keys with `validateApiKey()` from `apps/web/lib/api/auth.ts`; never trust raw
-  keys and always compare hashes.
-- Rate-limit with `consumeRateLimit()` and return headers via
-  `jsonWithRateLimitHeaders()`.
+- Export each route as `withExternalApi(endpoint, handler)` from
+  `apps/web/lib/api/handler.ts`. It validates the key hash, consumes the
+  per-key rate limit, logs auth failures to Axiom, records the key's last use
+  and turns unexpected errors into a logged `server_error`. Reply through the
+  context's `respond()` so rate-limit and `request-id` headers are set.
 - Use `externalApiErrorResponse()` for structured errors.
 - Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
   API users are resolved from API keys, not session cookies.
-- Call `updateApiKeyLastUsed()` in a `finally` block.
-- Log outcomes through `createLogger()` from `apps/web/lib/api/logger.ts`.
+- Log other outcomes through the context's `log()`.
 - Keep request and response schemas in `apps/web/lib/api/schemas.ts`; they feed OpenAPI
   generation.
 - When changing external API behavior, request/response schemas, auth, rate
@@ -239,20 +260,27 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   deletes a main-bucket object.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
-- Speech generation can involve Replicate, Google Gemini TTS (models `gpro` for
-  Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
-  `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
-  `model = 'gpro31'` should use Gemini 3.1 Flash.
+- Speech generation uses Replicate, Google Gemini 3.8 TTS (`gpro38`), or xAI
+  Grok TTS. `lib/tts/models.ts` excludes retired `gpro` and `gpro31` voices from
+  new generation; keep their database rows public for audio history joins.
 - Voice cloning uses Mistral Voxtral and Replicate Chatterbox for one-off
   speech and Inworld for saved call voices; fal.ai cleans reference audio. It
   must respect permission and privacy requirements.
 - Mistral TTS blocks sexual content with a 403 `guardrail_violation`, so
   saved call voices use Inworld.
-- `LiveKitRoom` renders its children one render after
-  `PlaygroundStateProvider` rewrites the URL. Read call page query parameters
-  on the server and pass them to `CallExperience`.
-- LiveKit call tokens resolve character prompts server-side. Predefined prompt
-  text must never be exposed to the client.
+- `LiveKitRoom` renders its children one render after `CallSetupProvider`
+  rewrites the URL. Read call page query parameters on the server and pass
+  them to the providers and `CallExperience`.
+- Call code lives in `apps/web/lib/calls/` and `apps/web/components/call/`.
+  `lib/calls/characters.ts` owns the character row; a custom character is
+  deleted by deleting its prompt, which cascades.
+- `/api/call-token` takes only the character ID and per-call choices
+  (language, scene) and resolves the prompt, voice, model and settings from
+  the saved character. Predefined prompt text must never be exposed to the
+  client. The SexyCall agent reads the metadata keys built in
+  `lib/calls/call-token.ts`; change them only together with the agent.
+- Call refusals and agent errors carry a stable `code`; `lib/calls/errors.ts`
+  maps each code to its `call.*` message.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
   worker's registered agent name. See `docs/devops.md` for dispatch setup.
 - The call agent lives in the `gianpaj/sexycall` repo (Python, LiveKit
@@ -264,10 +292,12 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   agent. See `ARCHITECTURE.md` for saved voices and `docs/devops.md` for setup.
 - Call transcript analysis is async: `/api/call-sessions/analyze` only enqueues
   into `call_analysis_queue`; the `/api/call-sessions/analyze/batch` cron
-  drains it through the xAI Batch API. Shared prompt/schema/batch code lives in
-  `apps/web/lib/ai/` and is imported by `scripts/` through Node type stripping,
-  so those modules must use relative imports with `.ts` extensions and no `@/`
-  aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency bypass.
+  drains it through the xAI Batch API. Shared prompt/schema/batch code and the
+  queue's states and retry rule (`call-analysis-queue.ts`) live in
+  `apps/web/lib/ai/` and are imported by `scripts/` through Node type
+  stripping, so those modules must use relative imports with `.ts` extensions
+  and no `@/` aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency
+  bypass.
 
 ## Banners
 
@@ -277,7 +307,11 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`. An unset or empty selection shows no promo
   banner; do not add an implicit campaign fallback.
 - Banner dismissal writes a client-side cookie through
-  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
+  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`. Public
+  pages render the banner through `MarketingPage` without reading cookies;
+  the dashboard filters dismissed banners on the server.
+- `isPromoEnabled()` in `apps/web/lib/promo.ts` is the one promo switch; it
+  also controls checkout bonus credits.
 - Localized copy lives under `promos` or `announcements` in every
   `apps/web/messages/*.json` file.
 - Promo setup guidance lives in `skills/promo-banner/SKILL.md`.

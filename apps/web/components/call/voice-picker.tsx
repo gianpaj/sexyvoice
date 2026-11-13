@@ -17,14 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { SessionConfig } from '@/data/session-config';
-import type { DBVoice } from '@/data/voices';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
+import type { SessionConfig } from '@/lib/calls/characters';
 import {
+  type CallVoice,
   type SavedCallVoice,
   savedVoiceSampleUrl,
   withCallVoice,
-} from '@/lib/call-voices';
+} from '@/lib/calls/voices';
 import { MAX_SAVED_CALL_VOICES } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { ListenButton } from './listen-button';
@@ -299,7 +299,7 @@ export function SavedCallVoices({
 }
 
 interface VoicePickerProps {
-  callVoices: DBVoice[];
+  callVoices: CallVoice[];
   config: SessionConfig;
   disabled?: boolean;
   /** ID of the heading that names the voice choice. */

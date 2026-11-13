@@ -13,16 +13,20 @@ import {
   getDemoCloneLanguages,
   getDemoCloneSelection,
   getDemoCloneSpeaker,
-  getDemoCloneTranscript,
   isDemoLanguageCode,
   resolveInitialDemoLanguageCode,
   resolveInitialDemoSpeakerId,
 } from '@/data/demo-clone';
+
+/** The spoken words of a prompt, without its delivery tags. */
+const getDemoCloneTranscript = (prompt: string) =>
+  prompt.replace(/\[[^\]]*\]/g, '').trim();
+
 import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
-import { i18n } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 
-const WEBSITE_LOCALES = i18n.locales;
+const WEBSITE_LOCALES = routing.locales;
 
 describe('demo clone speakers', () => {
   it('keeps three short deliveries and puts Kat’s same-text example first', () => {

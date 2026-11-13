@@ -8,17 +8,16 @@
  *
  * Why this happens
  * ----------------
- * Credits for Gemini TTS are `ceil(totalTokenCount * 1.1 * multiplier)` where
+ * Credits for Gemini TTS are `ceil(totalTokenCount * 1.1)` where
  * `totalTokenCount = promptTokenCount + candidatesTokenCount`
- * (see apps/web/lib/utils.ts:calculateCreditsFromTokens). A long transcript that
+ * (see apps/web/lib/tts/models.ts:creditsFromTokens). A long transcript that
  * the model fails to fully voice still produces a large `promptTokenCount`, so
  * the user pays for the whole script but only receives a few seconds of audio.
  *
  * Detection signal
  * ----------------
- * The transcript stored in `text_content` (everything after the `## TRANSCRIPT`
- * marker, see apps/web/lib/tts/gemini-prompt.ts) is the text that *should* have
- * been spoken. Dividing its character count by the audio `duration` gives
+ * Gemini 3.1 stored its director notes above a `## TRANSCRIPT` marker in
+ * `text_content`; the text after the marker is what *should* have been spoken. Dividing its character count by the audio `duration` gives
  * chars-per-second. A very high value can identify audio that is far too short
  * for its transcript. Speech rate, prompt structure, metadata quality, and
  * delivery defects can all affect the result, so independently inspect every
@@ -30,46 +29,24 @@
  * where expected duration is `spoken chars / --normal-cps`. Long outputs never
  * enter refund exposure or refund commands.
  *
- * Usage
- * -----
- *   node --env-file=.env scripts/find-truncated-gemini31-tts.mjs [options]
- *   # or, if you keep creds in .env / .env.local, dotenv is loaded automatically:
- *   node scripts/find-truncated-gemini31-tts.mjs [options]
- *
- * Options
- *   --user <uuid>       Only scan this user_id (default: all users).
- *   --threshold <cps>   Flag when spoken chars-per-second exceeds this
- *                       (default: 30 — comfortably above natural speech).
- *   --min-chars <n>     Ignore clips whose transcript is shorter than this, to
- *                       avoid noise on tiny generations (default: 150).
- *   --normal-cps <cps>  Assumed natural rate used to compute the "expected"
- *                       duration and the delivered fraction (default: 15).
- *   --long-factor <n>   Review output longer than expected by this factor
- *                       (default: 2; must be greater than 1).
- *   --active-only       Skip soft-deleted rows (deleted_at not null).
- *   --since <date>      Only scan files created on/after this date/timestamp,
- *                       ISO-parseable (e.g. 2026-06-01 or 2026-06-01T00:00:00Z).
- *   --until <date>      Only scan files created on/before this date/timestamp.
- *   --paid-only         Only scan users who have paid (a purchase/topup credit
- *                       transaction). Freemium-only users can't be refunded.
- *   --out <path>        JSON report path (default: ./truncated-gemini31-tts.json).
- *   --reason <text>     Refund reason printed in the generated refund commands.
- *
  * The report includes a separate `REVIEW-ONLY LONG OUTPUTS` table and an
- * `abnormallyLong` JSON array. It also includes conditional `refund-credits.mts`
+ * `abnormallyLong` JSON array. It also includes conditional `refund-credits`
  * commands for short-output candidates only. A human must independently confirm
- * affected files and approve any refund amount.
+ * affected files and approve any refund amount. Options are in HELP.
  *
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (read-only use).
  */
 
 import { writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
 
-// Load .env / .env.local when present (no-op if --env-file already populated env).
-config({ path: ['.env', '.env.local'] });
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { readPaidUserIds } from './lib/ledger.mts';
+import { createScriptAdminClient } from './lib/supabase.mts';
 
 const MODEL = 'gemini-3.1-flash-tts-preview';
 const TRANSCRIPT_MARKER = /##\s*TRANSCRIPT\s*\r?\n/;
@@ -77,88 +54,62 @@ const TRANSCRIPT_MARKER = /##\s*TRANSCRIPT\s*\r?\n/;
 const UNKNOWN_DURATION = -1;
 const PAGE_SIZE = 1000;
 
-function parseArgs(argv) {
-  const opts = {
-    activeOnly: false,
-    longFactor: 2,
-    minChars: 150,
-    normalCps: 15,
-    out: './truncated-gemini31-tts.json',
-    paidOnly: false,
-    reason:
-      'Truncated Gemini 3.1 Flash TTS: billed for the full transcript but only a few seconds of audio were generated',
-    since: null,
-    threshold: 30,
-    until: null,
-    user: null,
-  };
-  let i = 0;
-  while (i < argv.length) {
-    const arg = argv[i];
-    const next = () => argv[++i];
-    switch (arg) {
-      case '--':
-        break;
-      case '--user':
-        opts.user = next();
-        break;
-      case '--threshold':
-        opts.threshold = Number(next());
-        break;
-      case '--min-chars':
-        opts.minChars = Number(next());
-        break;
-      case '--normal-cps':
-        opts.normalCps = Number(next());
-        break;
-      case '--long-factor':
-        opts.longFactor = Number(next());
-        break;
-      case '--active-only':
-        opts.activeOnly = true;
-        break;
-      case '--since':
-        opts.since = next();
-        break;
-      case '--until':
-        opts.until = next();
-        break;
-      case '--paid-only':
-        opts.paidOnly = true;
-        break;
-      case '--out':
-        opts.out = next();
-        break;
-      case '--reason':
-        opts.reason = next();
-        break;
-      case '--help':
-      case '-h':
-        console.log(
-          'See the header of this file for options. Common: --user <uuid> --since <iso> --until <iso> --long-factor <n>',
-        );
-        process.exit(0);
-        break;
-      default:
-        console.warn(`Ignoring unknown argument: ${arg}`);
-    }
-    i++;
-  }
-  return opts;
-}
+const DEFAULT_REASON =
+  'Truncated Gemini 3.1 Flash TTS: billed for the full transcript but only a few seconds of audio were generated';
 
-function createSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SECRET_KEY;
-  if (!(url && key)) {
-    console.error('Missing required environment variables:');
-    console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-    console.error('  - SUPABASE_SECRET_KEY');
-    process.exit(1);
-  }
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
+const HELP = `Flag ${MODEL} audio_files whose duration does not fit the stored
+transcript. Reads only. Candidates are review signals, not refund decisions.
+
+Usage: pnpm find-truncated-gemini31-tts [options]
+
+  --user <uuid>        Only scan this user_id (default: all users)
+  --threshold <cps>    Flag short output above this many spoken chars/second
+                       (default: 30)
+  --min-chars <n>      Ignore transcripts shorter than this (default: 150)
+  --normal-cps <cps>   Natural rate for the expected duration and the
+                       delivered percentage (default: 15)
+  --long-factor <n>    Review output longer than expected by this factor;
+                       must be greater than 1 (default: 2)
+  --active-only        Skip soft-deleted rows
+  --since <date>       Only files created on or after this ISO date/timestamp
+  --until <date>       Only files created on or before this ISO date/timestamp
+  --paid-only          Only users with a purchase or topup transaction
+  --out <path>         JSON report path (default: truncated-gemini31-tts.json in
+                       the working directory)
+  --reason <text>      Reason printed in the conditional refund commands
+  -h, --help           Show this help`;
+
+function readOptions() {
+  const { values } = parseCliArgs({
+    options: {
+      'active-only': { default: false, type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      'long-factor': { default: '2', type: 'string' },
+      'min-chars': { default: '150', type: 'string' },
+      'normal-cps': { default: '15', type: 'string' },
+      out: { type: 'string' },
+      'paid-only': { default: false, type: 'boolean' },
+      reason: { default: DEFAULT_REASON, type: 'string' },
+      since: { type: 'string' },
+      threshold: { default: '30', type: 'string' },
+      until: { type: 'string' },
+      user: { type: 'string' },
+    },
   });
+  return {
+    activeOnly: values['active-only'],
+    help: values.help,
+    longFactor: Number(values['long-factor']),
+    minChars: Number(values['min-chars']),
+    normalCps: Number(values['normal-cps']),
+    out: values.out ? inputPath(values.out) : './truncated-gemini31-tts.json',
+    paidOnly: values['paid-only'],
+    reason: values.reason,
+    since: values.since ?? null,
+    threshold: Number(values.threshold),
+    until: values.until ?? null,
+    user: values.user ?? null,
+  };
 }
 
 /** Extract the text that should have been spoken from the stored prompt. */
@@ -196,18 +147,16 @@ function normalizeTimeBound(value, option) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    console.error(
+    throw new Error(
       `Invalid ${option} date: "${value}". Use an ISO date/timestamp, e.g. 2026-06-01.`,
     );
-    process.exit(1);
   }
   return date.toISOString();
 }
 
 function validateLongFactor(value) {
   if (!(Number.isFinite(value) && value > 1)) {
-    console.error('--long-factor must be a number greater than 1.');
-    process.exit(1);
+    throw new Error('--long-factor must be a number greater than 1.');
   }
 }
 
@@ -231,46 +180,13 @@ async function fetchAllRows(supabase, opts) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('Error fetching audio_files:', error);
-      process.exit(1);
+      throw new Error(`Failed to fetch audio_files: ${error.message}`);
     }
     rows.push(...data);
     if (data.length < PAGE_SIZE) break;
     from += PAGE_SIZE;
   }
   return rows;
-}
-
-// `.in()` is chunked to keep the request URL within limits.
-const IN_CHUNK = 300;
-
-/**
- * Set of user ids (from `userIds`) that have paid — i.e. have at least one
- * `purchase`/`topup` credit transaction. Mirrors `hasUserPaid` in
- * apps/web/lib/supabase/queries.ts.
- */
-async function fetchPaidUserIds(supabase, userIds) {
-  const paid = new Set();
-  for (let i = 0; i < userIds.length; i += IN_CHUNK) {
-    const chunk = userIds.slice(i, i + IN_CHUNK);
-    let from = 0;
-    for (;;) {
-      const { data, error } = await supabase
-        .from('credit_transactions')
-        .select('user_id')
-        .in('user_id', chunk)
-        .in('type', ['purchase', 'topup'])
-        .range(from, from + PAGE_SIZE - 1);
-      if (error) {
-        console.error('Error fetching credit_transactions:', error);
-        process.exit(1);
-      }
-      for (const t of data) paid.add(t.user_id);
-      if (data.length < PAGE_SIZE) break;
-      from += PAGE_SIZE;
-    }
-  }
-  return paid;
 }
 
 export function analyzeRow(row, opts) {
@@ -436,7 +352,7 @@ function buildReviewPlans(byUser, opts) {
   return [...byUser.entries()]
     .sort((a, b) => b[1].credits - a[1].credits)
     .map(([userId, acc]) => ({
-      command: `pnpm --filter @sexyvoice/scripts refund-credits -- ${userId}`,
+      command: `pnpm refund-credits ${userId}`,
       credits: acc.credits,
       files: acc.count,
       ids: acc.ids,
@@ -507,11 +423,11 @@ function printSummary(
   return candidateCredits;
 }
 
-/** When --paid-only, drop rows whose user has no purchase/topup transaction. */
+/** With --paid-only, keep rows of users who ever paid (hasEverPaid). */
 async function filterPaidOnly(supabase, rows, opts) {
   if (!opts.paidOnly) return rows;
   const userIds = [...new Set(rows.map((r) => r.user_id))];
-  const paidUserIds = await fetchPaidUserIds(supabase, userIds);
+  const paidUserIds = await readPaidUserIds(supabase, userIds);
   const scanRows = rows.filter((r) => paidUserIds.has(r.user_id));
   console.log(
     `Paid-only: ${paidUserIds.size}/${userIds.length} users paid; kept ${scanRows.length}/${rows.length} rows.`,
@@ -554,18 +470,22 @@ export function partitionAnalyzed(analyzed) {
 }
 
 async function main() {
-  const opts = parseArgs(process.argv.slice(2));
+  const opts = readOptions();
+  if (opts.help) {
+    console.log(HELP);
+    return;
+  }
   validateLongFactor(opts.longFactor);
   opts.since = normalizeTimeBound(opts.since, '--since');
   opts.until = normalizeTimeBound(opts.until, '--until');
   if (opts.since && opts.until && opts.since > opts.until) {
-    console.error('--since must be earlier than or equal to --until.');
-    process.exit(1);
+    throw new Error('--since must be earlier than or equal to --until.');
   }
 
   printScanHeader(opts);
 
-  const supabase = createSupabase();
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: true });
   const rows = await fetchAllRows(supabase, opts);
   console.log(`Fetched ${rows.length} '${MODEL}' rows.`);
 
@@ -630,12 +550,4 @@ async function main() {
   );
 }
 
-const isMain =
-  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isMain) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
-}
+runScript(import.meta.url, main);

@@ -52,14 +52,6 @@ const Post = defineDocumentType(() => ({
       resolve: (doc) => getSlug(doc._raw.sourceFilePath),
       type: 'string',
     },
-    slugAsParams: {
-      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
-      type: 'string',
-    },
-    url: {
-      resolve: (doc) => `/blog/${getSlug(doc._raw.sourceFilePath)}`,
-      type: 'string',
-    },
   },
   contentType: 'mdx',
   fields: {
@@ -116,11 +108,6 @@ const PolicyPage = defineDocumentType(() => ({
     },
     slug: {
       resolve: (doc) => getSlug(doc._raw.sourceFilePath),
-      type: 'string',
-    },
-    url: {
-      resolve: (doc) =>
-        `/${getLocale(doc._raw.sourceFilePath)}/${getSlug(doc._raw.sourceFilePath)}`,
       type: 'string',
     },
   },

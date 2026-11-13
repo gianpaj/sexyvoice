@@ -149,7 +149,7 @@ describe('submitCallAnalysisBatch() / collectCallAnalysisBatchResults()', () => 
 
     expect(submission.batchId).toBe('batch_1');
     expect(submission.rejected).toEqual([
-      { error: 'No messages in transcript', sessionId: 's2' },
+      { error: 'No messages in transcript', final: true, sessionId: 's2' },
     ]);
     if (!submission.batchId) {
       throw new Error('expected a batch');
@@ -167,7 +167,7 @@ describe('submitCallAnalysisBatch() / collectCallAnalysisBatchResults()', () => 
     );
     expect(prepared.requests.map((r) => r.custom_id)).toEqual(['s1']);
     expect(prepared.rejected).toEqual([
-      { error: 'No messages in transcript', sessionId: 's2' },
+      { error: 'No messages in transcript', final: true, sessionId: 's2' },
     ]);
     expect(mocks.uploadBatchInputFile).not.toHaveBeenCalled();
 

@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { SavedCallVoice } from '@/lib/calls/voices';
 import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import daMessages from '@/messages/da.json';
@@ -22,7 +22,7 @@ const {
   fetchMock,
   mockEnsureLoaded,
   mockFFmpegState,
-  mockAddFiles,
+  mockAddFile,
   mockUpload,
   mockLanguageSelect,
   mockMicrophone,
@@ -31,8 +31,8 @@ const {
   mockNavigate,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
-  mockAddFiles: vi.fn(),
-  mockUpload: { files: [] as { file: File; id: string }[] },
+  mockAddFile: vi.fn(),
+  mockUpload: { file: null as File | null },
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
   mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
@@ -78,7 +78,7 @@ vi.mock(
   }),
 );
 
-vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+vi.mock('@/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({
     convert: vi.fn(),
     ensureLoaded: mockEnsureLoaded,
@@ -97,7 +97,7 @@ vi.mock('@/components/audio/microphone-main', () => ({
   },
 }));
 
-vi.mock('@/components/services/toast', () => ({
+vi.mock('sonner', () => ({
   toast: {
     error: mockToastError,
     success: mockToastSuccess,
@@ -105,25 +105,20 @@ vi.mock('@/components/services/toast', () => ({
 }));
 
 vi.mock('@/hooks/use-file-upload', () => ({
-  formatBytes: () => '1 MB',
-  useFileUpload: () => [
-    {
-      errors: [],
-      files: mockUpload.files,
-      isDragging: false,
-    },
-    {
-      addFiles: mockAddFiles,
-      clearErrors: vi.fn(),
-      getInputProps: vi.fn(() => ({})),
-      handleDragEnter: vi.fn(),
-      handleDragLeave: vi.fn(),
-      handleDragOver: vi.fn(),
-      handleDrop: vi.fn(),
-      openFileDialog: vi.fn(),
-      removeFile: vi.fn(),
-    },
-  ],
+  useFileUpload: () => ({
+    addFile: mockAddFile,
+    clearError: vi.fn(),
+    error: null,
+    file: mockUpload.file,
+    handleDragEnter: vi.fn(),
+    handleDragLeave: vi.fn(),
+    handleDragOver: vi.fn(),
+    handleDrop: vi.fn(),
+    inputProps: {},
+    isDragging: false,
+    openFileDialog: vi.fn(),
+    removeFile: vi.fn(),
+  }),
 }));
 
 const recorderOptions = vi.hoisted(() => ({
@@ -162,10 +157,10 @@ const errorCodesDict = {
 const dict = {
   savedVoice: enMessages.clone.savedVoice,
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
-  audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
-  audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+  audioConversionFailedWithMessage: 'Audio conversion failed: {ERROR}',
+  audioDurationInvalidFallback: 'Audio must be at least {MIN} seconds.',
   audioDurationInvalidVoxtral:
-    'Reference audio must be at least __MIN__ seconds for voice cloning.',
+    'Reference audio must be at least {MIN} seconds for voice cloning.',
   audioDurationUnknown: 'Could not determine audio duration.',
   audioFileLabel: 'Audio File',
   audioProcessorError: 'Audio Processor Error',
@@ -181,20 +176,17 @@ const dict = {
   dragDropText: 'Drag & drop or click to browse',
   englishChatterbox: 'English (Chatterbox)',
   errorCloning: 'Failed to clone voice',
-  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
     audioConversionFailed:
       'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
     audioConversionRequiredWebm:
       'WebM audio must be converted before uploading. Please try recording again.',
-    audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+    audioDurationInvalidFallback: 'Audio must be at least {MIN} seconds.',
     audioDurationInvalidVoxtral:
-      'Reference audio must be at least __MIN__ seconds for voice cloning.',
+      'Reference audio must be at least {MIN} seconds for voice cloning.',
     audioDurationUnknown: 'Could not determine audio duration.',
-    ffmpegLoading:
-      'The audio converter is still loading. Please try again in a moment',
     fileTooLarge: 'File size too large. Please use a smaller audio file.',
-    insufficientCredits: 'You need __CREDITS__ credits to clone this audio.',
+    insufficientCredits: 'You need {CREDITS} credits to clone this audio.',
     internalError: 'Failed to clone voice. Please try again.',
     invalidContentType: 'The upload request is invalid. Please try again.',
     invalidFileType:
@@ -206,8 +198,8 @@ const dict = {
     referenceAudioEnhancementInputTooLarge:
       'The reference audio is too large to enhance.',
     referenceAudioEnhancementInputTooLong:
-      'Reference audio cleanup supports clips up to __MAX__ seconds.',
-    textTooLong: 'Text exceeds the maximum length of __MAX__ characters.',
+      'Reference audio cleanup supports clips up to {MAX} seconds.',
+    textTooLong: 'Text exceeds the maximum length of {MAX} characters.',
     unsupportedAudioFormat:
       'Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.',
     unsupportedLocale: 'This language is not supported for voice cloning.',
@@ -216,8 +208,8 @@ const dict = {
   errorTitle: 'Error',
   errorTooLarge: 'File size too large. Please use a smaller audio file.',
   failedToLoadAudioProcessor: 'Failed to load audio processor',
-  failedToStartRecording: 'Failed to start recording: __ERROR__',
-  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
+  failedToStartRecording: 'Failed to start recording: {ERROR}',
+  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. {SIZE})',
   generating: 'Generating',
   languageLabel: 'Language',
   languageSelectPlaceholder: 'Select a language',
@@ -228,23 +220,18 @@ const dict = {
   notEnoughCredits: "You don't have enough credits to generate audio.",
   orUseMicrophone: 'or use your microphone',
   paidTextLimitTooltip:
-    'Paid users can clone longer speech with up to __MAX__ characters.',
+    'Paid users can clone longer speech with up to {MAX} characters.',
   playAudio: 'Play Audio',
-  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
+  preparingAudioProcessor: 'Preparing audio processor for {LANGUAGE}...',
   previewTitle: 'Generated Voice Preview',
   referenceAudioEnhancementHelp:
     'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
   referenceAudioEnhancementLabel: 'Reference audio enhancement',
   referenceAudioGuidanceLong:
-    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+    'Use a clear reference clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.',
   referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+    'Use a clean single-speaker reference clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.',
   removeFile: 'Remove file',
-  sampleCard: {
-    exampleOutput: 'Example',
-    loadSource: 'Load source',
-    sourceAudio: 'Source audio',
-  },
   subtitle:
     'Upload an audio file and enter text to create a voice clone and generate speech in one step',
   success: 'Audio generated successfully!',
@@ -253,10 +240,9 @@ const dict = {
   textAreaPlaceholder: 'Enter the text you want to convert to speech...',
   textToConvertLabel: 'Enter text to generate speech',
   title: 'Clone a Voice',
-  tryDemo: 'Or try with a demo:',
   unexpectedError: 'Unexpected error occurred',
   upgradeTextLimitTooltip:
-    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
+    'Upgrade to a paid plan to clone longer speech with up to {MAX} characters.',
   uploadAudioFile: 'Upload audio file',
 } as const;
 
@@ -330,10 +316,37 @@ const renderedLocaleCodes = () => {
 };
 
 describe('NewVoiceClient', () => {
+  it('tells the user how much reference audio the cloning provider keeps', async () => {
+    mockUpload.file = null;
+    renderClone({ lang: 'en' });
+    expect(
+      await screen.findByText(/Only the first 25 seconds are used/),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the Inworld trim length when saving a voice for calls', async () => {
+    mockUpload.file = null;
+    renderClone({
+      callCloneProvider: 'inworld',
+      initialSaveForCalls: true,
+      userHasPaid: true,
+    });
+    expect(
+      await screen.findByText(/Only the first 30 seconds are used/),
+    ).toBeInTheDocument();
+  });
+
   it('saves a reusable voice without requiring generated speech text', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ audioReferenceId: 'reference', provider: 'inworld' }),
+        JSON.stringify({
+          voice: {
+            id: 'reference',
+            locale: 'en',
+            name: 'My voice',
+            provider: 'inworld',
+          },
+        }),
         {
           status: 200,
         },
@@ -389,7 +402,7 @@ describe('NewVoiceClient', () => {
   };
 
   it('generates speech with a selected saved voice instead of a recording', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     const user = userEvent.setup();
     renderClone({
       cloneMessages: enMessages.clone,
@@ -625,7 +638,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('flags a microphone take shorter than the minimum', () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({ cloneMessages: enMessages.clone });
     const record = (seconds: number) =>
       act(() => {
@@ -637,7 +650,7 @@ describe('NewVoiceClient', () => {
       });
     const tooShort =
       enMessages.clone.errors.audioDurationInvalidVoxtral.replace(
-        '__MIN__',
+        '{MIN}',
         '10',
       );
 
@@ -649,7 +662,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('records from the microphone picked in the menu', () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({ cloneMessages: enMessages.clone });
     expect(recorderOptions.current?.mediaStreamConstraints).toEqual({
       audio: true,
@@ -666,7 +679,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('generates with Cmd/Ctrl+Enter only when Generate is enabled', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     const user = userEvent.setup();
     renderClone({
       cloneMessages: enMessages.clone,
@@ -810,7 +823,7 @@ describe('NewVoiceClient', () => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
     queryClient = new QueryClient();
-    mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
+    mockUpload.file = selectedFile;
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -830,7 +843,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('loads a selected demo reference and tagged sentence without generating', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     fetchMock.mockResolvedValue(
       new Response(new Uint8Array([1, 2, 3]), {
         headers: { 'content-type': 'audio/mpeg' },
@@ -841,8 +854,8 @@ describe('NewVoiceClient', () => {
     expect(input).toHaveTextContent(
       'Ach, da bist du ja genau im richtigen Moment.',
     );
-    await waitFor(() => expect(mockAddFiles).toHaveBeenCalledOnce());
-    const [file] = mockAddFiles.mock.calls[0][0] as File[];
+    await waitFor(() => expect(mockAddFile).toHaveBeenCalledOnce());
+    const file = mockAddFile.mock.calls[0][0] as File;
     expect(file.name).toBe('heike-reference.mp3');
     expect(file.type).toBe('audio/mpeg');
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -855,7 +868,7 @@ describe('NewVoiceClient', () => {
   it.each(['http', 'network'])(
     'shows a demo reference %s failure',
     async (failure) => {
-      mockUpload.files = [];
+      mockUpload.file = null;
       if (failure === 'http') {
         fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
       } else {
@@ -867,7 +880,7 @@ describe('NewVoiceClient', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent(
         enMessages.landing.demoClone.audioError,
       );
-      expect(mockAddFiles).not.toHaveBeenCalled();
+      expect(mockAddFile).not.toHaveBeenCalled();
       expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
     },
   );
@@ -881,7 +894,7 @@ describe('NewVoiceClient', () => {
     renderClone({ initialDemo: { speakerId: 'kat', takeId: 'sarcastic' } });
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     await act(async () => {});
-    expect(mockAddFiles).not.toHaveBeenCalled();
+    expect(mockAddFile).not.toHaveBeenCalled();
   });
 
   it('updates text direction without clearing text when switching languages', async () => {
@@ -1232,6 +1245,34 @@ describe('NewVoiceClient', () => {
       );
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it('shows no error when a cancel rejects with another browser message', async () => {
+      const user = userEvent.setup();
+      fetchMock.mockImplementationOnce(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => {
+              // Firefox's wording; the old check matched only Chrome's.
+              reject(new Error('The operation was aborted.'));
+            });
+          }),
+      );
+
+      renderClone();
+      await submitClone(user);
+      await user.click(
+        await screen.findByRole('button', { name: dict.cancelButton }),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: dict.cancelButton }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByText('The operation was aborted.'),
+      ).not.toBeInTheDocument();
     });
 
     it('does not refresh credits when the request fails without a response', async () => {

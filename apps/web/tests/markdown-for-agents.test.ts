@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildMarkdownResponse,
@@ -8,6 +8,9 @@ import {
   renderBlogPostMarkdown,
   renderPolicyMarkdown,
 } from '../lib/markdown-for-agents';
+import en from '../messages/en.json';
+
+vi.mock('contentlayer/generated', () => ({ allPolicyPages: [], allPosts: [] }));
 
 describe('estimateMarkdownTokens', () => {
   it('returns zero for empty text', () => {
@@ -39,40 +42,25 @@ describe('buildMarkdownResponse', () => {
     );
     expect(await response.text()).toBe('# Hello');
   });
-
-  it('preserves existing headers and appends Accept to Vary', () => {
-    const response = buildMarkdownResponse('body', {
-      headers: {
-        'Cache-Control': 'private, max-age=60',
-        Vary: 'Origin',
-        'x-test-header': 'present',
-      },
-      status: 201,
-    });
-
-    expect(response.status).toBe(201);
-    expect(response.headers.get('Vary')).toBe('Origin, Accept');
-    expect(response.headers.get('Cache-Control')).toBe('private, max-age=60');
-    expect(response.headers.get('x-test-header')).toBe('present');
-    expect(response.headers.get('Content-Type')).toBe(MARKDOWN_CONTENT_TYPE);
-  });
 });
 
 describe('renderBlogListMarkdown', () => {
   const messages = {
+    ...en,
     landing: {
+      ...en.landing,
       blogDescription: 'Guides and news about voice AI.',
       latestPosts: 'Latest Posts',
       noPostsAvailable: 'No posts available yet.',
     },
   } as IntlMessages;
 
-  it('renders blog posts with canonical URLs based on slugAsParams', () => {
+  it('renders blog posts with canonical URLs based on the slug', () => {
     const posts = [
       {
         date: '2025-04-28T00:00:00.000Z',
         description: 'Intro post',
-        slugAsParams: 'hello-from-sexyvoice',
+        slug: 'hello-from-sexyvoice',
         title: 'Hello from SexyVoice.ai',
       },
     ] as const;
@@ -84,7 +72,7 @@ describe('renderBlogListMarkdown', () => {
     expect(markdown).toContain(
       '## [Hello from SexyVoice.ai](https://sexyvoice.ai/en/blog/hello-from-sexyvoice)',
     );
-    expect(markdown).toContain('_2025-04-28T00:00:00.000Z_');
+    expect(markdown).toContain('_2025-04-28_');
     expect(markdown).toContain('Canonical URL: https://sexyvoice.ai/en/blog');
   });
 
@@ -96,7 +84,7 @@ describe('renderBlogListMarkdown', () => {
 });
 
 describe('renderBlogPostMarkdown', () => {
-  it('renders metadata and canonical URL using slugAsParams', () => {
+  it('renders metadata and canonical URL using the slug', () => {
     const post = {
       author: 'SexyVoice.ai',
       body: {
@@ -105,18 +93,18 @@ describe('renderBlogPostMarkdown', () => {
       date: '2025-04-28T00:00:00.000Z',
       description: 'Intro post',
       locale: 'en',
-      slugAsParams: 'hello-from-sexyvoice',
+      slug: 'hello-from-sexyvoice',
       title: 'Hello from SexyVoice.ai',
     };
 
-    const markdown = renderBlogPostMarkdown(post as never);
+    const markdown = renderBlogPostMarkdown(post as never, en);
 
     expect(markdown).toContain('# Hello from SexyVoice.ai');
     expect(markdown).toContain('> Intro post');
     expect(markdown).toContain('Published: 2025-04-28');
-    expect(markdown).toContain('Author: SexyVoice.ai');
+    expect(markdown).toContain('By SexyVoice.ai');
     expect(markdown).toContain(
-      'Canonical: https://sexyvoice.ai/en/blog/hello-from-sexyvoice',
+      'Canonical URL: https://sexyvoice.ai/en/blog/hello-from-sexyvoice',
     );
     expect(markdown).toContain('Building the next generation of voice AI');
   });
@@ -135,10 +123,10 @@ describe('renderPolicyMarkdown', () => {
       updated: '2026-03-02',
     };
 
-    const markdown = renderPolicyMarkdown(policy as never);
+    const markdown = renderPolicyMarkdown(policy as never, 'en', en);
 
     expect(markdown).toContain('# Terms & Conditions | SexyVoice.ai');
-    expect(markdown).toContain('_Updated: 2026-03-02_');
+    expect(markdown).toContain('_Updated 2026-03-02_');
     expect(markdown).toContain('Terms of service for SexyVoice.ai.');
     expect(markdown).toContain('## General Terms');
     expect(markdown).toContain('Canonical URL: https://sexyvoice.ai/en/terms');

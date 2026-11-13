@@ -1,19 +1,28 @@
 import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { parseArgs } from 'node:util';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient } from './lib/supabase.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { parseCsv } from './lib/csv.mts';
+import {
+  adjustCredits,
+  type CreditBalance,
+  readBalances,
+  readPaidUserIds,
+} from './lib/ledger.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
-loadScriptEnv();
-
-// UUID validation regex at top level for performance
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Batch size for fetching credit balances
-const BATCH_SIZE = 10;
+/** Balances under this are left alone. */
+const MINIMUM_RESET_CREDITS = 50;
 
 interface CliOptions {
   csvPath?: string;
@@ -40,254 +49,133 @@ interface ProcessingResult {
   username: string;
 }
 
-const createAdminClient = () =>
-  createScriptAdminClient({ persistSession: true });
+const CSV_COLUMNS = [
+  'id',
+  'username',
+  'created_at',
+  'total_credits_received',
+  'total_credits_used',
+  'current_credits',
+  'usage_percentage',
+] as const;
 
-/**
- * Parse CSV file and extract freeloader records
- */
+/** Read the freeloader CSV that identify-freeloaders.sql exports. */
 function parseCsvFile(filepath: string): FreeloaderRecord[] {
-  try {
-    const content = readFileSync(filepath, 'utf-8');
-    const lines = content.trim().split('\n');
-
-    if (lines.length < 2) {
-      throw new Error('CSV file is empty or has no data rows');
-    }
-
-    // Skip header line
-    const dataLines = lines.slice(1);
-    const records: FreeloaderRecord[] = [];
-
-    for (const line of dataLines) {
-      // Handle CSV with potential commas in fields
-      const parts = line.split(',');
-
-      if (parts.length < 7) {
-        console.warn(`Skipping malformed line: ${line}`);
-        continue;
-      }
-
-      const record: FreeloaderRecord = {
-        created_at: parts[2].trim(),
-        current_credits: Number.parseFloat(parts[5].trim()),
-        id: parts[0].trim(),
-        total_credits_received: Number.parseFloat(parts[3].trim()),
-        total_credits_used: Number.parseFloat(parts[4].trim()),
-        usage_percentage: Number.parseFloat(parts[6].trim()),
-        username: parts[1].trim(),
-      };
-
-      // Validate UUID format
-      if (!UUID_REGEX.test(record.id)) {
-        console.warn(`Skipping invalid UUID: ${record.id}`);
-        continue;
-      }
-
-      records.push(record);
-    }
-
-    return records;
-  } catch (error) {
-    throw new Error(
-      `Failed to parse CSV file: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
+  const { columns, rows } = parseCsv(readFileSync(filepath, 'utf8'));
+  const missing = CSV_COLUMNS.filter((column) => !columns.includes(column));
+  if (missing.length > 0) {
+    throw new Error(`CSV is missing columns: ${missing.join(', ')}`);
   }
+  if (rows.length === 0) {
+    throw new Error('CSV file is empty or has no data rows');
+  }
+
+  const records: FreeloaderRecord[] = [];
+  for (const row of rows) {
+    const record: FreeloaderRecord = {
+      created_at: row.created_at.trim(),
+      current_credits: Number.parseFloat(row.current_credits),
+      id: row.id.trim(),
+      total_credits_received: Number.parseFloat(row.total_credits_received),
+      total_credits_used: Number.parseFloat(row.total_credits_used),
+      usage_percentage: Number.parseFloat(row.usage_percentage),
+      username: row.username.trim(),
+    };
+
+    if (!UUID_PATTERN.test(record.id)) {
+      console.warn(`Skipping invalid UUID: ${record.id}`);
+      continue;
+    }
+
+    records.push(record);
+  }
+
+  return records;
 }
 
-/**
- * Get credit balances for multiple users in a single query
- */
-async function getUserCreditBalancesBatch(
-  userIds: string[],
-): Promise<Map<string, number | null>> {
-  const supabase = createAdminClient();
-  const balanceMap = new Map<string, number | null>();
-
-  // Initialize all users as not found
-  for (const userId of userIds) {
-    balanceMap.set(userId, null);
-  }
-
-  if (userIds.length === 0) {
-    return balanceMap;
-  }
-
-  const { data, error } = await supabase
-    .from('credits')
-    .select('user_id, amount')
-    .in('user_id', userIds);
-
-  if (error) {
-    throw new Error(`Failed to fetch credit balances: ${error.message}`);
-  }
-
-  // Update map with actual balances
-  if (data) {
-    for (const record of data) {
-      balanceMap.set(record.user_id, record.amount ?? 0);
-    }
-  }
-
-  return balanceMap;
+interface Accounts {
+  balances: Map<string, CreditBalance>;
+  paid: Set<string>;
 }
 
-/**
- * Get credit balances for all records in batches
- */
-async function getAllCreditBalances(
+async function fetchAccounts(
+  supabase: ScriptSupabaseClient,
   records: FreeloaderRecord[],
-): Promise<Map<string, number | null>> {
-  const allBalances = new Map<string, number | null>();
-  const userIds = records.map((r) => r.id);
-
-  console.log(`Fetching credit balances in batches of ${BATCH_SIZE}...\n`);
-
-  for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-    const batch = userIds.slice(i, i + BATCH_SIZE);
-    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
-    const totalBatches = Math.ceil(userIds.length / BATCH_SIZE);
-
-    console.log(
-      `  Fetching batch ${batchNumber}/${totalBatches} (${batch.length} users)...`,
-    );
-
-    const balances = await getUserCreditBalancesBatch(batch);
-
-    // Merge batch results into all balances
-    balances.forEach((balance, userId) => {
-      allBalances.set(userId, balance);
-    });
-  }
-
-  console.log(`✅ Fetched balances for ${allBalances.size} users\n`);
-  return allBalances;
+): Promise<Accounts> {
+  const userIds = records.map((record) => record.id);
+  console.log(
+    `Fetching balances and payments for ${userIds.length} users...\n`,
+  );
+  const [balances, paid] = await Promise.all([
+    readBalances(supabase, userIds),
+    readPaidUserIds(supabase, userIds),
+  ]);
+  console.log(`✅ Fetched balances for ${balances.size} users\n`);
+  return { balances, paid };
 }
 
 /**
- * Reset user credits to zero
- */
-async function resetUserCredits(
-  userId: string,
-  currentCredits: number,
-): Promise<void> {
-  const supabase = createAdminClient();
-
-  if (currentCredits < 50) {
-    console.log('  → User already less than 50 credits, skipping');
-    return;
-  }
-
-  // Use the decrement function to set credits to 0
-  const { error } = await supabase.rpc('decrement_user_credits', {
-    credit_amount_var: Math.abs(currentCredits),
-    user_id_var: userId,
-  });
-
-  if (error) {
-    throw new Error(`Failed to reset credits: ${error.message}`);
-  }
-}
-
-/**
- * Insert adjustment transaction for audit trail
- */
-async function insertAdjustmentTransaction(
-  userId: string,
-  creditAmount: number,
-  reason: string,
-): Promise<void> {
-  const supabase = createAdminClient();
-
-  const { error } = await supabase.from('credit_transactions').insert({
-    amount: -Math.abs(creditAmount),
-    description: reason,
-    metadata: {
-      automated: true,
-      script: 'reset-freeloader-credits.ts',
-      timestamp: new Date().toISOString(),
-    },
-    type: 'refund',
-    user_id: userId,
-  });
-
-  if (error) {
-    throw new Error(`Failed to insert transaction: ${error.message}`);
-  }
-}
-
-/**
- * Process a single user with pre-fetched balance
+ * Reset one user's balance to 0 with a ledger row. Paid users, empty
+ * balances and balances under MINIMUM_RESET_CREDITS are skipped.
  */
 async function processUser(
+  supabase: ScriptSupabaseClient,
   record: FreeloaderRecord,
-  currentBalance: number | null,
+  accounts: Accounts,
   dryRun: boolean,
-  insertTransaction: boolean,
 ): Promise<ProcessingResult> {
-  try {
-    if (currentBalance === null) {
-      return {
-        error: 'User not found in credits table',
-        previousCredits: 0,
-        success: false,
-        userId: record.id,
-        username: record.username,
-      };
-    }
+  const balance = accounts.balances.get(record.id)?.amount;
+  const result = {
+    previousCredits: balance ?? 0,
+    success: true,
+    userId: record.id,
+    username: record.username,
+  };
 
-    if (currentBalance <= 0) {
-      return {
-        error: 'Already at 0 or negative',
-        previousCredits: currentBalance,
-        success: true,
-        userId: record.id,
-        username: record.username,
-      };
-    }
-
-    if (dryRun) {
-      console.log(`  [DRY RUN] Would reset ${currentBalance} credits to 0`);
-      return {
-        previousCredits: currentBalance,
-        success: true,
-        userId: record.id,
-        username: record.username,
-      };
-    }
-
-    await resetUserCredits(record.id, currentBalance);
-
-    // Optionally insert transaction record for audit trail
-    if (insertTransaction && currentBalance > 0) {
-      await insertAdjustmentTransaction(
-        record.id,
-        currentBalance,
-        `Credit adjustment - Freeloader bug exploitation (${record.usage_percentage}% over limit)`,
-      );
-    }
-
+  if (balance === undefined) {
     return {
-      previousCredits: currentBalance,
-      success: true,
-      userId: record.id,
-      username: record.username,
+      ...result,
+      error: 'User not found in credits table',
+      success: false,
     };
+  }
+  if (accounts.paid.has(record.id)) {
+    return { ...result, error: 'Paid user' };
+  }
+  if (balance <= 0) {
+    return { ...result, error: 'Already at 0 or negative' };
+  }
+  if (balance < MINIMUM_RESET_CREDITS) {
+    return { ...result, error: `Under ${MINIMUM_RESET_CREDITS} credits` };
+  }
+  if (dryRun) {
+    console.log(`  [DRY RUN] Would reset ${balance} credits to 0`);
+    return result;
+  }
+
+  try {
+    await adjustCredits(supabase, {
+      amount: -balance,
+      description: `Credit adjustment - Freeloader bug exploitation (${record.usage_percentage}% over limit)`,
+      metadata: {
+        automated: true,
+        script: 'reset-freeloader-credits.mts',
+        timestamp: new Date().toISOString(),
+      },
+      reason: 'freeloader_bug',
+      userId: record.id,
+    });
+    return result;
   } catch (error) {
     return {
+      ...result,
       error: error instanceof Error ? error.message : String(error),
       previousCredits: 0,
       success: false,
-      userId: record.id,
-      username: record.username,
     };
   }
 }
 
-/**
- * Display summary statistics
- */
 function displaySummary(results: ProcessingResult[]): void {
   const successful = results.filter((r) => r.success && !r.error);
   const skipped = results.filter((r) => r.success && r.error);
@@ -303,9 +191,9 @@ function displaySummary(results: ProcessingResult[]): void {
   }
 
   if (skipped.length > 0) {
-    console.log('\n⏭️  Skipped (already at 0):');
+    console.log('\n⏭️  Skipped:');
     for (const result of skipped) {
-      console.log(`  - ${result.username}`);
+      console.log(`  - ${result.username}: ${result.error}`);
     }
   }
 
@@ -324,9 +212,6 @@ function displaySummary(results: ProcessingResult[]): void {
   console.log('');
 }
 
-/**
- * Prompt user for input
- */
 async function promptUser(
   rl: ReturnType<typeof createInterface>,
   question: string,
@@ -335,53 +220,31 @@ async function promptUser(
   return answer.trim();
 }
 
-/**
- * Parse CLI arguments
- */
-function parseCliArgs(): CliOptions {
-  try {
-    const { values, positionals } = parseArgs({
-      allowPositionals: true,
-      args: process.argv.slice(2),
-      options: {
-        dryrun: {
-          default: false,
-          type: 'boolean',
-        },
-        help: {
-          default: false,
-          short: 'h',
-          type: 'boolean',
-        },
-        limit: {
-          short: 'l',
-          type: 'string',
-        },
-      },
-    });
+function readOptions(): CliOptions {
+  const { values, positionals } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      dryrun: { default: false, short: 'd', type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      limit: { short: 'l', type: 'string' },
+    },
+  });
 
-    return {
-      csvPath: positionals[0],
-      dryrun: values.dryrun as boolean,
-      help: values.help as boolean,
-      limit: values.limit
-        ? Number.parseInt(values.limit as string, 10)
-        : undefined,
-    };
-  } catch (error) {
-    console.error('Error parsing arguments:', error);
-    process.exit(1);
-  }
+  return {
+    csvPath: positionals[0],
+    dryrun: values.dryrun,
+    help: values.help,
+    limit: values.limit ? Number.parseInt(values.limit, 10) : undefined,
+  };
 }
 
-/**
- * Display help message
- */
 function displayHelp(): void {
   console.log(`
-Usage: pnpm tsx scripts/reset-freeloader-credits.ts [options] <csv-file>
+Usage: pnpm reset-freeloader-credits [options] <csv-file>
 
 Reset credits to 0 for users who exploited a bug where credits weren't deducted.
+Paid users and balances under ${MINIMUM_RESET_CREDITS} credits are skipped; every reset
+writes a refund ledger row.
 
 Arguments:
   <csv-file>              Path to CSV file with freeloader data
@@ -393,27 +256,21 @@ Options:
 
 Examples:
   # Interactive mode (prompts for confirmation)
-  pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+  pnpm reset-freeloader-credits freeloaders.csv
 
   # Dry-run mode
-  pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+  pnpm reset-freeloader-credits --dryrun freeloaders.csv
 
   # Process only first 10 records
-  pnpm tsx scripts/reset-freeloader-credits.ts --limit 10 freeloaders.csv
+  pnpm reset-freeloader-credits --limit 10 freeloaders.csv
 
   # Dry-run with limit
-  pnpm tsx scripts/reset-freeloader-credits.ts -d -l 5 freeloaders.csv
+  pnpm reset-freeloader-credits -d -l 5 freeloaders.csv
 
 CSV Format:
   id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
   uuid,email@example.com,2025-11-26 16:11:36+00,10000,11856,2464,118.56
 
-Features:
-  - Batch credit balance fetching (10 users per query)
-  - Dry-run mode for safe testing
-  - Limit records for testing
-  - Detailed progress reporting
-  - Optional audit trail logging
 `);
 }
 
@@ -437,9 +294,6 @@ async function getCsvPath(
   return csvPath;
 }
 
-/**
- * Display records to be processed
- */
 function displayRecords(records: FreeloaderRecord[], limit?: number): void {
   const total = records.length;
   const processing = limit ? Math.min(limit, total) : total;
@@ -463,25 +317,10 @@ function displayRecords(records: FreeloaderRecord[], limit?: number): void {
   console.log('');
 }
 
-/**
- * Display environment warning
- */
-function displayEnvironmentWarning(): void {
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.log('⚠️  WARNING: Using LOCAL Supabase URL\n');
-  } else {
-    console.log('⚠️  WARNING: Using PRODUCTION Supabase URL\n');
-  }
-}
-
-/**
- * Get dry run confirmation
- */
 async function getDryRunMode(
   rl: ReturnType<typeof createInterface>,
   cliDryrun: boolean,
 ): Promise<boolean> {
-  // If CLI flag is set, use it
   if (cliDryrun) {
     console.log('Running in DRY-RUN mode (--dryrun flag)\n');
     return true;
@@ -492,19 +331,6 @@ async function getDryRunMode(
     'Run in dry-run mode? (yes/no) [yes]: ',
   );
   return dryRunAnswer === '' || dryRunAnswer.toLowerCase() === 'yes';
-}
-
-/**
- * Get transaction logging preference
- */
-async function getTransactionLogging(
-  rl: ReturnType<typeof createInterface>,
-): Promise<boolean> {
-  const transactionAnswer = await promptUser(
-    rl,
-    'Insert adjustment transactions for audit trail? (yes/no) [yes]: ',
-  );
-  return transactionAnswer === '' || transactionAnswer.toLowerCase() === 'yes';
 }
 
 /**
@@ -522,27 +348,21 @@ async function getFinalConfirmation(
  * Process all records with pre-fetched balances
  */
 async function processRecords(
+  supabase: ScriptSupabaseClient,
   records: FreeloaderRecord[],
-  balances: Map<string, number | null>,
+  accounts: Accounts,
   dryRun: boolean,
-  insertTransaction: boolean,
 ): Promise<ProcessingResult[]> {
   const results: ProcessingResult[] = [];
 
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
-    const currentBalance = balances.get(record.id) ?? null;
 
     console.log(
       `[${i + 1}/${records.length}] Processing ${record.username}...`,
     );
 
-    const result = await processUser(
-      record,
-      currentBalance,
-      dryRun,
-      insertTransaction,
-    );
+    const result = await processUser(supabase, record, accounts, dryRun);
     results.push(result);
 
     if (result.success && !result.error) {
@@ -559,29 +379,24 @@ async function processRecords(
   return results;
 }
 
-/**
- * Main function
- */
 async function main() {
-  // Parse CLI arguments
-  const options = parseCliArgs();
+  const options = readOptions();
 
-  // Show help if requested
   if (options.help) {
     displayHelp();
-    process.exit(0);
+    return;
   }
 
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: options.dryrun });
   const rl = createInterface({ input, output });
 
   try {
     console.log('\n=== Reset Freeloader Credits ===\n');
 
-    // Get CSV file path
-    const csvPath = await getCsvPath(rl, options.csvPath);
+    const csvPath = inputPath(await getCsvPath(rl, options.csvPath));
     console.log(`\nReading CSV file: ${csvPath}\n`);
 
-    // Read and parse CSV
     let records = parseCsvFile(csvPath);
 
     if (records.length === 0) {
@@ -590,24 +405,15 @@ async function main() {
       return;
     }
 
-    // Apply limit if specified
     if (options.limit && options.limit < records.length) {
       records = records.slice(0, options.limit);
     }
 
-    // Display summary
     displayRecords(records, options.limit);
-    displayEnvironmentWarning();
 
-    // Batch fetch all credit balances upfront
-    const balances = await getAllCreditBalances(records);
+    const accounts = await fetchAccounts(supabase, records);
 
-    // Get user preferences
     const dryRun = await getDryRunMode(rl, options.dryrun);
-    let insertTransaction = false;
-    if (!dryRun) {
-      insertTransaction = await getTransactionLogging(rl);
-    }
 
     // Final confirmation for production
     if (!dryRun) {
@@ -619,36 +425,24 @@ async function main() {
       }
     }
 
-    // Process records
     console.log(`\n${dryRun ? '[DRY RUN] ' : ''}Processing records...\n`);
-    const results = await processRecords(
-      records,
-      balances,
-      dryRun,
-      insertTransaction,
-    );
+    const results = await processRecords(supabase, records, accounts, dryRun);
 
-    // Display summary
     displaySummary(results);
 
+    if (results.some((result) => !result.success)) {
+      process.exitCode = 1;
+    }
     if (dryRun) {
       console.log(
         '💡 This was a dry run. No changes were made. Run without --dryrun to apply changes.\n',
       );
-    } else {
+    } else if (process.exitCode !== 1) {
       console.log('✅ All records processed successfully!\n');
     }
-  } catch (error) {
-    console.error(
-      '\n❌ Error:',
-      error instanceof Error ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
   } finally {
     rl.close();
   }
 }
 
-// Run the script
-await main();
+runScript(import.meta.url, main);

@@ -3,7 +3,11 @@ export const docsRoute = '/';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
-// fill this with your actual GitHub info, for example:
+export const docsUrl = 'https://docs.sexyvoice.ai';
+
+/** Origin of the web app the docs describe. */
+export const siteUrl = 'https://sexyvoice.ai';
+
 export const gitConfig = {
   user: 'gianpaj',
   repo: 'sexyvoice',

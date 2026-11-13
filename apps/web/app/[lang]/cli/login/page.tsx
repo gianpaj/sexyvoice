@@ -1,14 +1,16 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
+import { MarketingPage } from '@/components/marketing-page';
 import { isAllowedCliCallbackUrl } from '@/lib/api/cli-login';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CliLoginClient } from './cli-login-client';
+
+const MAIN_CLASS =
+  'mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12';
 
 export default async function CliLoginPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -20,18 +22,14 @@ export default async function CliLoginPage(props: {
 
   if (!(callback_url && state && isAllowedCliCallbackUrl(callback_url))) {
     return (
-      <>
-        <HeaderStatic />
-        <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
-          <div className="rounded-2xl border bg-background p-8 shadow-sm">
-            <h1 className="font-bold text-2xl">{t('invalidRequest.title')}</h1>
-            <p className="mt-3 text-muted-foreground">
-              {t('invalidRequest.description')}
-            </p>
-          </div>
-        </main>
-        <Footer lang={lang} />
-      </>
+      <MarketingPage className={MAIN_CLASS} lang={lang}>
+        <div className="rounded-2xl border bg-background p-8 shadow-sm">
+          <h1 className="font-bold text-2xl">{t('invalidRequest.title')}</h1>
+          <p className="mt-3 text-muted-foreground">
+            {t('invalidRequest.description')}
+          </p>
+        </div>
+      </MarketingPage>
     );
   }
 
@@ -63,17 +61,13 @@ export default async function CliLoginPage(props: {
     ) ?? [];
 
   return (
-    <>
-      <HeaderStatic />
-      <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
-        <CliLoginClient
-          callbackUrl={callback_url}
-          hasCreateAccess={isPaidUser}
-          keys={visibleKeys}
-          state={state}
-        />
-      </main>
-      <Footer lang={lang} />
-    </>
+    <MarketingPage className={MAIN_CLASS} lang={lang}>
+      <CliLoginClient
+        callbackUrl={callback_url}
+        hasCreateAccess={isPaidUser}
+        keys={visibleKeys}
+        state={state}
+      />
+    </MarketingPage>
   );
 }

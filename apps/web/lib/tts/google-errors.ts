@@ -1,0 +1,448 @@
+// https://github.com/google-gemini/gemini-cli/blob/5611ff40e7ace8157fbeee97d459178e988862f3/packages/core/src/utils/googleErrors.ts
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @fileoverview
+ * This file contains types and functions for parsing structured Google API errors.
+ */
+
+/**
+ * Sanitize a JSON string before parsing to handle known SSE stream corruption.
+ * SSE stream parsing can inject stray commas — the observed pattern is a comma
+ * at the end of one line followed by a stray comma on the next line, e.g.:
+ *   `"domain": "cloudcode-pa.googleapis.com",\n ,       "metadata": {`
+ * This collapses duplicate commas (possibly separated by whitespace/newlines)
+ * into a single comma, preserving the whitespace.
+ */
+function sanitizeJsonString(jsonStr: string): string {
+  // Match a comma, optional whitespace/newlines, then another comma.
+  // Replace with just a comma + the captured whitespace.
+  // Loop to handle cases like `,,,` which would otherwise become `,,` on a single pass.
+  let prev: string;
+  do {
+    prev = jsonStr;
+    // biome-ignore lint/style/noParameterAssign: keep original
+    jsonStr = jsonStr.replace(/,(\s*),/g, ',$1');
+  } while (jsonStr !== prev);
+  return jsonStr;
+}
+
+/**
+ * Based on google/rpc/error_details.proto
+ */
+
+interface ErrorInfo {
+  '@type': 'type.googleapis.com/google.rpc.ErrorInfo';
+  domain?: string;
+  metadata?: { [key: string]: string };
+  reason: string;
+}
+
+interface RetryInfo {
+  '@type': 'type.googleapis.com/google.rpc.RetryInfo';
+  retryDelay: string; // e.g. "51820.638305887s"
+}
+
+interface DebugInfo {
+  '@type': 'type.googleapis.com/google.rpc.DebugInfo';
+  detail: string;
+  stackEntries: string[];
+}
+
+interface QuotaFailure {
+  '@type': 'type.googleapis.com/google.rpc.QuotaFailure';
+  violations: Array<{
+    subject?: string;
+    description?: string;
+    apiService?: string;
+    quotaMetric?: string;
+    quotaId?: string;
+    quotaDimensions?: { [key: string]: string };
+    quotaValue?: string | number;
+    futureQuotaValue?: number;
+  }>;
+}
+
+interface PreconditionFailure {
+  '@type': 'type.googleapis.com/google.rpc.PreconditionFailure';
+  violations: Array<{
+    type: string;
+    subject: string;
+    description: string;
+  }>;
+}
+
+interface LocalizedMessage {
+  '@type': 'type.googleapis.com/google.rpc.LocalizedMessage';
+  locale: string;
+  message: string;
+}
+
+interface BadRequest {
+  '@type': 'type.googleapis.com/google.rpc.BadRequest';
+  fieldViolations: Array<{
+    field: string;
+    description: string;
+    reason?: string;
+    localizedMessage?: LocalizedMessage;
+  }>;
+}
+
+interface RequestInfo {
+  '@type': 'type.googleapis.com/google.rpc.RequestInfo';
+  requestId: string;
+  servingData: string;
+}
+
+interface ResourceInfo {
+  '@type': 'type.googleapis.com/google.rpc.ResourceInfo';
+  description: string;
+  owner: string;
+  resourceName: string;
+  resourceType: string;
+}
+
+interface Help {
+  '@type': 'type.googleapis.com/google.rpc.Help';
+  links: Array<{
+    description: string;
+    url: string;
+  }>;
+}
+
+type GoogleApiErrorDetail =
+  | ErrorInfo
+  | RetryInfo
+  | DebugInfo
+  | QuotaFailure
+  | PreconditionFailure
+  | BadRequest
+  | RequestInfo
+  | ResourceInfo
+  | Help
+  | LocalizedMessage;
+
+export interface GoogleApiError {
+  code: number;
+  details: GoogleApiErrorDetail[];
+  message: string;
+}
+
+interface ErrorShape {
+  code?: number;
+  details?: unknown[];
+  message?: string;
+}
+
+/**
+ * Parses an error object to check if it's a structured Google API error
+ * and extracts all details.
+ *
+ * This function can handle two formats:
+ * 1. Standard Google API errors where `details` is a top-level field.
+ * 2. Errors where the entire structured error object is stringified inside
+ *    the `message` field of a wrapper error.
+ *
+ * @param error The error object to inspect.
+ * @returns A GoogleApiError object if the error matches, otherwise null.
+ */
+export function parseGoogleApiError(error: unknown): GoogleApiError | null {
+  if (!error) {
+    return null;
+  }
+
+  let errorObj: unknown = error;
+
+  // If error is a string, try to parse it.
+  if (typeof errorObj === 'string') {
+    try {
+      errorObj = JSON.parse(sanitizeJsonString(errorObj));
+    } catch {
+      // Not a JSON string, can't parse.
+      return null;
+    }
+  }
+
+  if (Array.isArray(errorObj) && errorObj.length > 0) {
+    errorObj = errorObj[0];
+  }
+
+  if (typeof errorObj !== 'object' || errorObj === null) {
+    return null;
+  }
+
+  let currentError: ErrorShape | undefined =
+    fromGaxiosError(errorObj) ?? fromApiError(errorObj);
+
+  let depth = 0;
+  const maxDepth = 10;
+  // Handle cases where the actual error object is stringified inside the message
+  // by drilling down until we find an error that doesn't have a stringified message.
+  while (
+    currentError &&
+    typeof currentError.message === 'string' &&
+    depth < maxDepth
+  ) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const parsedMessage = JSON.parse(
+        sanitizeJsonString(
+          currentError.message.replace(/\u00A0/g, '').replace(/\n/g, ' '),
+        ),
+      );
+      if (parsedMessage.error) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        currentError = parsedMessage.error;
+        depth++;
+      } else {
+        // The message is a JSON string, but not a nested error object.
+        break;
+      }
+    } catch {
+      // It wasn't a JSON string, so we've drilled down as far as we can.
+      break;
+    }
+  }
+
+  if (!currentError) {
+    return null;
+  }
+
+  const code = currentError.code;
+  const message = currentError.message;
+  const errorDetails = currentError.details;
+
+  if (code && message) {
+    const details: GoogleApiErrorDetail[] = [];
+    if (Array.isArray(errorDetails)) {
+      for (const detail of errorDetails) {
+        if (detail && typeof detail === 'object') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+          const detailObj = detail as Record<string, unknown>;
+          const typeKey = Object.keys(detailObj).find(
+            (key) => key.trim() === '@type',
+          );
+          if (typeKey) {
+            if (typeKey !== '@type') {
+              detailObj['@type'] = detailObj[typeKey];
+              delete detailObj[typeKey];
+            }
+            // Basic structural check before casting.
+            // Since the proto definitions are loose, we primarily rely on @type presence.
+            // eslint-disable-next-line no-restricted-syntax
+            if (typeof detailObj['@type'] === 'string') {
+              // We can just cast it; the consumer will have to switch on @type
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+              details.push(detailObj as unknown as GoogleApiErrorDetail);
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      code,
+      details,
+      message,
+    };
+  }
+
+  return null;
+}
+
+function isErrorShape(obj: unknown): obj is ErrorShape {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    (('message' in obj &&
+      typeof (obj as { message: unknown }).message === 'string') ||
+      ('code' in obj && typeof (obj as { code: unknown }).code === 'number'))
+  );
+}
+
+function fromGaxiosError(errorObj: object): ErrorShape | undefined {
+  const gaxiosError = errorObj as {
+    response?: {
+      status?: number;
+      data?:
+        | {
+            error?: ErrorShape;
+          }
+        | string;
+    };
+    error?: ErrorShape;
+    code?: number;
+  };
+
+  let outerError: ErrorShape | undefined;
+  if (gaxiosError.response?.data) {
+    let data = gaxiosError.response.data;
+
+    if (typeof data === 'string') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data = JSON.parse(sanitizeJsonString(data));
+      } catch {
+        // Not a JSON string, can't parse.
+      }
+    }
+
+    if (Array.isArray(data) && data.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data = data[0];
+    }
+
+    if (typeof data === 'object' && data !== null && 'error' in data) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      const potentialError = (data as { error: unknown }).error;
+      if (isErrorShape(potentialError)) {
+        outerError = potentialError;
+      }
+    }
+  }
+
+  if (!outerError) {
+    // If the gaxios structure isn't there, check for a top-level `error` property.
+    if (gaxiosError.error) {
+      outerError = gaxiosError.error;
+    } else {
+      return undefined;
+    }
+  }
+  return outerError;
+}
+
+function fromApiError(errorObj: object): ErrorShape | undefined {
+  const apiError = errorObj as {
+    message?:
+      | {
+          error?: ErrorShape;
+        }
+      | string;
+    code?: number;
+  };
+
+  let outerError: ErrorShape | undefined;
+  if (apiError.message) {
+    let data = apiError.message;
+
+    if (typeof data === 'string') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data = JSON.parse(sanitizeJsonString(data));
+      } catch {
+        // Not a JSON string, can't parse.
+        // Try one more fallback: look for the first '{' and last '}'
+        if (typeof data === 'string') {
+          const firstBrace = data.indexOf('{');
+          const lastBrace = data.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              data = JSON.parse(
+                // biome-ignore lint/style/noSubstr: keep original
+                sanitizeJsonString(data.substring(firstBrace, lastBrace + 1)),
+              );
+            } catch {
+              // Still failed
+            }
+          }
+        }
+      }
+    }
+
+    if (Array.isArray(data) && data.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data = data[0];
+    }
+
+    if (typeof data === 'object' && data !== null && 'error' in data) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      const potentialError = (data as { error: unknown }).error;
+      if (isErrorShape(potentialError)) {
+        outerError = potentialError;
+      }
+    }
+  }
+  return outerError;
+}
+
+export type GoogleRpcStatus =
+  | 'INVALID_ARGUMENT'
+  | 'FAILED_PRECONDITION'
+  | 'OUT_OF_RANGE'
+  | 'UNAUTHENTICATED'
+  | 'PERMISSION_DENIED'
+  | 'NOT_FOUND'
+  | 'ABORTED'
+  | 'ALREADY_EXISTS'
+  | 'RESOURCE_EXHAUSTED'
+  | 'CANCELLED'
+  | 'UNKNOWN'
+  | 'INTERNAL'
+  | 'DATA_LOSS'
+  | 'UNIMPLEMENTED'
+  | 'UNAVAILABLE'
+  | 'DEADLINE_EXCEEDED'
+  | (string & {});
+
+export type GoogleApiErrorWithStatus = GoogleApiError & {
+  status?: GoogleRpcStatus;
+};
+
+function mapHttpToGoogleRpcStatus(
+  httpStatus: number | undefined,
+): GoogleRpcStatus {
+  switch (httpStatus) {
+    case 400:
+      return 'INVALID_ARGUMENT';
+    case 401:
+      return 'UNAUTHENTICATED';
+    case 403:
+      return 'PERMISSION_DENIED';
+    case 404:
+      return 'NOT_FOUND';
+    case 408:
+      return 'DEADLINE_EXCEEDED';
+    case 409:
+      return 'ALREADY_EXISTS';
+    case 429:
+      return 'RESOURCE_EXHAUSTED';
+    case 500:
+      return 'INTERNAL';
+    case 501:
+      return 'UNIMPLEMENTED';
+    case 502:
+    case 503:
+      return 'UNAVAILABLE';
+    case 504:
+      return 'DEADLINE_EXCEEDED';
+    default:
+      return 'UNKNOWN';
+  }
+}
+
+export function getGoogleApiErrorStatus(
+  error: GoogleApiErrorWithStatus,
+): GoogleRpcStatus {
+  return error.status ?? mapHttpToGoogleRpcStatus(error.code);
+}
+
+export function isGoogleQuotaError(error: GoogleApiErrorWithStatus): boolean {
+  return getGoogleApiErrorStatus(error) === 'RESOURCE_EXHAUSTED';
+}
+
+export function isGoogleTransientProviderError(
+  error: GoogleApiErrorWithStatus,
+): boolean {
+  const status = getGoogleApiErrorStatus(error);
+  return (
+    status === 'INTERNAL' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DEADLINE_EXCEEDED'
+  );
+}

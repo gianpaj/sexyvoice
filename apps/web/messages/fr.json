@@ -123,7 +123,6 @@
       "originalVoice": "Enregistrement original",
       "hearOriginal": "Écouter l’original",
       "backToClone": "Revenir au clone",
-      "tryVoice": "Utiliser cette interprétation",
       "signUpAndClone": "Inscrivez-vous et clonez",
       "seek": "Position de l’audio",
       "preparedExamplesCaption": "Exemples préparés. L’écoute est gratuite ; la génération utilise des crédits.",
@@ -211,23 +210,7 @@
         "action": "Clonez votre voix"
       }
     },
-    "generator": {
-      "title": "Essayez maintenant",
-      "subtitle": "Générez votre premier échantillon vocal",
-      "selectVoice": "Sélectionnez une voix",
-      "enterText": "Entrez le texte à convertir",
-      "speed": "Vitesse",
-      "pitch": "Tonalité",
-      "generating": "Génération...",
-      "play": "Lire",
-      "pause": "Pause",
-      "reset": "Réinitialiser",
-      "download": "Télécharger"
-    },
     "popular": {
-      "title": "Échantillons audio populaires",
-      "subtitle": "Écoutez ce que les autres ont créé",
-      "loading": "Chargement des audios populaires...",
       "trySamplesTitle": "Essayez nos échantillons vocaux",
       "trySamplesSubtitle": "Écoutez des échantillons vocaux créés avec notre technologie IA avancée"
     },
@@ -241,7 +224,7 @@
           "questions": [
             {
               "question": "Dans quelles langues puis-je générer de la parole ?",
-              "answer": "Les langues dépendent de la voix et du modèle. Les voix Gemini 3.1 prennent en charge plus de 70 langues, et les voix Gemini 2.5, 24. Les autres modèles ont leur propre sélection. Choisissez une voix pour votre langue et écoutez un aperçu. Le clonage a sa propre liste de langues ci-dessous."
+              "answer": "Les langues dépendent de la voix et du modèle. Les voix Gemini 3.8 prennent en charge plus de 130 langues. Les autres modèles ont leur propre sélection. Choisissez une voix pour votre langue et écoutez un aperçu. Le clonage a sa propre liste de langues ci-dessous."
             },
             {
               "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
@@ -515,12 +498,10 @@
     "downloadAudio": "Télécharger l'audio",
     "enhanceTextTitle": "Améliorer le texte avec des balises d'émotion IA",
     "error": "Échec de la génération de l'audio",
-    "GEMINI_OUTPUT_LIMIT": "La voix a atteint sa limite de sortie audio. Raccourcissez le texte et réessayez.",
     "errorEstimating": "Impossible d'estimer les crédits",
     "estimateCreditsButton": "Estimer les crédits",
     "fullscreenTitle": "Plein écran",
     "generating": "Génération",
-    "gproLimitExceeded": "Vous avez atteint la limite gratuite de __COUNT__ générations avec ce modèle. Achetez des crédits pour continuer à l’utiliser.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
@@ -583,8 +564,9 @@
       "multilingualGroupLabel": "Multilingue 🌍",
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un chuchotement dramatique\"",
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
-      "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS prend en charge plus de 130 langues. Les instructions de style contrôlent le ton et le rythme ; les balises dans le texte ajoutent des sons vocaux.",
       "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
+      "orpheusInfo": "Modèle : Orpheus-TTS (modèle d'IA de synthèse vocale) - Usage commercial ✔️",
       "featuredBadge": "En vedette",
       "selectVoicePlaceholder": "Sélectionner une voix...",
       "searchPlaceholder": "Rechercher par nom, style ou modèle...",
@@ -599,26 +581,27 @@
       "voiceListLabel": "Voix"
     },
     "split": {
+      "characterCount": "{characters} caractères -> {segments} segments",
       "segmentPreviews": "Aperçus des segments",
-      "segmentLabel": "Segment __INDEX__",
+      "segmentLabel": "Segment {INDEX}",
       "downloadAll": "Tout télécharger",
       "joiningWav": "Assemblage audio...",
       "preparingJoiner": "Préparation de l'assembleur audio...",
       "retry": "Réessayer",
       "segmentCannotBeEmpty": "Le texte du segment ne peut pas être vide.",
-      "segmentFailed": "Le segment __INDEX__ a échoué. Génération arrêtée.",
-      "segmentGenerated": "Segment __INDEX__ généré.",
-      "segmentRetryFailed": "Nouvelle tentative du segment __INDEX__ échouée.",
+      "segmentFailed": "Le segment {INDEX} a échoué. Génération arrêtée.",
+      "segmentGenerated": "Segment {INDEX} généré.",
+      "segmentRetryFailed": "Nouvelle tentative du segment {INDEX} échouée.",
       "progressTitle": "Génération audio",
-      "progressTitleWithVoice": "Génération de __VOICE__",
-      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "progressTitleWithVoice": "Génération de {VOICE}",
+      "progressSegment": "Segment {CURRENT}/{TOTAL}",
       "statusGenerated": "Généré",
       "statusGenerating": "En cours...",
       "statusFailed": "Échoué",
       "statusPending": "En attente",
       "splitToggleLabel": "Diviser en segments",
       "splitToggleDisabled": "La division du texte en audios est disponible pour les utilisateurs payants.",
-      "tooManySegments": "Le texte divisé peut contenir au maximum __COUNT__ segments. Raccourcissez le texte ou combinez des segments avant de générer.",
+      "tooManySegments": "Le texte divisé peut contenir au maximum {COUNT} segments. Raccourcissez le texte ou combinez des segments avant de générer.",
       "downloadAllFailed": "Impossible de télécharger tous les segments."
     },
     "advancedSettings": {
@@ -635,13 +618,6 @@
         "description": "Fixez une graine pour des résultats reproductibles. Laissez vide pour une graine aléatoire.",
         "placeholder": "Aléatoire",
         "randomize": "Graine aléatoire"
-      },
-      "streaming": {
-        "label": "Diffusion",
-        "description": "Diffusez l'audio au fur et à mesure de sa génération (Gemini 3.1 uniquement).",
-        "auto": "Auto",
-        "on": "Activé",
-        "off": "Désactivé"
       },
       "temperature": {
         "label": "Température",
@@ -674,7 +650,11 @@
     "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "microphoneUnavailable": "Impossible d’accéder à votre microphone. Vérifiez qu’il est connecté, fermez les autres applications qui l’utilisent et réessayez.",
+    "upgradeRequired": "Les personnages personnalisés et les scènes nécessitent une offre payante. Achetez des crédits pour les utiliser.",
+    "characterUnavailable": "Ce personnage ou sa voix n’est plus disponible. Rechargez la page et réessayez.",
+    "agentError": "Une erreur s’est produite pendant l’appel. Veuillez réessayer.",
     "disconnected": "Déconnecté",
+    "allowAudio": "Cliquez pour autoriser la lecture audio",
     "availableInputs": "Entrées disponibles",
     "audioSettings": "Paramètres audio",
     "enhancedNoiseFilter": "Filtre anti-bruit amélioré",
@@ -856,7 +836,7 @@
       "recorded": "Enregistré",
       "recordAgain": "Réenregistrer",
       "dropFile": "Déposez un fichier audio ici ou <browse>parcourez</browse>",
-      "fileHint": "MP3, WAV ou M4A · jusqu'à {size} · une seule personne qui parle, sans musique",
+      "fileHint": "MP3, WAV ou OGG · jusqu'à {size} · une seule personne qui parle, sans musique",
       "removeFile": "Retirer le fichier",
       "fileTooLarge": "Ce fichier dépasse {size}.",
       "needRecording": "Enregistrez d'abord au moins {seconds} secondes.",
@@ -893,7 +873,7 @@
     "errorCloning": "Échec du clonage vocal",
     "errorTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
     "errorTitle": "Erreur",
-    "fileFormatsText": "MP3, WAV, M4A, OGG ou OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG ou OPUS (WhatsApp) (max. {SIZE})",
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
@@ -908,23 +888,24 @@
     "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
     "textToConvertLabel": "Entrez du texte pour générer de la parole",
     "title": "Cloner une voix",
-    "tryDemo": "Ou essayez avec une démo :",
     "uploadAudioFile": "Télécharger un fichier audio",
     "orUseMicrophone": "ou utilisez votre microphone",
     "micRecord": "Enregistrer",
     "micStop": "Arrêter",
+    "micChoose": "Choisir le microphone",
+    "micInputs": "Entrées disponibles",
+    "micReset": "Réinitialiser le microphone",
     "errors": {
       "noAudioFile": "Veuillez sélectionner un fichier audio.",
       "noText": "Veuillez entrer du texte à convertir en parole.",
-      "ffmpegLoading": "Le convertisseur audio est encore en cours de chargement. Veuillez réessayer dans un moment",
       "audioConversionFailed": "Impossible de convertir le format audio. Veuillez téléverser un fichier MP3, OGG, Opus ou WAV.",
       "audioConversionRequiredWebm": "L'audio WebM doit être converti avant l'envoi. Veuillez réessayer l'enregistrement.",
-      "audioDurationInvalidFallback": "L'audio doit durer au moins __MIN__ secondes.",
-      "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins __MIN__ secondes pour le clonage vocal.",
+      "audioDurationInvalidFallback": "L'audio doit durer au moins {MIN} secondes.",
+      "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins {MIN} secondes pour le clonage vocal.",
       "audioDurationUnknown": "Impossible de déterminer la durée de l'audio.",
       "fileTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
-      "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
+      "insufficientCredits": "Il vous faut {CREDITS} crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
@@ -932,8 +913,8 @@
       "missingRequiredParameters": "Veuillez entrer du texte et sélectionner un fichier audio.",
       "providerRequestRejected": "Le fournisseur de voix n’a pas pu utiliser cet enregistrement ou ce texte. Veuillez en essayer un autre.",
       "referenceAudioEnhancementInputTooLarge": "L'audio de référence est trop volumineux pour être amélioré. Utilisez un fichier plus petit ou désactivez le nettoyage audio.",
-      "referenceAudioEnhancementInputTooLong": "Le nettoyage de l'audio de référence prend en charge les clips jusqu'à __MAX__ secondes.",
-      "textTooLong": "Le texte dépasse la longueur maximale de __MAX__ caractères.",
+      "referenceAudioEnhancementInputTooLong": "Le nettoyage de l'audio de référence prend en charge les clips jusqu'à {MAX} secondes.",
+      "textTooLong": "Le texte dépasse la longueur maximale de {MAX} caractères.",
       "unsupportedAudioFormat": "Format audio non pris en charge pour le clonage vocal. Utilisez MP3, OGG/Opus, WebM ou WAV.",
       "unsupportedLocale": "Cette langue n'est pas prise en charge pour le clonage vocal.",
       "userNotFound": "Veuillez vous connecter pour cloner une voix.",
@@ -942,12 +923,7 @@
       "savedVoiceRequiresPaid": "Un compte payant est nécessaire pour enregistrer des voix.",
       "savedVoiceLocaleUnsupported": "Cette option de langue ne permet pas d’enregistrer une voix pour les appels. Choisissez une autre langue.",
       "savedVoiceNotFound": "Cette voix enregistrée n’existe plus.",
-      "savedVoiceLimitReached": "Vous pouvez enregistrer jusqu’à __MAX__ voix. Supprimez-en une pour en enregistrer une autre."
-    },
-    "sampleCard": {
-      "sourceAudio": "Audio source",
-      "exampleOutput": "Exemple",
-      "loadSource": "Charger la source"
+      "savedVoiceLimitReached": "Vous pouvez enregistrer jusqu’à {MAX} voix. Supprimez-en une pour en enregistrer une autre."
     },
     "crossLanguageInfo": {
       "title": "Transfert vocal inter-langues",
@@ -957,23 +933,19 @@
     "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles.",
     "referenceAudioEnhancementLabel": "Nettoyer l'audio de référence",
     "referenceAudioEnhancementHelp": "Supprime le bruit de fond et améliore l'audio vocal. Recommandé pour les enregistrements bruyants ou réalisés sur téléphone. Cela coûte 10 crédits par seconde d'audio de référence découpé.",
-    "errorEnhancingReferenceAudio": "Impossible d'améliorer l'audio de référence. Réessayez ou désactivez l'amélioration de l'audio de référence.",
     "failedToLoadAudioProcessor": "Impossible de charger le processeur audio",
-    "failedToStartRecording": "Impossible de démarrer l'enregistrement : __ERROR__",
+    "failedToStartRecording": "Impossible de démarrer l'enregistrement : {ERROR}",
     "microphoneError": "Erreur de microphone",
-    "referenceAudioGuidanceShort": "Pour de meilleurs résultats : utilisez un clip de référence propre avec un seul locuteur, d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
-    "referenceAudioGuidanceLong": "Utilisez un clip de référence clair d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
-    "paidTextLimitTooltip": "Vous pouvez générer de la parole avec jusqu'à __MAX__ caractères.",
-    "upgradeTextLimitTooltip": "Achetez des crédits pour générer de la parole avec jusqu'à __MAX__ caractères.",
-    "audioDurationUnknown": "Impossible de déterminer la durée de l'audio.",
-    "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins __MIN__ secondes pour le clonage vocal.",
-    "audioDurationInvalidFallback": "L'audio doit durer au moins __MIN__ secondes.",
+    "referenceAudioGuidanceShort": "Pour de meilleurs résultats : utilisez un clip de référence propre avec un seul locuteur, d'au moins {MIN} secondes. Seules les {TRIM_SECONDS} premières secondes sont utilisées.",
+    "referenceAudioGuidanceLong": "Utilisez un clip de référence clair d'au moins {MIN} secondes. Seules les {TRIM_SECONDS} premières secondes sont utilisées.",
+    "paidTextLimitTooltip": "Vous pouvez générer de la parole avec jusqu'à {MAX} caractères.",
+    "upgradeTextLimitTooltip": "Achetez des crédits pour générer de la parole avec jusqu'à {MAX} caractères.",
     "audioConversionFailed": "La conversion audio a échoué. Veuillez réessayer l'enregistrement.",
-    "audioConversionFailedWithMessage": "La conversion audio a échoué : __ERROR__",
+    "audioConversionFailedWithMessage": "La conversion audio a échoué : {ERROR}",
     "unexpectedError": "Une erreur inattendue s'est produite",
     "loadingAudioProcessor": "Chargement du processeur audio...",
     "audioProcessorError": "Erreur du processeur audio",
-    "preparingAudioProcessor": "Préparation du processeur audio pour __LANGUAGE__...",
+    "preparingAudioProcessor": "Préparation du processeur audio pour {LANGUAGE}...",
     "removeFile": "Supprimer le fichier",
     "convertingAudio": "Conversion de l'audio",
     "savedVoice": {
@@ -1121,10 +1093,8 @@
     "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
     "titleVoiceCloning": "Clonage vocal par IA",
     "descriptionVoiceCloning": "Clonez une voix à partir de 10 secondes d'audio et écoutez-la parler naturellement dans 28 langues.",
-    "/": "",
-    "/voice-call": "Appel Vocal",
-    "/login": "Connexion",
-    "/signup": "Inscription avec e-mail ou Google",
+    "titleLogin": "Connexion",
+    "titleSignup": "Inscription avec e-mail ou Google",
     "/dashboard/call": "Appeler",
     "/dashboard/generate": "Générer",
     "/dashboard/clone": "Cloner",
@@ -1266,11 +1236,7 @@
       "ctaLoggedOut": "Obtenir l'offre",
       "ariaLabelDismiss": "Fermer la bannière Black Friday",
       "countdown": {
-        "prefix": "L'offre se termine dans :",
-        "days": "Jours",
-        "hours": "Heures",
-        "minutes": "Min",
-        "seconds": "Sec"
+        "prefix": "L'offre se termine dans :"
       },
       "pricing": {
         "bannerText": "Black Friday"
@@ -1294,7 +1260,7 @@
       "ariaLabelDismiss": "Fermer l'annonce des appels avec voix clonée"
     },
     "expressiveVoicesLaunch": {
-      "text": "De nouvelles voix plus expressives sont arrivées — propulsées par Gemini 3.1, avec un contrôle plus fin du rythme, des respirations, de la hauteur, de la vitesse et de l'intensité.",
+      "text": "De nouvelles voix plus expressives sont arrivées — propulsées par Gemini 3.8, avec un contrôle plus fin du rythme, des respirations, de la hauteur, de la vitesse et de l'intensité.",
       "ctaLoggedIn": "Essayer les voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des voix expressives"
@@ -1421,6 +1387,33 @@
           "answer": "Après le premier téléchargement du modèle, oui. Le modèle est mis en cache dans votre navigateur, de sorte que les transcriptions futures fonctionnent entièrement hors ligne."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Transcription audio, Voix en texte, 99+ langues, Traitement hors ligne, Horodatage, Transcription vidéo, Traduction en anglais",
+      "open": {
+        "name": "Ouvrez l'outil de transcription",
+        "text": "Accédez à l'outil gratuit de transcription audio de SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Ajoutez votre audio",
+        "text": "Glissez-déposez un fichier audio ou vidéo dans la zone de dépôt, cliquez pour parcourir ou enregistrez directement avec votre micro."
+      },
+      "chooseModel": {
+        "name": "Choisissez un modèle Whisper",
+        "text": "Sélectionnez {tiny} pour une transcription rapide ou {small} pour plus de précision."
+      },
+      "selectLanguage": {
+        "name": "Choisissez la langue et la tâche",
+        "text": "Choisissez la langue de votre audio. Sélectionnez « {transcribe} » pour conserver la langue d'origine, ou « {translate} »."
+      },
+      "transcribe": {
+        "name": "Transcrire",
+        "text": "Cliquez sur « {button} ». Le modèle est téléchargé une seule fois puis mis en cache pour les prochaines utilisations."
+      },
+      "copy": {
+        "name": "Copiez votre transcription",
+        "text": "Votre transcription horodatée s'affiche instantanément. Copiez-la en un clic."
+      }
     }
   },
   "audioJoiner": {
@@ -1464,13 +1457,42 @@
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
     "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
-    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
+    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez.",
+    "GEMINI_OUTPUT_LIMIT": "La voix a atteint sa limite de sortie audio. Raccourcissez le texte et réessayez."
   },
   "ttsEditor": {
+    "filterTags": "Filtrer...",
+    "tagSuggestions": "Suggestions",
     "label": "Texte à lire",
     "effects": "Effets vocaux",
     "emotions": "Émotions",
     "pace": "Rythme",
     "vocalSounds": "Sons vocaux"
+  },
+  "blogPost": {
+    "audienceCreators": "créateurs de contenu",
+    "audienceLabel": "Public cible :",
+    "audienceStorytellers": "conteurs",
+    "by": "Par",
+    "level": "Débutant à intermédiaire",
+    "published": "Publié le {date}",
+    "readingTime": "{minutes} min de lecture",
+    "resourceType": "tutoriel",
+    "resourceTypeLabel": "Type de ressource :",
+    "seriesNote": "Cet article fait partie de notre guide complet sur la technologie vocale par IA.",
+    "topics": {
+      "speechSynthesis": "Synthèse vocale",
+      "voiceAi": "IA vocale",
+      "voiceCloning": "Clonage vocal"
+    },
+    "topicsLabel": "Sujets :",
+    "wordCount": "{count, plural, one {# mot} other {# mots}}"
+  },
+  "policy": {
+    "updated": "Mis à jour le {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "URL canonique : {url}",
+    "features": "Fonctionnalités"
   }
 }

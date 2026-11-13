@@ -13,7 +13,6 @@ import {
   E2E_USER_ID,
 } from './e2e-mocks-shared';
 import { isE2E as isE2EMode } from './e2e-mode';
-import type { getCallInstructionConfig } from './edge-config/call-instructions';
 import type { getCallVoices } from './supabase/queries';
 import type { AudioFileAndVoicesRes } from './supabase/queries.client';
 import type { MonthlyUsageSummary } from './supabase/usage-queries';
@@ -101,12 +100,6 @@ export const E2E_SAVED_CALL_VOICES = [
     locale: 'en',
   },
 ];
-
-export const E2E_CALL_INSTRUCTION_CONFIG = {
-  defaultInstructions: 'Keep the conversation friendly and concise.',
-  initialInstruction: 'Say hello.',
-  presetInstructions: undefined,
-} satisfies Awaited<ReturnType<typeof getCallInstructionConfig>>;
 
 type CreditTransactionRow = Tables<'credit_transactions'>;
 

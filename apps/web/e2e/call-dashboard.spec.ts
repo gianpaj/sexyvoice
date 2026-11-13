@@ -1,6 +1,6 @@
 import type { Page, Response } from '@playwright/test';
 
-import type { ApiCharacterResponse } from '@/lib/characters';
+import type { CharacterRow } from '@/lib/calls/characters';
 import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
 import de from '@/messages/de.json';
 import en from '@/messages/en.json';
@@ -91,7 +91,7 @@ async function setupCallPage(
  * the mock must not treat an empty or unknown ID as a successful creation.
  */
 async function mockCharacterWrites(page: Page) {
-  const characters = new Map<string, ApiCharacterResponse>();
+  const characters = new Map<string, CharacterRow>();
   const deletes: string[] = [];
   await page.route('**/api/characters', async (route) => {
     const request = route.request();
@@ -109,17 +109,19 @@ async function mockCharacterWrites(page: Page) {
       });
       return;
     }
-    const character: ApiCharacterResponse = {
+    const character: CharacterRow = {
       id: body.id ?? crypto.randomUUID(),
+      image: null,
       is_public: false,
       localized_descriptions: body.localizedDescriptions,
+      localized_sample_urls: null,
       name: body.name,
       prompts: {
         localized_prompts: body.localizedPrompts,
         prompt: body.prompt,
       },
       session_config: body.sessionConfig,
-      voices: { name: body.voiceName },
+      voices: { sample_url: null },
     };
     characters.set(character.id, character);
     await route.fulfill({
@@ -355,7 +357,7 @@ for (const locale of ['en', 'de'] as const) {
     await creator
       .getByRole('button', { exact: true, name: labels.creator.save })
       .click();
-    const copy = (await (await copyResponse).json()) as ApiCharacterResponse;
+    const copy = (await (await copyResponse).json()) as CharacterRow;
     expect(copy.prompts?.localized_prompts?.[locale]).toBe(originalPrompt);
     await callPage.panel
       .getByRole('button', { exact: true, name: labels.panel.close })

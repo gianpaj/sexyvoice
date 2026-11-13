@@ -2,7 +2,10 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
+import {
+  CallSessionProvider,
+  useCallSession,
+} from '@/components/call/call-session';
 
 const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
@@ -13,23 +16,36 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => mocks }));
 vi.mock('@/lib/supabase/client', () => ({ default: () => ({ auth: mocks }) }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
-vi.mock('@/hooks/use-playground-state', () => ({
-  usePlaygroundState: () => ({
-    dispatch: vi.fn(),
-    helpers: {
-      getSelectedPreset: () => null,
-      getStateWithFullInstructions: () => ({ sessionConfig: { voice: 'Ara' } }),
-    },
-    pgState: {},
-  }),
-}));
-vi.mock('@/lib/characters', () => ({}));
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), info: vi.fn() } }));
+
+async function hangUpConnectedCall() {
+  const { result } = renderHook(useCallSession, {
+    wrapper: CallSessionProvider,
+  });
+  await act(async () => {
+    await result.current.connect({ characterId: 'character-id' });
+  });
+  act(() => result.current.roomConnected());
+  await act(async () => {
+    result.current.disconnect();
+    await Promise.resolve();
+  });
+  return result;
+}
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () =>
+      Response.json({ accessToken: 'token', url: 'wss://test.livekit.cloud' }),
+    ),
+  );
+});
 
 describe('connection disconnect claims', () => {
   it('refreshes only the verified subject credit cache without getUser', async () => {
@@ -37,11 +53,8 @@ describe('connection disconnect claims', () => {
       data: { claims: { sub: 'claims-user' } },
       error: null,
     });
-    const { result } = renderHook(useConnection, {
-      wrapper: ConnectionProvider,
-    });
-    await act(() => result.current.disconnect());
-    expect(result.current.shouldConnect).toBe(false);
+    const result = await hangUpConnectedCall();
+    expect(result.current.session.phase.name).toBe('idle');
     expect(mocks.refetchQueries).not.toHaveBeenCalled();
     expect(mocks.invalidateQueries).toHaveBeenCalledExactlyOnceWith({
       queryKey: ['credits', 'claims-user'],
@@ -61,11 +74,8 @@ describe('connection disconnect claims', () => {
     'does not refresh user credit data for invalid claims %j',
     async (response) => {
       mocks.getClaims.mockResolvedValue(response);
-      const { result } = renderHook(useConnection, {
-        wrapper: ConnectionProvider,
-      });
-      await act(() => result.current.disconnect());
-      expect(result.current.shouldConnect).toBe(false);
+      const result = await hangUpConnectedCall();
+      expect(result.current.session.phase.name).toBe('idle');
       expect(mocks.refetchQueries).not.toHaveBeenCalled();
       expect(mocks.invalidateQueries).not.toHaveBeenCalled();
     },
@@ -77,66 +87,62 @@ it('refreshes credits when a call is rejected for insufficient balance', async (
     'fetch',
     vi.fn().mockResolvedValue(new Response(null, { status: 402 })),
   );
-  const { result } = renderHook(useConnection, { wrapper: ConnectionProvider });
+  const { result } = renderHook(useCallSession, {
+    wrapper: CallSessionProvider,
+  });
   await act(async () => {
-    await expect(result.current.connect()).rejects.toThrow(
-      'Failed to fetch token',
-    );
+    await expect(
+      result.current.connect({ characterId: 'character-id' }),
+    ).resolves.toBe('failed');
   });
   expect(mocks.invalidateQueries).toHaveBeenCalledExactlyOnceWith({
     queryKey: ['credits'],
   });
   expect(mocks.refetchQueries).not.toHaveBeenCalled();
-  expect(result.current.shouldConnect).toBe(false);
+  expect(result.current.session.phase.name).toBe('idle');
 });
 
+function tokenRequestBody(call: number) {
+  const [, init] = vi.mocked(fetch).mock.calls[call];
+  return JSON.parse(String(init?.body));
+}
+
 it('sends a fresh browser timestamp and time zone on every connection', async () => {
-  const fetch = vi
-    .fn()
-    .mockImplementation(() =>
-      Promise.resolve(
-        Response.json({ accessToken: 'token', url: 'wss://example.test' }),
-      ),
-    );
-  vi.stubGlobal('fetch', fetch);
-  const { result } = renderHook(useConnection, { wrapper: ConnectionProvider });
+  mocks.getClaims.mockResolvedValue({ data: null, error: null });
   const before = Date.now();
-  await act(() => result.current.connect());
-  const first = JSON.parse(fetch.mock.calls[0][1].body);
+  const result = await hangUpConnectedCall();
+  const first = tokenRequestBody(0);
   expect(first.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
   expect(Date.parse(first.clientTime)).toBeGreaterThanOrEqual(before);
   expect(Date.parse(first.clientTime)).toBeLessThanOrEqual(Date.now());
+
   const later = new Date(Date.now() + 60_000);
-  vi.useFakeTimers();
+  vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(later);
   try {
-    await act(() => result.current.connect());
-    const second = JSON.parse(fetch.mock.calls[1][1].body);
-    expect(second.clientTime).toBe(later.toISOString());
+    await act(async () => {
+      await result.current.connect({ characterId: 'character-id' });
+    });
+    expect(tokenRequestBody(1).clientTime).toBe(later.toISOString());
   } finally {
     vi.useRealTimers();
   }
 });
 
 it('connects when browser time zone detection fails', async () => {
-  const fetch = vi
-    .fn()
-    .mockImplementation(() =>
-      Promise.resolve(
-        Response.json({ accessToken: 'token', url: 'wss://example.test' }),
-      ),
-    );
-  vi.stubGlobal('fetch', fetch);
   const clock = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
     throw new Error('Time zone unavailable');
   });
   try {
-    const { result } = renderHook(useConnection, {
-      wrapper: ConnectionProvider,
+    const { result } = renderHook(useCallSession, {
+      wrapper: CallSessionProvider,
     });
-    await act(() => result.current.connect());
-    expect(result.current.shouldConnect).toBe(true);
-    expect(JSON.parse(fetch.mock.calls[0][1].body).timeZone).toBeUndefined();
+    await act(async () => {
+      await expect(
+        result.current.connect({ characterId: 'character-id' }),
+      ).resolves.toBe('started');
+    });
+    expect(tokenRequestBody(0).timeZone).toBeUndefined();
   } finally {
     clock.mockRestore();
   }

@@ -1,16 +1,10 @@
 'use client';
 
-import {
-  useConnectionState,
-  useLocalParticipant,
-  useVoiceAssistant,
-} from '@livekit/components-react';
+import { useLocalParticipant } from '@livekit/components-react';
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
-import { ConnectionState } from 'livekit-client';
 import { Mic, MicOff, PhoneOff, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 import {
   DropdownMenu,
@@ -20,51 +14,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Preset } from '@/data/presets';
-import { useAgent } from '@/hooks/use-agent';
-import { useConnection } from '@/hooks/use-connection';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
+import type { Character } from '@/lib/calls/characters';
+import { formatClock } from '@/lib/clock';
+import { useCallElapsed, useCallSession } from './call-session';
 import { CharacterAvatar } from './character-avatar';
 import {
   enableKrispNoiseFilterIfReady,
   isExpectedKrispNoiseFilterError,
 } from './krisp-noise-filter';
 
-const AGENT_TIMEOUT_MS = 10_000;
-
 const roundButton =
   'flex size-16 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2';
-
-/**
- * Disconnects when the agent never joins, or leaves and does not come back,
- * within ten seconds.
- */
-function useAgentWatchdog() {
-  const connectionState = useConnectionState();
-  const { agent } = useAgent();
-  const { disconnect } = useConnection();
-  const t = useTranslations('call');
-  const [hasSeenAgent, setHasSeenAgent] = useState(false);
-
-  useEffect(() => {
-    if (agent) {
-      setHasSeenAgent(true);
-      return;
-    }
-    if (connectionState !== ConnectionState.Connected) return;
-    const timer = setTimeout(() => {
-      disconnect();
-      setHasSeenAgent(false);
-      if (hasSeenAgent) {
-        toast.info(t('disconnected'));
-      } else {
-        console.error('Agent Unavailable');
-        toast.error(t('agentUnavailable'));
-      }
-    }, AGENT_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [connectionState, agent, disconnect, hasSeenAgent, t]);
-}
 
 function AudioSettingsMenu() {
   const t = useTranslations('call');
@@ -141,28 +102,21 @@ function AudioSettingsMenu() {
   );
 }
 
-export function InCallView({
-  elapsed,
-  preset,
-}: {
-  /** Formatted call duration. */
-  elapsed: string;
-  preset: Preset;
-}) {
+export function InCallView({ character }: { character: Character }) {
   const t = useTranslations('call.inCall');
-  const connectionState = useConnectionState();
-  const { state: agentState } = useVoiceAssistant();
+  const { disconnect, session } = useCallSession();
+  const elapsed = useCallElapsed();
   const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
-  const { disconnect } = useConnection();
-  useAgentWatchdog();
 
-  const connected = connectionState === ConnectionState.Connected;
+  const { phase } = session;
+  const connected = phase.name === 'connected';
+  const agentState = connected ? phase.agentState : undefined;
   const muted = connected && !isMicrophoneEnabled;
   let status = t('connecting');
   if (muted) status = t('muted');
-  else if (connected && agentState === 'speaking') status = t('speaking');
-  else if (connected && agentState === 'thinking') status = t('thinking');
-  else if (connected && agentState === 'listening') status = t('listening');
+  else if (agentState === 'speaking') status = t('speaking');
+  else if (agentState === 'thinking') status = t('thinking');
+  else if (agentState === 'listening') status = t('listening');
 
   return (
     <div
@@ -171,19 +125,21 @@ export function InCallView({
     >
       <div className="rounded-full p-2.5 shadow-[0_0_0_10px_rgba(124,58,237,0.18),0_0_0_24px_rgba(124,58,237,0.08)]">
         <CharacterAvatar
-          image={preset.image}
-          name={preset.name}
-          seed={preset.id}
+          image={character.image}
+          name={character.name}
+          seed={character.id}
           size="3xl"
         />
       </div>
       <h1 className="mt-[18px] font-bold text-[32px] leading-tight">
-        {preset.name}
+        {character.name}
       </h1>
       <p aria-live="polite" className="text-base text-violet-300">
         {status}
       </p>
-      <p className="text-[15px] text-slate-400 tabular-nums">{elapsed}</p>
+      <p className="text-[15px] text-slate-400 tabular-nums">
+        {formatClock(elapsed, { padMinutes: true })}
+      </p>
       <div className="mt-4 flex gap-5">
         <button
           aria-label={muted ? t('unmute') : t('mute')}

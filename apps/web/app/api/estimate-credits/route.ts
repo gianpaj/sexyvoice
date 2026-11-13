@@ -1,21 +1,24 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-import { getCharactersLimit } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
   buildGeminiTtsContents,
-  buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
 import {
-  calculateCreditsFromTokens,
-  estimateGrokCredits,
-  getTtsProvider,
-} from '@/lib/utils';
+  creditsFromTokens,
+  getTtsModel,
+  type TtsModel,
+} from '@/lib/tts/models';
+import type {
+  EstimateSpeechRequestBody,
+  EstimateSpeechResponseBody,
+} from '@/lib/tts/speech-client';
 
 type ValidationResult<T> =
   | { ok: true; data: T }
@@ -23,9 +26,7 @@ type ValidationResult<T> =
 
 async function validateRequestBody(
   request: Request,
-): Promise<
-  ValidationResult<{ text: string; voiceId: string; styleVariant: string }>
-> {
+): Promise<ValidationResult<EstimateSpeechRequestBody>> {
   if (request.body === null) {
     return {
       ok: false,
@@ -34,7 +35,7 @@ async function validateRequestBody(
   }
 
   try {
-    const body = await request.json();
+    const body: Partial<EstimateSpeechRequestBody> = await request.json();
     const text: string = body.text || '';
     const voiceId: string = body.voiceId || '';
     const styleVariant: string = body.styleVariant || '';
@@ -74,49 +75,28 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
 
 async function validateVoice(
   voiceId: string,
-): Promise<ValidationResult<{ model: string }>> {
+): Promise<ValidationResult<{ model: string; ttsModel: TtsModel }>> {
   const voiceObj = await getVoiceById(voiceId);
+  const ttsModel = getTtsModel(voiceObj?.model);
 
-  if (!voiceObj) {
+  if (!(voiceObj && ttsModel)) {
     return {
       ok: false,
       response: APIErrorResponse('Voice not found', 404),
     };
   }
 
-  const provider = getTtsProvider(voiceObj.model);
-
-  if (!(provider === 'gemini' || provider === 'grok')) {
+  if (!ttsModel.canEstimate) {
     return {
       ok: false,
       response: APIErrorResponse(
-        'Credit estimation currently supports only gpro and grok voices',
+        'Credit estimation currently supports only Gemini and Grok voices',
         400,
       ),
     };
   }
 
-  return { data: voiceObj, ok: true };
-}
-
-function validateTextLength(
-  text: string,
-  model: string,
-  isPaidUser: boolean,
-): ValidationResult<null> {
-  const maxLength = getCharactersLimit(model, isPaidUser);
-
-  if (text.length > maxLength) {
-    return {
-      ok: false,
-      response: APIErrorResponse(
-        `Text exceeds the maximum length of ${maxLength} characters`,
-        400,
-      ),
-    };
-  }
-
-  return { data: null, ok: true };
+  return { data: { model: voiceObj.model, ttsModel }, ok: true };
 }
 
 function validateApiKey(): ValidationResult<string> {
@@ -153,18 +133,31 @@ export async function POST(request: Request) {
 
     const isPaidUser = await hasUserPaid(userResult.data.id);
 
-    const model = voiceResult.data.model;
-    const textError = validateTextLength(text, model, isPaidUser);
-    if (!textError.ok) {
-      return textError.response;
+    const { model, ttsModel } = voiceResult.data;
+    const input = validateGenerationInput(ttsModel, {
+      isPaidUser,
+      style: styleVariant,
+      text,
+    });
+    if (input.textTooLong) {
+      return APIErrorResponse(
+        `Text exceeds the maximum length of ${input.textLimit} characters`,
+        400,
+      );
+    }
+    if (input.styleTooLong) {
+      return APIErrorResponse(
+        `Style exceeds the maximum length of ${input.styleLimit} characters`,
+        400,
+      );
     }
 
-    if (getTtsProvider(model) === 'grok') {
-      const credits = estimateGrokCredits(text);
+    if (ttsModel.provider === 'grok') {
+      const credits = ttsModel.estimateCredits(text, '');
 
       return NextResponse.json({
         estimatedCredits: credits,
-      });
+      } satisfies EstimateSpeechResponseBody);
     }
 
     const apiKeyResult = validateApiKey();
@@ -172,21 +165,14 @@ export async function POST(request: Request) {
       return apiKeyResult.response;
     }
 
-    // Build the exact same prompt and target the same model the generation
-    // route will use, so the token count reflects the real request. The model
-    // and prompt format differ by voice (gpro31 vs gpro) and by user tier.
-    const finalText = buildGeminiTtsPrompt({ model, styleVariant, text });
-    const estimateModel = resolveGeminiTtsModel({
-      model,
-      userHasPaid: isPaidUser,
-    });
+    const estimateModel = resolveGeminiTtsModel({ model });
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
       contents: buildGeminiTtsContents({
         model,
-        styleVariant,
-        text: finalText,
+        styleVariant: input.style,
+        text,
       }),
       model: estimateModel,
     });
@@ -195,35 +181,23 @@ export async function POST(request: Request) {
 
     // Estimate output tokens for audio
     // Characters per second ~ 15 (faster speech)
-    // Tokens per second of audio ~ 32 (based on documentation)
+    // Gemini 3.8 produces about 25 audio tokens per second.
     const CHARACTERS_PER_SECOND = 15;
-    const TOKENS_PER_SECOND = model === 'gpro38' ? 25 : 32;
+    const TOKENS_PER_SECOND = 25;
 
-    // Base the audio-duration estimate on the full spoken payload. For gpro31
-    // the style is delivered as direction (it shapes pacing/delivery), so the
-    // combined length tracks real audio length better than the transcript alone.
-    // For gpro (2.5) the style is an inline `style: text` instruction rather
-    // than spoken content, so it doesn't add to the audio duration.
-    const spokenLength =
-      styleVariant && model === 'gpro31'
-        ? styleVariant.length + text.length
-        : text.length;
-    const estimatedDurationSeconds = spokenLength / CHARACTERS_PER_SECOND;
+    const estimatedDurationSeconds = text.length / CHARACTERS_PER_SECOND;
     const estimatedOutputTokens = Math.ceil(
       estimatedDurationSeconds * TOKENS_PER_SECOND,
     );
 
     const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
 
-    const credits = calculateCreditsFromTokens(totalEstimatedTokens, {
-      model,
-      userHasPaid: isPaidUser,
-    });
+    const credits = creditsFromTokens(totalEstimatedTokens);
 
     return NextResponse.json({
       estimatedCredits: credits,
       tokens: totalEstimatedTokens,
-    });
+    } satisfies EstimateSpeechResponseBody);
   } catch (error) {
     console.error('Estimate credits error:', error);
     return APIErrorResponse('Failed to estimate credits', 500);

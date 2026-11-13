@@ -5,7 +5,7 @@ export function resizeTextarea(
   textarea: HTMLTextAreaElement | null,
   minRows = 0,
   maxRows = 10,
-  cssVariable = '--ta2-height',
+  cssVariable = '--textarea-height',
 ) {
   if (!textarea) return;
   // Use RAF to ensure DOM measurements are accurate

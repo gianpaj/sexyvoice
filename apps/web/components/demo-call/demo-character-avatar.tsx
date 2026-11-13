@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { characterImageSrc } from '@/components/call/character-avatar';
+
 interface DemoCharacterAvatarProps {
   accentGradient: string;
   energy: number;
@@ -28,7 +30,6 @@ export function DemoCharacterAvatar({
   accentGradient,
   glowColor,
 }: DemoCharacterAvatarProps) {
-  // Clamp energy to 0–1
   const e = Math.max(0, Math.min(1, energy));
 
   const glowOpacity = isSpeaking ? 0.3 + e * 0.5 : 0;
@@ -55,7 +56,7 @@ export function DemoCharacterAvatar({
               fill
               priority
               sizes="(max-width: 640px) 80px, 96px"
-              src={`/characters/${image}`}
+              src={characterImageSrc(image)}
             />
           </div>
         </div>

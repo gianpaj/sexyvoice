@@ -13,12 +13,8 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('@/lib/supabase/queries', () => ({ getVoiceIdByName }));
 
-import { defaultSessionConfig } from '@/data/default-config';
-import {
-  callReadiness,
-  savedVoiceUsers,
-  withCallVoice,
-} from '@/lib/call-voices';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import { savedVoiceUsers, withCallVoice } from '@/lib/calls/voices';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 
 beforeEach(() => {
@@ -101,7 +97,7 @@ describe('call voice resolution', () => {
     'selects the saved %s profile independently of the new-clone default',
     (provider) => {
       expect(
-        withCallVoice(defaultSessionConfig, {
+        withCallVoice(DEFAULT_SESSION_CONFIG, {
           name: 'My voice',
           savedId: 'reference',
           provider,
@@ -147,37 +143,5 @@ describe('savedVoiceUsers', () => {
         { name: 'Nina', session_config: null },
       ]),
     ).toEqual({ a: ['Max', 'Lily'] });
-  });
-});
-
-describe('callReadiness', () => {
-  const voice = { id: 'saved-voice' };
-  const own = (audioReferenceId?: string) => ({
-    isPublic: false,
-    sessionConfig: { ...defaultSessionConfig, audioReferenceId },
-  });
-
-  it('lets a character with a voice and a personality call', () => {
-    expect(
-      callReadiness(own('saved-voice'), 'You are Marco.', [voice]),
-    ).toEqual({
-      canCall: true,
-      personalityMissing: false,
-      voiceMissing: false,
-    });
-  });
-
-  it('reports both a deleted voice and a missing personality', () => {
-    expect(callReadiness(own('deleted-voice'), '  ', [voice])).toEqual({
-      canCall: false,
-      personalityMissing: true,
-      voiceMissing: true,
-    });
-  });
-
-  it('never asks a public character for a personality', () => {
-    expect(
-      callReadiness({ ...own(), isPublic: true }, '', [voice]).canCall,
-    ).toBe(true);
   });
 });

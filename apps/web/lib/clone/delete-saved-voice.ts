@@ -5,12 +5,10 @@ import { getCallVoiceSampleKey } from './call-voice-sample';
 import { deleteInworldVoice } from './inworld';
 import { deleteMistralVoice } from './mistral';
 
-interface SavedVoiceReference {
-  id: string;
-  provider: string;
-  sample_url: string | null;
-  voice_id: string;
-}
+type SavedVoiceReference = Pick<
+  Tables<'audio_references'>,
+  'id' | 'provider' | 'sample_url' | 'voice_id'
+>;
 
 /**
  * Deletes the provider voice and its stored sample, then the row. The row

@@ -6,6 +6,8 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 
+import { requiredEnv } from './cli.mts';
+import { isRecord } from './guards.mts';
 import {
   normalizeEtag,
   type R2Client,
@@ -24,10 +26,10 @@ export function createR2S3Client(
 ): S3Client {
   return new S3Client({
     credentials: {
-      accessKeyId: requiredEnv(environment, 'R2_ACCESS_KEY_ID'),
-      secretAccessKey: requiredEnv(environment, 'R2_SECRET_ACCESS_KEY'),
+      accessKeyId: requiredEnv('R2_ACCESS_KEY_ID', environment),
+      secretAccessKey: requiredEnv('R2_SECRET_ACCESS_KEY', environment),
     },
-    endpoint: requiredEnv(environment, 'R2_ENDPOINT'),
+    endpoint: requiredEnv('R2_ENDPOINT', environment),
     region: 'auto',
   });
 }
@@ -133,19 +135,11 @@ export function createR2ClientAdapter(
   };
 }
 
-function requiredEnv(environment: NodeJS.ProcessEnv, name: string): string {
-  const value = environment[name];
-  if (!value) {
-    throw new Error(`Missing env.${name}`);
-  }
-  return value;
-}
-
 function isNotFound(error: unknown): boolean {
   return hasAwsErrorStatus(error, 404, 'NotFound', 'NoSuchKey');
 }
 
-function isPreconditionFailed(error: unknown): boolean {
+export function isPreconditionFailed(error: unknown): boolean {
   return hasAwsErrorStatus(error, 412, 'PreconditionFailed');
 }
 
@@ -162,8 +156,4 @@ function hasAwsErrorStatus(
     names.includes(String(error.name)) ||
     metadata?.httpStatusCode === statusCode
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

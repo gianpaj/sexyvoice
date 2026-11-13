@@ -4,22 +4,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as estimate } from '@/app/api/estimate-credits/route';
 import { POST as dashboard } from '@/app/api/generate-voice/route';
 import { POST as speech } from '@/app/api/v1/speech/route';
-import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav } from '@/lib/audio';
 import {
   getVoiceById,
   getVoiceByIdAdmin,
+  hasUserPaid,
   insertUsageEvent,
   restoreCredits,
 } from '@/lib/supabase/queries';
 import {
   buildGeminiTtsContents,
-  buildGeminiTtsPrompt,
   buildGeminiVoiceConfig,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { getTtsModel, TTS_MODELS } from '@/lib/tts/models';
+import { speechProviderCost } from '@/lib/tts/provider-cost';
 import { resolveUsageCost } from '@/lib/usage-costs';
-import { estimateCredits, getTtsProvider } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
   mockRedisGet,
@@ -82,9 +82,6 @@ describe('Gemini 3.8 integration', () => {
   it('keeps direction out of the transcript and preserves the extended voice ID', () => {
     const text = 'Vamos paso a paso.';
     expect(
-      buildGeminiTtsPrompt({ model: 'gpro38', styleVariant: 'Paciente', text }),
-    ).toBe(text);
-    expect(
       buildGeminiTtsContents({
         model: 'gpro38',
         styleVariant: 'Paciente',
@@ -106,42 +103,27 @@ describe('Gemini 3.8 integration', () => {
     expect(
       getVoiceDisplayName({ model: 'gpro38', name: 'voice_1n3ne2q96iaf' }),
     ).toBe('Vivienne');
-    expect(buildGeminiVoiceConfig(voice.name, 'gpro31')).toEqual({
-      prebuiltVoiceConfig: { voiceName: 'Es-es-tutor-12' },
-    });
-    expect(resolveGeminiTtsModel({ model: 'gpro38', userHasPaid: false })).toBe(
+    expect(() => buildGeminiVoiceConfig(voice.name, 'gpro31')).toThrow();
+    expect(resolveGeminiTtsModel({ model: 'gpro38' })).toBe(
       'gemini-3.8-flash-tts',
     );
-    expect(getTtsProvider('gpro38')).toBe('gemini');
-    expect(estimateCredits(text, voice.name, 'gpro38', false)).toBe(
-      estimateCredits(text, voice.name, 'gpro', false),
-    );
+    expect(getTtsModel('gpro38')?.provider).toBe('gemini');
+    expect(TTS_MODELS.gpro38.estimateCredits(text, voice.name)).toBe(27);
   });
 
-  it.each(['tts', 'api_tts'] as const)(
-    'prices %s across the promotional boundary',
-    (sourceType) => {
-      const input = {
-        candidatesTokenCount: 1_000_000,
-        model: 'gemini-3.8-flash-tts',
-        promptTokenCount: 1_000_000,
-        provider: 'google' as const,
-        sourceType,
-      };
-      expect(
-        calculateGenerateApiDollarAmount({
-          ...input,
-          occurredAt: '2026-12-31T23:59:59Z',
-        }),
-      ).toBe(9.5);
-      expect(
-        calculateGenerateApiDollarAmount({
-          ...input,
-          occurredAt: '2027-01-01T00:00:00Z',
-        }),
-      ).toBe(19);
-    },
-  );
+  it('prices Gemini 3.8 across the promotional boundary', () => {
+    const input = {
+      candidatesTokenCount: 1_000_000,
+      model: 'gemini-3.8-flash-tts',
+      promptTokenCount: 1_000_000,
+    };
+    expect(
+      speechProviderCost({ ...input, occurredAt: '2026-12-31T23:59:59Z' }),
+    ).toBe(9.5);
+    expect(
+      speechProviderCost({ ...input, occurredAt: '2027-01-01T00:00:00Z' }),
+    ).toBe(19);
+  });
 
   it('uses the event date when recovering historical provider costs', () => {
     vi.setSystemTime(new Date('2027-02-01'));
@@ -270,23 +252,63 @@ describe('Gemini 3.8 integration', () => {
     },
   );
 
-  it('uses structured style and records costs in dashboard generation', async () => {
-    vi.mocked(getVoiceById).mockResolvedValueOnce(voice);
-    mockRedisGet.mockResolvedValueOnce(null);
-    const generateContent = vi.fn().mockResolvedValue(providerResponse);
-    setMockGoogleGenAIFactory(() => ({
-      models: { countTokens: vi.fn(), generateContent },
-    }));
-    const response = await dashboard(
-      request('/api/generate-voice', {
-        styleVariant: 'Paciente',
-        text: 'Hola.',
-        voiceId: voice.id,
-      }),
-    );
-    expect(response.status).toBe(200);
-    expect(generateContent).toHaveBeenCalledWith(
-      expect.objectContaining({
+  it.each([false, true])(
+    'uses structured style and records dashboard costs for paid=%s',
+    async (userHasPaid) => {
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(userHasPaid);
+      vi.mocked(getVoiceById).mockResolvedValueOnce(voice);
+      mockRedisGet.mockResolvedValueOnce(null);
+      const generateContent = vi.fn().mockResolvedValue(providerResponse);
+      setMockGoogleGenAIFactory(() => ({
+        models: { countTokens: vi.fn(), generateContent },
+      }));
+      const response = await dashboard(
+        request('/api/generate-voice', {
+          styleVariant: 'Paciente',
+          text: 'Hola.',
+          voiceId: voice.id,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contents: [
+            {
+              parts: [{ speechMetadata: { style: 'Paciente' }, text: 'Hola.' }],
+              role: 'user',
+            },
+          ],
+          model: 'gemini-3.8-flash-tts',
+        }),
+      );
+      await vi.waitFor(() =>
+        expect(insertUsageEvent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dollarAmount: 0.000_91,
+            model: 'gemini-3.8-flash-tts',
+          }),
+        ),
+      );
+    },
+  );
+  it.each([false, true])(
+    'counts structured style and estimates spoken duration for paid=%s',
+    async (userHasPaid) => {
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(userHasPaid);
+      vi.mocked(getVoiceById).mockResolvedValueOnce(voice);
+      const countTokens = vi.fn().mockResolvedValue({ totalTokens: 20 });
+      setMockGoogleGenAIFactory(() => ({
+        models: { countTokens, generateContent: vi.fn() },
+      }));
+      const response = await estimate(
+        request('/api/estimate-credits', {
+          styleVariant: 'Paciente',
+          text: 'Hola.',
+          voiceId: voice.id,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(countTokens).toHaveBeenCalledWith({
         contents: [
           {
             parts: [{ speechMetadata: { style: 'Paciente' }, text: 'Hola.' }],
@@ -294,42 +316,10 @@ describe('Gemini 3.8 integration', () => {
           },
         ],
         model: 'gemini-3.8-flash-tts',
-      }),
-    );
-    await vi.waitFor(() =>
-      expect(insertUsageEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dollarAmount: 0.000_91,
-          model: 'gemini-3.8-flash-tts',
-        }),
-      ),
-    );
-  });
-  it('counts structured style while estimating only the spoken transcript duration', async () => {
-    vi.mocked(getVoiceById).mockResolvedValueOnce(voice);
-    const countTokens = vi.fn().mockResolvedValue({ totalTokens: 20 });
-    setMockGoogleGenAIFactory(() => ({
-      models: { countTokens, generateContent: vi.fn() },
-    }));
-    const response = await estimate(
-      request('/api/estimate-credits', {
-        styleVariant: 'Paciente',
-        text: 'Hola.',
-        voiceId: voice.id,
-      }),
-    );
-    expect(response.status).toBe(200);
-    expect(countTokens).toHaveBeenCalledWith({
-      contents: [
-        {
-          parts: [{ speechMetadata: { style: 'Paciente' }, text: 'Hola.' }],
-          role: 'user',
-        },
-      ],
-      model: 'gemini-3.8-flash-tts',
-    });
-    expect((await response.json()).tokens).toBe(29);
-  });
+      });
+      expect((await response.json()).tokens).toBe(29);
+    },
+  );
 
   it('keeps different delivery styles in separate dashboard cache entries', async () => {
     const generateContent = vi.fn().mockResolvedValue(providerResponse);

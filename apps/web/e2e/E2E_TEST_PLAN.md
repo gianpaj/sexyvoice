@@ -83,6 +83,7 @@ Implemented mock/helper files:
 
 - `mocks/google-ai.mock.ts` — used by generate tests
 - `mocks/usage.mock.ts` — used by usage tests
+- `mocks/history.mock.ts` — used by the shared fixtures
 
 ---
 
@@ -100,6 +101,8 @@ Implemented mock/helper files:
 #### Authenticated
 
 - page renders heading, voice selector, textarea, and generate button
+- Gemini 3.8 is selected by default; retired Gemini 2.5 and 3.1 models have no
+  voice options or model filters
 - successful audio generation with mocked `/api/generate-voice`
 - Grok TTS flow with a featured Grok voice
 - disabled state when text is empty
@@ -130,7 +133,8 @@ Implemented mock/helper files:
 Notes:
 
 - Gemini estimation returns a fixed mock response
-- Grok estimation is provider-aware and uses `estimateGrokCredits(text)`
+- Grok estimation is provider-aware and uses the catalog estimate
+  (`TTS_MODELS.xai.estimateCredits`)
 - `/api/generate-text` mock matches the current `streamProtocol: 'text'` client behavior
 
 ### Intentional gap

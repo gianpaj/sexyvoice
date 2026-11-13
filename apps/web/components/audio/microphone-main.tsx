@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { RecorderStatus } from '@/hooks/use-media-recorder';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -22,15 +23,7 @@ interface Props {
   /** Reports the input picked or restored in the menu, for recording. */
   onDeviceChange?: (deviceId: string) => void;
   onToggleMicrophone: () => void;
-  status:
-    | 'idle'
-    | 'acquiring_media'
-    | 'ready'
-    | 'recording'
-    | 'paused'
-    | 'stopping'
-    | 'stopped'
-    | 'failed';
+  status: RecorderStatus;
 }
 
 function AudioPlayer({ blob }: { blob: Blob }) {
@@ -42,18 +35,10 @@ function AudioPlayer({ blob }: { blob: Blob }) {
       return;
     }
 
-    // Use setTimeout to defer URL creation to next tick
-    // This fixes a race condition where the audio element
-    // tries to load before the blob is fully ready
-    let url: string | null = null;
-    url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     setAudioUrl(url);
 
-    return () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    };
+    return () => URL.revokeObjectURL(url);
   }, [blob]);
 
   if (!audioUrl) return null;
@@ -77,6 +62,7 @@ function DeviceSelectDropdown({
 }: {
   onDeviceChange?: (deviceId: string) => void;
 }) {
+  const t = useTranslations('clone');
   const [listRequested, setListRequested] = useState(false);
   const deviceSelect = usePersistentMediaDevice({
     requestPermissions: listRequested,
@@ -97,7 +83,7 @@ function DeviceSelectDropdown({
     <DropdownMenu onOpenChange={(open) => open && setListRequested(true)}>
       <DropdownMenuTrigger asChild>
         <Button
-          aria-label="Choose microphone"
+          aria-label={t('micChoose')}
           className="rounded-l-none border-gray-700 border-l px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
           variant="secondary"
         >
@@ -111,7 +97,7 @@ function DeviceSelectDropdown({
         forceMount
       >
         <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-          Available inputs
+          {t('micInputs')}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {devices.map((device) => (
@@ -192,7 +178,7 @@ export function MicrophoneMain(props: Props) {
         <div className="mt-6 flex w-full justify-center self-center">
           <AudioPlayer blob={mediaBlob} />
           <Button
-            aria-label="Reset Microphone"
+            aria-label={t('micReset')}
             className="ml-2 flex w-10 flex-1 justify-center bg-red-400 disabled:opacity-50"
             disabled={status !== 'stopped'}
             onClick={onClearMediaStream}

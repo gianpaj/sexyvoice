@@ -71,12 +71,14 @@ function createReadQuery(result: object) {
 function setupAccountDeletion({
   usageResult = { count: 3, error: null },
   memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
+  characterResult = { data: [{ id: 'prompt-1' }], error: null },
   transcriptResult = { data: [{ id: 'call-1' }], error: null },
   apiKeysResult = { data: [{ id: 'key-1' }, { id: 'key-2' }], error: null },
   references = [],
 }: {
   usageResult?: { count: number | null; error: Error | null };
   memoryResult?: { data: { id: number }[] | null; error: Error | null };
+  characterResult?: { data: { id: string }[] | null; error: Error | null };
   transcriptResult?: { data: { id: string }[] | null; error: Error | null };
   apiKeysResult?: { data: { id: string }[] | null; error: Error | null };
   references?: {
@@ -90,7 +92,11 @@ function setupAccountDeletion({
     data: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
     error: null,
   });
-  const charactersRead = createReadQuery({ data: [], error: null });
+  const characterPromptsDelete = {
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(characterResult),
+  };
   const apiKeysUpdate = {
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -125,7 +131,7 @@ function setupAccountDeletion({
     },
     from: vi.fn((table: string) => {
       if (table === 'audio_files') return audioRead;
-      if (table === 'characters') return charactersRead;
+      if (table === 'prompts') return characterPromptsDelete;
       if (table === 'api_keys') return apiKeysUpdate;
       if (table === 'usage_events') return usageRead;
       if (table === 'audio_references') return referenceRead;
@@ -156,6 +162,7 @@ function setupAccountDeletion({
     adminSupabase,
     apiKeysUpdate,
     audioUpdate,
+    characterPromptsDelete,
     memoryDelete,
     transcriptUpdate,
     sessionSupabase,
@@ -396,6 +403,36 @@ describe('account deletion', () => {
       'User deleted',
       expect.objectContaining({ deletedMemories: 2 }),
     );
+  });
+
+  it('deletes custom characters through their prompts', async () => {
+    const { characterPromptsDelete, sessionSupabase } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(sessionSupabase.from).not.toHaveBeenCalledWith('characters');
+    expect(characterPromptsDelete.delete).toHaveBeenCalledOnce();
+    expect(characterPromptsDelete.eq.mock.calls).toEqual([
+      ['user_id', 'user-1'],
+      ['type', 'call'],
+      ['is_public', false],
+    ]);
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedCustomCharacters: 1 }),
+    );
+  });
+
+  it('fails deletion when the character cleanup fails', async () => {
+    const { sessionSupabase } = setupAccountDeletion({
+      characterResult: { data: null, error: new Error('Prompt delete failed') },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
   it('allows deletion when the user has no memories', async () => {

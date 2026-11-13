@@ -8,13 +8,14 @@ import {
   extractMessages,
   MIN_ANALYSIS_CALL_DURATION_SECONDS,
 } from '@/lib/ai/analyze-call';
-import { APIErrorResponse } from '@/lib/error-ts';
-import { createAdminClient } from '@/lib/supabase/admin';
 import {
+  CALL_ANALYSIS_SESSION_COLUMNS,
   enqueueCallAnalysis,
   hasCallSessionAnalysis,
-  upsertCallSessionAnalysis,
-} from '@/lib/supabase/call-analysis-queries';
+  saveCallSessionAnalysis,
+} from '@/lib/ai/call-analysis-queue';
+import { APIErrorResponse } from '@/lib/error-ts';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // The default Node runtime (not Edge) is required for the service-role
 // Supabase client. The default engine only enqueues, so the request is short;
@@ -63,9 +64,7 @@ export async function POST(request: NextRequest) {
 
   const { data: session, error: selectError } = await supabase
     .from('call_sessions')
-    .select(
-      'id, user_id, started_at, ended_at, duration_seconds, end_reason, model, voice_id, status, transcript',
-    )
+    .select(`${CALL_ANALYSIS_SESSION_COLUMNS}, status`)
     .eq('id', id)
     .maybeSingle();
 
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const analysis = await analyzeTranscript(session);
-    await upsertCallSessionAnalysis(supabase, session, analysis);
+    await saveCallSessionAnalysis(supabase, session, analysis);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Call analysis error:', error);

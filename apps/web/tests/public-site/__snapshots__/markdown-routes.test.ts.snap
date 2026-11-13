@@ -1,0 +1,1756 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`blog post markdown > serves en hello-from-sexyvoice 1`] = `
+{
+  "body": "# Hello from SexyVoice.ai
+
+> Next-gen voice AI for synthesis and dubbing.
+
+Published: 2025-04-28 · Canonical URL: https://sexyvoice.ai/en/blog/hello-from-sexyvoice
+
+Body of hello-from-sexyvoice in en.
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "51",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog post markdown > serves en voice-ai-glossary 1`] = `
+{
+  "body": "# Voice AI Glossary
+
+> The definitive glossary of voice AI terminology.
+
+Published: 2025-06-27 · Canonical URL: https://sexyvoice.ai/en/blog/voice-ai-glossary
+
+Body of voice-ai-glossary in en.
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "49",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog post markdown > serves es hello-from-sexyvoice 1`] = `
+{
+  "body": "# Hola desde SexyVoice.ai
+
+> IA de voz de nueva generación para síntesis y doblaje.
+
+Publicado: 2025-04-28 · URL canónica: https://sexyvoice.ai/es/blog/hello-from-sexyvoice
+
+Body of hello-from-sexyvoice in es.
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "53",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in da 1`] = `
+{
+  "body": "# Seneste indlæg
+
+Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.
+
+Der er ingen indlæg endnu.
+
+---
+
+Kanonisk URL: https://sexyvoice.ai/da/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "49",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in de 1`] = `
+{
+  "body": "# Neueste Beiträge
+
+Anleitungen, Tutorials und Neuigkeiten zu KI-Stimmklonen, Text-zu-Sprache-Synthese und Voice-KI-Technologie.
+
+## [KI-Sprachanrufe in Echtzeit](https://sexyvoice.ai/de/blog/realtime-ai-voice-call)
+
+_2026-01-15_
+
+Sprich in Echtzeit mit KI-Charakteren.
+
+---
+
+Kanonische URL: https://sexyvoice.ai/de/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "81",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in en 1`] = `
+{
+  "body": "# Latest Posts
+
+Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.
+
+## [Real-time AI Voice Calls](https://sexyvoice.ai/en/blog/realtime-ai-voice-call)
+
+_2026-01-15_
+
+Talk to AI characters in real time.
+
+## [Voice AI Glossary](https://sexyvoice.ai/en/blog/voice-ai-glossary)
+
+_2025-06-27_
+
+The definitive glossary of voice AI terminology.
+
+## [Hello from SexyVoice.ai](https://sexyvoice.ai/en/blog/hello-from-sexyvoice)
+
+_2025-04-28_
+
+Next-gen voice AI for synthesis and dubbing.
+
+---
+
+Canonical URL: https://sexyvoice.ai/en/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "146",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in es 1`] = `
+{
+  "body": "# Ultimos Posts
+
+Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto a voz y tecnología de voz IA.
+
+## [Hola desde SexyVoice.ai](https://sexyvoice.ai/es/blog/hello-from-sexyvoice)
+
+_2025-04-28_
+
+IA de voz de nueva generación para síntesis y doblaje.
+
+---
+
+URL canónica: https://sexyvoice.ai/es/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "82",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in fr 1`] = `
+{
+  "body": "# Derniers articles
+
+Guides, tutoriels et actualités sur le clonage vocal par IA, la synthèse texte-parole et la technologie vocale IA.
+
+Aucun article disponible pour le moment.
+
+---
+
+URL canonique : https://sexyvoice.ai/fr/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "58",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`blog.md > serves markdown in it 1`] = `
+{
+  "body": "# Ultimi post
+
+Guide, tutorial e notizie sulla clonazione vocale con IA, sintesi testo-parlato e tecnologia vocale IA.
+
+Nessun articolo disponibile al momento.
+
+---
+
+URL canonico: https://sexyvoice.ai/it/blog
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "53",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in da 1`] = `
+{
+  "body": "# SexyVoice.ai – Gratis AI tekst-til-tale & stemmeopkald i realtid med realistiske og følelsesfulde stemmer
+
+Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet.
+
+## Udtryksfulde stemmer — ubegrænsede muligheder
+
+Gratis AI tekst-til-tale & stemmegenerator.
+Perfekt til indholdsskabere og historiefortællere.
+
+[Tilmeld dig gratis](https://sexyvoice.ai/da/signup) — Intet kreditkort påkrævet
+
+## Funktioner
+
+### Live stemmeopkald
+
+Før samtaler i realtid med AI-karakterer, med vores stemmer eller en, du kloner.
+
+### Klon din stemme
+
+Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra 10 sekunders lyd og taler naturligt på flere sprog.
+
+### Sikkert & privat
+
+Dine stemmedata er beskyttet med sikkerhed på virksomhedsniveau. Fuld kontrol over dit privatliv, profil og historik.
+
+### Naturlige stemmer
+
+Integrer naturlige følelser — tilføj latter, suk, hoste og mere — for at skabe autentiske, fængslende lydoplevelser.
+
+### Flersproget support
+
+Vælg mellem 20+ unikke stemmer på flere sprog, perfekt til dine specifikke behov og præferencer.
+
+## Prøv vores stemmeprøver
+
+Lyt til stemmeprøver skabt med vores avancerede AI-teknologi
+
+## Ofte stillede spørgsmål
+
+Alt hvad du behøver at vide om SexyVoice.ai
+
+### Live AI-opkald
+
+#### Hvordan fungerer Live AI-opkald?
+
+Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale.
+
+#### Kan jeg ringe til en karakter med min egen stemme?
+
+Ja. Et engangskøb af kreditter eller en abonnementsbetaling låser op for gemte stemmer. Opret en karakter og vælg "Klon en stemme", eller brug "Gem en stemme til opkald" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme, og vælg den som karakterens stemme.
+
+#### Hvor meget koster det?
+
+Live-opkald koster 1000 kreditter pr. minut, mens du er forbundet.
+
+#### Koster det mere at ringe med en klonet stemme?
+
+Nej. Opkald koster 1000 kreditter pr. minut, uanset hvilken stemme du vælger, og det er gratis at gemme en stemme. Afregningen starter, når karakteren er klar til at tale, ikke mens der forbindes.
+
+#### Hvordan får jeg den bedste klon?
+
+Optag 10–30 sekunder af én person, der taler naturligt i et stille rum, uden musik eller stemmer i baggrunden. Længere klip forkortes til 30 sekunder. Hvis rummet var støjende, så gem stemmen på Klon-siden og sæt flueben ved "Rens referenceaudioen". Lad den være slået fra ved rene optagelser, da den kan få dem til at lyde dårligere.
+
+#### Kan jeg klone en andens stemme?
+
+Kun med deres tilladelse. Før du kloner, skal du bekræfte, at du har rettighederne til at bruge stemmen.
+
+### Stemmegenerering og stil
+
+#### Hvilke sprog kan jeg generere tale på?
+
+Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.8-stemmer understøtter over 130 sprog. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor.
+
+#### Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?
+
+Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — "britisk accent", "piratstemme", "forførende tone" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner.
+
+### Stemmekloning
+
+#### Hvordan fungerer stemmekloning?
+
+Optag eller upload mindst 10 sekunder af din egen stemme eller en stemme, du har tilladelse til at bruge. Vores AI bruger prøven til at genskabe lyden. Generer tale med det samme, eller gem stemmen til senere.
+
+#### Kan jeg klone min egen stemme?
+
+Ja! Optag eller upload mindst 10 sekunders ren lyd. Du kan generere tale fra optagelsen eller gemme din stemme til senere, hvis du har købt kreditter.
+
+#### Hvordan prissættes stemmekloning?
+
+Det er gratis at gemme en stemme, når du har købt kreditter én gang eller betalt for et abonnement. Tale med en klonet stemme bruger flere kreditter end vores standardstemmer, og længere tekster bruger flere. Liveopkald bruger kreditter til opkaldstaksten. Dit dashboard og API deler samme saldo.
+
+#### Hvilke sprog understøttes for stemmekloning?
+
+Stemmekloning understøtter følgende 28 sprog:
+
+🇸🇦 Arabisk,
+🇪🇸 Catalansk,
+🇩🇰 Dansk,
+🇬🇧 Engelsk,
+🇫🇮 Finsk,
+🇫🇷 Fransk,
+🇬🇷 Græsk,
+🇮🇱 Hebraisk,
+🇮🇳 Hindi,
+🇳🇱 Hollandsk,
+🇮🇹 Italiensk,
+🇯🇵 Japansk,
+🇰🇷 Koreansk,
+🇲🇾 Malajisk,
+🇨🇳 Mandarin-kinesisk,
+🇳🇴 Norsk,
+🇵🇱 Polsk,
+🇵🇹 Portugisisk,
+🇷🇴 Rumænsk,
+🇷🇺 Russisk,
+🇪🇸 Spansk,
+🇸🇪 Svensk,
+🇰🇪 Swahili,
+🇹🇷 Tyrkisk,
+🇩🇪 Tysk,
+🇺🇦 Ukrainsk,
+🇭🇺 Ungarsk,
+og 🇻🇳 Vietnamesisk.
+
+#### Kan jeg gemme min klonede stemme og bruge den igen?
+
+Ja. Betalende brugere kan gemme op til 10 stemmer og genbruge dem til stemmegenerering eller liveopkald. Vælg en gemt stemme på Klon-siden for at generere tale, eller vælg den som stemme, når du opretter en karakter.
+
+### Brug, sikkerhed & politikker
+
+#### Er mine stemmedata sikre?
+
+Gemte opkaldsstemmer er private for din konto. Stemmeudbyderen beholder optagelsen, så du kan genbruge stemmen. Du kan slette genererede lydfiler i dit dashboard. Når du sletter din konto, anmoder vi også om sletning af gemte stemmer og deres lydprøver.
+
+#### Hvad kan jeg bruge stemmegenerering til?
+
+Lav lyd til videoer, podcasts, lydbøger, spil, kurser og opslag på sociale medier. Brug kun stemmer og indhold, du har rettighederne til.
+
+#### Kan jeg prøve det, før jeg betaler?
+
+Nye konti får 10.000 gratis kreditter. Intet kreditkort påkrævet.
+
+#### Må jeg bruge lyden kommercielt?
+
+Ja. Du ejer den lyd, du genererer, og må bruge den kommercielt, hvis du har rettighederne til de stemmer og det indhold, du bruger.
+
+#### Hvor længe gemmes genererede lydfiler?
+
+Genereret lyd gemmes i 30 dage på gratis konti og 90 dage på betalte konti. Download de filer, du vil beholde.
+
+### Priser & adgang
+
+#### Skal jeg købe kreditter én gang eller abonnere?
+
+Et engangskøb tilføjer kreditter uden abonnement. Abonnér for at modtage kreditter hver måned med en abonnementsbonus på 15%.
+
+#### Hvor meget kan jeg bruge mine kreditter til?
+
+Liveopkald koster 1000 kreditter pr. minut. Prisen for talegenerering afhænger af stemme, model og længde. Tale med en klonet stemme bruger flere kreditter end standardstemmer.
+
+#### Udløber kreditter, eller overføres de?
+
+Købte kreditter udløber ikke. Ubrugte købte kreditter overføres, også efter du har opsagt dit abonnement.
+
+#### Hvornår fornyes mit abonnement?
+
+Dit abonnement fornyes automatisk hver måned, indtil du opsiger det. En eventuel rabat for den første måned gælder kun den første betaling. Derefter gælder den normale månedspris, som vises ved betaling.
+
+#### Kan jeg opsige og beholde mine kreditter?
+
+Opsig via Stripes kundeportal på kreditter-siden. Dit abonnement er aktivt indtil slutningen af den betalte periode. Derefter stopper de månedlige fornyelser. Du kan fortsat bruge de kreditter, du har på din konto.
+
+#### Kan jeg købe flere kreditter før næste fornyelse?
+
+Ja. Du kan foretage et engangskøb af kreditter, mens du abonnerer, uden at vente på næste månedlige betaling.
+
+### API til udviklere
+
+#### Har I en API til udviklere?
+
+Ja. Vores API giver dig stemmegenerering i apps, hjemmesider og spil med de samme kreditter som dit dashboard. Stemmekloning og liveopkald findes i webappen. Se [dokumentationen](https://docs.sexyvoice.ai).
+
+## Klar til at finde din stemme?
+
+Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.
+
+[Opret din første stemme](https://sexyvoice.ai/da/signup)
+
+---
+
+Kanonisk URL: https://sexyvoice.ai/da
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "1935",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in de 1`] = `
+{
+  "body": "# SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe mit realistischen und emotionalen Stimmen
+
+Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.
+
+## Ausdrucksstarke Stimmen — grenzenlose Möglichkeiten
+
+Kostenloser KI-Text-zu-Sprache- & Stimmengenerator.
+Perfekt für Content-Ersteller und Geschichtenerzähler.
+
+[Kostenlos anmelden](https://sexyvoice.ai/de/signup) — Keine Kreditkarte erforderlich
+
+## Funktionen
+
+### Live-Sprachanrufe
+
+Führen Sie Gespräche in Echtzeit mit KI-Charakteren, mit unseren Stimmen oder einer, die Sie klonen.
+
+### Klone deine Stimme
+
+Teste die Live-Klon-Demo: Höre eine Stimme, die aus 10 Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht.
+
+### Sicher & Privat
+
+Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung.
+
+### Natürliche Stimmen
+
+Integrieren Sie natürliche Emotionen – fügen Sie Lachen, Seufzer, Husten und mehr hinzu – um authentische, fesselnde Audioerlebnisse zu schaffen.
+
+### Mehrsprachige Unterstützung
+
+Wählen Sie aus über 20 einzigartigen Stimmen in mehreren Sprachen – perfekt für Ihre speziellen Bedürfnisse und Vorlieben.
+
+## Probieren Sie unsere Sprachmuster
+
+Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden
+
+## Häufig gestellte Fragen
+
+Alles, was Sie über SexyVoice.ai wissen müssen
+
+### Live-KI-Anrufe
+
+#### Wie funktionieren Live-KI-Anrufe?
+
+Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.
+
+#### Kann ich einen Charakter mit meiner eigenen Stimme anrufen?
+
+Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.
+
+#### Was kostet das?
+
+Live-Anrufe kosten 1000 Credits pro Minute, solange Sie verbunden sind.
+
+#### Kostet ein Anruf mit einer geklonten Stimme mehr?
+
+Nein. Anrufe kosten 1000 Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.
+
+#### Wie bekomme ich den besten Klon?
+
+Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.
+
+#### Kann ich die Stimme einer anderen Person klonen?
+
+Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.
+
+### Stimmgenerierung und Stil
+
+#### In welchen Sprachen kann ich Sprache erzeugen?
+
+Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.8-Stimmen unterstützen über 130 Sprachen. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten.
+
+#### Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?
+
+Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – "Britischer Akzent", "Piratenstimme", "Verführerischer Ton" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern.
+
+### Stimmklonen
+
+#### Wie funktioniert das Klonen von Stimmen?
+
+Nehmen Sie mindestens 10 Sekunden Ihrer eigenen Stimme auf oder laden Sie eine Stimme hoch, die Sie verwenden dürfen. Unsere KI nutzt die Aufnahme, um ihren Klang nachzubilden. Erzeugen Sie sofort Sprache oder speichern Sie die Stimme für später.
+
+#### Kann ich meine eigene Stimme klonen?
+
+Ja! Nehmen Sie mindestens 10 Sekunden klarer Sprache auf oder laden Sie eine Aufnahme hoch. Sie können daraus Sprache erzeugen oder Ihre Stimme für später speichern, wenn Sie Credits gekauft haben.
+
+#### Wie wird das Klonen von Stimmen berechnet?
+
+Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Sprache mit einer geklonten Stimme verbraucht mehr Credits als mit unseren Standardstimmen. Längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben.
+
+#### Welche Sprachen werden für das Stimmklonen unterstützt?
+
+Das Stimmklonen unterstützt die folgenden 28 Sprachen:
+
+🇸🇦 Arabisch,
+🇩🇰 Dänisch,
+🇩🇪 Deutsch,
+🇬🇧 Englisch,
+🇫🇮 Finnisch,
+🇫🇷 Französisch,
+🇬🇷 Griechisch,
+🇮🇱 Hebräisch,
+🇮🇳 Hindi,
+🇮🇹 Italienisch,
+🇯🇵 Japanisch,
+🇪🇸 Katalanisch,
+🇰🇷 Koreanisch,
+🇲🇾 Malaiisch,
+🇨🇳 Mandarin-Chinesisch,
+🇳🇱 Niederländisch,
+🇳🇴 Norwegisch,
+🇵🇱 Polnisch,
+🇵🇹 Portugiesisch,
+🇷🇴 Rumänisch,
+🇷🇺 Russisch,
+🇸🇪 Schwedisch,
+🇪🇸 Spanisch,
+🇰🇪 Suaheli,
+🇹🇷 Türkisch,
+🇺🇦 Ukrainisch,
+🇭🇺 Ungarisch,
+und 🇻🇳 Vietnamesisch.
+
+#### Kann ich meine geklonte Stimme speichern und wiederverwenden?
+
+Ja. Zahlende Nutzer können bis zu 10 Stimmen speichern und für die Stimmgenerierung oder Live-Anrufe wiederverwenden. Wählen Sie eine gespeicherte Stimme auf der Klonen-Seite, um Sprache zu erzeugen, oder weisen Sie sie beim Erstellen einem Charakter zu.
+
+### Nutzung, Sicherheit & Richtlinien
+
+#### Sind meine Stimm-Daten sicher?
+
+Gespeicherte Anrufstimmen sind nur für Ihr Konto verfügbar. Der Sprachanbieter behält die Aufnahme, damit Sie die Stimme wiederverwenden können. Generierte Audiodateien können Sie im Dashboard löschen. Beim Löschen Ihres Kontos wird auch die Löschung gespeicherter Stimmen und ihrer Hörproben angefordert.
+
+#### Wofür kann ich die Stimmgenerierung nutzen?
+
+Erstellen Sie Audio für Videos, Podcasts, Hörbücher, Spiele, Kurse und soziale Medien. Verwenden Sie nur Stimmen und Inhalte, für die Sie die Rechte haben.
+
+#### Kann ich es vor dem Kauf ausprobieren?
+
+Neue Konten erhalten 10.000 kostenlose Credits. Keine Kreditkarte erforderlich.
+
+#### Darf ich das Audio kommerziell nutzen?
+
+Ja. Das von Ihnen generierte Audio gehört Ihnen und Sie dürfen es kommerziell nutzen, sofern Sie die Rechte an den verwendeten Stimmen und Inhalten haben.
+
+#### Wie lange werden generierte Audiodateien gespeichert?
+
+Generiertes Audio wird bei kostenlosen Konten 30 Tage und bei bezahlten Konten 90 Tage gespeichert. Laden Sie Dateien herunter, die Sie behalten möchten.
+
+### Preise & Zugang
+
+#### Soll ich einmalig Credits kaufen oder ein Abo abschließen?
+
+Ein einmaliger Kauf fügt Credits ohne Abo hinzu. Mit einem Abo erhalten Sie jeden Monat Credits und einen Abo-Bonus von 15%.
+
+#### Wie viel kann ich mit meinen Credits machen?
+
+Live-Anrufe kosten 1000 Credits pro Minute. Die Kosten der Sprachgenerierung hängen von Stimme, Modell und Länge ab. Die Sprachgenerierung mit einer geklonten Stimme verbraucht mehr Credits als mit Standardstimmen.
+
+#### Verfallen Credits oder werden sie übertragen?
+
+Gekaufte Credits verfallen nicht. Ungenutzte gekaufte Credits bleiben erhalten, auch nachdem Sie Ihr Abo gekündigt haben.
+
+#### Wann verlängert sich mein Abo?
+
+Ihr Abo verlängert sich automatisch jeden Monat, bis Sie es kündigen. Ein Rabatt für den ersten Monat gilt nur für die erste Zahlung. Danach gilt der reguläre Monatspreis, der beim Bezahlen angezeigt wird.
+
+#### Kann ich kündigen und meine Credits behalten?
+
+Kündigen Sie über das Stripe-Kundenportal auf der Credits-Seite. Ihr Abo bleibt bis zum Ende des bezahlten Abrechnungszeitraums aktiv. Danach enden die monatlichen Verlängerungen. Sie können die Credits auf Ihrem Konto weiterhin nutzen.
+
+#### Kann ich vor der nächsten Verlängerung weitere Credits kaufen?
+
+Ja. Sie können während Ihres Abos einmalig Credits kaufen, ohne auf die nächste monatliche Zahlung zu warten.
+
+### API für Entwickler
+
+#### Haben Sie eine API für Entwickler?
+
+Ja. Unsere API ermöglicht Stimmgenerierung in Apps, Websites und Spielen mit denselben Credits wie Ihr Dashboard. Stimmklonen und Live-Anrufe sind in der Web-App verfügbar. Lesen Sie die [Dokumentation](https://docs.sexyvoice.ai).
+
+## Bereit, Ihre Stimme zu finden?
+
+Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.
+
+[Erstellen sie ihre erste stimme](https://sexyvoice.ai/de/signup)
+
+---
+
+Kanonische URL: https://sexyvoice.ai/de
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "2238",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in en 1`] = `
+{
+  "body": "# SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls with realistic and emotional voices
+
+Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.
+
+## Expressive Voices — Limitless Possibilities
+
+Free AI Text-to-Speech & Voice Generator.
+Perfect for content creators and storytellers.
+
+[Sign up for Free](https://sexyvoice.ai/en/signup) — No credit card required
+
+## Features
+
+### Live Voice Calls
+
+Have real-time conversations with AI characters, in our voices or one you clone.
+
+### Clone Your Voice
+
+Try the live cloning demo: hear a voice recreated from 10 seconds of audio, speaking naturally in multiple languages.
+
+### Secure & Private
+
+Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history.
+
+### Natural Voices
+
+Integrate natural emotions — add laughter, sighs, coughs, and more — to create authentic, captivating audio experiences.
+
+### Multi-Language Support
+
+Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences.
+
+## Try Our Voice Samples
+
+Listen to voice samples created with our advanced AI technology
+
+## Frequently Asked Questions
+
+Everything you need to know about SexyVoice.ai
+
+### Live AI Calling
+
+#### How does Live AI Calling work?
+
+Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.
+
+#### Can I call a character in my own voice?
+
+Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.
+
+#### How much does it cost?
+
+Live calling costs 1000 credits per minute while you're connected.
+
+#### Does calling with a cloned voice cost more?
+
+No. Calls cost 1000 credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.
+
+#### How do I get the best clone?
+
+Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.
+
+#### Can I clone someone else's voice?
+
+Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.
+
+### Voice generation & styles
+
+#### Which languages can I generate speech in?
+
+Language support depends on your voice and model. Gemini 3.8 voices support over 130 languages. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below.
+
+#### Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?
+
+Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions.
+
+### Voice cloning
+
+#### How does voice cloning work?
+
+Record or upload at least 10 seconds of your voice, or a voice you have permission to use. Our AI uses the sample to recreate how it sounds. Generate speech right away, or save the voice to use again.
+
+#### Can I clone my own voice?
+
+Yes! Record or upload at least 10 seconds of clean audio. You can generate speech from the recording, or save your voice for later if you have bought credits.
+
+#### How is voice cloning priced?
+
+Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance.
+
+#### Which languages are supported for Voice Cloning?
+
+Voice cloning supports the following 28 languages:
+
+🇸🇦 Arabic,
+🇪🇸 Catalan,
+🇩🇰 Danish,
+🇳🇱 Dutch,
+🇬🇧 English,
+🇫🇮 Finnish,
+🇫🇷 French,
+🇩🇪 German,
+🇬🇷 Greek,
+🇮🇱 Hebrew,
+🇮🇳 Hindi,
+🇭🇺 Hungarian,
+🇮🇹 Italian,
+🇯🇵 Japanese,
+🇰🇷 Korean,
+🇲🇾 Malay,
+🇨🇳 Mandarin Chinese,
+🇳🇴 Norwegian,
+🇵🇱 Polish,
+🇵🇹 Portuguese,
+🇷🇴 Romanian,
+🇷🇺 Russian,
+🇪🇸 Spanish,
+🇰🇪 Swahili,
+🇸🇪 Swedish,
+🇹🇷 Turkish,
+🇺🇦 Ukrainian,
+and 🇻🇳 Vietnamese.
+
+#### Can I save my cloned voice and use it again?
+
+Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character.
+
+### Usage, safety & policies
+
+#### Is my voice data secure?
+
+Saved call voices are private to your account. The voice provider retains the reference so you can reuse the voice. You can delete generated audio files in your dashboard. Account deletion also requests removal of saved voices and their previews.
+
+#### What can I use voice generation for?
+
+Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use.
+
+#### Can I try it before paying?
+
+New accounts receive 10,000 free credits. No credit card required.
+
+#### Can I use the audio commercially?
+
+Yes. You own the audio you generate and can use it commercially, provided you have the rights to the voices and content you use.
+
+#### How long are generated audio files stored?
+
+Generated audio is stored for 30 days on free accounts and 90 days on paid accounts. Download files you want to keep.
+
+### Pricing & access
+
+#### Should I buy credits once or subscribe?
+
+A one-time purchase adds credits without a subscription. Subscribe to receive credits every month, with a 15% subscription bonus.
+
+#### How much can I do with my credits?
+
+Live calls cost 1000 credits per minute. Speech generation costs depend on the voice, model, and length. Generating speech with a cloned voice uses more credits than standard voices.
+
+#### Do credits expire or roll over?
+
+Paid credits don't expire. Unused paid credits carry over, including after you cancel your subscription.
+
+#### When will my subscription renew?
+
+Your subscription renews automatically each month until you cancel. Any first-month discount applies only to your first payment. Later payments use the regular monthly price shown at checkout.
+
+#### Can I cancel, and will I lose my credits?
+
+Cancel through the Stripe Customer Portal on the credits page. Your plan stays active until the end of your paid billing period, then monthly renewals stop. You can keep using the credits already in your account.
+
+#### Can I buy more credits before my next renewal?
+
+Yes. You can make a one-time credit purchase while subscribed, without waiting for your next monthly payment.
+
+### API for Developers
+
+#### Do you have an API for developers?
+
+Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the [documentation](https://docs.sexyvoice.ai).
+
+## Ready to find your voice?
+
+Join thousands of creators who trust our platform for creating realistic emotion-rich speech.
+
+[Create your first voice](https://sexyvoice.ai/en/signup)
+
+---
+
+Canonical URL: https://sexyvoice.ai/en
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "1890",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in es 1`] = `
+{
+  "body": "# SexyVoice.ai – Texto a voz IA gratis y llamadas de voz en tiempo real con voces realistas y emotivas
+
+Genera voz IA expresiva con emociones en 24+ idiomas o habla en tiempo real con personajes de IA. Generador de voz IA gratis, clonación de voz y llamadas de voz en vivo. Empieza con créditos gratis – sin tarjeta requerida.
+
+## Voces expresivas — posibilidades sin límites
+
+Generador de voz y texto a voz con IA gratis.
+Perfecto para creadores de contenido y narradores.
+
+[Empezar](https://sexyvoice.ai/es/signup) — Sin tarjeta de crédito
+
+## Funciones
+
+### Llamadas de Voz en Vivo
+
+Mantén conversaciones en tiempo real con personajes de IA, con nuestras voces o una que clones.
+
+### Clona tu voz
+
+Prueba la demo de clonación en directo: escucha una voz recreada a partir de 10 segundos de audio, hablando con naturalidad en varios idiomas.
+
+### Seguro y Privado
+
+Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso.
+
+### Voz Naturales
+
+Integra emociones naturales—añade risas, suspiros, toses y más—para crear experiencias de audio auténticas y cautivadoras.
+
+### Soporte Multilingüe
+
+Elige entre más de 20 voces únicas en varios idiomas, ideal para tus necesidades y preferencias.
+
+## Pruebe nuestras muestras de voz
+
+Escucha muestras de voz creadas con nuestra avanzada tecnología de IA
+
+## Preguntas Frecuentes
+
+Todo lo que necesitas saber sobre SexyVoice.ai
+
+### Llamadas de IA en vivo
+
+#### ¿Cómo funcionan las llamadas de IA en vivo?
+
+Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real.
+
+#### ¿Puedo llamar a un personaje con mi propia voz?
+
+Sí. Una recarga o un pago de suscripción desbloquea las voces guardadas. Crea un personaje y elige "Clonar una voz", o usa "Guardar una voz para llamadas" en la página Clonar. Graba o sube al menos 10 segundos de tu voz y elígela como voz del personaje.
+
+#### ¿Cuánto cuesta?
+
+Las llamadas en vivo cuestan 1000 créditos por minuto mientras estás conectado.
+
+#### ¿Cuesta más llamar con una voz clonada?
+
+No. Las llamadas cuestan 1000 créditos por minuto sea cual sea la voz que elijas, y guardar una voz es gratis. La facturación empieza cuando el personaje está listo para hablar, no mientras se conecta.
+
+#### ¿Cómo consigo el mejor clon?
+
+Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, guarda la voz en la página Clonar y marca "Limpiar el audio de referencia". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido.
+
+#### ¿Puedo clonar la voz de otra persona?
+
+Solo con su permiso. Antes de clonar, debes confirmar que tienes los derechos para usar esa voz.
+
+### Generación de voz y estilos
+
+#### ¿En qué idiomas puedo generar voz?
+
+Los idiomas dependen de la voz y el modelo. Las voces Gemini 3.8 admiten más de 130 idiomas. Otros modelos tienen sus propias opciones. Elige una voz para tu idioma y escucha una muestra. La clonación tiene su propia lista de idiomas más abajo.
+
+#### ¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?
+
+¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) e ingresa el estilo que deseas—"acento británico", "voz de pirata", "tono seductor", etc. El modelo se adapta al instante, y puedes refinarlo con más instrucciones.
+
+### Clonación de voz
+
+#### ¿Cómo funciona la clonación de voz?
+
+Graba o sube al menos 10 segundos de tu voz o de una voz que tengas permiso para usar. Nuestra IA usa la muestra para reproducir cómo suena. Genera voz al momento o guárdala para usarla de nuevo.
+
+#### ¿Puedo clonar mi propia voz?
+
+¡Sí! Graba o sube al menos 10 segundos de audio limpio. Puedes generar voz a partir de la grabación o guardar tu voz para después si has comprado créditos.
+
+#### ¿Cómo se cobra la clonación de voz?
+
+Guardar una voz es gratis después de una recarga o un pago de suscripción. Generar audio con una voz clonada consume más créditos que con nuestras voces estándar, y los textos más largos consumen más. Las llamadas en directo se cobran a la tarifa de llamadas. El panel y la API comparten el mismo saldo.
+
+#### ¿Qué idiomas soporta la clonación de voz?
+
+La clonación de voz soporta los siguientes 28 idiomas:
+
+🇩🇪 Alemán,
+🇸🇦 Árabe,
+🇪🇸 Catalán,
+🇨🇳 Chino mandarín,
+🇰🇷 Coreano,
+🇩🇰 Danés,
+🇪🇸 Español,
+🇫🇮 Finlandés,
+🇫🇷 Francés,
+🇬🇷 Griego,
+🇮🇱 Hebreo,
+🇮🇳 Hindi,
+🇳🇱 Holandés,
+🇭🇺 Húngaro,
+🇬🇧 Inglés,
+🇮🇹 Italiano,
+🇯🇵 Japonés,
+🇲🇾 Malayo,
+🇳🇴 Noruego,
+🇵🇱 Polaco,
+🇵🇹 Portugués,
+🇷🇴 Rumano,
+🇷🇺 Ruso,
+🇰🇪 Suajili,
+🇸🇪 Sueco,
+🇹🇷 Turco,
+🇺🇦 Ucraniano,
+y 🇻🇳 Vietnamita.
+
+#### ¿Puedo guardar mi voz clonada y volver a usarla?
+
+Sí. Los usuarios de pago pueden guardar hasta 10 voces y reutilizarlas para generar voz o hacer llamadas en directo. Selecciona una voz guardada en la página Clonar para generar audio, o elígela como voz al crear un personaje.
+
+### Uso, seguridad y políticas
+
+#### ¿Están seguros mis datos de voz?
+
+Las voces guardadas para llamadas son privadas de tu cuenta. El proveedor de voz conserva la muestra para que puedas reutilizar la voz. Puedes eliminar los archivos de audio generados desde tu panel. Al eliminar tu cuenta también se solicita la eliminación de las voces guardadas y sus muestras de escucha.
+
+#### ¿Para qué puedo usar la generación de voz?
+
+Crea audio para vídeos, podcasts, audiolibros, juegos, cursos y redes sociales. Usa solo voces y contenido para los que tengas los derechos.
+
+#### ¿Puedo probarlo antes de pagar?
+
+Las cuentas nuevas reciben 10.000 créditos gratis. No necesitas tarjeta de crédito.
+
+#### ¿Puedo usar el audio comercialmente?
+
+Sí. El audio que generas te pertenece y puedes usarlo comercialmente, siempre que tengas los derechos sobre las voces y el contenido que utilizas.
+
+#### ¿Cuánto tiempo se guardan los archivos de audio generados?
+
+El audio generado se guarda durante 30 días en cuentas gratuitas y 90 días en cuentas de pago. Descarga los archivos que quieras conservar.
+
+### Precios y acceso
+
+#### ¿Compro créditos una vez o me suscribo?
+
+Una compra única añade créditos sin suscripción. Suscríbete para recibir créditos cada mes, con un 15% de créditos extra.
+
+#### ¿Cuánto puedo hacer con mis créditos?
+
+Las llamadas en directo cuestan 1000 créditos por minuto. El coste de generar voz depende de la voz, el modelo y la duración. Generar audio con una voz clonada consume más créditos que con las voces estándar.
+
+#### ¿Los créditos caducan o se acumulan?
+
+Los créditos comprados no caducan. Los que no uses se acumulan, incluso después de cancelar tu suscripción.
+
+#### ¿Cuándo se renueva mi suscripción?
+
+Tu suscripción se renueva automáticamente cada mes hasta que la canceles. Cualquier descuento del primer mes se aplica solo al primer pago. Los pagos posteriores usan el precio mensual habitual indicado al pagar.
+
+#### ¿Puedo cancelar y conservar mis créditos?
+
+Cancela desde el portal de clientes de Stripe en la página de créditos. Tu plan sigue activo hasta el final del periodo pagado. Después, cesan las renovaciones mensuales. Puedes seguir usando los créditos de tu cuenta.
+
+#### ¿Puedo comprar más créditos antes de la próxima renovación?
+
+Sí. Puedes hacer una compra única de créditos mientras estás suscrito, sin esperar al próximo pago mensual.
+
+### API para desarrolladores
+
+#### ¿Tenéis una API para desarrolladores?
+
+Sí. Nuestra API permite añadir generación de voz a apps, sitios web y juegos con los mismos créditos de tu panel. La clonación y las llamadas en directo están disponibles en la aplicación web. Consulta la [documentación](https://docs.sexyvoice.ai).
+
+## ¿Listo para encontrar tu voz?
+
+Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.
+
+[Crea tu primera voz](https://sexyvoice.ai/es/signup)
+
+---
+
+URL canónica: https://sexyvoice.ai/es
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "2018",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in fr 1`] = `
+{
+  "body": "# SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel avec des voix réalistes et riches en émotions
+
+Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.
+
+## Voix expressives — possibilités infinies
+
+Générateur de voix et de synthèse vocale IA gratuit.
+Parfait pour les créateurs de contenu et les conteurs.
+
+[S'inscrire gratuitement](https://sexyvoice.ai/fr/signup) — Aucune carte de crédit requise
+
+## Fonctionnalités
+
+### Appels vocaux en direct
+
+Ayez des conversations en temps réel avec des personnages IA, avec nos voix ou une voix que vous clonez.
+
+### Clonez votre voix
+
+Essayez la démo de clonage en direct : écoutez une voix recréée à partir de 10 secondes d’audio, s’exprimant naturellement dans plusieurs langues.
+
+### Sécurisé et privé
+
+Vos données vocales sont protégées par une sécurité de niveau entreprise. Contrôle total sur votre vie privée, votre profil et votre historique.
+
+### Voix naturelles
+
+Intégrez des émotions naturelles — ajoutez des rires, des soupirs, de la toux et plus encore — pour créer des expériences audio authentiques et captivantes.
+
+### Support multilingue
+
+Choisissez parmi plus de 20 voix uniques dans plusieurs langues, parfaites pour vos besoins et préférences spécifiques.
+
+## Essayez nos échantillons vocaux
+
+Écoutez des échantillons vocaux créés avec notre technologie IA avancée
+
+## Questions fréquentes
+
+Tout ce que vous devez savoir sur SexyVoice.ai
+
+### Appels IA en direct
+
+#### Comment fonctionnent les appels IA en direct ?
+
+Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation.
+
+#### Puis-je appeler un personnage avec ma propre voix ?
+
+Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage.
+
+#### Combien ça coûte ?
+
+Les appels en direct coûtent 1000 crédits par minute pendant que vous êtes connecté.
+
+#### Appeler avec une voix clonée coûte-t-il plus cher ?
+
+Non. Les appels coûtent 1000 crédits par minute, quelle que soit la voix choisie, et enregistrer une voix est gratuit. La facturation commence quand le personnage est prêt à parler, pas pendant la connexion.
+
+#### Comment obtenir le meilleur clone ?
+
+Enregistrez 10 à 30 secondes d'une seule personne parlant naturellement dans une pièce calme, sans musique ni voix en arrière-plan. Les extraits plus longs sont coupés à 30 secondes. Si la pièce était bruyante, enregistrez la voix sur la page Cloner et cochez « Nettoyer l'audio de référence ». Laissez-le désactivé pour les enregistrements propres, car il peut les dégrader.
+
+#### Puis-je cloner la voix de quelqu'un d'autre ?
+
+Seulement avec son autorisation. Avant de cloner, vous devez confirmer que vous avez le droit d'utiliser cette voix.
+
+### Génération vocale et styles
+
+#### Dans quelles langues puis-je générer de la parole ?
+
+Les langues dépendent de la voix et du modèle. Les voix Gemini 3.8 prennent en charge plus de 130 langues. Les autres modèles ont leur propre sélection. Choisissez une voix pour votre langue et écoutez un aperçu. Le clonage a sa propre liste de langues ci-dessous.
+
+#### Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?
+
+Oui ! Choisissez une voix multilingue (ex. Zephyr) et tapez le style souhaité — "accent britannique", "voix de pirate", "ton séducteur", etc. Le modèle s'adapte instantanément, et vous pouvez l'affiner avec plus d'instructions.
+
+### Clonage vocal
+
+#### Comment fonctionne le clonage vocal ?
+
+Enregistrez ou importez au moins 10 secondes de votre voix, ou d'une voix que vous avez le droit d'utiliser. Notre IA utilise cet extrait pour en reproduire le son. Générez de la parole tout de suite ou enregistrez la voix pour la réutiliser.
+
+#### Puis-je cloner ma propre voix ?
+
+Oui ! Enregistrez ou importez au moins 10 secondes d'audio clair. Vous pouvez générer de la parole à partir de cet extrait ou enregistrer votre voix pour plus tard si vous avez acheté des crédits.
+
+#### Comment est tarifé le clonage vocal ?
+
+Enregistrer une voix est gratuit après une recharge ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde.
+
+#### Quelles langues sont supportées pour le clonage vocal ?
+
+Le clonage vocal supporte les 28 langues suivantes :
+
+🇩🇪 Allemand,
+🇬🇧 Anglais,
+🇸🇦 Arabe,
+🇪🇸 Catalan,
+🇨🇳 Chinois mandarin,
+🇰🇷 Coréen,
+🇩🇰 Danois,
+🇪🇸 Espagnol,
+🇫🇮 Finnois,
+🇫🇷 Français,
+🇬🇷 Grec,
+🇮🇱 Hébreu,
+🇮🇳 Hindi,
+🇭🇺 Hongrois,
+🇮🇹 Italien,
+🇯🇵 Japonais,
+🇲🇾 Malais,
+🇳🇱 Néerlandais,
+🇳🇴 Norvégien,
+🇵🇱 Polonais,
+🇵🇹 Portugais,
+🇷🇴 Roumain,
+🇷🇺 Russe,
+🇸🇪 Suédois,
+🇰🇪 Swahili,
+🇹🇷 Turc,
+🇺🇦 Ukrainien,
+et 🇻🇳 Vietnamien.
+
+#### Puis-je enregistrer ma voix clonée et la réutiliser ?
+
+Oui. Les utilisateurs ayant acheté des crédits peuvent enregistrer jusqu'à 10 voix et les réutiliser pour générer de la parole ou passer des appels en direct. Sélectionnez une voix enregistrée sur la page Cloner, ou choisissez-la comme voix lors de la création d'un personnage.
+
+### Utilisation, sécurité et politiques
+
+#### Mes données vocales sont-elles sécurisées ?
+
+Les voix enregistrées pour les appels sont privées à votre compte. Le fournisseur conserve l’échantillon pour vous permettre de réutiliser la voix. Vous pouvez supprimer les fichiers audio générés depuis votre tableau de bord. La suppression du compte demande aussi la suppression des voix enregistrées et de leurs aperçus.
+
+#### À quoi sert la génération vocale ?
+
+Créez de l'audio pour des vidéos, podcasts, livres audio, jeux, cours et réseaux sociaux. Utilisez uniquement des voix et des contenus pour lesquels vous disposez des droits.
+
+#### Puis-je essayer avant de payer ?
+
+Les nouveaux comptes reçoivent 10 000 crédits gratuits. Aucune carte bancaire requise.
+
+#### Puis-je utiliser le contenu audio à des fins commerciales ?
+
+Oui. Vous êtes propriétaire du contenu audio que vous générez et pouvez en faire un usage commercial, à condition de détenir les droits sur les voix et les contenus utilisés.
+
+#### Combien de temps les fichiers audio générés sont-ils conservés ?
+
+Le contenu audio généré est conservé 30 jours pour les comptes gratuits et 90 jours pour les comptes payants. Téléchargez les fichiers que vous souhaitez garder.
+
+### Tarifs et accès
+
+#### Vaut-il mieux acheter des crédits une fois ou s'abonner ?
+
+Un achat unique ajoute des crédits sans abonnement. Abonnez-vous pour recevoir des crédits chaque mois, avec un bonus de 15 %.
+
+#### Que puis-je faire avec mes crédits ?
+
+Les appels en direct coûtent 1000 crédits par minute. Le coût de la génération vocale dépend de la voix, du modèle et de la durée. Générer du son avec une voix clonée utilise plus de crédits que les voix standard.
+
+#### Les crédits expirent-ils ou sont-ils reportés ?
+
+Les crédits achetés n'expirent pas. Les crédits achetés non utilisés sont reportés, même après la résiliation de votre abonnement.
+
+#### Quand mon abonnement est-il renouvelé ?
+
+Votre abonnement se renouvelle automatiquement chaque mois jusqu'à sa résiliation. Toute remise du premier mois s'applique uniquement au premier paiement. Les paiements suivants utilisent le tarif mensuel habituel indiqué lors du paiement.
+
+#### Puis-je résilier et conserver mes crédits ?
+
+Résiliez depuis le portail client Stripe sur la page des crédits. Votre forfait reste actif jusqu'à la fin de la période payée, puis les renouvellements mensuels cessent. Vous pouvez continuer à utiliser les crédits de votre compte.
+
+#### Puis-je acheter des crédits avant le prochain renouvellement ?
+
+Oui. Vous pouvez effectuer un achat unique de crédits tout en étant abonné, sans attendre le prochain paiement mensuel.
+
+### API pour les développeurs
+
+#### Avez-vous une API pour les développeurs ?
+
+Oui. Notre API ajoute la génération vocale aux applications, sites web et jeux avec les mêmes crédits que votre tableau de bord. Le clonage et les appels en direct sont disponibles dans l'application web. Consultez la [documentation](https://docs.sexyvoice.ai).
+
+## Prêt à trouver votre voix ?
+
+Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.
+
+[Créez votre première voix](https://sexyvoice.ai/fr/signup)
+
+---
+
+URL canonique : https://sexyvoice.ai/fr
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "2250",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`landing.md > serves markdown in it 1`] = `
+{
+  "body": "# SexyVoice.ai – Sintesi vocale IA gratuita & chiamate vocali in tempo reale con voci realistiche e ricche di emozioni
+
+Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta.
+
+## Voci espressive — possibilità illimitate
+
+Generatore IA di sintesi vocale e voci gratuito.
+Perfetto per creatori di contenuti e narratori.
+
+[Registrati gratis](https://sexyvoice.ai/it/signup) — Nessuna carta di credito richiesta
+
+## Funzionalità
+
+### Chiamate vocali dal vivo
+
+Fai conversazioni in tempo reale con personaggi IA, con le nostre voci o una che cloni.
+
+### Clona la tua voce
+
+Prova la demo di clonazione dal vivo: ascolta una voce ricreata da 10 secondi di audio, che parla in modo naturale in più lingue.
+
+### Sicuro e privato
+
+I tuoi dati vocali sono protetti con sicurezza di livello aziendale. Controllo completo sulla tua privacy, profilo e cronologia.
+
+### Voci naturali
+
+Integra emozioni naturali — aggiungi risate, sospiri, colpi di tosse e altro — per creare esperienze audio autentiche e coinvolgenti.
+
+### Supporto multilingua
+
+Scegli tra oltre 20 voci uniche in più lingue, perfette per le tue esigenze e preferenze specifiche.
+
+## Prova i nostri campioni vocali
+
+Ascolta i campioni vocali creati con la nostra tecnologia AI avanzata
+
+## Domande frequenti
+
+Tutto quello che devi sapere su SexyVoice.ai
+
+### Chiamate AI live
+
+#### Come funzionano le chiamate AI live?
+
+Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione.
+
+#### Posso chiamare un personaggio con la mia voce?
+
+Sì. Una ricarica o un pagamento di abbonamento sblocca le voci salvate. Crea un personaggio e scegli "Clona una voce", oppure usa "Salva una voce per le chiamate" nella pagina Clona. Registra o carica almeno 10 secondi della tua voce e sceglila come voce del personaggio.
+
+#### Quanto costa?
+
+Le chiamate live costano 1000 crediti al minuto mentre sei connesso.
+
+#### Chiamare con una voce clonata costa di più?
+
+No. Le chiamate costano 1000 crediti al minuto qualunque voce tu scelga, e salvare una voce è gratis. L'addebito inizia quando il personaggio è pronto a parlare, non durante la connessione.
+
+#### Come ottengo il clone migliore?
+
+Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, salva la voce nella pagina Clona e spunta "Pulisci l'audio di riferimento". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle.
+
+#### Posso clonare la voce di un'altra persona?
+
+Solo con il suo permesso. Prima di clonare devi confermare di avere i diritti per usare quella voce.
+
+### Generazione vocale e stili
+
+#### In quali lingue posso generare il parlato?
+
+Le lingue dipendono dalla voce e dal modello. Le voci Gemini 3.8 supportano oltre 130 lingue. Gli altri modelli hanno le proprie opzioni. Scegli una voce per la tua lingua e ascolta un esempio. La clonazione ha un elenco di lingue separato qui sotto.
+
+#### Posso far parlare una voce con un accento o uno stile specifico, come britannico o pirata🏴‍☠️?
+
+Sì! Scegli una voce multilingua (es. Zephyr) e scrivi lo stile che desideri — "accento britannico", "voce da pirata", "tono seducente", ecc. Il modello si adatta istantaneamente e puoi perfezionarlo con ulteriori istruzioni.
+
+### Clonazione vocale
+
+#### Come funziona la clonazione vocale?
+
+Registra o carica almeno 10 secondi della tua voce o di una voce che hai il permesso di usare. La nostra AI usa il campione per riprodurne il suono. Genera subito il parlato o salva la voce per riutilizzarla.
+
+#### Posso clonare la mia voce?
+
+Sì! Registra o carica almeno 10 secondi di audio pulito. Puoi generare il parlato dalla registrazione o salvare la tua voce per dopo se hai acquistato crediti.
+
+#### Come viene calcolato il prezzo della clonazione vocale?
+
+Salvare una voce è gratis dopo una ricarica o un pagamento di abbonamento. Generare il parlato con una voce clonata consuma più crediti rispetto alle nostre voci standard, e i testi più lunghi ne consumano di più. Le chiamate live usano la tariffa delle chiamate. Dashboard e API condividono lo stesso saldo.
+
+#### Quali lingue supporta la clonazione vocale?
+
+La clonazione vocale supporta le seguenti 28 lingue:
+
+🇸🇦 Arabo,
+🇪🇸 Catalano,
+🇨🇳 Cinese mandarino,
+🇰🇷 Coreano,
+🇩🇰 Danese,
+🇮🇱 Ebraico,
+🇫🇮 Finlandese,
+🇫🇷 Francese,
+🇯🇵 Giapponese,
+🇬🇷 Greco,
+🇮🇳 Hindi,
+🇬🇧 Inglese,
+🇮🇹 Italiano,
+🇲🇾 Malese,
+🇳🇴 Norvegese,
+🇳🇱 Olandese,
+🇵🇱 Polacco,
+🇵🇹 Portoghese,
+🇷🇴 Rumeno,
+🇷🇺 Russo,
+🇪🇸 Spagnolo,
+🇸🇪 Svedese,
+🇰🇪 Swahili,
+🇩🇪 Tedesco,
+🇹🇷 Turco,
+🇺🇦 Ucraino,
+🇭🇺 Ungherese,
+e 🇻🇳 Vietnamita.
+
+#### Posso salvare la mia voce clonata e riutilizzarla?
+
+Sì. Gli utenti paganti possono salvare fino a 10 voci e riutilizzarle per la generazione vocale o le chiamate live. Seleziona una voce salvata nella pagina Clona per generare il parlato, oppure sceglila come voce quando crei un personaggio.
+
+### Utilizzo, sicurezza e policy
+
+#### I miei dati vocali sono sicuri?
+
+Le voci salvate per le chiamate sono private del tuo account. Il fornitore conserva il campione per consentirti di riutilizzare la voce. Puoi eliminare i file audio generati dalla dashboard. L’eliminazione dell’account richiede anche la rimozione delle voci salvate e delle loro anteprime.
+
+#### Per cosa posso usare la generazione vocale?
+
+Crea audio per video, podcast, audiolibri, giochi, corsi e social. Usa solo voci e contenuti per cui hai i diritti.
+
+#### Posso provarlo prima di pagare?
+
+I nuovi account ricevono 10.000 crediti gratuiti. Non serve una carta di credito.
+
+#### Posso usare l'audio a fini commerciali?
+
+Sì. Sei proprietario dell'audio che generi e puoi usarlo a fini commerciali, purché tu abbia i diritti sulle voci e sui contenuti che utilizzi.
+
+#### Per quanto tempo vengono conservati i file audio generati?
+
+L'audio generato viene conservato per 30 giorni sugli account gratuiti e 90 giorni sugli account a pagamento. Scarica i file che vuoi conservare.
+
+### Prezzi e accesso
+
+#### Meglio acquistare crediti una volta o abbonarsi?
+
+Un acquisto singolo aggiunge crediti senza abbonamento. Abbonati per ricevere crediti ogni mese, con un bonus del 15%.
+
+#### Quanto posso fare con i miei crediti?
+
+Le chiamate dal vivo costano 1000 crediti al minuto. Il costo della generazione vocale dipende dalla voce, dal modello e dalla durata. Generare audio con una voce clonata consuma più crediti rispetto alle voci standard.
+
+#### I crediti scadono o si accumulano?
+
+I crediti acquistati non scadono. I crediti acquistati e non utilizzati si accumulano, anche dopo la disdetta dell'abbonamento.
+
+#### Quando si rinnova il mio abbonamento?
+
+Il tuo abbonamento si rinnova automaticamente ogni mese finché non lo disdici. Un eventuale sconto per il primo mese si applica solo al primo pagamento. I pagamenti successivi usano il prezzo mensile normale indicato al momento dell'acquisto.
+
+#### Posso disdire e mantenere i miei crediti?
+
+Disdici dal portale clienti Stripe sulla pagina dei crediti. Il piano resta attivo fino alla fine del periodo pagato, poi i rinnovi mensili si interrompono. Puoi continuare a usare i crediti già presenti nel tuo account.
+
+#### Posso acquistare altri crediti prima del prossimo rinnovo?
+
+Sì. Puoi fare un acquisto singolo di crediti mentre sei abbonato, senza aspettare il prossimo pagamento mensile.
+
+### API per sviluppatori
+
+#### Avete un'API per sviluppatori?
+
+Sì. La nostra API aggiunge la generazione vocale ad app, siti web e giochi con gli stessi crediti della dashboard. La clonazione e le chiamate live sono disponibili nell'app web. Consulta la [documentazione](https://docs.sexyvoice.ai).
+
+## Pronto a trovare la tua voce?
+
+Unisciti a migliaia di creatori che si affidano alla nostra piattaforma per creare voci realistiche ricche di emozioni.
+
+[Crea la tua prima voce](https://sexyvoice.ai/it/signup)
+
+---
+
+URL canonico: https://sexyvoice.ai/it
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "2072",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in da 1`] = `
+{
+  "body": "# Privacy Policy
+
+_Opdateret 2026-11-03_
+
+How SexyVoice.ai handles data.
+
+Privacy Policy body.
+
+---
+
+Kanonisk URL: https://sexyvoice.ai/en/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "39",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in de 1`] = `
+{
+  "body": "# Privacy Policy
+
+_Aktualisiert am 2026-11-03_
+
+How SexyVoice.ai handles data.
+
+Privacy Policy body.
+
+---
+
+Kanonische URL: https://sexyvoice.ai/en/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "41",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in en 1`] = `
+{
+  "body": "# Privacy Policy
+
+_Updated 2026-11-03_
+
+How SexyVoice.ai handles data.
+
+Privacy Policy body.
+
+---
+
+Canonical URL: https://sexyvoice.ai/en/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "39",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in es 1`] = `
+{
+  "body": "# Política de Privacidad
+
+_Actualizado el 2026-11-03_
+
+Cómo SexyVoice.ai gestiona los datos.
+
+Política de Privacidad body.
+
+---
+
+URL canónica: https://sexyvoice.ai/es/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "46",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in fr 1`] = `
+{
+  "body": "# Privacy Policy
+
+_Mis à jour le 2026-11-03_
+
+How SexyVoice.ai handles data.
+
+Privacy Policy body.
+
+---
+
+URL canonique : https://sexyvoice.ai/en/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "40",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`privacy-policy.md > serves markdown in it 1`] = `
+{
+  "body": "# Privacy Policy
+
+_Aggiornato il 2026-11-03_
+
+How SexyVoice.ai handles data.
+
+Privacy Policy body.
+
+---
+
+URL canonico: https://sexyvoice.ai/en/privacy-policy
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "40",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in da 1`] = `
+{
+  "body": "# Terms & Conditions
+
+_Opdateret 2026-07-15_
+
+Terms governing the use of SexyVoice.ai.
+
+Terms & Conditions body.
+
+---
+
+Kanonisk URL: https://sexyvoice.ai/en/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "41",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in de 1`] = `
+{
+  "body": "# Terms & Conditions
+
+_Aktualisiert am 2026-07-15_
+
+Terms governing the use of SexyVoice.ai.
+
+Terms & Conditions body.
+
+---
+
+Kanonische URL: https://sexyvoice.ai/en/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "43",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in en 1`] = `
+{
+  "body": "# Terms & Conditions
+
+_Updated 2026-07-15_
+
+Terms governing the use of SexyVoice.ai.
+
+Terms & Conditions body.
+
+---
+
+Canonical URL: https://sexyvoice.ai/en/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "41",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in es 1`] = `
+{
+  "body": "# Términos y Condiciones
+
+_Actualizado el 2026-07-15_
+
+Términos que rigen el uso de SexyVoice.ai.
+
+Términos y Condiciones body.
+
+---
+
+URL canónica: https://sexyvoice.ai/es/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "45",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in fr 1`] = `
+{
+  "body": "# Terms & Conditions
+
+_Mis à jour le 2026-07-15_
+
+Terms governing the use of SexyVoice.ai.
+
+Terms & Conditions body.
+
+---
+
+URL canonique : https://sexyvoice.ai/en/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "43",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;
+
+exports[`terms.md > serves markdown in it 1`] = `
+{
+  "body": "# Terms & Conditions
+
+_Aggiornato il 2026-07-15_
+
+Terms governing the use of SexyVoice.ai.
+
+Terms & Conditions body.
+
+---
+
+URL canonico: https://sexyvoice.ai/en/terms
+",
+  "headers": {
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "text/markdown; charset=utf-8",
+    "vary": "Accept",
+    "x-markdown-tokens": "42",
+    "x-robots-tag": "noindex, nofollow",
+  },
+  "status": 200,
+}
+`;

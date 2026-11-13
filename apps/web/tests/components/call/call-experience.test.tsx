@@ -1,26 +1,23 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CallExperience } from '@/components/call/call-experience';
-import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
-import type { Preset } from '@/data/presets';
-import type { DBVoice } from '@/data/voices';
-import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import {
+  CallSessionProvider,
+  useCallSession,
+} from '@/components/call/call-session';
+import { CallSetupProvider } from '@/components/call/call-setup';
+import type { Character } from '@/lib/calls/characters';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import type { CallVoice, SavedCallVoice } from '@/lib/calls/voices';
 import messages from '@/messages/en.json';
+import { makeCharacter } from '../../utils/call-test-utils';
 
-const connection = vi.hoisted(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  shouldConnect: false,
-  state: 'disconnected',
-}));
 const microphone = vi.hoisted(() => ({
   request: vi.fn(),
   status: 'unknown',
@@ -34,34 +31,20 @@ const toastMock = vi.hoisted(() =>
 );
 const routerPush = vi.hoisted(() => vi.fn());
 
-vi.mock('@livekit/components-react', () => ({
-  useConnectionState: () => connection.state,
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn(async () => undefined) }),
 }));
-vi.mock('livekit-client', () => ({
-  ConnectionState: {
-    Connected: 'connected',
-    Connecting: 'connecting',
-    Disconnected: 'disconnected',
-  },
+vi.mock('@/lib/supabase/client', () => ({
+  default: () => ({ auth: { getClaims: vi.fn(async () => null) } }),
 }));
-vi.mock('@/hooks/use-connection', () => ({
-  useConnection: () => ({
-    connect: connection.connect,
-    disconnect: connection.disconnect,
-    shouldConnect: connection.shouldConnect,
-  }),
-}));
-vi.mock('@/hooks/use-call-timer', () => ({
-  useCallTimer: () => ({ formattedTime: '01:42' }),
-}));
-vi.mock('@/hooks/use-microphone-permission', () => ({
+vi.mock('@/components/call/use-microphone-permission', () => ({
   useMicrophonePermission: () => microphone,
 }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('next/dynamic', () => ({
   default: () =>
-    function InCallView({ preset }: { preset: Preset }) {
-      return <div data-testid="in-call-view">{preset.name}</div>;
+    function InCallView({ character }: { character: Character }) {
+      return <div data-testid="in-call-view">{character.name}</div>;
     },
 }));
 vi.mock('next/image', () => ({
@@ -71,7 +54,7 @@ vi.mock('next/image', () => ({
   ),
 }));
 vi.mock('sonner', () => ({ toast: toastMock }));
-vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+vi.mock('@/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
 }));
 vi.mock('@/lib/i18n/navigation', () => ({
@@ -90,39 +73,31 @@ vi.mock('@/lib/i18n/navigation', () => ({
   useRouter: () => ({ push: routerPush }),
 }));
 
-const featured: Preset = {
+const featured = makeCharacter({
   id: '6f1d9c2a-0000-4000-8000-000000000001',
   image: 'lily.webp',
-  instructions: '',
   isPublic: true,
   localizedDescriptions: { en: 'Shy, warm, and playful.' },
   name: 'Lily',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
-  voiceName: 'Ara',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Ara' },
   voiceSampleUrl: 'https://cdn.example.com/ara.mp3',
-};
+});
 
-const own: Preset = {
+const own = makeCharacter({
   id: '6f1d9c2a-0000-4000-8000-000000000002',
-  instructions: 'You are Marco, a patient Italian tutor.',
-  isPublic: false,
   localizedDescriptions: { en: 'Patient Italian tutor' },
-  localizedInstructions: { en: 'You are Marco, a patient Italian tutor.' },
+  localizedPrompts: { en: 'You are Marco, a patient Italian tutor.' },
   name: 'Marco',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
-  voiceName: 'Rex',
-};
+  prompt: 'You are Marco, a patient Italian tutor.',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Rex' },
+});
 
 const callVoices = ['Ara', 'Rex'].map(
-  (name, index): DBVoice => ({
+  (name): CallVoice => ({
     description: `${name} description`,
-    feature: 'call',
     id: `voice-${name}`,
-    language: 'en',
-    model: 'grok',
     name,
     sample_url: `https://cdn.example.com/${name}.mp3`,
-    sort_order: index,
     type: null,
   }),
 );
@@ -142,46 +117,54 @@ function renderExperience({
   isPaidUser = true,
   returnFromClone = null,
 }: {
-  customCharacters?: Preset[];
+  customCharacters?: Character[];
   isPaidUser?: boolean;
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <PlaygroundStateProvider
-        defaultPresets={[featured]}
-        initialCustomCharacters={customCharacters}
-        initialState={{ selectedPresetId: featured.id }}
+      <CallSetupProvider
+        customCharacters={customCharacters}
+        language="en"
+        predefinedCharacters={[featured]}
       >
-        <CallExperience
-          callVoices={callVoices}
-          isPaidUser={isPaidUser}
-          returnFromClone={returnFromClone}
-          savedVoices={[savedVoice]}
-        >
-          <p>Footer</p>
-        </CallExperience>
-      </PlaygroundStateProvider>
+        <CallSessionProvider>
+          <SessionProbe />
+          <CallExperience
+            callVoices={callVoices}
+            isPaidUser={isPaidUser}
+            returnFromClone={returnFromClone}
+            savedVoices={[savedVoice]}
+          >
+            <p>Footer</p>
+          </CallExperience>
+        </CallSessionProvider>
+      </CallSetupProvider>
     </NextIntlClientProvider>,
   );
 }
 
+let callSession: ReturnType<typeof useCallSession>;
+// Stands in for the LiveKit room, which reports to the session.
+function SessionProbe() {
+  callSession = useCallSession();
+  return null;
+}
+
 const savedResponse = (body: Record<string, unknown>, id: string) => ({
   id,
+  image: null,
   is_public: false,
   localized_descriptions: body.localizedDescriptions,
+  localized_sample_urls: null,
   name: body.name,
   prompts: { localized_prompts: body.localizedPrompts, prompt: body.prompt },
   session_config: body.sessionConfig,
-  voices: { name: body.voiceName },
+  voices: null,
 });
 
 beforeEach(() => {
   window.history.replaceState({}, '', '/en/dashboard/call');
-  connection.connect.mockReset().mockResolvedValue(undefined);
-  connection.disconnect.mockReset().mockResolvedValue(undefined);
-  connection.shouldConnect = false;
-  connection.state = 'disconnected';
   microphone.request.mockReset().mockResolvedValue(true);
   microphone.status = 'unknown';
   toastMock.mockClear().mockReturnValue('toast-id');
@@ -192,9 +175,20 @@ beforeEach(() => {
   window.scrollTo = vi.fn();
   fetchMock = vi.fn(async (url: string, init: RequestInit) => {
     if (url === '/api/clone-voice') {
+      const form = init.body as FormData;
       return Response.json({
-        audioReferenceId: clonedVoiceId,
-        provider: 'inworld',
+        voice: {
+          id: clonedVoiceId,
+          locale: form.get('locale'),
+          name: form.get('saveVoiceName'),
+          provider: 'inworld',
+        },
+      });
+    }
+    if (url === '/api/call-token') {
+      return Response.json({
+        accessToken: 'call-token',
+        url: 'wss://test.livekit.cloud',
       });
     }
     const body = JSON.parse(String(init.body));
@@ -211,6 +205,11 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
+
+const callTokenRequests = () =>
+  fetchMock.mock.calls
+    .filter(([url]) => url === '/api/call-token')
+    .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
 
 const lastPostBody = () => {
   const call = fetchMock.mock.calls.findLast(
@@ -280,12 +279,11 @@ describe('CallExperience panel', () => {
         {
           ...own,
           sessionConfig: {
-            ...defaultSessionConfig,
+            ...DEFAULT_SESSION_CONFIG,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
-            model: ModelId.INWORLD_TTS,
+            model: 'inworld-tts',
             voice: 'Deleted voice',
           },
-          voiceName: 'Deleted voice',
         },
       ],
     });
@@ -302,56 +300,81 @@ describe('CallExperience panel', () => {
       within(panel).getByRole('button', { name: 'Choose a voice' }),
     );
     expect(await screen.findByTestId('character-creator')).toBeVisible();
-    expect(connection.connect).not.toHaveBeenCalled();
+    expect(callTokenRequests()).toEqual([]);
   });
 
   it('opens the panel from a card and starts the call', async () => {
     const user = userEvent.setup();
-    const { rerender } = renderExperience();
+    renderExperience();
 
     await user.click(screen.getByRole('button', { name: 'Open Lily' }));
     const panel = await screen.findByTestId('call-panel');
     expect(within(panel).getByRole('heading', { name: 'Lily' })).toBeVisible();
     expect(within(panel).getByText(/Ara description/)).toBeInTheDocument();
 
-    connection.connect.mockImplementation(async () => {
-      connection.shouldConnect = true;
-    });
     await user.click(within(panel).getByRole('button', { name: 'Start call' }));
 
     expect(microphone.request).toHaveBeenCalledOnce();
-    expect(connection.connect).toHaveBeenCalledOnce();
-    const tree = () => (
-      <NextIntlClientProvider locale="en" messages={messages}>
-        <PlaygroundStateProvider
-          defaultPresets={[featured]}
-          initialCustomCharacters={[own]}
-          initialState={{ selectedPresetId: featured.id }}
-        >
-          <CallExperience
-            callVoices={callVoices}
-            isPaidUser
-            savedVoices={[savedVoice]}
-          />
-        </PlaygroundStateProvider>
-      </NextIntlClientProvider>
-    );
-    rerender(tree());
+    expect(callTokenRequests()).toEqual([
+      {
+        characterId: featured.id,
+        clientTime: expect.any(String),
+        language: 'en',
+        sceneId: null,
+        sceneText: null,
+        timeZone: expect.any(String),
+      },
+    ]);
     expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
+    expect(screen.queryByTestId('call-panel')).not.toBeInTheDocument();
   });
 
   it("starts a call from a card's Call without opening the panel", async () => {
     const user = userEvent.setup();
     renderExperience();
-    connection.connect.mockImplementation(async () => {
-      connection.shouldConnect = true;
-    });
 
     await user.click(screen.getByRole('button', { name: 'Call Lily' }));
 
-    await waitFor(() => expect(connection.connect).toHaveBeenCalledOnce());
+    expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
+    expect(callTokenRequests()).toMatchObject([{ characterId: featured.id }]);
     expect(microphone.request).toHaveBeenCalledOnce();
     expect(screen.queryByTestId('call-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows how long a call lasted and calls again', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+    await screen.findByTestId('in-call-view');
+
+    act(() => callSession.roomConnected());
+    act(() => callSession.agentChanged(true, 'listening'));
+    act(() => callSession.disconnect());
+
+    const ended = await screen.findByTestId('call-ended-view');
+    expect(ended).toHaveTextContent('Lily');
+    expect(ended).toHaveTextContent('00:00');
+
+    await user.click(within(ended).getByRole('button', { name: 'Call again' }));
+    expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
+    expect(callTokenRequests()).toHaveLength(2);
+  });
+
+  it('returns to the picker from an ended call', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+    await screen.findByTestId('in-call-view');
+    act(() => callSession.roomConnected());
+    act(() => callSession.disconnect());
+
+    const ended = await screen.findByTestId('call-ended-view');
+    await user.click(
+      within(ended).getByRole('button', { name: messages.call.ended.back }),
+    );
+
+    expect(await screen.findByTestId('character-picker')).toBeVisible();
+    expect(screen.queryByTestId('call-ended-view')).not.toBeInTheDocument();
   });
 
   it('opens the panel instead when the character has lost its voice', async () => {
@@ -361,9 +384,9 @@ describe('CallExperience panel', () => {
         {
           ...own,
           sessionConfig: {
-            ...defaultSessionConfig,
+            ...DEFAULT_SESSION_CONFIG,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
-            model: ModelId.INWORLD_TTS,
+            model: 'inworld-tts',
             voice: 'Deleted voice',
           },
         },
@@ -376,7 +399,7 @@ describe('CallExperience panel', () => {
     expect(
       within(panel).getByRole('button', { name: 'Choose a voice' }),
     ).toBeInTheDocument();
-    expect(connection.connect).not.toHaveBeenCalled();
+    expect(callTokenRequests()).toEqual([]);
   });
 
   it('opens the panel when a Call finds the microphone blocked', async () => {
@@ -387,7 +410,7 @@ describe('CallExperience panel', () => {
     await user.click(screen.getByRole('button', { name: 'Call Lily' }));
 
     expect(await screen.findByTestId('call-panel')).toBeInTheDocument();
-    expect(connection.connect).not.toHaveBeenCalled();
+    expect(callTokenRequests()).toEqual([]);
   });
 
   it('keeps the panel open without connecting when the microphone is blocked', async () => {
@@ -399,7 +422,7 @@ describe('CallExperience panel', () => {
     const panel = await screen.findByTestId('call-panel');
     await user.click(within(panel).getByRole('button', { name: 'Start call' }));
 
-    expect(connection.connect).not.toHaveBeenCalled();
+    expect(callTokenRequests()).toEqual([]);
     expect(screen.getByTestId('call-panel')).toBeInTheDocument();
   });
 
@@ -458,10 +481,9 @@ describe('CallExperience creator', () => {
       name: 'Max',
       sessionConfig: {
         audioReferenceId: savedVoice.id,
-        model: ModelId.MISTRAL_TTS,
+        model: 'mistral-tts',
         voice: 'My voice',
       },
-      voiceName: 'My voice',
     });
     expect(body.prompt).toContain('job-interview coach');
 
@@ -500,7 +522,9 @@ describe('CallExperience creator', () => {
 
     await user.click(within(creator).getByRole('button', { name: 'Call' }));
 
-    await waitFor(() => expect(connection.connect).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(callTokenRequests()).toMatchObject([{ characterId: own.id }]),
+    );
     expect(screen.queryByTestId('character-creator')).not.toBeInTheDocument();
   });
 
@@ -531,7 +555,7 @@ describe('CallExperience creator', () => {
     const personality = within(creator).getByRole('textbox', {
       name: 'Personality',
     });
-    expect(personality).toHaveValue(own.instructions);
+    expect(personality).toHaveValue(own.prompt);
 
     await user.clear(personality);
     await user.type(personality, 'You are Marco, now stricter.');
@@ -664,7 +688,7 @@ describe('CallExperience creator', () => {
     );
     expect(lastPostBody()).toMatchObject({
       sessionConfig: {
-        model: ModelId.INWORLD_TTS,
+        model: 'inworld-tts',
         audioReferenceId: clonedVoiceId,
         voice: 'Radio voice',
       },

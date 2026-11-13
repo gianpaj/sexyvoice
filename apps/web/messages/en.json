@@ -123,7 +123,6 @@
       "originalVoice": "Original recording",
       "hearOriginal": "Hear the original",
       "backToClone": "Back to the clone",
-      "tryVoice": "Use this delivery",
       "signUpAndClone": "Sign up and Clone",
       "seek": "Audio position",
       "preparedExamplesCaption": "Prepared examples. Listening is free; generation uses credits.",
@@ -211,23 +210,7 @@
         "action": "Clone your voice"
       }
     },
-    "generator": {
-      "title": "Try it now",
-      "subtitle": "Generate your first voice sample",
-      "selectVoice": "Select a voice",
-      "enterText": "Enter text to convert",
-      "speed": "Speed",
-      "pitch": "Pitch",
-      "generating": "Generating...",
-      "play": "Play",
-      "pause": "Pause",
-      "reset": "Reset",
-      "download": "Download"
-    },
     "popular": {
-      "title": "Popular Audio Samples",
-      "subtitle": "Listen to what others have created",
-      "loading": "Loading popular audios...",
       "trySamplesTitle": "Try Our Voice Samples",
       "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },
@@ -241,7 +224,7 @@
           "questions": [
             {
               "question": "Which languages can I generate speech in?",
-              "answer": "Language support depends on your voice and model. Gemini 3.1 voices support 70+ languages, while Gemini 2.5 voices support 24. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
+              "answer": "Language support depends on your voice and model. Gemini 3.8 voices support over 130 languages. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
             },
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
@@ -513,12 +496,10 @@
     "downloadAudio": "Download Audio",
     "enhanceTextTitle": "Enhance text with AI emotion tags",
     "error": "Failed to generate audio",
-    "GEMINI_OUTPUT_LIMIT": "The voice reached its audio output limit. Shorten the text and try again.",
     "errorEstimating": "Failed to estimate credits",
     "estimateCreditsButton": "Estimate credits",
     "fullscreenTitle": "Fullscreen",
     "generating": "Generating",
-    "gproLimitExceeded": "You have reached the free limit of __COUNT__ generations with this model. Buy credits to keep using it.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
@@ -581,8 +562,9 @@
       "multilingualGroupLabel": "Multilingual 🌍",
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
-      "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS supports over 130 languages. Style instructions control tone and pace; inline tags add vocal sounds.",
       "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast> and supports 24 languages:\n🇪🇬 Arabic (Egypt, Saudi Arabia and UAE),\n🇧🇩 Bengali,\n🇳🇱 Dutch (Netherlands),\n🇨🇳 Chinese (Simplified),\n🇺🇸 English,\n🇫🇷 French,\n🇩🇪 German,\n🇮🇳 Hindi,\n🇮🇩 Indonesian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇧🇷 Portuguese (Brazil, Portugal),\n🇷🇺 Russian,\n🇪🇸 Spanish (Mexico, Spain),\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese",
+      "orpheusInfo": "Model: Orpheus-TTS (text-to-speech AI model) - Commercial use ✔️",
       "featuredBadge": "Featured",
       "selectVoicePlaceholder": "Select a voice...",
       "searchPlaceholder": "Search name, style, or model...",
@@ -597,26 +579,27 @@
       "voiceListLabel": "Voices"
     },
     "split": {
+      "characterCount": "{characters} chars -> {segments} segments",
       "segmentPreviews": "Segment previews",
-      "segmentLabel": "Segment __INDEX__",
+      "segmentLabel": "Segment {INDEX}",
       "downloadAll": "Download All",
       "joiningWav": "Joining audio...",
       "preparingJoiner": "Preparing audio joiner...",
       "retry": "Retry",
       "segmentCannotBeEmpty": "Segment text cannot be empty.",
-      "segmentFailed": "Segment __INDEX__ failed. Generation stopped.",
-      "segmentGenerated": "Segment __INDEX__ generated.",
-      "segmentRetryFailed": "Segment __INDEX__ retry failed.",
+      "segmentFailed": "Segment {INDEX} failed. Generation stopped.",
+      "segmentGenerated": "Segment {INDEX} generated.",
+      "segmentRetryFailed": "Segment {INDEX} retry failed.",
       "progressTitle": "Audio generation",
-      "progressTitleWithVoice": "__VOICE__ generation",
-      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "progressTitleWithVoice": "{VOICE} generation",
+      "progressSegment": "Segment {CURRENT}/{TOTAL}",
       "statusGenerated": "Generated",
       "statusGenerating": "Generating...",
       "statusFailed": "Failed",
       "statusPending": "Pending",
       "splitToggleLabel": "Split into segments",
       "splitToggleDisabled": "Split text audios is available for paid users.",
-      "tooManySegments": "Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.",
+      "tooManySegments": "Split text can have at most {COUNT} segments. Shorten the text or combine segments before generating.",
       "downloadAllFailed": "Failed to download all segments."
     },
     "advancedSettings": {
@@ -633,13 +616,6 @@
         "description": "Pin a seed for reproducible results. Leave empty for a random seed.",
         "placeholder": "Random",
         "randomize": "Randomize seed"
-      },
-      "streaming": {
-        "label": "Streaming",
-        "description": "Stream audio as it's generated (Gemini 3.1 only).",
-        "auto": "Auto",
-        "on": "On",
-        "off": "Off"
       },
       "temperature": {
         "label": "Temperature",
@@ -672,7 +648,11 @@
     "instructionsRejected": "This call couldn't start because the character or scene didn't pass the AI provider's safety checks. Edit the character or scene and try again.",
     "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
     "microphoneUnavailable": "Couldn't access your microphone. Check that it is connected, close other apps using it, and try again.",
+    "upgradeRequired": "Custom characters and scenes need a plan. Buy credits to use them.",
+    "characterUnavailable": "This character or its voice is no longer available. Reload the page and try again.",
+    "agentError": "Something went wrong during the call. Please try again.",
     "disconnected": "Disconnected",
+    "allowAudio": "Click to allow audio playback",
     "availableInputs": "Available inputs",
     "audioSettings": "Audio Settings",
     "enhancedNoiseFilter": "Enhanced Noise Filter",
@@ -854,7 +834,7 @@
       "recorded": "Recorded",
       "recordAgain": "Record again",
       "dropFile": "Drop an audio file here, or <browse>browse</browse>",
-      "fileHint": "MP3, WAV or M4A · up to {size} · one person talking, no music",
+      "fileHint": "MP3, WAV or OGG · up to {size} · one person talking, no music",
       "removeFile": "Remove file",
       "fileTooLarge": "This file is larger than {size}.",
       "needRecording": "Record at least {seconds} seconds first.",
@@ -891,7 +871,7 @@
     "errorCloning": "Failed to clone voice",
     "errorTooLarge": "File size too large. Please use a smaller audio file.",
     "errorTitle": "Error",
-    "fileFormatsText": "MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. {SIZE})",
     "generating": "Generating",
     "languageLabel": "Language",
     "languageSelectPlaceholder": "Select a language",
@@ -906,23 +886,24 @@
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "textToConvertLabel": "Enter text to generate speech",
     "title": "Clone a Voice",
-    "tryDemo": "Or try with a demo:",
     "uploadAudioFile": "Upload reference audio",
     "orUseMicrophone": "or use your microphone",
     "micRecord": "Record",
     "micStop": "Stop",
+    "micChoose": "Choose microphone",
+    "micInputs": "Available inputs",
+    "micReset": "Reset microphone",
     "errors": {
       "noAudioFile": "Please select an audio file.",
       "noText": "Please enter some text to convert to speech.",
-      "ffmpegLoading": "The audio converter is still loading. Please try again in a moment",
       "audioConversionFailed": "Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.",
       "audioConversionRequiredWebm": "WebM audio must be converted before uploading. Please try recording again.",
-      "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
-      "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
+      "audioDurationInvalidFallback": "Audio must be at least {MIN} seconds.",
+      "audioDurationInvalidVoxtral": "Reference audio must be at least {MIN} seconds for voice cloning.",
       "audioDurationUnknown": "Could not determine audio duration.",
       "fileTooLarge": "File size too large. Please use a smaller audio file.",
       "guardrailViolation": "This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.",
-      "insufficientCredits": "You need __CREDITS__ credits to clone this audio.",
+      "insufficientCredits": "You need {CREDITS} credits to clone this audio.",
       "internalError": "Failed to clone voice. Please try again.",
       "invalidContentType": "The upload request is invalid. Please try again.",
       "invalidFileType": "Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.",
@@ -930,8 +911,8 @@
       "missingRequiredParameters": "Please enter text and select an audio file.",
       "providerRequestRejected": "The voice provider couldn't use this recording or text. Please try a different one.",
       "referenceAudioEnhancementInputTooLarge": "The reference audio is too large to enhance. Please use a smaller file or turn off audio cleanup.",
-      "referenceAudioEnhancementInputTooLong": "Reference audio cleanup supports clips up to __MAX__ seconds.",
-      "textTooLong": "Text exceeds the maximum length of __MAX__ characters.",
+      "referenceAudioEnhancementInputTooLong": "Reference audio cleanup supports clips up to {MAX} seconds.",
+      "textTooLong": "Text exceeds the maximum length of {MAX} characters.",
       "unsupportedAudioFormat": "Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.",
       "unsupportedLocale": "This language is not supported for voice cloning.",
       "userNotFound": "Please sign in to clone a voice.",
@@ -940,12 +921,7 @@
       "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
       "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language.",
       "savedVoiceNotFound": "This saved voice no longer exists.",
-      "savedVoiceLimitReached": "You can save up to __MAX__ voices. Delete one to save another."
-    },
-    "sampleCard": {
-      "sourceAudio": "Source audio",
-      "exampleOutput": "Example",
-      "loadSource": "Load source"
+      "savedVoiceLimitReached": "You can save up to {MAX} voices. Delete one to save another."
     },
     "crossLanguageInfo": {
       "title": "Cross-Language Voice Transfer",
@@ -955,23 +931,19 @@
     "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.",
     "referenceAudioEnhancementLabel": "Clean up the reference audio",
     "referenceAudioEnhancementHelp": "Removes background noise and enhances speech audio. Recommended for noisy or mobile phone recordings. This costs 10 credits per second of trimmed reference audio.",
-    "errorEnhancingReferenceAudio": "Failed to enhance reference audio. Please try again or turn off reference audio enhancement.",
     "failedToLoadAudioProcessor": "Failed to load audio processor",
-    "failedToStartRecording": "Failed to start recording: __ERROR__",
+    "failedToStartRecording": "Failed to start recording: {ERROR}",
     "microphoneError": "Microphone error",
-    "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
-    "referenceAudioGuidanceLong": "Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
-    "paidTextLimitTooltip": "You can generate longer speech, up to __MAX__ characters.",
-    "upgradeTextLimitTooltip": "Buy credits to generate longer speech, up to __MAX__ characters.",
-    "audioDurationUnknown": "Could not determine audio duration.",
-    "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
-    "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
+    "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.",
+    "referenceAudioGuidanceLong": "Use a clear reference clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.",
+    "paidTextLimitTooltip": "You can generate longer speech, up to {MAX} characters.",
+    "upgradeTextLimitTooltip": "Buy credits to generate longer speech, up to {MAX} characters.",
     "audioConversionFailed": "Audio conversion failed. Please try recording again.",
-    "audioConversionFailedWithMessage": "Audio conversion failed: __ERROR__",
+    "audioConversionFailedWithMessage": "Audio conversion failed: {ERROR}",
     "unexpectedError": "Unexpected error occurred",
     "loadingAudioProcessor": "Loading audio processor...",
     "audioProcessorError": "Audio Processor Error",
-    "preparingAudioProcessor": "Preparing audio processor for __LANGUAGE__...",
+    "preparingAudioProcessor": "Preparing audio processor for {LANGUAGE}...",
     "removeFile": "Remove file",
     "convertingAudio": "Converting audio",
     "savedVoice": {
@@ -1126,10 +1098,8 @@
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
     "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
-    "/": "",
-    "/voice-call": "Voice Call",
-    "/login": "Sign In",
-    "/signup": "Sign Up Free – 10,000 Credits",
+    "titleLogin": "Sign In",
+    "titleSignup": "Sign Up Free – 10,000 Credits",
     "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
@@ -1264,11 +1234,7 @@
       "ctaLoggedOut": "Claim offer",
       "ariaLabelDismiss": "Dismiss Black Friday banner",
       "countdown": {
-        "prefix": "Deal ends in:",
-        "days": "Days",
-        "hours": "Hours",
-        "minutes": "Min",
-        "seconds": "Sec"
+        "prefix": "Deal ends in:"
       },
       "pricing": {
         "bannerText": "Black Friday Sale"
@@ -1292,7 +1258,7 @@
       "ariaLabelDismiss": "Dismiss cloned voice calls announcement"
     },
     "expressiveVoicesLaunch": {
-      "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
+      "text": "New, more expressive voices are here — powered by Gemini 3.8, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss expressive voices announcement"
@@ -1419,6 +1385,33 @@
           "answer": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English",
+      "open": {
+        "name": "Open the transcription tool",
+        "text": "Navigate to the free audio transcription tool on SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Add your audio",
+        "text": "Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone."
+      },
+      "chooseModel": {
+        "name": "Choose a Whisper model",
+        "text": "Select {tiny} for fast transcription or {small} for higher accuracy."
+      },
+      "selectLanguage": {
+        "name": "Select language and task",
+        "text": "Pick the language of your audio. Choose \"{transcribe}\" to keep the original language, or \"{translate}\"."
+      },
+      "transcribe": {
+        "name": "Transcribe",
+        "text": "Click \"{button}\". The model downloads once and is cached for future use."
+      },
+      "copy": {
+        "name": "Copy your transcript",
+        "text": "Your timestamped transcript appears instantly. Copy it with one click."
+      }
     }
   },
   "audioJoiner": {
@@ -1462,13 +1455,42 @@
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
     "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds.",
-    "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry."
+    "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry.",
+    "GEMINI_OUTPUT_LIMIT": "The voice reached its audio output limit. Shorten the text and try again."
   },
   "ttsEditor": {
+    "filterTags": "Filter...",
+    "tagSuggestions": "Suggestions",
     "label": "Speech text",
     "effects": "Voice effects",
     "emotions": "Emotions",
     "pace": "Pace",
     "vocalSounds": "Vocal sounds"
+  },
+  "blogPost": {
+    "audienceCreators": "content creators",
+    "audienceLabel": "Target audience:",
+    "audienceStorytellers": "storytellers",
+    "by": "By",
+    "level": "Beginner to Intermediate",
+    "published": "Published: {date}",
+    "readingTime": "{minutes} min read",
+    "resourceType": "tutorial",
+    "resourceTypeLabel": "Resource type:",
+    "seriesNote": "This article is part of our comprehensive guide to AI voice technology.",
+    "topics": {
+      "speechSynthesis": "Speech Synthesis",
+      "voiceAi": "Voice AI",
+      "voiceCloning": "Voice Cloning"
+    },
+    "topicsLabel": "Topics:",
+    "wordCount": "{count, plural, one {# word} other {# words}}"
+  },
+  "policy": {
+    "updated": "Updated {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "Canonical URL: {url}",
+    "features": "Features"
   }
 }

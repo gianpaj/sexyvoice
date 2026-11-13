@@ -1,5 +1,6 @@
 import assetManifest from './clone-demo-assets.json';
 import {
+  CLONE_DEMO_ASSET_DIR,
   CLONE_DEMO_VOICES,
   type CloneDemoTakeId,
   getCloneDemoPrompt,
@@ -41,7 +42,7 @@ export interface DemoCloneSpeaker {
   takes: readonly DemoCloneTake[];
 }
 
-export interface DemoCloneLanguage {
+interface DemoCloneLanguage {
   languageCode: DemoLanguageCode;
   /** Staged text, not the transcript of any ready audio. */
   prompt: string;
@@ -64,7 +65,7 @@ function getClip(filename: string): DemoCloneClip {
   return {
     durationSeconds: asset.durationSeconds,
     peaks: asset.waveform.peaks,
-    src: `/demo-clones/voxtral-3/${filename}`,
+    src: `/${CLONE_DEMO_ASSET_DIR}/${filename}`,
   };
 }
 
@@ -100,10 +101,6 @@ export function getDemoCloneSelection(
   return speaker && take ? { speaker, take } : null;
 }
 
-export function getDemoCloneTranscript(script: string): string {
-  return script.replace(/\[[^\]]*\]/g, '').trim();
-}
-
 export function getDemoCloneLanguages(locale: string): DemoCloneLanguage[] {
   const initialLanguage = resolveInitialDemoLanguageCode(locale);
   const languages = CLONE_DEMO_LANGUAGES.map((language) => ({
@@ -120,8 +117,10 @@ export function getDemoCloneLanguages(locale: string): DemoCloneLanguage[] {
 }
 
 export function resolveInitialDemoSpeakerId(pageLocale: string): string {
+  const languageCode = resolveInitialDemoLanguageCode(pageLocale);
   return (
-    demoCloneSpeakers.find((speaker) => speaker.languageCode === pageLocale) ??
-    demoCloneSpeakers[0]
+    demoCloneSpeakers.find(
+      (speaker) => speaker.languageCode === languageCode,
+    ) ?? demoCloneSpeakers[0]
   ).id;
 }

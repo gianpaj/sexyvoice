@@ -1,12 +1,4 @@
-import { captureException } from '@sentry/nextjs';
-
-import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
-import {
-  externalApiErrorResponse,
-  getExternalApiRequestId,
-} from '@/lib/api/external-errors';
-import { consumeRateLimit } from '@/lib/api/rate-limit';
-import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
+import { withExternalApi } from '@/lib/api/handler';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 type BillingTransactionType =
@@ -23,40 +15,15 @@ interface BillingTransaction {
   type: BillingTransactionType;
 }
 
-export async function GET(request: Request) {
-  const requestId = getExternalApiRequestId();
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return externalApiErrorResponse({
-      key: 'missing_authorization_header',
-      requestId,
-    });
-  }
+export const GET = withExternalApi(
+  '/api/v1/billing',
+  async (_request, { auth, respond }) => {
+    const admin = createAdminClient();
 
-  const authResult = await validateApiKey(authHeader);
-  if (!authResult) {
-    return externalApiErrorResponse({
-      key: 'invalid_api_key',
-      requestId,
-    });
-  }
-
-  const rateLimit = await consumeRateLimit(authResult.keyHash);
-  if (!rateLimit.allowed) {
-    return externalApiErrorResponse({
-      key: 'rate_limit_exceeded',
-      rateLimit,
-      requestId,
-    });
-  }
-
-  const admin = createAdminClient();
-
-  try {
     const { data: creditsData, error: creditsError } = await admin
       .from('credits')
       .select('amount, updated_at')
-      .eq('user_id', authResult.userId)
+      .eq('user_id', auth.userId)
       .maybeSingle();
 
     if (creditsError) {
@@ -68,7 +35,7 @@ export async function GET(request: Request) {
       .select(
         'id, type, amount, description, created_at, reference_id, subscription_id, metadata',
       )
-      .eq('user_id', authResult.userId)
+      .eq('user_id', auth.userId)
       .in('type', ['purchase', 'topup'])
       .order('created_at', { ascending: false })
       .limit(1);
@@ -80,32 +47,15 @@ export async function GET(request: Request) {
     const lastTransaction = (transactionData?.[0] ??
       null) as BillingTransaction | null;
 
-    return jsonWithRateLimitHeaders(
+    return respond(
       {
         creditsLeft: creditsData?.amount ?? 0,
         lastBillingTransaction: lastTransaction,
         lastUpdated: creditsData?.updated_at ?? null,
-        userId: authResult.userId,
+        userId: auth.userId,
       },
       { status: 200 },
-      rateLimit,
-      requestId,
     );
-  } catch (error) {
-    captureException(error, {
-      extra: {
-        endpoint: '/api/v1/billing',
-        requestId,
-        userId: authResult.userId,
-      },
-    });
-    return externalApiErrorResponse({
-      key: 'server_error',
-      message: 'Failed to fetch billing balance',
-      rateLimit,
-      requestId,
-    });
-  } finally {
-    await updateApiKeyLastUsed(authResult.keyHash);
-  }
-}
+  },
+  { serverErrorMessage: 'Failed to fetch billing balance' },
+);

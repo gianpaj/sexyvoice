@@ -45,7 +45,7 @@ The repository has three main workspaces:
   components, server actions, and route handlers.
 - **Supabase** provides Google OAuth, PostgreSQL, RLS-protected user data, and
   privileged server access through `SUPABASE_SECRET_KEY`.
-- **Google Generative AI** provides Gemini 2.5 and Gemini 3.1 TTS, text
+- **Google Generative AI** provides Gemini 3.8 TTS, text
   enhancement, and emotion tagging.
 - **xAI** provides Grok TTS, the real-time call model, and structured call
   transcript analysis.
@@ -59,24 +59,20 @@ The repository has three main workspaces:
   `R2_BUCKET_NAME`; `/api/v1/speech` uses `R2_SPEECH_API_BUCKET_NAME`.
 - **Upstash Redis** caches dashboard TTS and cloned output and rate-limits
   external API keys.
-- **Vercel Edge Config** supplies default call instructions. Character prompts
-  come from PostgreSQL and are resolved again when the server mints a token.
 - **Stripe** manages subscriptions, top-ups, and credit purchases.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
 
 ## Provider and Model Map
 
-| Feature                  | Public or stored ID                                       | Runtime provider/model                                                   | Notes                                                                     |
-| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Dashboard TTS            | `gpro`                                                    | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
-| External API TTS         | `gpro`                                                    | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
-| Dashboard and API TTS    | `gpro31`                                                  | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
-| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
-| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
-| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
+| Feature                  | Public or stored ID                                       | Runtime provider/model                                              | Notes                                                                               |
+| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Dashboard and API TTS    | `gpro38`                                                  | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                                     |
+| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                                    |
+| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus`                     |
+| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                                                  |
+| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider; `lib/calls/models.ts` |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                                     |
 
 ## External REST API
 
@@ -100,13 +96,13 @@ API-key provisioning; the external API does not issue OAuth tokens.
 
 ### Endpoints
 
-| Method | Path              | Description                                             |
-| ------ | ----------------- | ------------------------------------------------------- |
-| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
-| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
-| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
-| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
-| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
+| Method | Path              | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                      |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs       |
+| `GET`  | `/api/v1/models`  | List the `gpro38`, `xai`, and `orpheus` catalog  |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document           |
 
 Clients may select speech voices by `voiceId`, or by the `voice` and `model`
 pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
@@ -141,7 +137,7 @@ flowchart TD
     E --> F["Validate model, format, style, and input length"]
     F --> G["Check and reserve estimated credits"]
     G --> H{"Provider"}
-    H -->|"gpro / gpro31"| I["Generate with Gemini"]
+    H -->|"gpro38"| I["Generate with Gemini"]
     H -->|"xai"| J["Generate with xAI TTS"]
     H -->|"orpheus"| K["Generate with Replicate"]
     I --> L["Upload to external API R2 bucket"]
@@ -184,11 +180,44 @@ flowchart TD
     H -->|"Failure"| Q["Refund reserved credits"]
 ```
 
-The route enforces model- and tier-specific text limits: 500 characters by
-default and 1,000 for paid Gemini and Grok requests. Gemini accepts style,
-seed, and temperature; seed and temperature require a paid account. Grok
-accepts a speech-speed multiplier. Provider-affecting advanced settings create
-distinct cache keys.
+`lib/tts/models.ts` has one entry per active speech model: provider, stored
+model IDs, label, text and style limits per tier, formats, accepted settings,
+credit estimate, inline tags and enhance prompt. Adding a model means an entry
+there, a provider adapter in `lib/tts/synthesize.ts` for a new provider, a
+price in `lib/tts/provider-cost.ts`, and its `voices` rows. The catalog
+excludes the retired `gpro` and `gpro31` models from
+voice lists, lookups, generation, and estimates. Requests for retired model
+aliases fail validation; retired UUIDs return voice-not-found before cache
+access or charging. Historical voice rows remain public so history joins,
+playback, and downloads can resolve their names and audio. Provider-cost
+reporting retains the retired models' historical rates.
+
+`validateGenerationInput` in `apps/web/lib/tts/generation-input.ts` holds the
+input rules the dashboard and the three speech routes share. Text limits are
+500 characters by default and 1,000 for paid Gemini and Grok requests. Gemini
+takes a style with its own limit (1,000 characters, 2,500 when paid), a seed,
+and a temperature; seed and temperature require a paid account. Grok takes a
+speech-speed multiplier and a language from `GROK_LANGUAGES`. The dashboard
+route drops settings the voice ignores or the plan excludes and clamps the
+rest, so only settings the provider receives create distinct cache keys. The
+external API instead counts the style toward the input limit and rejects
+settings out of range.
+
+The generate page calls the dashboard speech routes through
+`apps/web/lib/tts/speech-client.ts`, which also defines the request, response,
+and error bodies the routes return. Two error codes carry localized copy:
+`PROVIDER_UNAVAILABLE`, which names the provider, and `GEMINI_OUTPUT_LIMIT`
+(HTTP 422), sent when Gemini stops at its audio output limit and the audio may
+be cut off. The page shows the route's message for any other failure, and the
+HTTP status after every message.
+
+Split mode, for paid users, cuts long text into up to 20 segments that fit
+every model's paid request limit, without breaking a Grok wrapper or an inline
+tag. `useSplitGeneration` in `apps/web/components/split-generation/` generates
+them in order, skips segments already generated, and stops at the first
+failure. Its session is keyed by the full text and the request fields
+`generateSpeech` sends, so any change to them starts over. The latest session
+persists in `localStorage` under `generate-split-session`.
 
 The dashboard sends `textImproved` to record whether Improve text succeeded in
 the current edit chain, not whether the current text still contains AI-added
@@ -196,7 +225,7 @@ tags. Non-empty edits, including select-all replacement with unrelated text,
 preserve the flag. Clearing the text resets it, and Undo restores its prior
 value. Pending improvements are discarded if the text changes before they
 complete. The route stores the boolean in
-`audio_files.usage.textImproved` for JSON and streaming generations. Omitted or
+`audio_files.usage.textImproved` for generations. Omitted or
 non-boolean values resolve to `false`. Cache hits reuse the existing audio row
 and its original metadata; the flag does not affect cache keys.
 
@@ -216,7 +245,7 @@ flowchart TD
     C --> D["Normalize to WAV when supported and trim to provider limit"]
     D --> S{"Save voice for calls?"}
     S -->|"Yes: paid and consented"| T["Create provider voice, generate R2 preview, and save owned profile"]
-    T --> U["Return audioReferenceId and provider"]
+    T --> U["Return the saved voice row"]
     S -->|"No"| E["Hash processed audio and check Redis output cache"]
     E -->|"Hit"| F["Return cached URL at zero credits"]
     E -->|"Miss"| G{"Enhancement requested?"}
@@ -259,8 +288,11 @@ Mistral) to the dashboard R2 bucket under
 `call-voice-samples/<profile-id>/<random-id>.<mp3|wav>`,
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
-attempts to clean up the provider voice and any attempted R2 upload. The response contains
-`audioReferenceId` and `provider`. This action charges no speech credits. The
+attempts to clean up the provider voice and any attempted R2 upload. The response
+returns the saved row (`id`, `name`, `locale`, `provider`) as `voice`, and both
+the Clone page and the call clone dialog add it to their lists. The upload
+contract (accepted types, the 4.5 MB limit, the 50-character name) lives in
+`lib/clone/reference-audio.ts`. This action charges no speech credits. The
 platform pays for the sample: a zero-credit `voice_cloning` usage event with
 `metadata.operation = 'saved_voice_sample'` records its provider cost, which
 daily stats include. The user's Usage page lists it as a free cloning
@@ -317,7 +349,8 @@ Changing the default does not convert existing profiles or voice IDs.
 | Chatterbox Multilingual | `da`, `en-multi`, `fi`, `he`, `ms`, `sv`, `sw`                                                                                     | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 The dashboard language dropdown and `POST /api/clone-voice` use
-`apps/web/lib/clone/constants.ts` for the same locale list and provider routing.
+`apps/web/lib/clone/constants.ts` for the same locale list and
+`apps/web/lib/clone/providers.ts` for provider routing.
 The list contains 28 languages plus the explicit English Chatterbox option.
 Mistral confirms 21 languages in its
 [TTS preset table](https://docs.mistral.ai/studio/audio/specs-and-limits/languages)
@@ -326,11 +359,12 @@ Its claimed 35-language coverage is not fully enumerated. Danish, Finnish,
 Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
 this routing does not establish that Mistral cannot speak them.
 
-Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
-Chatterbox accepts 300. Reference audio must be at least 10 seconds for every
-provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
-separately. Longer references are trimmed to 25 seconds for
-Voxtral or 10 seconds for Chatterbox when conversion permits.
+`CLONE_PROVIDERS` in `lib/clone/providers.ts` holds each provider's model,
+text limits, and reference audio bounds. Voxtral accepts 1,000 text characters
+for free users and 4,000 for paid users; Chatterbox accepts 300 and Inworld
+2,000. Reference audio must be at least 10 seconds for every provider. Longer
+references are trimmed to 25 seconds for Voxtral, 30 for Inworld, or 10 for
+Chatterbox when conversion permits.
 
 Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
 converted to WAV in the client; the route rejects unconverted WebM. The route
@@ -350,15 +384,22 @@ live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline
 
 ### Tagged speech editing
 
-`apps/web/components/tts-editor.tsx` shares the Tiptap editor between Grok speech
-and Voxtral cloning. The provider selects its tag catalog, autocomplete, and
-unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
-Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
-`apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
-a closing tag. The clone form uses a textarea for Chatterbox locales.
+`apps/web/components/speech-text-field.tsx` is the speech text field of the
+generate and clone pages, with one character count. Providers with a tag
+catalog, Grok speech and Voxtral cloning, get the Tiptap editor in
+`apps/web/components/speech-tags/tag-editor.tsx`; other voices and Chatterbox
+locales get a textarea.
 
-`apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
-Copying preserves tag syntax and line breaks; unknown tags remain literal text.
+`apps/web/components/speech-tags/catalog.ts` holds each provider's tag catalog,
+which drives parsing, chips, autocomplete, unknown-tag highlighting, and
+split-safe cutting. Grok supports instant tags and paired wrappers; Voxtral
+supports 34 emotion tags, pace tags, and the documented vocal sounds. Voxtral
+tags apply to the following text without a closing tag. Gemini 3.8 and Orpheus
+tags exist only in their Improve text prompts.
+
+`apps/web/components/speech-tags/text.ts` parses and serializes provider tags as
+plain text. Copying preserves tag syntax and line breaks; unknown tags remain
+literal text.
 The API receives the text unchanged. Tag characters count toward the existing
 text limits. Mistral documents tag behavior as tested in English; its other
 listed languages are untested.
@@ -423,11 +464,11 @@ Endpoint: `POST /api/call-token`
 
 ```mermaid
 flowchart TD
-    A["Choose a character or a custom voice and personality"] --> B["POST /api/call-token"]
+    A["Choose a saved character, language and scene"] --> B["POST /api/call-token"]
     B --> C["Authenticate Supabase session"]
     C --> D["Check minimum credits and free-user lifetime call limit"]
-    D --> E["Validate configuration and normalize the call model"]
-    E --> F["Resolve character prompt from PostgreSQL"]
+    D --> E["Validate the per-call choices"]
+    E --> F["Load the character's prompt and call settings from PostgreSQL"]
     F --> G["Authorize paid custom-character and scene features"]
     G --> H["Resolve voice ID"]
     H --> I["Mint LiveKit token with server-resolved metadata"]
@@ -444,15 +485,27 @@ The token route accepts 20 call languages. It requires at least 1,000 credits;
 free users also have a five-minute lifetime call allowance. The current billed
 rate is 1,000 credits per minute.
 
-The call-token request has a 30-second deadline covering the response body;
-expiry aborts the request, shows a localized error, and releases the call button.
-The browser allows another 30 seconds for the initial LiveKit connection, including
-regional retries, after the call token is available. Connecting to the room
-clears the deadline. A deadline expiry or terminal connection error disconnects
-the room, shows a localized message, and resets the call controls so the user can
-try again with a fresh token. An unexpected disconnect after connection also
-resets the controls and refreshes credits; an intentional hangup does not show a
-connection error.
+`CallSessionProvider` (`components/call/call-session.tsx`) owns one call at a
+time: requesting a token, connecting to the room, connected, and the last
+ended call. LiveKit's room callbacks and the agent's presence and state, reported
+from inside the room, feed it, and the views render its state. It owns three
+deadlines. The call-token request has 30 seconds, covering the response body;
+expiry aborts the request, shows a localized error, and releases the call
+button. The initial LiveKit connection, including regional retries, has
+another 30 seconds once the token is available; connecting to the room clears
+it. A connected call ends when the agent does not join, or leaves and does not
+come back, within 10 seconds. A deadline expiry or terminal connection error
+disconnects the room, shows a localized message, and resets the call controls
+so the user can try again with a fresh token. An unexpected disconnect after
+connection also resets the controls and refreshes credits; an intentional
+hangup does not show a connection error.
+
+Refusals and agent errors carry stable codes, listed with their messages in
+`lib/calls/errors.ts`. call-token returns `code` in its error responses
+(`insufficient_credits`, `free_call_limit`, `paid_character`, `paid_scene`,
+`character_not_found`, `voice_not_found`); the agent's `pg.error` RPC sends
+`active_call`, `insufficient_credits` or `instructions_rejected`. An unknown
+code shows a generic localized message.
 
 In this audio-only wrapper, `LiveKitRoom.onError` after connection reports
 microphone acquisition or publishing failures. Every such error shows localized
@@ -461,28 +514,32 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-Predefined character prompt text never reaches the browser. The token route loads
-it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters
-and custom scenes require a paid account.
+The browser sends only the character ID, the call language and the scene. The
+token route loads the saved character with an admin query and takes everything
+else from it: the prompt in the call language (the default prompt when that
+language has none), the model, voice, temperature and max output tokens.
+`buildAgentMetadata` in `lib/calls/call-token.ts` turns them into the LiveKit
+token metadata the agent reads. Predefined character prompt text never reaches
+the browser. Custom characters and scene text require a paid account.
 
-Every call-token request captures the browser clock as `clientTime`, an ISO
-timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
-these optional fields and forwards them as `client_time` and `time_zone` in
-LiveKit participant metadata. Invalid clock fields are ignored. SexyCall adds
-the caller's local date and time to the system prompt and exposes
-`get_current_time` for a fresh reading during the call. Clock context is
-independent of the selected language and long-term memory preference.
+Every call-token request carries the browser clock from
+`lib/calls/caller-time.ts`: `clientTime`, an ISO timestamp, and `timeZone`, an
+IANA zone such as `Europe/Rome`. `callTokenRequestSchema` drops invalid values
+without refusing the call, and `buildAgentMetadata` forwards them as
+`client_time` and `time_zone`. SexyCall adds the caller's local date and time
+to the system prompt and exposes `get_current_time` for a fresh reading during
+the call. Clock context is independent of the selected language and the
+memory preference.
 
-Long-term memory is on by default for free and paid accounts. The Profile
-page's Voice Call Memory switch saves `call_memory_enabled` in Auth
-`user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
-absent preference to enabled. The call-token route reads the current preference
-with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
-and cannot override a saved opt-out. The lookup overlaps voice and character
-resolution. A failed lookup logs a warning and starts the call without memory.
-An explicit request flag of `memory: false` also disables memory. This is a
-user preference, not an entitlement or authorization check.
+Long-term memory is on by default for free and paid accounts.
+`lib/calls/memory.ts` owns the preference and its erasure. The Profile page's
+Voice Call Memory switch saves `call_memory_enabled` in Auth `user_metadata`
+through `auth.updateUser()`, and an absent preference counts as enabled. The
+call-token route reads the current preference with `getUser()` for each call;
+JWT metadata is a snapshot and cannot override a saved opt-out. The lookup
+overlaps voice and character resolution. A failed lookup logs a warning and
+starts the call without memory. This is a user preference, not an
+entitlement or authorization check.
 
 Call tokens send `memory_scope: "both"`. The agent retrieves shared user
 profiles under `__shared__` together with the active character's relationship
@@ -499,13 +556,17 @@ off, the agent neither loads nor saves memories for that call. Stored memories
 remain until erased with the Profile page's delete action, which calls
 `DELETE /api/memories`. Memory controls live only on the Profile page.
 Account deletion also erases every memory row and its embedding across all
-character scopes. Both deletion paths use `lib/supabase/memories.ts` to filter
+character scopes. Both deletion paths use `lib/calls/memory.ts` to filter
 by the authenticated user. A failed memory erasure blocks the account-deletion
 success response and is reported to Sentry.
 
 ### Call Setup
 
-Characters are voice-and-prompt bundles. The call page
+Characters are voice-and-prompt bundles. Call code lives in `lib/calls/`
+(characters, models, languages, scenes, the call-token request and agent
+metadata, error codes) and `components/call/`. `CallSetupProvider`
+(`components/call/call-setup.tsx`) holds the characters, the selected one,
+the call language and the scene. The call page
 (`components/call/call-experience.tsx`) has a picker with "Your characters"
 and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
 on phones) with the voice sample, language, scene, microphone status and
@@ -523,17 +584,28 @@ personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
 copies its name, description and voice, never its prompt. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next
-to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
-character can call, for both the panel and a card's Call. Deleting a
-character removes it from the list at once; the DELETE request waits until
+to an `UpgradeCrown`. `callReadiness` in `lib/calls/characters.ts` decides
+whether a character can call, for both the panel and a card's Call. Deleting
+a character removes it from the list at once; the DELETE request waits until
 the Undo toast closes or the page is hidden.
+
+`lib/calls/characters.ts` owns the character row: the select lists, the
+`session_config` parser and defaults, the localized fallbacks and the mapping
+to `Character`, plus the browser client for `/api/characters`. Predefined
+characters are selected without prompt text. A custom character is deleted by
+deleting its prompt: `characters.prompt_id` cascades, so `DELETE
+/api/characters` and account deletion remove both in one statement. Creating
+a character inserts the prompt, then the character, and removes the prompt if
+the second insert fails; an update writes the prompt and then the character in
+two statements.
 
 The creator's Clone a voice dialog records or uploads a sample and saves a
 profile through the save-only `/api/clone-voice` path, using the call
 language when the configured provider supports it and English otherwise. The Clone page links
 back with `?custom=1&voice=<id>` to start a character with that voice. The
-call page reads that query on the server and passes it to `CallExperience`
-as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
+call page reads its query on the server: `?preset=<id>` selects a loaded
+character and opens its panel, and `custom` and `voice` reach `CallExperience`
+as `returnFromClone`. `CallSetupProvider` rewrites the URL on mount,
 before `LiveKitRoom` renders its children. Prompt text never enters the URL;
 only `?preset=<id>` is written.
 
@@ -549,15 +621,22 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 ### Call Configuration
 
-| Setting           | Current behavior                                                                    |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-2.0`, `inworld-tts`, or `mistral-tts`                        |
-| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                    |
-| Instructions      | Server-resolved database prompt for the selected character                          |
-| Language          | 20 supported call languages; English fallback                                       |
-| Memory            | On by default for all accounts; saved Profile opt-out                               |
+| Setting           | Current behavior                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Model             | `grok-voice-think-fast-2.0` for built-in voices; `inworld-tts` or `mistral-tts` for saved voices |
+| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters              |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                                   |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                                 |
+| Instructions      | Server-resolved database prompt for the selected character                                       |
+| Language          | 20 supported call languages; English fallback                                                    |
+| Memory            | On by default for all accounts; saved Profile opt-out                                            |
+
+`lib/calls/models.ts` lists the call models: each model's pipeline (Grok
+realtime or STT + LLM + TTS), saved-voice provider and provider cost per
+minute. It maps the retired `grok-voice-think-fast-1.0` to 2.0, so saved
+characters run on 2.0 and past 1.0 sessions keep a price. `lib/calls/languages.ts` lists the call languages, and the
+server-only `lib/calls/greetings.ts` holds each language's opening
+instruction for the agent.
 
 ### Call transcript analysis
 
@@ -589,20 +668,25 @@ Flow:
    dies or fails between the claim and that write, the claim is left alone and
    parked as `failed` after 15 minutes (never resubmitted, since the batch may
    already be billed), with the batch id in the Sentry error when it is known.
-4. Failed requests never persist an analysis row. Retryable failures return to
-   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
-   The analysis scripts count their failures in the same `attempts` column and
-   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
-   them. Each in-flight batch is reconciled in isolation
-   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
-   a batch that has not settled after 48 hours is abandoned: its rows return
-   to `pending` under the same attempt limit.
+4. Failed requests never persist an analysis row. `attempts` counts analyses
+   that came back failed, from the cron or the scripts. A retryable failure
+   returns the row to `pending`, so the cron retries it, until the third
+   failed attempt parks it as `failed` with `last_error`; a final failure
+   (no usable transcript, session gone) parks it at once. `failed` is terminal
+   for every engine: the scripts skip parked sessions, and
+   `backfill-call-analysis --retry-failed` reprocesses them. A script's
+   successful analysis completes the session's queue row. Each in-flight batch
+   is reconciled in isolation (one unreadable batch id is reported to Sentry
+   and skipped, not fatal), and a batch that has not settled after 48 hours
+   is abandoned: each of its rows counts a failed attempt.
 
 Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
-the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
-batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
-`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
-scripts import the same modules, so every path writes identical rows.
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`, and the queue states,
+attempt rule and session columns in `apps/web/lib/ai/call-analysis-queue.ts`.
+The `scripts/analyze-call-sessions.mjs` and
+`scripts/backfill-call-analysis.mjs` scripts import the same modules, so every
+path writes identical rows and follows the same retry rule.
 
 ## Data and Storage
 
@@ -794,10 +878,11 @@ The query's 60-second `staleTime` is not polling.
 balance; support investigations should verify `public.credits.amount`.
 
 `invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
-after non-cancelled generation requests, including split segments and retries,
-and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
-scopes the refresh to the verified user. Cache hits skip it because they do not
-charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+after speech requests, on call-token 402s, call disconnect, or a balance-error
+Retry. Disconnect scopes the refresh to the verified user. For speech,
+`generateSpeech` refreshes after each request, split segments and retries
+included, unless the audio came from the cache, which does not charge, or the
+request was cancelled. Cancellation is best-effort:
 provider work that has finished can retain a charge during upload or reconciliation.
 The aborted fetch cannot confirm settlement, so it skips immediate invalidation
 to avoid caching a temporary reservation before a refund. A late charge can leave
@@ -840,8 +925,10 @@ Dashboard TTS and voice cloning use persistent Redis entries with no explicit
 TTL. Cache hits return the existing URL and consume zero credits.
 
 - TTS keys use a SHA-256 digest of the rendered text, voice, effective model,
-  seed, temperature, and speed. The stored digest is truncated to eight hex
-  characters.
+  and the settings the model uses: seed, temperature, speed, style, and the
+  Grok language when it is not `auto`. The stored digest is truncated to eight
+  hex characters. `lib/tts/cache-key.ts` builds the key, which is also the R2
+  object key.
 - Clone keys use locale, provider, text, processed reference-audio hash, and
   enhancement mode.
 - Paid and free dashboard TTS outputs use separate R2 path prefixes.
@@ -849,6 +936,26 @@ TTL. Cache hits return the existing URL and consume zero credits.
 
 External API rate limiting uses an Upstash token bucket with a capacity and
 refill rate of 60 requests per minute per API key hash.
+
+## Public Site
+
+- `lib/site.ts` names the site: its origin (`NEXT_PUBLIC_SITE_URL`), name,
+  logo and social links. `lib/structured-data.ts` builds JSON-LD from it, with
+  one Organization node that other nodes reference by `@id`.
+- `lib/page-metadata.ts` builds each page's metadata: canonical URL, hreflang
+  for the locales the page exists in plus `x-default`, the title template and
+  the share image. The root layout holds only site-wide defaults.
+- `components/marketing-page.tsx` renders the public shell (banner, header,
+  `<main id="main-content">`, footer). Tool pages and shared hero and CTA
+  sections build on it.
+- `lib/content.ts` reads posts and policies. Drafts never build a page or reach
+  the sitemap. Policies are written in English and Spanish; other locales show
+  the English text, with the English page as canonical.
+- `lib/public-routes.ts` lists the pages that exist in every locale. The
+  sitemap adds posts and policies in the locales they are written in.
+- `lib/landing-content.ts` feeds the landing page, its FAQ JSON-LD and
+  `/landing.md` from one model; `lib/markdown-for-agents.ts` renders the agent
+  markdown for pages and posts.
 
 ## Repository Map
 
@@ -872,9 +979,9 @@ apps/
 │   │   ├── stripe/                    # Checkout and webhooks
 │   │   └── v1/                        # External REST API
 │   ├── components/                    # Shared and feature UI
-│   ├── data/                          # Call models, voices, scenes, defaults
-│   ├── hooks/                         # Call, audio, and client state
-│   ├── lib/                           # API, Supabase, storage, AI, and billing
+│   ├── data/                          # Clone demo voices, takes, and assets
+│   ├── hooks/                         # Shared client hooks (FFmpeg, recording, uploads)
+│   ├── lib/                           # TTS, cloning, calls, credits, API, Supabase, storage
 │   ├── messages/                      # next-intl locale files
 │   ├── supabase/migrations/           # PostgreSQL schema and RLS
 │   ├── tests/                         # Vitest tests

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
@@ -7,9 +6,14 @@ import {
   type S3Client,
 } from '@aws-sdk/client-s3';
 
-export function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
-}
+import { sha256 } from './files.mts';
+import { isPreconditionFailed } from './r2-client.mts';
+import {
+  parsePublicOrigin,
+  r2Folder,
+  r2ObjectKey,
+  r2PublicUrl,
+} from './r2-keys.mts';
 
 export interface R2FileUpload {
   key: string;
@@ -24,31 +28,8 @@ export async function planR2FileUploads(
   publicUrl?: string,
 ): Promise<R2FileUpload[]> {
   if (!files.length) throw new Error('Provide at least one file');
-  const folder = prefix.replace(/\/+$/, '');
-  if (
-    folder.length > 0 &&
-    folder
-      .split('/')
-      .some(
-        (part) => !part || part === '.' || part === '..' || part.includes('\\'),
-      )
-  ) {
-    throw new Error(
-      'Prefix must contain relative folder names without . or .. segments',
-    );
-  }
-  const base = publicUrl ? new URL(publicUrl) : undefined;
-  if (
-    base &&
-    (base.protocol !== 'https:' ||
-      base.username ||
-      base.password ||
-      base.search ||
-      base.hash ||
-      base.pathname !== '/')
-  ) {
-    throw new Error('Public URL must be an HTTPS origin');
-  }
+  const folder = r2Folder(prefix);
+  if (publicUrl) parsePublicOrigin(publicUrl);
   const keys = new Set<string>();
   const targets: R2FileUpload[] = [];
   for (const file of files) {
@@ -56,18 +37,14 @@ export async function planR2FileUploads(
     const stat = await lstat(filename);
     if (!stat.isFile() || stat.isSymbolicLink())
       throw new Error(`Expected a regular file: ${filename}`);
-    const key = folder
-      ? `${folder}/${path.basename(filename)}`
-      : path.basename(filename);
+    const key = r2ObjectKey(folder, path.basename(filename));
     if (keys.has(key)) throw new Error(`Duplicate destination: ${key}`);
     keys.add(key);
     targets.push({
       path: filename,
       key,
       sha256: sha256(await readFile(filename)),
-      publicUrl: base
-        ? new URL(key.split('/').map(encodeURIComponent).join('/'), base).href
-        : undefined,
+      publicUrl: publicUrl ? r2PublicUrl(publicUrl, key) : undefined,
     });
   }
   return targets;
@@ -104,12 +81,8 @@ export async function uploadR2File(options: {
       }),
     );
   } catch (error) {
-    // Identical objects can be verified on retries without overwriting existing data.
-    if (
-      (error as { $metadata?: { httpStatusCode?: number } }).$metadata
-        ?.httpStatusCode !== 412
-    )
-      throw error;
+    // An existing object is verified below; it is never overwritten.
+    if (!isPreconditionFailed(error)) throw error;
   }
   const head = await client.send(
     new HeadObjectCommand({ Bucket: bucket, Key: key }),

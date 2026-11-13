@@ -10,11 +10,8 @@ import {
   type S3Client,
 } from '@aws-sdk/client-s3';
 
-import {
-  planR2FileUploads,
-  sha256,
-  uploadR2File,
-} from './lib/r2-file-upload.mts';
+import { sha256 } from './lib/files.mts';
+import { planR2FileUploads, uploadR2File } from './lib/r2-file-upload.mts';
 
 const bytes = Buffer.from('any file contents');
 
@@ -96,7 +93,7 @@ test('rejects missing files, directories, symlinks, duplicate destinations, and 
       planR2FileUploads([file, duplicate], ''),
       /Duplicate destination/,
     );
-    await assert.rejects(planR2FileUploads([file], '../bad'), /Prefix/);
+    await assert.rejects(planR2FileUploads([file], '../bad'), /Folder/);
     await assert.rejects(
       planR2FileUploads([file], 'demo', 'https://files.sexyvoice.ai/path'),
       /HTTPS origin/,

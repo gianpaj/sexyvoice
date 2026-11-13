@@ -8,6 +8,7 @@ import {
   type SampleAudio,
 } from '@/app/sample-audio';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
+import { FILES_URL } from '@/lib/site';
 
 interface SampleAudioPreviewsProps {
   initialAudios: SampleAudio[];
@@ -38,7 +39,7 @@ export function SampleAudioPreviews({
       <div className="grid gap-6 md:grid-cols-2">
         {audios.map((audio) => (
           <AudioPreviewCard
-            audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
+            audioSrc={`${FILES_URL}/${audio.audioSrc}`}
             dir={audio.dir}
             key={audio.id}
             lang={audio.lang}

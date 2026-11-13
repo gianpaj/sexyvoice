@@ -5,13 +5,14 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { DropZone } from './components/drop-zone';
-import { JoinControls } from './components/join-controls';
-import { TrackList } from './components/track-list';
 import {
   type JoinerOutputFormat,
   useFFmpegJoiner,
-} from './hooks/use-ffmpeg-joiner';
+} from '@/hooks/use-ffmpeg-joiner';
+import { downloadBlob } from '@/lib/download';
+import { DropZone } from './components/drop-zone';
+import { JoinControls } from './components/join-controls';
+import { TrackList } from './components/track-list';
 import './audio-joiner.css';
 
 interface TrackSegment {
@@ -431,14 +432,7 @@ export default function AudioJoinerClient() {
         outputFormat,
       );
 
-      const outputUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = outputUrl;
-      anchor.download = `joined-audio.${outputFormat}`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
+      downloadBlob(blob, `joined-audio.${outputFormat}`);
       toast.success(t('success.downloadStarted'));
     } catch (err) {
       if (err instanceof Error && err.message === 'CANCELLED') {
@@ -473,7 +467,7 @@ export default function AudioJoinerClient() {
         </p>
       </header>
 
-      <main className="glass-card animate-fade-in rounded-3xl p-4 md:p-8">
+      <div className="glass-card animate-fade-in rounded-3xl p-4 md:p-8">
         <div className="space-y-6">
           <TrackList
             currentTimeSec={currentTimeSec}
@@ -526,7 +520,7 @@ export default function AudioJoinerClient() {
             outputFormat={outputFormat}
           />
         </div>
-      </main>
+      </div>
     </>
   );
 }

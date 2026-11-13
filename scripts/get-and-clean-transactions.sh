@@ -19,7 +19,3 @@ SQL_SELECT="select ct.*, p.username, p.stripe_id from public.credit_transactions
 psql $SUPABASE_DB_URL -c "COPY ($SQL_SELECT) TO STDOUT WITH CSV HEADER DELIMITER ',';" > $FILE
 
 echo "[TRANSACTIONS]: Exported credit_transactions to ${FILE}"
-
-python scripts/clean-transactions.py ${FILE}
-
-# python scripts/analyze-credit-transactions.py ${FILE}

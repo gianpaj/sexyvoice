@@ -1,7 +1,3 @@
-export const i18n = {
-  defaultLocale: 'en',
-  localePrefix: 'always',
-  locales: ['en', 'es', 'de', 'da', 'it', 'fr'],
-} as const;
+import type { routing } from '@/src/i18n/routing';
 
-export type Locale = (typeof i18n)['locales'][number];
+export type Locale = (typeof routing.locales)[number];

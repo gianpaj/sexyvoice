@@ -10,24 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
+import { AUDIO_OUTPUT_FORMATS, type AudioOutputFormat } from '@/lib/ffmpeg';
 
 interface Props {
   disabled: boolean;
-  onChange: (value: AudioFormat) => void;
-  value: AudioFormat;
+  onChange: (value: AudioOutputFormat) => void;
+  value: AudioOutputFormat;
 }
 
-const formats: { value: AudioFormat; label: string }[] = [
-  { label: 'MP3', value: 'mp3' },
-  { label: 'WAV', value: 'wav' },
-  { label: 'AAC', value: 'aac' },
-  { label: 'OGG', value: 'ogg' },
-  { label: 'FLAC', value: 'flac' },
-  { label: 'M4A', value: 'm4a' },
-  { label: 'MP4', value: 'mp4' },
-];
+const formats = Object.entries(AUDIO_OUTPUT_FORMATS).map(
+  ([value, { label }]) => ({ label, value: value as AudioOutputFormat }),
+);
 
 export function FormatSelector({ value, onChange, disabled }: Props) {
   const t = useTranslations('audioConverter.formatSelector');

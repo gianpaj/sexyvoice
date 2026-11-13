@@ -1,11 +1,16 @@
-import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { Effect, Result } from 'effect';
 import { all as progressAll } from 'effective-progress';
 
-import { loadScriptEnv } from './lib/env.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  requiredEnv,
+  runScript,
+} from './lib/cli.mts';
+import { fileTimestamp, writeNewJson } from './lib/files.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   assertR2BucketName,
@@ -15,6 +20,8 @@ import {
   downloadWithoutOverwrite,
   formatBytes,
   listAllObjects,
+  locationIdentity,
+  objectIdentity,
   parseByteSize,
   type R2Client,
   type R2Location,
@@ -131,22 +138,22 @@ class DownloadOutcomeError extends Error {
 }
 
 export function parseBackupCliArgs(args: string[]): BackupCliOptions {
-  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
-  const { values } = parseArgs({
-    allowPositionals: false,
-    args: normalizedArgs,
-    options: {
-      'download-dir': { type: 'string' },
-      'dry-run': { default: false, type: 'boolean' },
-      help: { default: false, short: 'h', type: 'boolean' },
-      'max-download-size': { type: 'string' },
-      source: { type: 'string' },
+  const { values } = parseCliArgs(
+    {
+      options: {
+        'download-dir': { type: 'string' },
+        'dry-run': { default: false, type: 'boolean' },
+        help: { default: false, short: 'h', type: 'boolean' },
+        'max-download-size': { type: 'string' },
+        source: { type: 'string' },
+      },
     },
-    strict: true,
-  });
+    args,
+  );
 
+  const downloadDir = values['download-dir'];
   const options: BackupCliOptions = {
-    downloadDir: values['download-dir'],
+    downloadDir: downloadDir?.trim() ? inputPath(downloadDir) : downloadDir,
     dryRun: values['dry-run'],
     help: values.help,
     maxDownloadBytes: values['max-download-size']
@@ -168,8 +175,8 @@ export function resolveBackupSources(
   const rawSources =
     source === undefined
       ? [
-          requiredEnv(environment, 'R2_BUCKET_NAME'),
-          requiredEnv(environment, 'R2_SPEECH_API_BUCKET_NAME'),
+          requiredEnv('R2_BUCKET_NAME', environment),
+          requiredEnv('R2_SPEECH_API_BUCKET_NAME', environment),
         ]
       : source.split(',');
 
@@ -186,7 +193,7 @@ export function resolveBackupSources(
       prefix: separator === -1 ? '' : value.slice(separator + 1),
     };
     assertR2BucketName(location.bucket);
-    unique.set(sourceIdentity(location), location);
+    unique.set(locationIdentity(location), location);
   }
 
   const locations = [...unique.values()];
@@ -250,7 +257,7 @@ export async function runBackup(
         reason: errorMessage(listing.reason),
       });
     } else {
-      objectsBySource.set(sourceIdentity(source), listing.value);
+      objectsBySource.set(locationIdentity(source), listing.value);
     }
   }
 
@@ -263,7 +270,7 @@ export async function runBackup(
       results: [],
       sources,
     });
-    await writeJson(reportPath, report);
+    await writeNewJson(reportPath, report);
     for (const failure of listingFailures) {
       log(`Listing failed for ${displaySource(failure)}: ${failure.reason}`);
     }
@@ -421,7 +428,7 @@ export async function runBackup(
     results: orderedResults,
     sources,
   });
-  await writeJson(reportPath, report);
+  await writeNewJson(reportPath, report);
   printFailures(log, orderedResults);
   printCompletion(
     log,
@@ -496,7 +503,7 @@ function createBackupReport({
   const byBucket = new Map<string, BucketStatusSummary>();
   const byStatus = new Map<BackupStatus, StatusSummary>();
   for (const result of results) {
-    const sourceKey = `${sourceIdentity(result)}\0${result.status}`;
+    const sourceKey = `${locationIdentity(result)}\0${result.status}`;
     const sourceTotal = bySource.get(sourceKey) ?? {
       bucket: result.bucket,
       bytes: 0,
@@ -541,7 +548,7 @@ function createBackupReport({
     results,
     schemaVersion: REPORT_SCHEMA_VERSION,
     sourceTotals: sources.map((source) => {
-      const objects = objectsBySource.get(sourceIdentity(source)) ?? [];
+      const objects = objectsBySource.get(locationIdentity(source)) ?? [];
       return {
         ...source,
         bytes: totalBytes(objects),
@@ -574,7 +581,7 @@ function printSourceTotals(
 ): void {
   log('Source totals');
   for (const source of sources) {
-    const objects = objectsBySource.get(sourceIdentity(source)) ?? [];
+    const objects = objectsBySource.get(locationIdentity(source)) ?? [];
     log(
       `  ${displaySource(source)}: ${objects.length} objects, ${formatBytes(totalBytes(objects))}`,
     );
@@ -690,16 +697,6 @@ function formatDuration(milliseconds: number): string {
   return seconds < 10 ? `${seconds.toFixed(1)}s` : `${Math.round(seconds)}s`;
 }
 
-function sourceIdentity(source: R2Location): string {
-  return `${source.bucket}\0${source.prefix}`;
-}
-
-function objectIdentity(
-  object: Pick<R2ObjectMetadata, 'bucket' | 'key'>,
-): string {
-  return `${object.bucket}\0${object.key}`;
-}
-
 function displaySource(source: R2Location): string {
   return source.prefix ? `${source.bucket}/${source.prefix}` : source.bucket;
 }
@@ -709,35 +706,15 @@ function displayReportPath(reportPath: string): string {
   return relative.startsWith('..') ? reportPath : relative;
 }
 
-function fileTimestamp(date: Date): string {
-  return date.toISOString().replace(/[:.]/g, '-');
-}
-
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function requiredEnv(environment: NodeJS.ProcessEnv, name: string): string {
-  const value = environment[name];
-  if (!value) {
-    throw new Error(`Missing env.${name}`);
-  }
-  return value;
-}
-
-async function writeJson(filePath: string, value: unknown): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
-    encoding: 'utf8',
-    flag: 'wx',
-  });
 }
 
 function printHelp(): void {
   console.log(`Back up R2 audio to a local directory without overwriting files.
 
 Usage:
-  pnpm backup-r2-audio -- --download-dir <path> [options]
+  pnpm backup-r2-audio --download-dir <path> [options]
 
 Options:
   --download-dir <path>       Required local backup directory
@@ -748,13 +725,13 @@ Options:
 }
 
 async function main(): Promise<void> {
-  loadScriptEnv();
   const options = parseBackupCliArgs(process.argv.slice(2));
   if (options.help) {
     printHelp();
     return;
   }
 
+  loadScriptEnv();
   const sources = resolveBackupSources(options.source, process.env);
   const result = await runBackup(options, sources, {
     client: createR2Client(),
@@ -762,12 +739,4 @@ async function main(): Promise<void> {
   process.exitCode = result.exitCode;
 }
 
-const entryPoint = process.argv[1]
-  ? pathToFileURL(path.resolve(process.argv[1])).href
-  : undefined;
-if (entryPoint === import.meta.url) {
-  main().catch((error: unknown) => {
-    console.error(errorMessage(error));
-    process.exitCode = 1;
-  });
-}
+runScript(import.meta.url, main);
