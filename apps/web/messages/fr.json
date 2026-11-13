@@ -999,17 +999,17 @@
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
-        "button": "Supprimer le compte",
-        "confirmTitle": "Êtes-vous absolument sûr ?",
-        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
-        "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
+        "button": "Supprimer le contenu",
+        "confirmTitle": "Supprimer le contenu de votre compte ?",
+        "confirmDescription": "Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Nous conservons vos identifiants de connexion, votre profil et vos crédits restants. Les données d'utilisation sont conservées pour la facturation et le suivi des coûts internes. Vos clés API cesseront de fonctionner. En vous reconnectant avec la même adresse e-mail, vous retrouverez le même compte avec les mêmes crédits. Le contenu supprimé ne peut pas être récupéré.",
+        "alertTitle": "Supprimez le contenu de votre compte",
         "cancel": "Annuler",
         "continue": "Continuer",
         "errors": {
           "manageBilling": "Gérer la facturation",
-          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
-          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer.",
-          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre contenu.",
+          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre contenu n'a pas été supprimé. Veuillez réessayer.",
+          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre contenu. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
           "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
         }
       }

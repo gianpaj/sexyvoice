@@ -995,17 +995,17 @@
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
-        "button": "Slet konto",
-        "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
-        "alertTitle": "Bekræft at du vil slette din konto",
+        "button": "Slet indhold",
+        "confirmTitle": "Vil du slette indhold fra din konto?",
+        "confirmDescription": "Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Vi beholder dit login, din profil og dine resterende credits. Forbrugsoplysninger gemmes til fakturering og intern omkostningsopfølgning. Dine API-nøgler holder op med at virke. Hvis du logger ind igen med den samme e-mailadresse, får du adgang til den samme konto og de samme credits. Slettet indhold kan ikke gendannes.",
+        "alertTitle": "Slet indhold fra din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt",
         "errors": {
           "manageBilling": "Administrer fakturering",
-          "subscriptionExists": "Din konto har stadig et Stripe-abonnement. Opsig det i faktureringsportalen, og vent, til det udløber, før du sletter din konto.",
-          "subscriptionCheckFailed": "Vi kunne ikke kontrollere status for dit abonnement. Din konto er ikke blevet slettet. Prøv igen.",
-          "accountBillingBlocked": "Kontosletning er blokeret af en tidligere sletteanmodning. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
+          "subscriptionExists": "Din konto har stadig et Stripe-abonnement. Opsig det i faktureringsportalen, og vent, til det udløber, før du sletter dit indhold.",
+          "subscriptionCheckFailed": "Vi kunne ikke kontrollere status for dit abonnement. Dit indhold er ikke blevet slettet. Prøv igen.",
+          "accountBillingBlocked": "Sletning af indhold er blokeret af en tidligere sletteanmodning. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
           "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
         }
       }

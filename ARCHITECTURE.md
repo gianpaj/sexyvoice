@@ -699,6 +699,17 @@ Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
 deleted files or characters.
 
+Account deletion clears `call_sessions.transcript` and revokes every owned API
+key through `lib/supabase/api-keys.ts`. Call-session metering fields and immutable
+`usage_events` remain available for billing and provider-cost reporting through
+`lib/usage-costs.ts`. API-key rows remain as audit references; setting
+`is_active = false` prevents them from authenticating external API requests.
+
+Transcript-derived `call_session_analysis` rows and aggregate reports remain as
+internal analytics. Deletion clears the transcript stored when cleanup runs.
+It does not end active calls or block later transcript writes. A running call
+can save its transcript again and trigger analysis.
+
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
 expiration. Successful requests release their reservations. A rejection releases

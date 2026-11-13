@@ -78,7 +78,7 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     const deleteButton = profilePage.deleteAccountButton;
     await expect(deleteButton).toBeVisible();
     // The button should be a destructive variant (red)
-    await expect(deleteButton).toHaveText(/delete account/i);
+    await expect(deleteButton).toHaveText(/delete content/i);
   });
 
   test('should open delete confirmation dialog', async ({ page }, testInfo) => {
