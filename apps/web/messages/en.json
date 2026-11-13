@@ -999,7 +999,7 @@
       "deleteAccount": {
         "button": "Delete content",
         "confirmTitle": "Delete content from your account?",
-        "confirmDescription": "This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. We keep your login, profile and remaining credits. API usage history and call transcripts are also kept. Active API keys keep working. Signing in again with the same email restores the same account and credits. Deleted content cannot be restored.",
+        "confirmDescription": "This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories and transcripts\n• Cloned voices\n\nYou will be signed out. We keep your login, profile and remaining credits. Usage records are kept for billing and internal cost tracking. Your API keys will stop working. Signing in again with the same email restores the same account and credits. Deleted content cannot be restored.",
         "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
         "continue": "Continue",

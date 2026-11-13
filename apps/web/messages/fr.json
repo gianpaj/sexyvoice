@@ -1001,7 +1001,7 @@
       "deleteAccount": {
         "button": "Supprimer le contenu",
         "confirmTitle": "Supprimer le contenu de votre compte ?",
-        "confirmDescription": "Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Nous conservons vos identifiants de connexion, votre profil et vos crédits restants. Nous conservons aussi l'historique d'utilisation de l'API et les transcriptions des appels. Les clés API actives continuent de fonctionner. En vous reconnectant avec la même adresse e-mail, vous retrouverez le même compte avec les mêmes crédits. Le contenu supprimé ne peut pas être récupéré.",
+        "confirmDescription": "Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs et les transcriptions des appels\n• Les voix clonées\n\nVous serez déconnecté. Nous conservons vos identifiants de connexion, votre profil et vos crédits restants. Les données d'utilisation sont conservées pour la facturation et le suivi des coûts internes. Vos clés API cesseront de fonctionner. En vous reconnectant avec la même adresse e-mail, vous retrouverez le même compte avec les mêmes crédits. Le contenu supprimé ne peut pas être récupéré.",
         "alertTitle": "Supprimez le contenu de votre compte",
         "cancel": "Annuler",
         "continue": "Continuer",

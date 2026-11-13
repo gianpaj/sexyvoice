@@ -1001,7 +1001,7 @@
       "deleteAccount": {
         "button": "Eliminar contenido",
         "confirmTitle": "¿Eliminar contenido de tu cuenta?",
-        "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. También conservamos el historial de uso de la API y las transcripciones de las llamadas. Las claves API activas siguen funcionando. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
+        "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos y las transcripciones de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. Conservamos los registros de uso para la facturación y el seguimiento de costes internos. Tus claves API dejarán de funcionar. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
         "alertTitle": "Elimina contenido de tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar",

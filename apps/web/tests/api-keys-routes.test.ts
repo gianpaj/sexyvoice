@@ -105,6 +105,14 @@ describe('/api/api-keys routes', () => {
   });
 
   it('deactivates API key', async () => {
+    const keyUpdate = {
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue({
+        data: [{ id: 'key-1' }],
+        error: null,
+      }),
+      update: vi.fn().mockReturnThis(),
+    };
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
         getClaims: vi.fn().mockResolvedValue({
@@ -113,14 +121,7 @@ describe('/api/api-keys routes', () => {
         }),
         getUser: mockGetUser,
       },
-      from: vi.fn(() => ({
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockResolvedValue({
-          data: [{ id: 'key-1' }],
-          error: null,
-        }),
-        update: vi.fn().mockReturnThis(),
-      })),
+      from: vi.fn(() => keyUpdate),
     } as never);
 
     const response = await DELETE(new Request('http://localhost'), {
@@ -131,6 +132,11 @@ describe('/api/api-keys routes', () => {
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
     expect(mockGetUser).not.toHaveBeenCalled();
+    expect(keyUpdate.update).toHaveBeenCalledWith({ is_active: false });
+    expect(keyUpdate.eq.mock.calls).toEqual([
+      ['user_id', 'test-user-id'],
+      ['id', 'key-1'],
+    ]);
   });
 
   it('returns 404 when key does not exist or belongs to another user', async () => {
