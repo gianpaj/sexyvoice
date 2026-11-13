@@ -461,9 +461,11 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-The call page loads predefined character prompts with an admin query for paid
-users so the creator can prefill a private copy. Free users receive only prompt
-metadata. The token route independently loads the prompt, chooses the requested
+The call page loads predefined character prompts with a session-scoped query for
+paid users so the creator can prefill a private copy. The page supplies only prompt
+metadata to free users. Public prompt rows retain the catalog's public-read RLS;
+the paid gate controls creator access, custom-character writes and calls.
+The token route independently loads the prompt, chooses the requested
 localized prompt or English fallback, and places it in LiveKit token metadata.
 Custom characters and custom scenes require a paid account.
 

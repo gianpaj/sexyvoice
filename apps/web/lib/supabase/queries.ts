@@ -58,10 +58,10 @@ export async function getPublicCallCharacters() {
   return data;
 }
 
-/** Load public character prompts server-side after verifying paid access. */
+/** Read public prompts with session RLS; the caller gates paid creator access. */
 export async function getPublicCallCharacterPrompts() {
-  const admin = createAdminClient();
-  const { data, error } = await admin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('characters')
     .select('id, prompts ( prompt, localized_prompts )')
     .eq('is_public', true);
