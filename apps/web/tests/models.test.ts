@@ -14,6 +14,12 @@ describe('normalizeCallModel', () => {
     expect(normalizeCallModel(model)).toBe(model);
   });
 
+  it('upgrades the retired grok-voice-think-fast-1.0 id', () => {
+    expect(normalizeCallModel('grok-voice-think-fast-1.0')).toBe(
+      'grok-voice-think-fast-2.0',
+    );
+  });
+
   it('falls back to the default for missing or unknown ids', () => {
     expect(normalizeCallModel(undefined)).toBe(DEFAULT_CALL_MODEL);
     expect(normalizeCallModel(null)).toBe(DEFAULT_CALL_MODEL);
@@ -40,7 +46,7 @@ describe('saved voice models', () => {
 });
 
 describe('saved characters', () => {
-  it('keep the model id they were saved with', () => {
+  it('upgrade a retired model id', () => {
     const character = toCharacter({
       id: '00000000-0000-4000-a000-000000000201',
       image: null,
@@ -57,6 +63,6 @@ describe('saved characters', () => {
       voices: null,
     });
 
-    expect(character.sessionConfig.model).toBe('grok-voice-think-fast-1.0');
+    expect(character.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
   });
 });

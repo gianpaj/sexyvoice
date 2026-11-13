@@ -48,6 +48,7 @@ export interface PlanData {
   price: number;
   pricePer1kCredits?: string;
   promoBonus?: string;
+  recurringPrice?: number;
   saveFromPrevPlanPer1kCredits?: number;
   /** Only present on subscription plans */
   subscriptionBonusCredits?: string;
@@ -132,6 +133,10 @@ export function PricingCards({
         </button>
       </div>
 
+      <p className="text-center text-muted-foreground text-sm">
+        {billingT(billingMode === 'monthly' ? 'monthlyNote' : 'oneTimeNote')}
+      </p>
+
       <div
         className={clsx('grid gap-6', {
           'md:grid-cols-1 lg:grid-cols-3': plans.length === 3,
@@ -183,7 +188,13 @@ export function PricingCards({
                 </div>
                 <div className="flex items-baseline gap-0.5">
                   <span className="font-bold text-3xl tabular-nums">
-                    ${plan.price}
+                    {format.number(plan.price, {
+                      style: 'currency',
+                      currency: 'USD',
+                      minimumFractionDigits: Number.isInteger(plan.price)
+                        ? 0
+                        : 2,
+                    })}
                   </span>
                   <span className="text-muted-foreground text-sm">
                     {plan.billing ??
@@ -192,14 +203,45 @@ export function PricingCards({
                         : billingT('oneTime'))}
                   </span>
                 </div>
+                {billingMode === 'monthly' &&
+                  plan.recurringPrice !== undefined &&
+                  plan.price !== plan.recurringPrice && (
+                    <p className="mt-1 text-muted-foreground text-xs">
+                      {billingT('introductoryPrice', {
+                        firstPrice: format.number(plan.price, {
+                          style: 'currency',
+                          currency: 'USD',
+                        }),
+                        renewalPrice: format.number(plan.recurringPrice, {
+                          style: 'currency',
+                          currency: 'USD',
+                        }),
+                      })}
+                    </p>
+                  )}
                 {!isPromoEnabled && plan.pricePer1kCredits ? (
                   <div className="mt-1 text-muted-foreground text-xs tabular-nums">
-                    ${plan.pricePer1kCredits} per 1k credits
+                    {t('pricePer1kCredits', {
+                      price: format.number(Number(plan.pricePer1kCredits), {
+                        style: 'currency',
+                        currency: 'USD',
+                        maximumFractionDigits: 3,
+                      }),
+                    })}
                     {plan.saveFromPrevPlanPer1kCredits && (
                       <>
                         {' '}
                         <span className="font-medium text-green-400">
-                          (save ${plan.saveFromPrevPlanPer1kCredits}/1k)
+                          {t('savePer1kCredits', {
+                            amount: format.number(
+                              plan.saveFromPrevPlanPer1kCredits,
+                              {
+                                style: 'currency',
+                                currency: 'USD',
+                                maximumFractionDigits: 3,
+                              },
+                            ),
+                          })}
                         </span>
                       </>
                     )}

@@ -318,9 +318,11 @@ describe('CallExperience panel', () => {
     expect(callTokenRequests()).toEqual([
       {
         characterId: featured.id,
+        clientTime: expect.any(String),
         language: 'en',
         sceneId: null,
         sceneText: null,
+        timeZone: expect.any(String),
       },
     ]);
     expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');

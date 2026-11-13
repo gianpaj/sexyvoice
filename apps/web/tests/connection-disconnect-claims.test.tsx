@@ -101,3 +101,49 @@ it('refreshes credits when a call is rejected for insufficient balance', async (
   expect(mocks.refetchQueries).not.toHaveBeenCalled();
   expect(result.current.session.phase.name).toBe('idle');
 });
+
+function tokenRequestBody(call: number) {
+  const [, init] = vi.mocked(fetch).mock.calls[call];
+  return JSON.parse(String(init?.body));
+}
+
+it('sends a fresh browser timestamp and time zone on every connection', async () => {
+  mocks.getClaims.mockResolvedValue({ data: null, error: null });
+  const before = Date.now();
+  const result = await hangUpConnectedCall();
+  const first = tokenRequestBody(0);
+  expect(first.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  expect(Date.parse(first.clientTime)).toBeGreaterThanOrEqual(before);
+  expect(Date.parse(first.clientTime)).toBeLessThanOrEqual(Date.now());
+
+  const later = new Date(Date.now() + 60_000);
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(later);
+  try {
+    await act(async () => {
+      await result.current.connect({ characterId: 'character-id' });
+    });
+    expect(tokenRequestBody(1).clientTime).toBe(later.toISOString());
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('connects when browser time zone detection fails', async () => {
+  const clock = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+    throw new Error('Time zone unavailable');
+  });
+  try {
+    const { result } = renderHook(useCallSession, {
+      wrapper: CallSessionProvider,
+    });
+    await act(async () => {
+      await expect(
+        result.current.connect({ characterId: 'character-id' }),
+      ).resolves.toBe('started');
+    });
+    expect(tokenRequestBody(0).timeZone).toBeUndefined();
+  } finally {
+    clock.mockRestore();
+  }
+});

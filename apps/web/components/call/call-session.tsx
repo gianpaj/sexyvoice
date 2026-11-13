@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 
 import type { CallTokenRequest } from '@/lib/calls/call-token';
+import { getCallerTime } from '@/lib/calls/caller-time';
 import { type CallErrorCode, callErrorMessage } from '@/lib/calls/errors';
 import { invalidateCredits } from '@/lib/credits-query';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -267,7 +268,7 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
       );
       try {
         const response = await fetch('/api/call-token', {
-          body: JSON.stringify(request),
+          body: JSON.stringify({ ...request, ...getCallerTime() }),
           headers: { 'Content-Type': 'application/json' },
           method: 'POST',
           signal: controller.signal,

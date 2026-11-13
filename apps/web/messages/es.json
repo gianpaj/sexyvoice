@@ -299,6 +299,18 @@
             {
               "question": "¿Para qué puedo usar la generación de voz?",
               "answer": "Crea audio para vídeos, podcasts, audiolibros, juegos, cursos y redes sociales. Usa solo voces y contenido para los que tengas los derechos."
+            },
+            {
+              "question": "¿Puedo probarlo antes de pagar?",
+              "answer": "Las cuentas nuevas reciben 10.000 créditos gratis. No necesitas tarjeta de crédito."
+            },
+            {
+              "question": "¿Puedo usar el audio comercialmente?",
+              "answer": "Sí. El audio que generas te pertenece y puedes usarlo comercialmente, siempre que tengas los derechos sobre las voces y el contenido que utilizas."
+            },
+            {
+              "question": "¿Cuánto tiempo se guardan los archivos de audio generados?",
+              "answer": "El audio generado se guarda durante 30 días en cuentas gratuitas y 90 días en cuentas de pago. Descarga los archivos que quieras conservar."
             }
           ]
         },
@@ -307,12 +319,28 @@
           "category": "Precios y acceso",
           "questions": [
             {
-              "question": "¿Cuántos créditos necesito?",
-              "answer": "Los nuevos usuarios reciben 10.000 créditos gratis. La cantidad de audio depende de la voz, el modelo y el texto. Compra créditos con una recarga o recibe créditos mensuales con una suscripción. La generación de voz y las llamadas usan el mismo saldo."
+              "question": "¿Compro créditos una vez o me suscribo?",
+              "answer": "Una compra única añade créditos sin suscripción. Suscríbete para recibir créditos cada mes, con un 15% de créditos extra."
             },
             {
-              "question": "¿Por qué elegir SexyVoice.ai?",
-              "answer": "Combinamos calidad de voz premium con herramientas simples y precios justos. Ya seas creador o empresa, obtendrás resultados profesionales sin contratos ni configuraciones complicadas. Los créditos gratuitos facilitan probar todo."
+              "question": "¿Cuánto puedo hacer con mis créditos?",
+              "answer": "Las llamadas en directo cuestan {count} créditos por minuto. El coste de generar voz depende de la voz, el modelo y la duración. Generar audio con una voz clonada consume más créditos que con las voces estándar."
+            },
+            {
+              "question": "¿Los créditos caducan o se acumulan?",
+              "answer": "Los créditos comprados no caducan. Los que no uses se acumulan, incluso después de cancelar tu suscripción."
+            },
+            {
+              "question": "¿Cuándo se renueva mi suscripción?",
+              "answer": "Tu suscripción se renueva automáticamente cada mes hasta que la canceles. Cualquier descuento del primer mes se aplica solo al primer pago. Los pagos posteriores usan el precio mensual habitual indicado al pagar."
+            },
+            {
+              "question": "¿Puedo cancelar y conservar mis créditos?",
+              "answer": "Cancela desde el portal de clientes de Stripe en la página de créditos. Tu plan sigue activo hasta el final del periodo pagado. Después, cesan las renovaciones mensuales. Puedes seguir usando los créditos de tu cuenta."
+            },
+            {
+              "question": "¿Puedo comprar más créditos antes de la próxima renovación?",
+              "answer": "Sí. Puedes hacer una compra única de créditos mientras estás suscrito, sin esperar al próximo pago mensual."
             }
           ]
         },
@@ -341,9 +369,14 @@
     "billing": {
       "forever": "(para siempre)",
       "monthly": "/mes",
-      "oneTime": "Pago único"
+      "oneTime": "Pago único",
+      "oneTimeNote": "Un solo pago. Sin suscripción.",
+      "monthlyNote": "Se renueva cada mes. Cancela cuando quieras.",
+      "introductoryPrice": "{firstPrice} el primer mes, después {renewalPrice}/mes."
     },
     "plans": {
+      "pricePer1kCredits": "{price} por 1.000 créditos",
+      "savePer1kCredits": "(ahorra {amount}/1.000)",
       "popular": "Más Popular",
       "startFree": "Comenzar Gratis",
       "buyCredits": "Comprar créditos",
@@ -971,17 +1004,17 @@
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
-        "button": "Eliminar cuenta",
-        "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
-        "alertTitle": "Confirma que quieres eliminar tu cuenta",
+        "button": "Eliminar contenido",
+        "confirmTitle": "¿Eliminar contenido de tu cuenta?",
+        "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. Conservamos los registros de uso para la facturación y el seguimiento de costes internos. Tus claves API dejarán de funcionar. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
+        "alertTitle": "Elimina contenido de tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar",
         "errors": {
           "manageBilling": "Gestionar facturación",
-          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
-          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo.",
-          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
+          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu contenido.",
+          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu contenido no se ha eliminado. Inténtalo de nuevo.",
+          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu contenido. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
           "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
         }
       }

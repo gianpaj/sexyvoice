@@ -214,13 +214,14 @@ describe('call-token agent contract', () => {
     expect(metadata()).toEqual({
       character_id: predefinedId,
       initial_instruction:
-        'SYSTEM: <breathy>Begrüße den Nutzer auf verführerische und kokette Weise. Wenn der Nutzer nicht viel spricht, sei proaktiv und versuche ihn zum Engagement zu bewegen.</breathy>',
+        'SYSTEM: <breathy>Beginne den Anruf als deine Figur. Wenn eine Szene festgelegt ist, steig direkt in sie ein. Variiere deinen Einstieg: eine Begrüßung, eine Beobachtung, eine passende Frage oder ein Satz, der direkt in die Szene führt. Vermeide abgedroschene Floskeln. Halte es kurz, ein oder zwei Sätze, und sprich Deutsch. Wenn der Nutzer nicht viel spricht, sei proaktiv und versuche ihn zum Engagement zu bewegen.</breathy>',
       instructions: 'Du bist Lily.',
       language: 'de',
       max_output_tokens: null,
       memory: true,
       memory_scope: 'both',
-      model: 'grok-voice-think-fast-1.0',
+      // The stored retired id reaches the agent as its replacement.
+      model: 'grok-voice-think-fast-2.0',
       scene_id: null,
       scene_modified: false,
       temperature: 0.8,
@@ -301,7 +302,7 @@ describe('call-token agent contract', () => {
     expect(metadata()).toMatchObject({
       character_id: customId,
       initial_instruction:
-        'SYSTEM: Say hi to the user in a seductive and flirtatious manner. If the user is not talking much, be proactive and get them to engage.',
+        'SYSTEM: Start the call as your character. If a scene is set, open from inside it. Vary your opening: a greeting, an observation, a question that fits, or a line that drops straight into the scene. Avoid generic catchphrases. Keep it brief, one or two sentences, and speak English. If the user is not talking much, be proactive and get them to engage.',
       instructions: 'You are my tutor.',
       model: 'inworld-tts',
       temperature: 0.7,

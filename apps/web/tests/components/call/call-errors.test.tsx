@@ -59,12 +59,16 @@ afterEach(() => {
 });
 
 describe('call-token requests', () => {
-  it('sends only the per-call choices', async () => {
+  it('sends only the per-call choices and the caller clock', async () => {
     respond(500);
     await startCall();
     const [url, init] = vi.mocked(fetch).mock.calls[0];
     expect(url).toBe('/api/call-token');
-    expect(JSON.parse(String(init?.body))).toEqual(request);
+    expect(JSON.parse(String(init?.body))).toEqual({
+      ...request,
+      clientTime: expect.any(String),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
   });
 });
 

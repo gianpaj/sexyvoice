@@ -21,6 +21,7 @@ import {
   hasOngoingSubscription,
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { revokeApiKeys } from '@/lib/supabase/api-keys';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
@@ -171,9 +172,10 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { count: retainedUsageEventsCount, error: usageEventsError },
       { data: voiceReferences, error: voiceReferencesError },
       { data: deletedMemories, error: memoriesDeleteError },
+      { data: clearedCallTranscripts, error: transcriptsClearError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
-      supabase.from('api_keys').select().eq('user_id', user.id),
+      revokeApiKeys(supabase, user.id),
       supabase
         .from('usage_events')
         .select('id', { count: 'exact', head: true })
@@ -183,7 +185,20 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .select('id, sample_url, provider, voice_id')
         .eq('user_id', user.id),
       deleteUserMemories(supabase, user.id),
+      supabase
+        .from('call_sessions')
+        .update({ transcript: [] })
+        .eq('user_id', user.id)
+        .select('id'),
     ]);
+
+    if (transcriptsClearError) {
+      captureException(transcriptsClearError, {
+        extra: { context: 'call_transcript_account_cleanup' },
+        user: { id: user.id },
+      });
+      throw new Error('User deletion failed');
+    }
 
     if (memoriesDeleteError) {
       captureException(memoriesDeleteError, {
@@ -272,7 +287,8 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       throw new Error('User deletion failed');
     }
     logger.info('User deleted', {
-      apiKeysDeleted: apiKeys ? apiKeys.length : 0,
+      apiKeysRevoked: apiKeys?.length ?? 0,
+      clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: deletedCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
@@ -283,7 +299,8 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     });
 
     console.log('User deleted', {
-      apiKeysDeleted: apiKeys?.length ?? 0,
+      apiKeysRevoked: apiKeys?.length ?? 0,
+      clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: deletedCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,

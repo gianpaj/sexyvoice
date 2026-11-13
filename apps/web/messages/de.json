@@ -299,6 +299,18 @@
             {
               "question": "Wofür kann ich die Stimmgenerierung nutzen?",
               "answer": "Erstellen Sie Audio für Videos, Podcasts, Hörbücher, Spiele, Kurse und soziale Medien. Verwenden Sie nur Stimmen und Inhalte, für die Sie die Rechte haben."
+            },
+            {
+              "question": "Kann ich es vor dem Kauf ausprobieren?",
+              "answer": "Neue Konten erhalten 10.000 kostenlose Credits. Keine Kreditkarte erforderlich."
+            },
+            {
+              "question": "Darf ich das Audio kommerziell nutzen?",
+              "answer": "Ja. Das von Ihnen generierte Audio gehört Ihnen und Sie dürfen es kommerziell nutzen, sofern Sie die Rechte an den verwendeten Stimmen und Inhalten haben."
+            },
+            {
+              "question": "Wie lange werden generierte Audiodateien gespeichert?",
+              "answer": "Generiertes Audio wird bei kostenlosen Konten 30 Tage und bei bezahlten Konten 90 Tage gespeichert. Laden Sie Dateien herunter, die Sie behalten möchten."
             }
           ]
         },
@@ -307,12 +319,28 @@
           "category": "Preise & Zugang",
           "questions": [
             {
-              "question": "Wie viele Credits benötige ich?",
-              "answer": "Neue Nutzer erhalten 10.000 kostenlose Credits. Wie viel Sprache Sie erzeugen können, hängt von Stimme, Modell und Text ab. Kaufen Sie Credits einmalig oder erhalten Sie monatliche Credits mit einem Abonnement. Stimmgenerierung und Anrufe nutzen dasselbe Guthaben."
+              "question": "Soll ich einmalig Credits kaufen oder ein Abo abschließen?",
+              "answer": "Ein einmaliger Kauf fügt Credits ohne Abo hinzu. Mit einem Abo erhalten Sie jeden Monat Credits und einen Abo-Bonus von 15%."
             },
             {
-              "question": "Warum SexyVoice.ai wählen?",
-              "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
+              "question": "Wie viel kann ich mit meinen Credits machen?",
+              "answer": "Live-Anrufe kosten {count} Credits pro Minute. Die Kosten der Sprachgenerierung hängen von Stimme, Modell und Länge ab. Die Sprachgenerierung mit einer geklonten Stimme verbraucht mehr Credits als mit Standardstimmen."
+            },
+            {
+              "question": "Verfallen Credits oder werden sie übertragen?",
+              "answer": "Gekaufte Credits verfallen nicht. Ungenutzte gekaufte Credits bleiben erhalten, auch nachdem Sie Ihr Abo gekündigt haben."
+            },
+            {
+              "question": "Wann verlängert sich mein Abo?",
+              "answer": "Ihr Abo verlängert sich automatisch jeden Monat, bis Sie es kündigen. Ein Rabatt für den ersten Monat gilt nur für die erste Zahlung. Danach gilt der reguläre Monatspreis, der beim Bezahlen angezeigt wird."
+            },
+            {
+              "question": "Kann ich kündigen und meine Credits behalten?",
+              "answer": "Kündigen Sie über das Stripe-Kundenportal auf der Credits-Seite. Ihr Abo bleibt bis zum Ende des bezahlten Abrechnungszeitraums aktiv. Danach enden die monatlichen Verlängerungen. Sie können die Credits auf Ihrem Konto weiterhin nutzen."
+            },
+            {
+              "question": "Kann ich vor der nächsten Verlängerung weitere Credits kaufen?",
+              "answer": "Ja. Sie können während Ihres Abos einmalig Credits kaufen, ohne auf die nächste monatliche Zahlung zu warten."
             }
           ]
         },
@@ -341,9 +369,14 @@
     "billing": {
       "forever": "(für immer)",
       "monthly": "/Monat",
-      "oneTime": "Einmalzahlung"
+      "oneTime": "Einmalzahlung",
+      "oneTimeNote": "Einmalige Zahlung. Kein Abo.",
+      "monthlyNote": "Verlängert sich monatlich. Jederzeit kündbar.",
+      "introductoryPrice": "{firstPrice} im ersten Monat, danach {renewalPrice}/Monat."
     },
     "plans": {
+      "pricePer1kCredits": "{price} pro 1.000 Credits",
+      "savePer1kCredits": "({amount}/1.000 sparen)",
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
@@ -971,17 +1004,17 @@
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
-        "button": "Konto löschen",
-        "confirmTitle": "Sind Sie sich absolut sicher?",
-        "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• API-Nutzung\n• Benutzerdefinierte Anrufcharaktere\n• Alle zugehörigen Daten von unseren Servern",
-        "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
+        "button": "Inhalte löschen",
+        "confirmTitle": "Inhalte aus Ihrem Konto löschen?",
+        "confirmDescription": "Dadurch werden folgende Inhalte gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Wir behalten Ihre Anmeldedaten, Ihr Profil und Ihre verbleibenden Credits. Nutzungsdaten bleiben für die Abrechnung und die interne Kostenerfassung erhalten. Ihre API-Schlüssel funktionieren danach nicht mehr. Wenn Sie sich mit derselben E-Mail-Adresse erneut anmelden, erhalten Sie wieder Zugriff auf dasselbe Konto mit denselben Credits. Gelöschte Inhalte können nicht wiederhergestellt werden.",
+        "alertTitle": "Inhalte aus Ihrem Konto löschen",
         "cancel": "Abbrechen",
         "continue": "Weiter",
         "errors": {
           "manageBilling": "Abrechnung verwalten",
-          "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihr Konto löschen.",
-          "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihr Konto wurde nicht gelöscht. Bitte versuchen Sie es erneut.",
-          "accountBillingBlocked": "Eine frühere Löschanfrage blockiert die Kontolöschung. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+          "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihre Inhalte löschen.",
+          "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihre Inhalte wurden nicht gelöscht. Bitte versuchen Sie es erneut.",
+          "accountBillingBlocked": "Eine frühere Löschanfrage blockiert das Löschen Ihrer Inhalte. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
           "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
         }
       }

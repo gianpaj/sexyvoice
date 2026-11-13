@@ -106,9 +106,11 @@ export async function POST(request: Request) {
 
     const {
       characterId,
+      clientTime,
       language = DEFAULT_CALL_LANGUAGE,
       sceneId = null,
       sceneText,
+      timeZone,
     } = callRequest;
 
     const memoryPreference = getCallMemoryPreference(supabase, user.id);
@@ -159,6 +161,7 @@ export async function POST(request: Request) {
 
     const metadata = buildAgentMetadata({
       characterId,
+      clientTime,
       language,
       // The profile preference, read fresh for every call.
       memory: await memoryPreference,
@@ -166,6 +169,7 @@ export async function POST(request: Request) {
       sceneId,
       sceneText: scene,
       sessionConfig,
+      timeZone,
       userId: user.id,
       voiceId: voice.id,
     });

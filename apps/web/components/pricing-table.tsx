@@ -138,6 +138,7 @@ async function PricingTable({
       id: 'starter',
       name: pPlans.starter.name,
       price: subscriptionPackages.starter.dollarAmount,
+      recurringPrice: subscriptionPackages.starter.recurringDollarAmount,
       pricePer1kCredits: (
         (subscriptionPackages.starter.dollarAmount /
           subscriptionPackages.starter.baseCredits) *
@@ -160,6 +161,7 @@ async function PricingTable({
       isPopular: true,
       name: pPlans.standard.name,
       price: subscriptionPackages.standard.dollarAmount,
+      recurringPrice: subscriptionPackages.standard.recurringDollarAmount,
       pricePer1kCredits: subscriptionPackages.standard.pricePer1kCredits,
       saveFromPrevPlanPer1kCredits: hideFreePlan
         ? Number(
@@ -187,6 +189,7 @@ async function PricingTable({
       id: 'pro',
       name: pPlans.pro.name,
       price: subscriptionPackages.pro.dollarAmount,
+      recurringPrice: subscriptionPackages.pro.recurringDollarAmount,
       pricePer1kCredits: subscriptionPackages.pro.pricePer1kCredits,
       saveFromPrevPlanPer1kCredits: Number(
         (

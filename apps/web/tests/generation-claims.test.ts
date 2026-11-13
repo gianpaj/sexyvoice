@@ -291,6 +291,22 @@ describe('Generation route claims authentication', () => {
     });
   });
 
+  it('forwards caller clock data in agent metadata', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+    const response = await callToken(
+      jsonRequest('call-token', {
+        ...callBody,
+        clientTime: '2026-11-06T23:30:00.000Z',
+        timeZone: 'Europe/Rome',
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(JSON.parse(mocks.token.mock.calls[0][2].metadata)).toMatchObject({
+      client_time: '2026-11-06T23:30:00.000Z',
+      time_zone: 'Europe/Rome',
+    });
+  });
+
   it.each([
     { paid: false, preference: undefined, enabled: true },
     { paid: true, preference: undefined, enabled: true },

@@ -65,14 +65,14 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature                  | Public or stored ID                                                                              | Runtime provider/model                                              | Notes                                                                               |
-| ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Dashboard and API TTS    | `gpro38`                                                                                         | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                                     |
-| Dashboard and API TTS    | `xai`                                                                                            | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                                    |
-| Dashboard and API TTS    | `orpheus`                                                                                        | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus`                     |
-| Voice cloning            | Locale-dependent                                                                                 | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                                                  |
-| Real-time calls          | `grok-voice-think-fast-2.0` (default), `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider; `lib/calls/models.ts` |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                                                                | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                                     |
+| Feature                  | Public or stored ID                                       | Runtime provider/model                                              | Notes                                                                               |
+| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Dashboard and API TTS    | `gpro38`                                                  | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                                     |
+| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                                    |
+| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus`                     |
+| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                                                  |
+| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider; `lib/calls/models.ts` |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                                     |
 
 ## External REST API
 
@@ -522,6 +522,15 @@ language has none), the model, voice, temperature and max output tokens.
 token metadata the agent reads. Predefined character prompt text never reaches
 the browser. Custom characters and scene text require a paid account.
 
+Every call-token request carries the browser clock from
+`lib/calls/caller-time.ts`: `clientTime`, an ISO timestamp, and `timeZone`, an
+IANA zone such as `Europe/Rome`. `callTokenRequestSchema` drops invalid values
+without refusing the call, and `buildAgentMetadata` forwards them as
+`client_time` and `time_zone`. SexyCall adds the caller's local date and time
+to the system prompt and exposes `get_current_time` for a fresh reading during
+the call. Clock context is independent of the selected language and the
+memory preference.
+
 Long-term memory is on by default for free and paid accounts.
 `lib/calls/memory.ts` owns the preference and its erasure. The Profile page's
 Voice Call Memory switch saves `call_memory_enabled` in Auth `user_metadata`
@@ -612,19 +621,20 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 ### Call Configuration
 
-| Setting           | Current behavior                                                                                                                          |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-2.0` (default) or `grok-voice-think-fast-1.0` for built-in voices; `inworld-tts` or `mistral-tts` for saved voices |
-| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters                                                       |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                                                                            |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                                                                          |
-| Instructions      | Server-resolved database prompt for the selected character                                                                                |
-| Language          | 20 supported call languages; English fallback                                                                                             |
-| Memory            | On by default for all accounts; saved Profile opt-out                                                                                     |
+| Setting           | Current behavior                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Model             | `grok-voice-think-fast-2.0` for built-in voices; `inworld-tts` or `mistral-tts` for saved voices |
+| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters              |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                                   |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                                 |
+| Instructions      | Server-resolved database prompt for the selected character                                       |
+| Language          | 20 supported call languages; English fallback                                                    |
+| Memory            | On by default for all accounts; saved Profile opt-out                                            |
 
 `lib/calls/models.ts` lists the call models: each model's pipeline (Grok
 realtime or STT + LLM + TTS), saved-voice provider and provider cost per
-minute. `lib/calls/languages.ts` lists the call languages, and the
+minute. It maps the retired `grok-voice-think-fast-1.0` to 2.0, so saved
+characters run on 2.0 and past 1.0 sessions keep a price. `lib/calls/languages.ts` lists the call languages, and the
 server-only `lib/calls/greetings.ts` holds each language's opening
 instruction for the agent.
 
@@ -773,6 +783,17 @@ Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
 deleted files or characters.
 
+Account deletion clears `call_sessions.transcript` and revokes every owned API
+key through `lib/supabase/api-keys.ts`. Call-session metering fields and immutable
+`usage_events` remain available for billing and provider-cost reporting through
+`lib/usage-costs.ts`. API-key rows remain as audit references; setting
+`is_active = false` prevents them from authenticating external API requests.
+
+Transcript-derived `call_session_analysis` rows and aggregate reports remain as
+internal analytics. Deletion clears the transcript stored when cleanup runs.
+It does not end active calls or block later transcript writes. A running call
+can save its transcript again and trigger analysis.
+
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
 expiration. Successful requests release their reservations. A rejection releases
@@ -836,6 +857,16 @@ query retries. Direct browser reads remain single-attempt. The proxy's
 `ensureUserApplicationState` profile read also disables retries because repair
 is best-effort. Read, Auth lookup, and restoration failures are reported to
 Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit purchase information
+
+Paid credit validity and subscription renewal terms are defined in
+`apps/web/policies/terms.mdx`. Localized purchase questions live in the
+`landing.faq` message group `pricingAndAccess`. Both the landing FAQ and
+`CreditsFaq` on the credits page render that group. `FaqGroupAccordion` renders
+the individual questions for both `CreditsFaq` and `CallFaq`. `PricingCards` shows the
+billing commitment for the selected mode and displays the regular renewal
+price alongside an introductory monthly price.
 
 ### Credit balance sync
 

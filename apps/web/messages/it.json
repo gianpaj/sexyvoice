@@ -299,6 +299,18 @@
             {
               "question": "Per cosa posso usare la generazione vocale?",
               "answer": "Crea audio per video, podcast, audiolibri, giochi, corsi e social. Usa solo voci e contenuti per cui hai i diritti."
+            },
+            {
+              "question": "Posso provarlo prima di pagare?",
+              "answer": "I nuovi account ricevono 10.000 crediti gratuiti. Non serve una carta di credito."
+            },
+            {
+              "question": "Posso usare l'audio a fini commerciali?",
+              "answer": "Sì. Sei proprietario dell'audio che generi e puoi usarlo a fini commerciali, purché tu abbia i diritti sulle voci e sui contenuti che utilizzi."
+            },
+            {
+              "question": "Per quanto tempo vengono conservati i file audio generati?",
+              "answer": "L'audio generato viene conservato per 30 giorni sugli account gratuiti e 90 giorni sugli account a pagamento. Scarica i file che vuoi conservare."
             }
           ]
         },
@@ -307,12 +319,28 @@
           "category": "Prezzi e accesso",
           "questions": [
             {
-              "question": "Di quanti crediti ho bisogno?",
-              "answer": "I nuovi utenti ricevono 10.000 crediti gratis. La quantità di parlato dipende dalla voce, dal modello e dal testo. Acquista crediti con una ricarica o ricevili ogni mese con un abbonamento. Generazione vocale e chiamate usano lo stesso saldo."
+              "question": "Meglio acquistare crediti una volta o abbonarsi?",
+              "answer": "Un acquisto singolo aggiunge crediti senza abbonamento. Abbonati per ricevere crediti ogni mese, con un bonus del 15%."
             },
             {
-              "question": "Perché scegliere SexyVoice.ai?",
-              "answer": "Combiniamo qualità vocale premium con strumenti semplici e prezzi equi. Che tu sia un creatore o un'azienda, ottieni risultati professionali senza contratti o configurazioni complicate. I crediti gratuiti rendono facile provare tutto."
+              "question": "Quanto posso fare con i miei crediti?",
+              "answer": "Le chiamate dal vivo costano {count} crediti al minuto. Il costo della generazione vocale dipende dalla voce, dal modello e dalla durata. Generare audio con una voce clonata consuma più crediti rispetto alle voci standard."
+            },
+            {
+              "question": "I crediti scadono o si accumulano?",
+              "answer": "I crediti acquistati non scadono. I crediti acquistati e non utilizzati si accumulano, anche dopo la disdetta dell'abbonamento."
+            },
+            {
+              "question": "Quando si rinnova il mio abbonamento?",
+              "answer": "Il tuo abbonamento si rinnova automaticamente ogni mese finché non lo disdici. Un eventuale sconto per il primo mese si applica solo al primo pagamento. I pagamenti successivi usano il prezzo mensile normale indicato al momento dell'acquisto."
+            },
+            {
+              "question": "Posso disdire e mantenere i miei crediti?",
+              "answer": "Disdici dal portale clienti Stripe sulla pagina dei crediti. Il piano resta attivo fino alla fine del periodo pagato, poi i rinnovi mensili si interrompono. Puoi continuare a usare i crediti già presenti nel tuo account."
+            },
+            {
+              "question": "Posso acquistare altri crediti prima del prossimo rinnovo?",
+              "answer": "Sì. Puoi fare un acquisto singolo di crediti mentre sei abbonato, senza aspettare il prossimo pagamento mensile."
             }
           ]
         },
@@ -341,9 +369,14 @@
     "billing": {
       "forever": "(per sempre)",
       "monthly": "/mese",
-      "oneTime": "Acquisto singolo"
+      "oneTime": "Acquisto singolo",
+      "oneTimeNote": "Un solo pagamento. Nessun abbonamento.",
+      "monthlyNote": "Si rinnova ogni mese. Disdici quando vuoi.",
+      "introductoryPrice": "{firstPrice} per il primo mese, poi {renewalPrice}/mese."
     },
     "plans": {
+      "pricePer1kCredits": "{price} per 1.000 crediti",
+      "savePer1kCredits": "(risparmia {amount}/1.000)",
       "popular": "Più popolare",
       "startFree": "Inizia gratis",
       "buyCredits": "Acquista crediti",
@@ -971,17 +1004,17 @@
     "dangerZone": {
       "title": "Zona pericolosa",
       "deleteAccount": {
-        "button": "Elimina account",
-        "confirmTitle": "Sei assolutamente sicuro?",
-        "confirmDescription": "Questa azione non può essere annullata. Eliminerà permanentemente il tuo account, inclusi:\n• Tutti i file audio generati\n• Voci clonate\n• Utilizzo API\n• Personaggi personalizzati per le chiamate\n• Tutti i dati associati dai nostri server",
-        "alertTitle": "Conferma di voler eliminare il tuo account",
+        "button": "Elimina contenuti",
+        "confirmTitle": "Eliminare i contenuti del tuo account?",
+        "confirmDescription": "Questa azione elimina:\n• I file audio generati dallo spazio di archiviazione e dalla tua cronologia\n• I personaggi personalizzati e i relativi prompt\n• I ricordi delle chiamate\n• Le voci clonate\n\nVerrai disconnesso. Conserviamo le tue credenziali di accesso, il tuo profilo e i tuoi crediti rimanenti. Conserviamo i dati di utilizzo per la fatturazione e il monitoraggio dei costi interni. Le tue chiavi API smetteranno di funzionare. Accedendo di nuovo con la stessa email, ritroverai lo stesso account con gli stessi crediti. I contenuti eliminati non possono essere recuperati.",
+        "alertTitle": "Elimina i contenuti del tuo account",
         "cancel": "Annulla",
         "continue": "Continua",
         "errors": {
           "manageBilling": "Gestisci fatturazione",
-          "subscriptionExists": "Il tuo account ha ancora un abbonamento Stripe. Annullalo nel portale di fatturazione e attendi che termini prima di eliminare il tuo account.",
-          "subscriptionCheckFailed": "Non è stato possibile verificare lo stato del tuo abbonamento. Il tuo account non è stato eliminato. Riprova.",
-          "accountBillingBlocked": "Una precedente richiesta di eliminazione sta bloccando l'eliminazione del tuo account. Contatta l'assistenza tramite la chat nella dashboard o info@sexyvoice.ai.",
+          "subscriptionExists": "Il tuo account ha ancora un abbonamento Stripe. Annullalo nel portale di fatturazione e attendi che termini prima di eliminare i tuoi contenuti.",
+          "subscriptionCheckFailed": "Non è stato possibile verificare lo stato del tuo abbonamento. I tuoi contenuti non sono stati eliminati. Riprova.",
+          "accountBillingBlocked": "Una precedente richiesta di eliminazione sta bloccando l'eliminazione dei tuoi contenuti. Contatta l'assistenza tramite la chat nella dashboard o info@sexyvoice.ai.",
           "accountBillingBusy": "Un'altra richiesta di fatturazione o eliminazione è in corso. Riprova più tardi."
         }
       }

@@ -299,6 +299,18 @@
             {
               "question": "What can I use voice generation for?",
               "answer": "Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use."
+            },
+            {
+              "question": "Can I try it before paying?",
+              "answer": "New accounts receive 10,000 free credits. No credit card required."
+            },
+            {
+              "question": "Can I use the audio commercially?",
+              "answer": "Yes. You own the audio you generate and can use it commercially, provided you have the rights to the voices and content you use."
+            },
+            {
+              "question": "How long are generated audio files stored?",
+              "answer": "Generated audio is stored for 30 days on free accounts and 90 days on paid accounts. Download files you want to keep."
             }
           ]
         },
@@ -307,12 +319,28 @@
           "category": "Pricing & access",
           "questions": [
             {
-              "question": "How many credits do I need?",
-              "answer": "New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance."
+              "question": "Should I buy credits once or subscribe?",
+              "answer": "A one-time purchase adds credits without a subscription. Subscribe to receive credits every month, with a 15% subscription bonus."
             },
             {
-              "question": "Why choose SexyVoice.ai?",
-              "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+              "question": "How much can I do with my credits?",
+              "answer": "Live calls cost {count} credits per minute. Speech generation costs depend on the voice, model, and length. Generating speech with a cloned voice uses more credits than standard voices."
+            },
+            {
+              "question": "Do credits expire or roll over?",
+              "answer": "Paid credits don't expire. Unused paid credits carry over, including after you cancel your subscription."
+            },
+            {
+              "question": "When will my subscription renew?",
+              "answer": "Your subscription renews automatically each month until you cancel. Any first-month discount applies only to your first payment. Later payments use the regular monthly price shown at checkout."
+            },
+            {
+              "question": "Can I cancel, and will I lose my credits?",
+              "answer": "Cancel through the Stripe Customer Portal on the credits page. Your plan stays active until the end of your paid billing period, then monthly renewals stop. You can keep using the credits already in your account."
+            },
+            {
+              "question": "Can I buy more credits before my next renewal?",
+              "answer": "Yes. You can make a one-time credit purchase while subscribed, without waiting for your next monthly payment."
             }
           ]
         },
@@ -341,9 +369,14 @@
     "billing": {
       "forever": "(forever)",
       "monthly": "/month",
-      "oneTime": "One-time"
+      "oneTime": "One-time",
+      "oneTimeNote": "One payment. No subscription.",
+      "monthlyNote": "Renews monthly. Cancel anytime.",
+      "introductoryPrice": "{firstPrice} for your first month, then {renewalPrice}/month."
     },
     "plans": {
+      "pricePer1kCredits": "{price} per 1k credits",
+      "savePer1kCredits": "(save {amount}/1k)",
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
@@ -969,17 +1002,17 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete account",
-        "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
-        "alertTitle": "Confirm you want to delete your account",
+        "button": "Delete content",
+        "confirmTitle": "Delete content from your account?",
+        "confirmDescription": "This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. We keep your login, profile and remaining credits. Usage records are kept for billing and internal cost tracking. Your API keys will stop working. Signing in again with the same email restores the same account and credits. Deleted content cannot be restored.",
+        "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
         "continue": "Continue",
         "errors": {
           "manageBilling": "Manage billing",
-          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
-          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again.",
-          "accountBillingBlocked": "Account deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
+          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your content.",
+          "subscriptionCheckFailed": "We could not check your subscription status. Your content has not been deleted. Please try again.",
+          "accountBillingBlocked": "Content deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
           "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
         }
       }

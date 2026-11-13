@@ -365,15 +365,43 @@ Gemte opkaldsstemmer er private for din konto. Stemmeudbyderen beholder optagels
 
 Lav lyd til videoer, podcasts, lydbøger, spil, kurser og opslag på sociale medier. Brug kun stemmer og indhold, du har rettighederne til.
 
+#### Kan jeg prøve det, før jeg betaler?
+
+Nye konti får 10.000 gratis kreditter. Intet kreditkort påkrævet.
+
+#### Må jeg bruge lyden kommercielt?
+
+Ja. Du ejer den lyd, du genererer, og må bruge den kommercielt, hvis du har rettighederne til de stemmer og det indhold, du bruger.
+
+#### Hvor længe gemmes genererede lydfiler?
+
+Genereret lyd gemmes i 30 dage på gratis konti og 90 dage på betalte konti. Download de filer, du vil beholde.
+
 ### Priser & adgang
 
-#### Hvor mange kreditter har jeg brug for?
+#### Skal jeg købe kreditter én gang eller abonnere?
 
-Nye brugere får 10.000 gratis kreditter. Hvor meget tale du kan generere, afhænger af stemmen, modellen og teksten. Køb kreditter én gang, eller få månedlige kreditter med et abonnement. Stemmegenerering og opkald bruger samme saldo.
+Et engangskøb tilføjer kreditter uden abonnement. Abonnér for at modtage kreditter hver måned med en abonnementsbonus på 15%.
 
-#### Hvorfor vælge SexyVoice.ai?
+#### Hvor meget kan jeg bruge mine kreditter til?
 
-Vi kombinerer premium stemmekvalitet med enkle værktøjer og fair priser. Uanset om du er skaber eller virksomhed, får du professionelle resultater uden kontrakter eller komplicerede opsætninger. De gratis kreditter gør det nemt at prøve alt.
+Liveopkald koster 1000 kreditter pr. minut. Prisen for talegenerering afhænger af stemme, model og længde. Tale med en klonet stemme bruger flere kreditter end standardstemmer.
+
+#### Udløber kreditter, eller overføres de?
+
+Købte kreditter udløber ikke. Ubrugte købte kreditter overføres, også efter du har opsagt dit abonnement.
+
+#### Hvornår fornyes mit abonnement?
+
+Dit abonnement fornyes automatisk hver måned, indtil du opsiger det. En eventuel rabat for den første måned gælder kun den første betaling. Derefter gælder den normale månedspris, som vises ved betaling.
+
+#### Kan jeg opsige og beholde mine kreditter?
+
+Opsig via Stripes kundeportal på kreditter-siden. Dit abonnement er aktivt indtil slutningen af den betalte periode. Derefter stopper de månedlige fornyelser. Du kan fortsat bruge de kreditter, du har på din konto.
+
+#### Kan jeg købe flere kreditter før næste fornyelse?
+
+Ja. Du kan foretage et engangskøb af kreditter, mens du abonnerer, uden at vente på næste månedlige betaling.
 
 ### API til udviklere
 
@@ -395,7 +423,7 @@ Kanonisk URL: https://sexyvoice.ai/da
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1656",
+    "x-markdown-tokens": "1935",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -542,15 +570,43 @@ Gespeicherte Anrufstimmen sind nur für Ihr Konto verfügbar. Der Sprachanbieter
 
 Erstellen Sie Audio für Videos, Podcasts, Hörbücher, Spiele, Kurse und soziale Medien. Verwenden Sie nur Stimmen und Inhalte, für die Sie die Rechte haben.
 
+#### Kann ich es vor dem Kauf ausprobieren?
+
+Neue Konten erhalten 10.000 kostenlose Credits. Keine Kreditkarte erforderlich.
+
+#### Darf ich das Audio kommerziell nutzen?
+
+Ja. Das von Ihnen generierte Audio gehört Ihnen und Sie dürfen es kommerziell nutzen, sofern Sie die Rechte an den verwendeten Stimmen und Inhalten haben.
+
+#### Wie lange werden generierte Audiodateien gespeichert?
+
+Generiertes Audio wird bei kostenlosen Konten 30 Tage und bei bezahlten Konten 90 Tage gespeichert. Laden Sie Dateien herunter, die Sie behalten möchten.
+
 ### Preise & Zugang
 
-#### Wie viele Credits benötige ich?
+#### Soll ich einmalig Credits kaufen oder ein Abo abschließen?
 
-Neue Nutzer erhalten 10.000 kostenlose Credits. Wie viel Sprache Sie erzeugen können, hängt von Stimme, Modell und Text ab. Kaufen Sie Credits einmalig oder erhalten Sie monatliche Credits mit einem Abonnement. Stimmgenerierung und Anrufe nutzen dasselbe Guthaben.
+Ein einmaliger Kauf fügt Credits ohne Abo hinzu. Mit einem Abo erhalten Sie jeden Monat Credits und einen Abo-Bonus von 15%.
 
-#### Warum SexyVoice.ai wählen?
+#### Wie viel kann ich mit meinen Credits machen?
 
-Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren.
+Live-Anrufe kosten 1000 Credits pro Minute. Die Kosten der Sprachgenerierung hängen von Stimme, Modell und Länge ab. Die Sprachgenerierung mit einer geklonten Stimme verbraucht mehr Credits als mit Standardstimmen.
+
+#### Verfallen Credits oder werden sie übertragen?
+
+Gekaufte Credits verfallen nicht. Ungenutzte gekaufte Credits bleiben erhalten, auch nachdem Sie Ihr Abo gekündigt haben.
+
+#### Wann verlängert sich mein Abo?
+
+Ihr Abo verlängert sich automatisch jeden Monat, bis Sie es kündigen. Ein Rabatt für den ersten Monat gilt nur für die erste Zahlung. Danach gilt der reguläre Monatspreis, der beim Bezahlen angezeigt wird.
+
+#### Kann ich kündigen und meine Credits behalten?
+
+Kündigen Sie über das Stripe-Kundenportal auf der Credits-Seite. Ihr Abo bleibt bis zum Ende des bezahlten Abrechnungszeitraums aktiv. Danach enden die monatlichen Verlängerungen. Sie können die Credits auf Ihrem Konto weiterhin nutzen.
+
+#### Kann ich vor der nächsten Verlängerung weitere Credits kaufen?
+
+Ja. Sie können während Ihres Abos einmalig Credits kaufen, ohne auf die nächste monatliche Zahlung zu warten.
 
 ### API für Entwickler
 
@@ -572,7 +628,7 @@ Kanonische URL: https://sexyvoice.ai/de
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1921",
+    "x-markdown-tokens": "2238",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -719,15 +775,43 @@ Saved call voices are private to your account. The voice provider retains the re
 
 Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use.
 
+#### Can I try it before paying?
+
+New accounts receive 10,000 free credits. No credit card required.
+
+#### Can I use the audio commercially?
+
+Yes. You own the audio you generate and can use it commercially, provided you have the rights to the voices and content you use.
+
+#### How long are generated audio files stored?
+
+Generated audio is stored for 30 days on free accounts and 90 days on paid accounts. Download files you want to keep.
+
 ### Pricing & access
 
-#### How many credits do I need?
+#### Should I buy credits once or subscribe?
 
-New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance.
+A one-time purchase adds credits without a subscription. Subscribe to receive credits every month, with a 15% subscription bonus.
 
-#### Why choose SexyVoice.ai?
+#### How much can I do with my credits?
 
-We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out.
+Live calls cost 1000 credits per minute. Speech generation costs depend on the voice, model, and length. Generating speech with a cloned voice uses more credits than standard voices.
+
+#### Do credits expire or roll over?
+
+Paid credits don't expire. Unused paid credits carry over, including after you cancel your subscription.
+
+#### When will my subscription renew?
+
+Your subscription renews automatically each month until you cancel. Any first-month discount applies only to your first payment. Later payments use the regular monthly price shown at checkout.
+
+#### Can I cancel, and will I lose my credits?
+
+Cancel through the Stripe Customer Portal on the credits page. Your plan stays active until the end of your paid billing period, then monthly renewals stop. You can keep using the credits already in your account.
+
+#### Can I buy more credits before my next renewal?
+
+Yes. You can make a one-time credit purchase while subscribed, without waiting for your next monthly payment.
 
 ### API for Developers
 
@@ -749,7 +833,7 @@ Canonical URL: https://sexyvoice.ai/en
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1612",
+    "x-markdown-tokens": "1890",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -896,15 +980,43 @@ Las voces guardadas para llamadas son privadas de tu cuenta. El proveedor de voz
 
 Crea audio para vídeos, podcasts, audiolibros, juegos, cursos y redes sociales. Usa solo voces y contenido para los que tengas los derechos.
 
+#### ¿Puedo probarlo antes de pagar?
+
+Las cuentas nuevas reciben 10.000 créditos gratis. No necesitas tarjeta de crédito.
+
+#### ¿Puedo usar el audio comercialmente?
+
+Sí. El audio que generas te pertenece y puedes usarlo comercialmente, siempre que tengas los derechos sobre las voces y el contenido que utilizas.
+
+#### ¿Cuánto tiempo se guardan los archivos de audio generados?
+
+El audio generado se guarda durante 30 días en cuentas gratuitas y 90 días en cuentas de pago. Descarga los archivos que quieras conservar.
+
 ### Precios y acceso
 
-#### ¿Cuántos créditos necesito?
+#### ¿Compro créditos una vez o me suscribo?
 
-Los nuevos usuarios reciben 10.000 créditos gratis. La cantidad de audio depende de la voz, el modelo y el texto. Compra créditos con una recarga o recibe créditos mensuales con una suscripción. La generación de voz y las llamadas usan el mismo saldo.
+Una compra única añade créditos sin suscripción. Suscríbete para recibir créditos cada mes, con un 15% de créditos extra.
 
-#### ¿Por qué elegir SexyVoice.ai?
+#### ¿Cuánto puedo hacer con mis créditos?
 
-Combinamos calidad de voz premium con herramientas simples y precios justos. Ya seas creador o empresa, obtendrás resultados profesionales sin contratos ni configuraciones complicadas. Los créditos gratuitos facilitan probar todo.
+Las llamadas en directo cuestan 1000 créditos por minuto. El coste de generar voz depende de la voz, el modelo y la duración. Generar audio con una voz clonada consume más créditos que con las voces estándar.
+
+#### ¿Los créditos caducan o se acumulan?
+
+Los créditos comprados no caducan. Los que no uses se acumulan, incluso después de cancelar tu suscripción.
+
+#### ¿Cuándo se renueva mi suscripción?
+
+Tu suscripción se renueva automáticamente cada mes hasta que la canceles. Cualquier descuento del primer mes se aplica solo al primer pago. Los pagos posteriores usan el precio mensual habitual indicado al pagar.
+
+#### ¿Puedo cancelar y conservar mis créditos?
+
+Cancela desde el portal de clientes de Stripe en la página de créditos. Tu plan sigue activo hasta el final del periodo pagado. Después, cesan las renovaciones mensuales. Puedes seguir usando los créditos de tu cuenta.
+
+#### ¿Puedo comprar más créditos antes de la próxima renovación?
+
+Sí. Puedes hacer una compra única de créditos mientras estás suscrito, sin esperar al próximo pago mensual.
 
 ### API para desarrolladores
 
@@ -926,7 +1038,7 @@ URL canónica: https://sexyvoice.ai/es
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1709",
+    "x-markdown-tokens": "2018",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1073,15 +1185,43 @@ Les voix enregistrées pour les appels sont privées à votre compte. Le fournis
 
 Créez de l'audio pour des vidéos, podcasts, livres audio, jeux, cours et réseaux sociaux. Utilisez uniquement des voix et des contenus pour lesquels vous disposez des droits.
 
+#### Puis-je essayer avant de payer ?
+
+Les nouveaux comptes reçoivent 10 000 crédits gratuits. Aucune carte bancaire requise.
+
+#### Puis-je utiliser le contenu audio à des fins commerciales ?
+
+Oui. Vous êtes propriétaire du contenu audio que vous générez et pouvez en faire un usage commercial, à condition de détenir les droits sur les voix et les contenus utilisés.
+
+#### Combien de temps les fichiers audio générés sont-ils conservés ?
+
+Le contenu audio généré est conservé 30 jours pour les comptes gratuits et 90 jours pour les comptes payants. Téléchargez les fichiers que vous souhaitez garder.
+
 ### Tarifs et accès
 
-#### De combien de crédits ai-je besoin ?
+#### Vaut-il mieux acheter des crédits une fois ou s'abonner ?
 
-Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits. La quantité de parole dépend de la voix, du modèle et du texte. Achetez des crédits avec une recharge ou recevez-en chaque mois avec un abonnement. La génération vocale et les appels utilisent le même solde.
+Un achat unique ajoute des crédits sans abonnement. Abonnez-vous pour recevoir des crédits chaque mois, avec un bonus de 15 %.
 
-#### Pourquoi choisir SexyVoice.ai ?
+#### Que puis-je faire avec mes crédits ?
 
-Nous combinons une qualité vocale premium avec des outils simples et des prix équitables. Que vous soyez créateur ou entreprise, vous obtenez des résultats professionnels sans contrats ni configurations compliquées. Les crédits gratuits facilitent l'essai de tout.
+Les appels en direct coûtent 1000 crédits par minute. Le coût de la génération vocale dépend de la voix, du modèle et de la durée. Générer du son avec une voix clonée utilise plus de crédits que les voix standard.
+
+#### Les crédits expirent-ils ou sont-ils reportés ?
+
+Les crédits achetés n'expirent pas. Les crédits achetés non utilisés sont reportés, même après la résiliation de votre abonnement.
+
+#### Quand mon abonnement est-il renouvelé ?
+
+Votre abonnement se renouvelle automatiquement chaque mois jusqu'à sa résiliation. Toute remise du premier mois s'applique uniquement au premier paiement. Les paiements suivants utilisent le tarif mensuel habituel indiqué lors du paiement.
+
+#### Puis-je résilier et conserver mes crédits ?
+
+Résiliez depuis le portail client Stripe sur la page des crédits. Votre forfait reste actif jusqu'à la fin de la période payée, puis les renouvellements mensuels cessent. Vous pouvez continuer à utiliser les crédits de votre compte.
+
+#### Puis-je acheter des crédits avant le prochain renouvellement ?
+
+Oui. Vous pouvez effectuer un achat unique de crédits tout en étant abonné, sans attendre le prochain paiement mensuel.
 
 ### API pour les développeurs
 
@@ -1103,7 +1243,7 @@ URL canonique : https://sexyvoice.ai/fr
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1904",
+    "x-markdown-tokens": "2250",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1250,15 +1390,43 @@ Le voci salvate per le chiamate sono private del tuo account. Il fornitore conse
 
 Crea audio per video, podcast, audiolibri, giochi, corsi e social. Usa solo voci e contenuti per cui hai i diritti.
 
+#### Posso provarlo prima di pagare?
+
+I nuovi account ricevono 10.000 crediti gratuiti. Non serve una carta di credito.
+
+#### Posso usare l'audio a fini commerciali?
+
+Sì. Sei proprietario dell'audio che generi e puoi usarlo a fini commerciali, purché tu abbia i diritti sulle voci e sui contenuti che utilizzi.
+
+#### Per quanto tempo vengono conservati i file audio generati?
+
+L'audio generato viene conservato per 30 giorni sugli account gratuiti e 90 giorni sugli account a pagamento. Scarica i file che vuoi conservare.
+
 ### Prezzi e accesso
 
-#### Di quanti crediti ho bisogno?
+#### Meglio acquistare crediti una volta o abbonarsi?
 
-I nuovi utenti ricevono 10.000 crediti gratis. La quantità di parlato dipende dalla voce, dal modello e dal testo. Acquista crediti con una ricarica o ricevili ogni mese con un abbonamento. Generazione vocale e chiamate usano lo stesso saldo.
+Un acquisto singolo aggiunge crediti senza abbonamento. Abbonati per ricevere crediti ogni mese, con un bonus del 15%.
 
-#### Perché scegliere SexyVoice.ai?
+#### Quanto posso fare con i miei crediti?
 
-Combiniamo qualità vocale premium con strumenti semplici e prezzi equi. Che tu sia un creatore o un'azienda, ottieni risultati professionali senza contratti o configurazioni complicate. I crediti gratuiti rendono facile provare tutto.
+Le chiamate dal vivo costano 1000 crediti al minuto. Il costo della generazione vocale dipende dalla voce, dal modello e dalla durata. Generare audio con una voce clonata consuma più crediti rispetto alle voci standard.
+
+#### I crediti scadono o si accumulano?
+
+I crediti acquistati non scadono. I crediti acquistati e non utilizzati si accumulano, anche dopo la disdetta dell'abbonamento.
+
+#### Quando si rinnova il mio abbonamento?
+
+Il tuo abbonamento si rinnova automaticamente ogni mese finché non lo disdici. Un eventuale sconto per il primo mese si applica solo al primo pagamento. I pagamenti successivi usano il prezzo mensile normale indicato al momento dell'acquisto.
+
+#### Posso disdire e mantenere i miei crediti?
+
+Disdici dal portale clienti Stripe sulla pagina dei crediti. Il piano resta attivo fino alla fine del periodo pagato, poi i rinnovi mensili si interrompono. Puoi continuare a usare i crediti già presenti nel tuo account.
+
+#### Posso acquistare altri crediti prima del prossimo rinnovo?
+
+Sì. Puoi fare un acquisto singolo di crediti mentre sei abbonato, senza aspettare il prossimo pagamento mensile.
 
 ### API per sviluppatori
 
@@ -1280,7 +1448,7 @@ URL canonico: https://sexyvoice.ai/it
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1742",
+    "x-markdown-tokens": "2072",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,

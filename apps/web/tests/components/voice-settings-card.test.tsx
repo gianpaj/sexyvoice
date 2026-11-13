@@ -179,9 +179,9 @@ describe('VoiceSettingsCard', () => {
 
     await user.hover(screen.getByRole('button', { name: '' }));
 
-    expect(
-      await screen.findByText(baseDict.voiceSelector.grokInfo),
-    ).toBeVisible();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      baseDict.voiceSelector.grokInfo,
+    );
     expect(
       screen.queryByText(baseDict.voiceSelector.geminiInfo),
     ).not.toBeInTheDocument();
@@ -200,9 +200,9 @@ describe('VoiceSettingsCard', () => {
 
     await user.hover(screen.getByRole('button', { name: '' }));
 
-    expect(
-      await screen.findByText(baseDict.voiceSelector.geminiInfo),
-    ).toBeVisible();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      baseDict.voiceSelector.geminiInfo,
+    );
     expect(
       screen.queryByText(baseDict.voiceSelector.grokInfo),
     ).not.toBeInTheDocument();
@@ -222,9 +222,9 @@ describe('VoiceSettingsCard', () => {
 
     await user.hover(screen.getByRole('button', { name: '' }));
 
-    expect(
-      await screen.findByText(/Model: Orpheus-TTS \(text-to-speech AI model\)/),
-    ).toBeVisible();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      /Model: Orpheus-TTS \(text-to-speech AI model\)/,
+    );
     expect(
       screen.queryByText(baseDict.voiceSelector.geminiInfo),
     ).not.toBeInTheDocument();
