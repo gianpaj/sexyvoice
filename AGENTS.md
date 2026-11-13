@@ -140,7 +140,7 @@ pnpm format              # Biome format check for web and docs
 pnpm fixall              # Apply Biome format, lint, and assist fixes
 pnpm check-translations  # Validate message key parity across locales
 pnpm build:content       # Build MDX content (Contentlayer2) for the web app
-pnpm clean               # Check unused code with knip (apps/web/knip.jsonc)
+pnpm knip                # Find unused files, exports, and dependencies
 ```
 
 Use package filters when you only want one app, e.g.

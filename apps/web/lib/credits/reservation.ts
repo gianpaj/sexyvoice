@@ -15,7 +15,7 @@ import {
  */
 type CreditActor = 'session' | 'service';
 
-export type SettlementOutcome =
+type SettlementOutcome =
   | 'exact'
   | 'refunded'
   | 'refund_failed'
@@ -23,7 +23,7 @@ export type SettlementOutcome =
   | 'partial_debit'
   | 'debit_failed';
 
-export interface CreditSettlement {
+interface CreditSettlement {
   /** Credits kept for the generation. */
   debited: number;
   /** Provider error message when a refund or extra debit failed. */
@@ -31,7 +31,7 @@ export interface CreditSettlement {
   outcome: SettlementOutcome;
 }
 
-export type RefundResult = { ok: true } | { error: string; ok: false };
+type RefundResult = { ok: true } | { error: string; ok: false };
 
 export interface CreditReservation {
   /** Credits currently held. */

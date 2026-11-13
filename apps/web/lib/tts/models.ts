@@ -8,7 +8,7 @@ import { countWords } from '../text.ts';
  */
 
 export type TtsProvider = 'gemini' | 'grok' | 'replicate';
-export type TtsFormat = 'mp3' | 'wav';
+type TtsFormat = 'mp3' | 'wav';
 
 interface TierLimit {
   free: number;

@@ -39,6 +39,7 @@ type SpeechErrorKind =
   | 'input_too_long'
   | 'invalid_argument'
   | 'no_audio'
+  | 'output_limit'
   | 'provider_error'
   | 'provider_unavailable'
   | 'quota_exceeded'
@@ -55,6 +56,8 @@ export const SPEECH_ERROR_MESSAGES: Record<
     'Your text is too long for this voice. Please shorten it or use Split mode.',
   invalid_argument: 'Voice generation failed, please retry',
   no_audio: 'Voice generation returned no audio, please retry',
+  output_limit:
+    'The voice reached its audio output limit. Shorten the text and try again.',
   provider_error: 'Voice generation failed, please retry',
   quota_exceeded:
     'We have exceeded our third-party API current quota, please try later or tomorrow',
@@ -90,6 +93,20 @@ export class SpeechError extends Error {
     this.provider = provider;
     this.google = google;
   }
+}
+
+/**
+ * Undici reports a provider that sent no response headers in time as a
+ * TypeError caused by UND_ERR_HEADERS_TIMEOUT.
+ */
+function isTransientGrokFailure(error: unknown): boolean {
+  const cause: unknown = error instanceof TypeError ? error.cause : undefined;
+  return (
+    (Error.isError(cause) &&
+      'code' in cause &&
+      cause.code === 'UND_ERR_HEADERS_TIMEOUT') ||
+    isTransientProviderFailure(error)
+  );
 }
 
 /**
@@ -355,6 +372,15 @@ async function synthesizeWithGemini(
     throw new SpeechError('no_audio', { provider: 'gemini' });
   }
 
+  // MAX_TOKENS can arrive with audio, but the audio may stop mid-sentence.
+  if (outcome === 'output_limit') {
+    logger.warn('Gemini voice generation reached the output limit', {
+      extra: details,
+      user: context.user,
+    });
+    throw new SpeechError('output_limit', { provider: 'gemini' });
+  }
+
   if (outcome !== 'success' || !data || !mimeType) {
     logger.error('Gemini voice generation failed', {
       extra: {
@@ -427,7 +453,7 @@ async function synthesizeWithGrok(
     if (isAbortError(error)) {
       throw new SpeechError('aborted', { cause: error, provider: 'grok' });
     }
-    if (isTransientProviderFailure(error)) {
+    if (isTransientGrokFailure(error)) {
       logger.warn('Grok TTS provider unavailable', {
         extra: {
           ...details,

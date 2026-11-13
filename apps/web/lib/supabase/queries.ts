@@ -397,17 +397,6 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const getUserByStripeCustomerId = async (customerId: string) => {
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('stripe_id', customerId)
-    .single();
-  return data;
-};
-
 /**
  * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
  * as "no prior credit" because `unique_reference_topup_idx` and

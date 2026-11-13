@@ -57,6 +57,14 @@ function speechErrorBody(error: SpeechError) {
         status: 400,
         type: 'invalid_request_error',
       } as const;
+    case 'output_limit':
+      return {
+        code: 'output_limit_exceeded',
+        message: error.message,
+        param: 'input',
+        status: 422,
+        type: 'invalid_request_error',
+      } as const;
     case 'no_audio':
       return {
         code: 'server_error',

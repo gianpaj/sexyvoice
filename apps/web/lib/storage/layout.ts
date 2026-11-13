@@ -2,6 +2,7 @@
  * R2 folders for generated audio. Free-user folders are the ones the R2
  * lifecycle rules and the orphan cleanup may delete; the dashboard and the
  * external API use the same names in their own buckets.
+ * @public Scripts read it through a default import.
  */
 export const AUDIO_FOLDERS = {
   clone: { free: 'cloned-audio-free', paid: 'cloned-audio' },

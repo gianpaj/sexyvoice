@@ -21,13 +21,13 @@ export {
   resolveInitialDemoLanguageCode,
 } from './clone-demo-languages';
 
-export interface DemoCloneClip {
+interface DemoCloneClip {
   durationSeconds: number;
   peaks: number[][];
   src: string;
 }
 
-export interface DemoCloneTake extends DemoCloneClip {
+interface DemoCloneTake extends DemoCloneClip {
   id: CloneDemoTakeId;
   prompt: string;
 }

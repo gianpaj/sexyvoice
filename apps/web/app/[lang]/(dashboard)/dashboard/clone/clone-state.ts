@@ -1,4 +1,4 @@
-export type Status = 'idle' | 'generating' | 'complete' | 'error';
+type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 export interface CloneState {
   activeTab: 'upload' | 'preview';

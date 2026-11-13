@@ -205,9 +205,11 @@ settings out of range.
 
 The generate page calls the dashboard speech routes through
 `apps/web/lib/tts/speech-client.ts`, which also defines the request, response,
-and error bodies the routes return. `PROVIDER_UNAVAILABLE` is the only error
-code: the page shows its localized message with the provider name, the route's
-message for any other failure, and the HTTP status after either.
+and error bodies the routes return. Two error codes carry localized copy:
+`PROVIDER_UNAVAILABLE`, which names the provider, and `GEMINI_OUTPUT_LIMIT`
+(HTTP 422), sent when Gemini stops at its audio output limit and the audio may
+be cut off. The page shows the route's message for any other failure, and the
+HTTP status after every message.
 
 Split mode, for paid users, cuts long text into up to 20 segments that fit
 every model's paid request limit, without breaking a Grok wrapper or an inline

@@ -11,17 +11,17 @@ import {
  * to and from the tag editor's document.
  */
 
-export interface TextToken {
+interface TextToken {
   type: 'text';
   value: string;
 }
 
-export interface InstantTagToken {
+interface InstantTagToken {
   tag: string;
   type: 'instant-tag';
 }
 
-export interface WrapperTagToken {
+interface WrapperTagToken {
   children: TagToken[];
   closeTag: string;
   openTag: string;
@@ -29,7 +29,7 @@ export interface WrapperTagToken {
 }
 
 /** An open wrapper tag that never closes; its text follows as siblings. */
-export interface WrapperOpenTagToken {
+interface WrapperOpenTagToken {
   closeTag: string;
   openTag: string;
   type: 'wrapper-open-tag';

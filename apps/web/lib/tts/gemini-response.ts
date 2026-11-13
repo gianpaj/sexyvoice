@@ -25,6 +25,7 @@ export function extractInlineAudio(response: GenerateContentResponse | null): {
 type GeminiTtsResponseOutcome =
   | 'content_blocked'
   | 'no_audio'
+  | 'output_limit'
   | 'success'
   | 'unexpected';
 
@@ -47,6 +48,10 @@ export function classifyGeminiTtsResponse({
     blockReason === 'BLOCKLIST'
   ) {
     return 'content_blocked';
+  }
+
+  if (finishReason === FinishReason.MAX_TOKENS) {
+    return 'output_limit';
   }
 
   if (finishReason === FinishReason.STOP && hasAudio) {

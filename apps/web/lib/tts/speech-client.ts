@@ -46,8 +46,8 @@ export interface EstimateSpeechResponseBody {
   tokens?: number;
 }
 
-/** The only code the speech routes send; other failures carry a message. */
-export type SpeechRouteErrorCode = 'PROVIDER_UNAVAILABLE';
+/** Codes the client localizes; other failures carry a message. */
+type SpeechRouteErrorCode = 'GEMINI_OUTPUT_LIMIT' | 'PROVIDER_UNAVAILABLE';
 
 export interface SpeechErrorResponseBody {
   details?: ProviderUnavailableDetails;

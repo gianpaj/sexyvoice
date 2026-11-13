@@ -180,8 +180,8 @@ describe('VoiceSettingsCard', () => {
     await user.hover(screen.getByRole('button', { name: '' }));
 
     expect(
-      await screen.findAllByText(baseDict.voiceSelector.grokInfo),
-    ).toHaveLength(2);
+      await screen.findByText(baseDict.voiceSelector.grokInfo),
+    ).toBeVisible();
     expect(
       screen.queryByText(baseDict.voiceSelector.geminiInfo),
     ).not.toBeInTheDocument();
@@ -201,8 +201,8 @@ describe('VoiceSettingsCard', () => {
     await user.hover(screen.getByRole('button', { name: '' }));
 
     expect(
-      await screen.findAllByText(baseDict.voiceSelector.geminiInfo),
-    ).toHaveLength(2);
+      await screen.findByText(baseDict.voiceSelector.geminiInfo),
+    ).toBeVisible();
     expect(
       screen.queryByText(baseDict.voiceSelector.grokInfo),
     ).not.toBeInTheDocument();
@@ -223,10 +223,8 @@ describe('VoiceSettingsCard', () => {
     await user.hover(screen.getByRole('button', { name: '' }));
 
     expect(
-      await screen.findAllByText(
-        /Model: Orpheus-TTS \(text-to-speech AI model\)/,
-      ),
-    ).toHaveLength(2);
+      await screen.findByText(/Model: Orpheus-TTS \(text-to-speech AI model\)/),
+    ).toBeVisible();
     expect(
       screen.queryByText(baseDict.voiceSelector.geminiInfo),
     ).not.toBeInTheDocument();

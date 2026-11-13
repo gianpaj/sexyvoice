@@ -25,11 +25,6 @@ export const POLICY_PRIORITY = 0.3;
  * Pages that also serve agent markdown, at `/{lang}/landing.md` for the
  * landing page and `/{lang}{path}.md` for the others.
  */
-export const MARKDOWN_PAGES = [
-  '/',
-  '/blog',
-  '/privacy-policy',
-  '/terms',
-] as const;
+const MARKDOWN_PAGES = ['/', '/blog', '/privacy-policy', '/terms'] as const;
 
 export type MarkdownPage = (typeof MARKDOWN_PAGES)[number];

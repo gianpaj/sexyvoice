@@ -6,5 +6,3 @@ import { codeUsages } from '@/lib/code-usage';
 export const OpenAPIPage = createOpenAPIPage({
   codeUsages,
 });
-
-export const APIPage = OpenAPIPage;

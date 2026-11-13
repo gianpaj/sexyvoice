@@ -33,13 +33,14 @@ All errors return this shape:
 | `unsupported_parameter`       | `invalid_request_error` | Parameter is not supported.                                                                            |
 | `unsupported_response_format` | `invalid_request_error` | Requested format is unsupported for selected model.                                                    |
 | `input_too_long`              | `invalid_request_error` | Input exceeds model limits.                                                                            |
+| `output_limit_exceeded`       | `invalid_request_error` | Gemini reached its audio output limit. HTTP 422. Shorten the input before retrying.                     |
 | `voice_not_found`             | `not_found_error`       | Voice ID does not exist, or voice name does not exist for the requested model.                         |
 | `invalid_api_key`             | `authentication_error`  | Bearer key missing/invalid/inactive.                                                                   |
 | `insufficient_credits`        | `permission_error`      | Account balance is too low.                                                                            |
 | `rate_limit_exceeded`         | `rate_limit_error`      | Too many requests.                                                                                     |
 | `provider_quota_exceeded`     | `rate_limit_error`      | Provider quota or billing is temporarily exhausted.                                                    |
 | `content_policy_violation`    | `invalid_request_error` | Content blocked by provider safety policy.                                                             |
-| `provider_unavailable`        | `server_error`          | Upstream provider is temporarily unavailable; retry later.                                             |
+| `provider_unavailable`        | `server_error`          | Upstream provider is temporarily unavailable or timed out. Retry with backoff.                                             |
 | `server_error`                | `server_error`          | Internal service or provider failure. Responses use HTTP 500 or 503; retry 503 responses with backoff. |
 
 ## Voice lookup errors and client compatibility

@@ -20,7 +20,7 @@ type VoiceMetadata = Pick<
   | 'type'
   | 'sort_order'
 >;
-export interface CatalogVoice extends SampleVoice {
+interface CatalogVoice extends SampleVoice {
   row: VoiceMetadata;
   sourceIds: string[];
 }

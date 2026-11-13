@@ -56,6 +56,10 @@ function speechErrorResponse(error: SpeechError): Response {
       return APIErrorResponse(error.message, 422);
     case 'input_too_long':
       return APIErrorResponse(error.message, 400);
+    case 'output_limit':
+      return APIErrorResponse(error.message, 422, {
+        errorCode: 'GEMINI_OUTPUT_LIMIT',
+      } satisfies Partial<SpeechErrorResponseBody>);
     case 'no_audio':
       return APIErrorResponse(error.message, 503);
     case 'provider_unavailable':

@@ -19,10 +19,10 @@ const { AUDIO_FOLDERS } = storageLayout;
 
 export type { R2ObjectMetadata } from './r2-transfer.mts';
 
-export const MANIFEST_SCHEMA_VERSION = 1;
+const MANIFEST_SCHEMA_VERSION = 1;
 export const MINIMUM_AGE_DAYS = 45;
-export const DEFAULT_PAGE_SIZE = 1000;
-export const DEFAULT_DELETE_BATCH_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 1000;
+const DEFAULT_DELETE_BATCH_SIZE = 100;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -31,14 +31,14 @@ export interface CleanupConfig {
   mainBucket: string;
 }
 
-export interface ManifestSummaryEntry {
+interface ManifestSummaryEntry {
   bucket: string;
   bytes: number;
   count: number;
   prefix: string;
 }
 
-export interface ObjectTotals {
+interface ObjectTotals {
   bytes: number;
   count: number;
 }
@@ -95,7 +95,7 @@ export interface AudioUrlCache {
   deleteKey: (key: string) => Promise<void>;
 }
 
-export type RecheckStatus =
+type RecheckStatus =
   | 'changed-in-r2'
   | 'eligible'
   | 'missing-from-r2'
@@ -287,9 +287,7 @@ export function findOrphanCandidates(
     .sort(compareOldestFirst);
 }
 
-export function summarizeObjects(
-  objects: R2ObjectMetadata[],
-): ManifestSummaryEntry[] {
+function summarizeObjects(objects: R2ObjectMetadata[]): ManifestSummaryEntry[] {
   const groups = new Map<string, ManifestSummaryEntry>();
 
   for (const object of objects) {

@@ -1424,7 +1424,8 @@
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
     "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi.",
-    "PROVIDER_UNAVAILABLE": "{provider} non è disponibile al momento. Riprova."
+    "PROVIDER_UNAVAILABLE": "{provider} non è disponibile al momento. Riprova.",
+    "GEMINI_OUTPUT_LIMIT": "La voce ha raggiunto il limite di output audio. Accorcia il testo e riprova."
   },
   "ttsEditor": {
     "filterTags": "Filtra...",

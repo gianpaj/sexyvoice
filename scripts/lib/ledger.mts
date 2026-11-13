@@ -156,9 +156,7 @@ export async function readPaidUserIds(
   return new Set(payments.map((payment) => payment.user_id));
 }
 
-export function isPayment(
-  transaction: Pick<CreditTransaction, 'type'>,
-): boolean {
+function isPayment(transaction: Pick<CreditTransaction, 'type'>): boolean {
   return transaction.type === 'purchase' || transaction.type === 'topup';
 }
 
