@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@ai-sdk/react':
-      specifier: 3.0.292
-      version: 3.0.292
+      specifier: 3.0.333
+      version: 3.0.333
     '@biomejs/biome':
       specifier: 2.5.14
       version: 2.5.14
@@ -31,8 +31,8 @@ catalogs:
       specifier: 1.37.0
       version: 1.37.0
     ai:
-      specifier: 6.0.289
-      version: 6.0.289
+      specifier: 6.0.330
+      version: 6.0.330
     effect:
       specifier: 4.0.0
       version: 4.0.0
@@ -118,10 +118,10 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.292(react@19.3.1)(zod@4.6.6)
+        version: 3.0.333(react@19.3.1)(zod@4.6.6)
       '@openrouter/ai-sdk-provider':
         specifier: ^2.5.1
-        version: 2.5.1(ai@6.0.289(zod@4.6.6))(zod@4.6.6)
+        version: 2.5.1(ai@6.0.330(zod@4.6.6))(zod@4.6.6)
       '@radix-ui/react-presence':
         specifier: ^1.1.6
         version: 1.1.10(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -130,7 +130,7 @@ importers:
         version: 2.5.8(csstype@3.2.3)(preact@10.28.2)(react@19.3.1)
       ai:
         specifier: 'catalog:'
-        version: 6.0.289(zod@4.6.6)
+        version: 6.0.330(zod@4.6.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -229,14 +229,14 @@ importers:
   apps/web:
     dependencies:
       '@ai-sdk/google':
-        specifier: 3.0.126
-        version: 3.0.126(zod@4.6.6)
+        specifier: 3.0.145
+        version: 3.0.145(zod@4.6.6)
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.292(react@19.3.1)(zod@4.6.6)
+        version: 3.0.333(react@19.3.1)(zod@4.6.6)
       '@ai-sdk/xai':
-        specifier: 3.0.135
-        version: 3.0.135(zod@4.6.6)
+        specifier: 3.0.152
+        version: 3.0.152(zod@4.6.6)
       '@argos-ci/playwright':
         specifier: ^6.6.4
         version: 6.6.4(supports-color@8.1.1)
@@ -350,7 +350,7 @@ importers:
         version: 1.0.14(react@19.3.1)(wavesurfer.js@7.12.12)
       ai:
         specifier: 'catalog:'
-        version: 6.0.289(zod@4.6.6)
+        version: 6.0.330(zod@4.6.6)
       babel-plugin-react-compiler:
         specifier: ^1.0.0
         version: 1.0.0
@@ -536,8 +536,8 @@ importers:
   scripts:
     dependencies:
       '@ai-sdk/xai':
-        specifier: 3.0.135
-        version: 3.0.135(zod@4.6.6)
+        specifier: 3.0.152
+        version: 3.0.152(zod@4.6.6)
       '@aws-sdk/client-s3':
         specifier: 3.1145.0
         version: 3.1145.0
@@ -555,7 +555,7 @@ importers:
         version: 1.37.0
       ai:
         specifier: 'catalog:'
-        version: 6.0.289(zod@4.6.6)
+        version: 6.0.330(zod@4.6.6)
       disposable-email-domains-js:
         specifier: ^1.21.0
         version: 1.21.0
@@ -587,42 +587,42 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@ai-sdk/gateway@3.0.199':
-    resolution: {integrity: sha512-kSdvX3csolZV+u/4ZV0hdUAsxEGSMvGrACBa2SkubGRh5/I9BJmaDebFlZOT8VsyeSIZgnEVCJrN/lrTzIMojA==}
+  '@ai-sdk/gateway@3.0.235':
+    resolution: {integrity: sha512-TjTsHVSJIk+ixZISGIbUUh5MLnjW/x7FSFOIL58MxAf/I5VmcZnC/dPxUUwLpcYNsX3YKVLscHC4H/TovX1jLg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/google@3.0.126':
-    resolution: {integrity: sha512-7V0rnwRinYcJB/DJZfUomiSpYOO+A8X/DVcFusXicfzsP6kvEiICg1IdtrqEhN67pN+Axmw68Rckq4vLNWwkxA==}
+  '@ai-sdk/google@3.0.145':
+    resolution: {integrity: sha512-iKf+kWN4rgHhRG78wBG/JgFPyyGNxVdT1EfK0oCqt+uYShfsV7G9Y+ptcq/BNTPfAel9KTCAhKPFjSWtsvskMQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/openai-compatible@2.0.77':
-    resolution: {integrity: sha512-6goHStLlWPwt0W1GFqesfFlQRCIUI/gBQXUGRojjz06x9oyvaAzZMeH6PIZv6GmVhGvNd9WOvgE7lnicAF2Efg==}
+  '@ai-sdk/openai-compatible@2.0.93':
+    resolution: {integrity: sha512-5R5H7Opq2raqF+BVrxFULmN6tjV0WxgpZ3SMID99xhuuHBE4xg418vZnJIYBxz542QtXBXc/js5We8x/qMyV8Q==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@4.0.53':
-    resolution: {integrity: sha512-15VOMPPGZeUPw3fiOLwW8NJA/YvgaUrU+TIogLxEFxdBeijn+M1NrNZruX/R1HBSLWiNac7JB/jeDP5kksbLKw==}
+  '@ai-sdk/provider-utils@4.0.66':
+    resolution: {integrity: sha512-tITCIYBJlxD4PmDIAI2VXb67yEbWRepvJBJrv2pIY5vMRUta51AFRxLlxm0IexRGdIBGuQ10+ClClZMXtawkbA==}
     engines: {node: '>=18.17'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider@3.0.17':
-    resolution: {integrity: sha512-ijb+g+XxIAmv46hpt73ty83LhQHwwsqA1IwVX6p1MAREyX0zGM9eIrz1m3KlFxTHr8E4k/ao01w6Dlx3UBOihQ==}
+  '@ai-sdk/provider@3.0.19':
+    resolution: {integrity: sha512-5lWq7zSfRaU5ylDESn3sDQjgGl2AI1vjZKO/6JY3aFW70ct4zcP1kN+ZUYOuTXr28fVsYbyu2YFhddLdIgQFZQ==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@3.0.292':
-    resolution: {integrity: sha512-OhWvhJunNCTsCNC0MMPIxZRre5pbLW9ZsbUgsbTRM/ca1OlnrzrXhkE5cjUgYBXvqfCd2bC9nyK7Ba7ym1GqaA==}
+  '@ai-sdk/react@3.0.333':
+    resolution: {integrity: sha512-E9oXwfT/DhhquNR8eU86SRcWH6pozWvl4KIpNdhhcyo8a7OdP+fT/sGKHNwxOdoTn1F0itGqGChEcHJsFkop+Q==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
 
-  '@ai-sdk/xai@3.0.135':
-    resolution: {integrity: sha512-2MBna50qPz+eZ4T6g5efMpspFXptJ6zLFU0Vt8hcDWXwHfO8wNE5ppYZEqgNyIzWM+sdMXmhH9eYk4XjgqwSeg==}
+  '@ai-sdk/xai@3.0.152':
+    resolution: {integrity: sha512-Ipn9ZkjeocEaLgeSWwoAxNJPj/ke3LEj0/vzmxgJtTGr5TRvjXu5T9hQHXu/oTat02W+Wc8i/mMlW6G2KRZJcQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -4262,7 +4262,9 @@ packages:
   '@smithy/core@3.35.1':
     resolution: {integrity: sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w==}
     engines: {node: '>=18.0.0'}
-    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
+    deprecated: |-
+      Deprecated due to a bug in custom logger data redaction. Upgrade to the latest version. If you used a custom logger with this
+        version, review your logs and rotate any credentials or other secrets. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -5439,8 +5441,8 @@ packages:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
     engines: {node: '>= 14'}
 
-  ai@6.0.289:
-    resolution: {integrity: sha512-hmwaCl75KER0QoB7hPOy52EOB1eBad06uB6B72hBdETFrNKN33Dj22GvS1jgVaCdXLK45RqT/19P5SxiRTgW6g==}
+  ai@6.0.330:
+    resolution: {integrity: sha512-YerKl8FTXmigKD7DaMOUCdOTUdC6S3h9SP7fWH16Z3wGfb2tndc1lQmzL5EQUEnGCmbCr8bKwt/ayOc0pbifJQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -6758,6 +6760,7 @@ packages:
   imagescript@1.3.1:
     resolution: {integrity: sha512-ue/zxSyEzj7je8Nlt2vjY9GEa2BbScFSRZJq7OTVDZFp0r57fyuxrlsF8qWgxTP+kP8WklTw4by/ZEYVX5S13w==}
     engines: {node: '>=14.0.0'}
+    deprecated: ImageScript v1 is no longer actively maintained. Please update to v3.x for the latest bug fixes and stability improvements.
 
   immer@10.2.0:
     resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
@@ -9338,52 +9341,52 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@ai-sdk/gateway@3.0.199(zod@4.6.6)':
+  '@ai-sdk/gateway@3.0.235(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
+      '@ai-sdk/provider': 3.0.19
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
       '@vercel/oidc': 3.2.0
       zod: 4.6.6
 
-  '@ai-sdk/google@3.0.126(zod@4.6.6)':
+  '@ai-sdk/google@3.0.145(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
+      '@ai-sdk/provider': 3.0.19
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
       zod: 4.6.6
 
-  '@ai-sdk/openai-compatible@2.0.77(zod@4.6.6)':
+  '@ai-sdk/openai-compatible@2.0.93(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
+      '@ai-sdk/provider': 3.0.19
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
       zod: 4.6.6
 
-  '@ai-sdk/provider-utils@4.0.53(zod@4.6.6)':
+  '@ai-sdk/provider-utils@4.0.66(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/provider': 3.0.17
+      '@ai-sdk/provider': 3.0.19
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
       undici: 6.28.0
       zod: 4.6.6
 
-  '@ai-sdk/provider@3.0.17':
+  '@ai-sdk/provider@3.0.19':
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@3.0.292(react@19.3.1)(zod@4.6.6)':
+  '@ai-sdk/react@3.0.333(react@19.3.1)(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
-      ai: 6.0.289(zod@4.6.6)
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
+      ai: 6.0.330(zod@4.6.6)
       react: 19.3.1
       swr: 2.4.1(react@19.3.1)
       throttleit: 2.1.0
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/xai@3.0.135(zod@4.6.6)':
+  '@ai-sdk/xai@3.0.152(zod@4.6.6)':
     dependencies:
-      '@ai-sdk/openai-compatible': 2.0.77(zod@4.6.6)
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
+      '@ai-sdk/openai-compatible': 2.0.93(zod@4.6.6)
+      '@ai-sdk/provider': 3.0.19
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
       zod: 4.6.6
 
   '@alcalzone/ansi-tokenize@0.3.0':
@@ -10821,9 +10824,9 @@ snapshots:
 
   '@open-draft/until@2.1.0': {}
 
-  '@openrouter/ai-sdk-provider@2.5.1(ai@6.0.289(zod@4.6.6))(zod@4.6.6)':
+  '@openrouter/ai-sdk-provider@2.5.1(ai@6.0.330(zod@4.6.6))(zod@4.6.6)':
     dependencies:
-      ai: 6.0.289(zod@4.6.6)
+      ai: 6.0.330(zod@4.6.6)
       zod: 4.6.6
 
   '@opentelemetry/api-logs@0.203.0':
@@ -14122,11 +14125,11 @@ snapshots:
 
   agent-base@7.1.3: {}
 
-  ai@6.0.289(zod@4.6.6):
+  ai@6.0.330(zod@4.6.6):
     dependencies:
-      '@ai-sdk/gateway': 3.0.199(zod@4.6.6)
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.53(zod@4.6.6)
+      '@ai-sdk/gateway': 3.0.235(zod@4.6.6)
+      '@ai-sdk/provider': 3.0.19
+      '@ai-sdk/provider-utils': 4.0.66(zod@4.6.6)
       '@opentelemetry/api': 1.9.1
       zod: 4.6.6
 
