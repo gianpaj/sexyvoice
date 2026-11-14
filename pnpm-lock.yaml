@@ -280,8 +280,8 @@ importers:
         specifier: ^0.4.5
         version: 0.4.5(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))
       '@livekit/protocol':
-        specifier: 1.53.0
-        version: 1.53.0
+        specifier: 1.53.4
+        version: 1.53.4
       '@mistralai/mistralai':
         specifier: ^2.1.2
         version: 2.1.2
@@ -2004,8 +2004,8 @@ packages:
   '@livekit/protocol@1.52.1':
     resolution: {integrity: sha512-X8DxKlNbzk6Lh+v630+mjdFHSotdAFwIyzxSRSUql2DbTxCnlpa7JsvFGc6Na3mXiex2OFh0iiQtWwOBP0rIYA==}
 
-  '@livekit/protocol@1.53.0':
-    resolution: {integrity: sha512-dM562Q7sEQbJ9ZghjIpcVuRxRApGNwJW/JfXRub+dJT8J1cC2Tep0SyYkDzOawix7+0x969fnjXt0qEZOxkjbQ==}
+  '@livekit/protocol@1.53.4':
+    resolution: {integrity: sha512-xoZ14lbPJepmA7Giyh3CaquuGqfCol2jFZJsgoUZJ52PPqY+MfKHswuY0kQgeBuCqh/dWBKfX8AaYGA16hFoew==}
 
   '@mdx-js/esbuild@3.1.0':
     resolution: {integrity: sha512-Jk42xUb1SEJxh6n2GBAtJjQISFIZccjz8XVEsHVhrlvZJAJziIxR9KyaFF6nTeTB/jCAFQGDgO7+oMRH/ApRsg==}
@@ -4262,7 +4262,9 @@ packages:
   '@smithy/core@3.35.1':
     resolution: {integrity: sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w==}
     engines: {node: '>=18.0.0'}
-    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
+    deprecated: |-
+      Deprecated due to a bug in custom logger data redaction. Upgrade to the latest version. If you used a custom logger with this
+        version, review your logs and rotate any credentials or other secrets. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -10680,7 +10682,7 @@ snapshots:
   '@livekit/krisp-noise-filter@0.4.5(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))':
     dependencies:
       '@livekit/mutex': 1.1.1
-      '@livekit/protocol': 1.53.0
+      '@livekit/protocol': 1.53.4
       livekit-client: 2.23.0(@types/dom-mediacapture-record@1.0.22)
 
   '@livekit/mutex@1.1.1': {}
@@ -10693,7 +10695,7 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
-  '@livekit/protocol@1.53.0':
+  '@livekit/protocol@1.53.4':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
