@@ -289,6 +289,7 @@ vi.mock('next/server', () => ({
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
+  instrumentSupabaseClient: vi.fn(),
   logger: {
     error: vi.fn(),
     info: vi.fn(),

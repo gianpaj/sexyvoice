@@ -1,10 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+import { instrumentSupabase } from './tracing';
+
 export const createClient = async (responseHeaders?: Headers) => {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -29,4 +31,5 @@ export const createClient = async (responseHeaders?: Headers) => {
       },
     },
   );
+  return instrumentSupabase(client);
 };
