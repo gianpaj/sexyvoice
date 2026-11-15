@@ -224,12 +224,6 @@ redirect URLs for each deployment environment.
 - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT`: displayed first-month
   discount when the coupon is configured.
 
-### Edge Config
-
-Set `EDGE_CONFIG` when using dynamic call instructions. The `call-instructions`
-payload contains `defaultInstructions`, `initialInstruction`, and
-`presetInstructions`. Keep private prompt contents server-side.
-
 ### Monitoring, analytics, and support
 
 - `SENTRY_AUTH_TOKEN`

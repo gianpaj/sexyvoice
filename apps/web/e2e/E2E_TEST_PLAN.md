@@ -181,8 +181,7 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, saved Mistral profiles for paid users, credit transactions, and
-instruction config.
+call voices, saved Mistral profiles for paid users, and credit transactions.
 Custom characters start empty. Authentication still runs.
 
 The character scenarios intercept `/api/characters` with a per-test in-memory
@@ -208,8 +207,8 @@ the at-rest screenshots.
 
 Character and voice fixtures are a one-time snapshot of the linked database's
 public query results, including localized descriptions and voice assignments.
-They contain no user IDs or prompt text. Credits and instruction config are
-synthetic test data, not captured account data or production prompts.
+They contain no user IDs or prompt text. Credits are synthetic test data,
+not captured account data.
 
 Enable `E2E_TEST_MODE=true` on the **Next.js server**, not just the Playwright
 process. `isE2E()` disables fixtures when `VERCEL_ENV=production`. A server

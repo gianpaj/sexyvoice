@@ -401,19 +401,13 @@ We validate credits on the server before generating tokens. Relying on client-si
 
 Raw transcription segments are fragmented. Merging them based on timing and speaker creates a much better user experience.
 
-### 5. Use Edge Config for Dynamic Instructions
+### 5. Resolve character prompts on the server
 
-We use Vercel Edge Config to store and update AI instructions without redeploying:
-
-```typescript
-// lib/edge-config/call-instructions.ts
-import { get } from '@vercel/edge-config';
-
-export async function getCallInstructions(presetId: string) {
-  const instructions = await get(`call-instructions-${presetId}`);
-  return instructions ?? defaultInstructions;
-}
-```
+The call-token route loads public and saved custom character prompts from
+Supabase. It uses the selected language's prompt when available and falls back
+to the character's default prompt. Custom characters require ownership and a
+paid account. The server chooses the call opener from the selected language
+and model.
 
 ## Performance Optimizations
 

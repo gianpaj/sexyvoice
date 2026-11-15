@@ -6,6 +6,7 @@ import { POST as cloneVoice } from '@/app/api/clone-voice/route';
 import { POST as estimateCredits } from '@/app/api/estimate-credits/route';
 import { POST as generateText } from '@/app/api/generate-text/route';
 import { POST as generateVoice } from '@/app/api/generate-voice/route';
+import { getInitialInstruction } from '@/data/playground-state';
 // biome-ignore lint/performance/noNamespaceImport: tests assert across query mocks
 import * as queries from '@/lib/supabase/queries';
 import {
@@ -537,6 +538,48 @@ describe('Generation route claims authentication', () => {
     expect(response.status).toBe(403);
     expect(mocks.token).not.toHaveBeenCalled();
   });
+
+  it.each([
+    { isPublic: true, language: 'de', expected: 'Deutscher Server-Prompt' },
+    { isPublic: true, language: 'en', expected: 'Server-only prompt' },
+    { isPublic: false, language: 'de', expected: 'Deutscher Server-Prompt' },
+    { isPublic: false, language: 'en', expected: 'Server-only prompt' },
+  ] as const)(
+    'resolves database prompts and openers for public=$isPublic in $language',
+    async ({ isPublic, language, expected }) => {
+      vi.mocked(queries.resolveCharacterPrompt).mockResolvedValueOnce({
+        ...character,
+        is_public: isPublic,
+        prompts: {
+          prompt: 'Server-only prompt',
+          localized_prompts: { de: 'Deutscher Server-Prompt' },
+        },
+      });
+      vi.mocked(queries.hasUserPaid).mockResolvedValue(!isPublic);
+
+      const response = await callToken(
+        jsonRequest('call-token', {
+          ...callBody,
+          instructions: 'Client prompt must be ignored',
+          initialInstruction: 'Client opener must be ignored',
+          language,
+          selectedPresetId: presetId,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(queries.resolveCharacterPrompt).toHaveBeenCalledWith(presetId);
+      expect(JSON.parse(mocks.token.mock.calls[0][2].metadata)).toMatchObject({
+        character_id: presetId,
+        instructions: expected,
+        language,
+        initial_instruction: getInitialInstruction(
+          language,
+          'grok-voice-think-fast-2.0',
+        ),
+      });
+    },
+  );
 
   it.each([
     { owner: 'another-user', paid: true, status: 404 },

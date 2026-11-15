@@ -59,8 +59,6 @@ The repository has three main workspaces:
   `R2_BUCKET_NAME`; `/api/v1/speech` uses `R2_SPEECH_API_BUCKET_NAME`.
 - **Upstash Redis** caches dashboard TTS and cloned output and rate-limits
   external API keys.
-- **Vercel Edge Config** supplies default call instructions. Character prompts
-  come from PostgreSQL and are resolved again when the server mints a token.
 - **Stripe** manages subscriptions, top-ups, and credit purchases.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
@@ -465,6 +463,10 @@ Predefined character prompt text never reaches the browser. The token route load
 it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters
 and custom scenes require a paid account.
+
+The token route chooses the call opener with
+`getInitialInstruction(language, model)` from `apps/web/data/playground-state.ts`.
+Openers use the selected language and omit breathy markup for TTS pipeline models.
 
 Every call-token request captures the browser clock as `clientTime`, an ISO
 timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
