@@ -825,7 +825,11 @@
       "mute": "Stummschalten",
       "unmute": "Stummschaltung aufheben",
       "end": "Anruf beenden",
-      "audioSettings": "Audioeinstellungen"
+      "audioSettings": "Audioeinstellungen",
+      "record": "Aufnehmen",
+      "stopRecording": "Aufnahme beenden",
+      "recordVoice": "Nur Stimme",
+      "recordVideo": "Stimme und Video"
     },
     "ended": {
       "title": "Anruf mit {name} beendet · {duration}",
@@ -833,7 +837,9 @@
       "callAgain": "Erneut anrufen",
       "edit": "{name} bearbeiten",
       "makeYourOwn": "Eigene Version erstellen",
-      "back": "Zurück zu den Charakteren"
+      "back": "Zurück zu den Charakteren",
+      "downloadAudio": "Audio herunterladen",
+      "downloadVideo": "Video herunterladen"
     },
     "clone": {
       "title": "Stimme klonen",

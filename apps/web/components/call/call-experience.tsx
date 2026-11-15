@@ -17,6 +17,7 @@ import { defaultSessionConfig } from '@/data/default-config';
 import type { CustomCallDraft } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
+import { useCallRecording } from '@/hooks/use-call-recording';
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { useConnection } from '@/hooks/use-connection';
 import { useDeferredCharacterDelete } from '@/hooks/use-deferred-character-delete';
@@ -134,6 +135,7 @@ function CallExperienceScreens({
   const inCall =
     callPresetId !== null &&
     (shouldConnect || connectionState !== ConnectionState.Disconnected);
+  const recording = useCallRecording(findPreset(callPresetId), inCall);
   const lastDuration = useRef('');
   const reachedConnected = useRef(false);
   useEffect(() => {
@@ -258,7 +260,13 @@ function CallExperienceScreens({
 
   let screen: ReactNode;
   if (inCall && callPreset) {
-    screen = <InCallView elapsed={formattedTime} preset={callPreset} />;
+    screen = (
+      <InCallView
+        elapsed={formattedTime}
+        preset={callPreset}
+        recording={recording}
+      />
+    );
   } else if (ended && endedPreset) {
     screen = (
       <CallEndedView
@@ -273,6 +281,7 @@ function CallExperienceScreens({
             : undefined
         }
         preset={endedPreset}
+        recording={recording.files}
       />
     );
   } else if (view.name === 'creator') {
