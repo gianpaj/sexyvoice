@@ -181,7 +181,7 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, saved Mistral profiles for paid users, credit transactions, and
+call voices, saved Mistral and Inworld voices for paid users, credit transactions, and
 instruction config.
 Custom characters start empty. Authentication still runs.
 
@@ -273,7 +273,7 @@ It currently does **not** submit a real clone request and does **not** exercise 
 In E2E mode the page reads entitlement from the `e2e-call-user` cookie, like
 the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
 users and are empty for free users; custom characters are empty. The spec sets
-no cookie, so it renders the free page.
+the paid cookie, so its screenshot shows the fixture saved voices.
 
 ---
 
