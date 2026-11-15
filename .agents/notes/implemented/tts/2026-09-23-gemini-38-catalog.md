@@ -92,6 +92,3 @@ The Supabase CLI applied the verified SQL in a transaction. Readback verified
 all 28 private rows and confirmed all 36 existing TTS rows were unchanged.
 This explicit request authorized the insert despite the repository's default
 read-only database rule.
-
-Gemini 3.8 route support and display labels are committed on the feature branch.
-Production app deployment remains a separate step; the new catalog is private.
