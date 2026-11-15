@@ -6,8 +6,8 @@ Add `gpro38` rows with new UUIDs. Existing rows, models, prompts, and previews
 remain intact. A replacement migration was rejected because it would change
 saved voice selections and break clients requesting the original model.
 
-The shared Gemini helpers send 3.8 style as speech metadata and preserve extended
-voice IDs. SDK 2.24.0 exposes these fields. No 2.5 fallback is allowed for 3.8;
+The shared Gemini helpers send 3.8 style as speech metadata, never as director
+notes prepended to the transcript, and preserve extended voice IDs. SDK 2.24.0 exposes these fields. No 2.5 fallback is allowed for 3.8;
 the fallback cannot serve extended voice IDs. Streaming remains disabled.
 
 Provider costs use the model that ran and reported token counts. Dated 3.8 rates

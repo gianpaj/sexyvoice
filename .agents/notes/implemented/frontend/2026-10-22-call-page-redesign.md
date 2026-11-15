@@ -6,8 +6,7 @@ from outside the organization. Its 21 boards are states of one prototype,
 `project/Main.dc.html`, selected by a `start` prop. The prototype's header and
 `[Site name]` placeholder are not used; the dashboard layout stays.
 
-This replaces the Characters/Custom call UI in
-[call characters and custom voices](../../proposed/frontend/2026-10-21-call-custom-voices.md).
+It replaces the Characters/Custom call UI.
 Saved voices are owned provider profiles in `audio_references`; see
 [saved call voices](../../../../ARCHITECTURE.md#saved-voices-for-calls).
 

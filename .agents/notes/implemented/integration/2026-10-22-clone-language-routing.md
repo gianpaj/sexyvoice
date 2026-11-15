@@ -28,5 +28,3 @@ Formatting, type checks, translation parity, and diff whitespace checks pass.
 The Polish live synthesis probe is recorded under
 `/tmp/sexyvoice-polish-clone-2026-10-22/`; the language expansion uses mocked
 provider tests and does not assess native pronunciation in each language.
-
-Implementation is committed locally; deployment remains pending.
