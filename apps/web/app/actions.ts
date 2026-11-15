@@ -5,6 +5,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import { deleteCustomCharacters } from '@/lib/calls/characters';
+import { deleteUserMemories } from '@/lib/calls/memory';
 import { deleteSavedVoice } from '@/lib/clone/delete-saved-voice';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
@@ -20,7 +22,6 @@ import {
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revokeApiKeys } from '@/lib/supabase/api-keys';
-import { deleteUserMemories } from '@/lib/supabase/memories';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
@@ -167,7 +168,6 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
     const [
       { data: audio_files, error: audioFilesError },
-      { data: customCharacters, error: customCharactersError },
       { data: apiKeys, error: apiKeysError },
       { count: retainedUsageEventsCount, error: usageEventsError },
       { data: voiceReferences, error: voiceReferencesError },
@@ -175,10 +175,6 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { data: clearedCallTranscripts, error: transcriptsClearError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
-      supabase
-        .from('characters')
-        .select('id, prompt_id')
-        .eq('user_id', user.id),
       revokeApiKeys(supabase, user.id),
       supabase
         .from('usage_events')
@@ -212,12 +208,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       throw new Error('User deletion failed');
     }
 
-    if (
-      audioFilesError ||
-      customCharactersError ||
-      apiKeysError ||
-      voiceReferencesError
-    ) {
+    if (audioFilesError || apiKeysError || voiceReferencesError) {
       throw new Error('User deletion failed');
     }
 
@@ -286,40 +277,10 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       .eq('user_id', user.id)
       .select('id');
 
-    if (customCharacters && customCharacters.length > 0) {
-      const characterIds = customCharacters.map((character) => character.id);
-      const promptIds = customCharacters
-        .map((character) => character.prompt_id)
-        .filter((promptId): promptId is string => Boolean(promptId));
-
-      const { error: deleteCharactersError } = await supabase
-        .from('characters')
-        .delete()
-        .in('id', characterIds)
-        .eq('user_id', user.id);
-
-      if (deleteCharactersError) {
-        throw new Error('User deletion failed');
-      }
-
-      if (promptIds.length > 0) {
-        const { error: deletePromptsError } = await supabase
-          .from('prompts')
-          .delete()
-          .in('id', promptIds)
-          .eq('user_id', user.id);
-
-        if (deletePromptsError) {
-          captureException(deletePromptsError, {
-            extra: {
-              context:
-                'custom character prompt cleanup during account deletion',
-              promptIds,
-            },
-            user: { email: user.email, id: user.id },
-          });
-        }
-      }
+    const { data: deletedCharacters, error: deleteCharactersError } =
+      await deleteCustomCharacters(supabase, user.id);
+    if (deleteCharactersError) {
+      throw new Error('User deletion failed');
     }
 
     if (error || deleteError) {
@@ -329,7 +290,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysRevoked: apiKeys?.length ?? 0,
       clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
-      deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedCustomCharacters: deletedCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
       // usage_events is an immutable audit log protected from deletion by the
       // database. Report retained rows instead of claiming they were removed.
@@ -341,7 +302,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysRevoked: apiKeys?.length ?? 0,
       clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
-      deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedCustomCharacters: deletedCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
       usageEventsRetained: retainedUsageEventsCount,
       userId: user.id,

@@ -5,6 +5,8 @@ import { isBannerCountdownExpired } from '@/lib/banners/countdown';
 import * as bannerRegistry from '@/lib/banners/registry';
 import {
   getActivePromoBannerId,
+  getActivePromoPricingText,
+  getPromoTheme,
   resolveActiveBanner,
 } from '@/lib/banners/resolve-banner';
 import da from '@/messages/da.json';
@@ -53,11 +55,7 @@ const messages = {
     blackFridayBanner: {
       ariaLabelDismiss: 'Dismiss Black Friday banner',
       countdown: {
-        days: 'Days',
-        hours: 'Hours',
-        minutes: 'Min',
         prefix: 'Deal ends in:',
-        seconds: 'Sec',
       },
       ctaLoggedIn: 'Claim offer',
       ctaLoggedOut: 'Claim offer',
@@ -103,6 +101,29 @@ describe('getActivePromoBannerId', () => {
   });
 });
 
+describe('promo pricing', () => {
+  it('reads the selected campaign copy', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'halloweenBanner';
+
+    expect(getActivePromoPricingText(messages)).toBe('Halloween Special');
+
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
+
+    expect(getActivePromoPricingText(messages)).toBeUndefined();
+  });
+
+  it.each([
+    ['orange', 'orange'],
+    [undefined, 'pink'],
+    ['green', 'pink'],
+  ] as const)('themes promos from %s as %s', (theme, expected) => {
+    setEnv('NEXT_PUBLIC_PROMO_THEME', theme);
+
+    expect(getPromoTheme()).toBe(expected);
+  });
+});
+
 describe('isBannerCountdownExpired', () => {
   const now = Date.parse('2026-11-30T12:00:00Z');
 
@@ -123,24 +144,16 @@ describe('resolveActiveBanner', () => {
     vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-30T12:00:00Z'));
   });
 
-  it.each(['landing', 'dashboard', 'blog'] as const)(
-    'omits an expired promo on %s',
-    (placement) => {
-      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
-      process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
-      process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE = '2026-11-30T12:00:00Z';
-      unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
+  it('omits an expired promo', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE = '2026-11-30T12:00:00Z';
+    unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
 
-      expect(
-        resolveActiveBanner({
-          audience: 'loggedOut',
-          lang: 'en',
-          messages,
-          placement,
-        }),
-      ).toBeNull();
-    },
-  );
+    expect(
+      resolveActiveBanner({ audience: 'loggedOut', lang: 'en', messages }),
+    ).toBeNull();
+  });
 
   it('selects the announcement when the promo countdown has ended', () => {
     process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
@@ -154,7 +167,6 @@ describe('resolveActiveBanner', () => {
         audience: 'loggedIn',
         lang: 'en',
         messages,
-        placement: 'dashboard',
       })?.id,
     ).toBe('expressiveVoicesLaunch');
   });
@@ -171,7 +183,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toMatchObject({
@@ -180,9 +191,9 @@ describe('resolveActiveBanner', () => {
       id: 'blackFridayBanner',
       theme: 'orange',
     });
-    expect(banner?.countdown).toMatchObject({
-      enabled: true,
+    expect(banner?.countdown).toEqual({
       endDate: '2026-12-01T00:00:00.000Z',
+      prefix: 'Deal ends in:',
     });
   });
 
@@ -195,7 +206,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     } as const;
 
     expect(resolveActiveBanner(options)?.artwork).toMatchObject({
@@ -217,7 +227,6 @@ describe('resolveActiveBanner', () => {
         audience: 'loggedOut',
         lang: 'en',
         messages,
-        placement: 'landing',
       }),
     ).toBeNull();
   });
@@ -232,7 +241,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toMatchObject({
@@ -251,7 +259,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toMatchObject({
@@ -276,7 +283,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner?.id).toBe('blackFridayBanner');
@@ -293,7 +299,6 @@ describe('resolveActiveBanner', () => {
       dismissedCookieKeys: ['banner-black-friday-dismissed'],
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toMatchObject({
@@ -319,30 +324,9 @@ describe('resolveActiveBanner', () => {
       dismissedCookieKeys: ['legacy-promo-dismissed'],
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner?.id).toBe('blackFridayBanner');
-  });
-
-  it('returns the active announcement banner for the blog', () => {
-    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
-    process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER =
-      'expressiveVoicesLaunch';
-    unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
-
-    const banner = resolveActiveBanner({
-      audience: 'loggedOut',
-      lang: 'en',
-      messages,
-      placement: 'blog',
-    });
-
-    expect(banner).toMatchObject({
-      ctaLink: '/en/login',
-      ctaText: 'Log in',
-      id: 'expressiveVoicesLaunch',
-    });
   });
 
   it('returns null when no banner is active', () => {
@@ -354,7 +338,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toBeNull();
@@ -369,7 +352,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toBeNull();
@@ -384,7 +366,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages: { ...messages, promos: {} } as IntlMessages,
-      placement: 'landing',
     });
 
     expect(banner).toBeNull();
@@ -400,7 +381,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages: { ...messages, announcements: {} } as IntlMessages,
-      placement: 'landing',
     });
 
     expect(banner).toBeNull();
@@ -417,13 +397,12 @@ describe('resolveActiveBanner', () => {
       dismissedCookieKeys: ['banner-expressive-voices-launch-dismissed'],
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
     expect(banner).toBeNull();
   });
 
-  it('returns null when the active banner does not support the placement', () => {
+  it('uses the default theme for an announcement without one', () => {
     const definition = bannerRegistry.getBannerDefinition(
       'expressiveVoicesLaunch',
     );
@@ -433,35 +412,6 @@ describe('resolveActiveBanner', () => {
 
     vi.spyOn(bannerRegistry, 'getBannerDefinition').mockReturnValue({
       ...definition,
-      placements: ['landing', 'dashboard'],
-    });
-
-    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
-    process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER =
-      'expressiveVoicesLaunch';
-    unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
-
-    const banner = resolveActiveBanner({
-      audience: 'loggedOut',
-      lang: 'en',
-      messages,
-      placement: 'blog',
-    });
-
-    expect(banner).toBeNull();
-  });
-
-  it('uses the default announcement theme and explicit dismissibility', () => {
-    const definition = bannerRegistry.getBannerDefinition(
-      'expressiveVoicesLaunch',
-    );
-    if (!definition) {
-      throw new Error('Expected expressiveVoicesLaunch banner definition');
-    }
-
-    vi.spyOn(bannerRegistry, 'getBannerDefinition').mockReturnValue({
-      ...definition,
-      dismissible: false,
       theme: undefined,
     });
 
@@ -474,13 +424,9 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedOut',
       lang: 'en',
       messages,
-      placement: 'landing',
     });
 
-    expect(banner).toMatchObject({
-      dismissible: false,
-      theme: 'pink',
-    });
+    expect(banner).toMatchObject({ theme: 'pink' });
   });
 
   it('uses the logged-in CTA target for dashboard announcements', () => {
@@ -493,7 +439,6 @@ describe('resolveActiveBanner', () => {
       audience: 'loggedIn',
       lang: 'en',
       messages,
-      placement: 'dashboard',
     });
 
     expect(banner).toMatchObject({
@@ -519,7 +464,6 @@ describe('resolveActiveBanner', () => {
           audience,
           lang: 'en',
           messages: en as IntlMessages,
-          placement: 'landing',
         }),
       ).toMatchObject({ ctaLink, ctaText, id: 'clonedVoiceCallsLaunch' });
     },
@@ -538,7 +482,6 @@ describe('resolveActiveBanner', () => {
           audience: 'loggedIn',
           lang: 'en',
           messages: localeMessages as IntlMessages,
-          placement: 'dashboard',
         })?.id,
       ).toBe('clonedVoiceCallsLaunch');
     },

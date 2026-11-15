@@ -1,7 +1,5 @@
 'use client';
 
-import { useConnectionState } from '@livekit/components-react';
-import { ConnectionState } from 'livekit-client';
 import { DynamicIcon } from 'lucide-react/dynamic';
 import { useTranslations } from 'next-intl';
 
@@ -13,8 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { callScenes } from '@/data/call-scenes';
-import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { callScenes } from '@/lib/calls/scenes';
+import { useCallSession } from './call-session';
+import { useCallSetup } from './call-setup';
 
 const NO_SCENE_VALUE = 'none';
 
@@ -23,20 +22,15 @@ interface SceneSelectorProps {
 }
 
 export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
-  const connectionState = useConnectionState();
-  const isConnected = connectionState === ConnectionState.Connected;
+  const isConnected = useCallSession().session.phase.name === 'connected';
   const t = useTranslations('call');
-  const { pgState, dispatch } = usePlaygroundState();
-  const selectedValue = pgState.selectedSceneId ?? NO_SCENE_VALUE;
-  const hasEditableScene = isPaidUser && pgState.selectedSceneId;
+  const { sceneId, sceneText, selectScene, setSceneText } = useCallSetup();
+  const selectedValue = sceneId ?? NO_SCENE_VALUE;
+  const hasEditableScene = isPaidUser && sceneId;
 
   const handleSceneChange = (value: string) => {
     if (!isPaidUser || isConnected) return;
-
-    dispatch({
-      payload: value === NO_SCENE_VALUE ? null : value,
-      type: 'SET_SELECTED_SCENE_ID',
-    });
+    selectScene(value === NO_SCENE_VALUE ? null : value);
   };
 
   // Renders as cells of the call panel's two-column settings grid.
@@ -87,13 +81,8 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
             className="min-h-40 border-slate-700/70 bg-slate-950/70 text-sm leading-relaxed"
             disabled={isConnected}
             id="call-scene-text"
-            onChange={(event) =>
-              dispatch({
-                payload: event.target.value,
-                type: 'SET_SCENE_INSTRUCTIONS',
-              })
-            }
-            value={pgState.sceneInstructions}
+            onChange={(event) => setSceneText(event.target.value)}
+            value={sceneText}
           />
         </div>
       )}

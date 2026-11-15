@@ -1,23 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const normalizeFrequencies = (frequencies: Float32Array) => {
-  const normalizeDb = (value: number) => {
-    const minDb = -100;
-    const maxDb = -10;
-    let db = 1 - (Math.max(minDb, Math.min(maxDb, value)) * -1) / 100;
-    db = Math.sqrt(db);
-
-    return db;
-  };
-
-  // Normalize all frequency values
-  return frequencies.map((value) => {
-    if (value === Number.NEGATIVE_INFINITY) {
-      return 0;
-    }
-    return normalizeDb(value);
-  });
-};
+import { levelFromDb } from '@/lib/audio-level';
 
 export const useMultibandTrackVolume = (
   mediaStream: MediaStream | null,
@@ -43,19 +26,11 @@ export const useMultibandTrackVolume = (
 
     const updateVolume = () => {
       analyser.getFloatFrequencyData(dataArray);
-      let frequencies: Float32Array = new Float32Array(dataArray.length);
-      for (let i = 0; i < dataArray.length; i++) {
-        frequencies[i] = dataArray[i];
-      }
-      frequencies = frequencies.slice(loPass, hiPass);
-
-      const normalizedFrequencies = normalizeFrequencies(frequencies);
-      const chunkSize = Math.ceil(normalizedFrequencies.length / bands);
+      const levels = dataArray.slice(loPass, hiPass).map(levelFromDb);
+      const chunkSize = Math.ceil(levels.length / bands);
       const chunks: Float32Array[] = [];
       for (let i = 0; i < bands; i++) {
-        chunks.push(
-          normalizedFrequencies.slice(i * chunkSize, (i + 1) * chunkSize),
-        );
+        chunks.push(levels.slice(i * chunkSize, (i + 1) * chunkSize));
       }
 
       setFrequencyBands(chunks);

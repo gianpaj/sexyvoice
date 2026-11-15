@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 
-import { estimateGrokCredits } from '@/lib/utils';
+import { TTS_MODELS } from '@/lib/tts/models';
 
 /**
  * Google AI Mock Handlers
@@ -88,7 +88,7 @@ async function handleEstimateCredits(route: Route) {
   const text = typeof postData?.text === 'string' ? postData.text : '';
   const responseBody = isMockGrokVoice(postData?.voice)
     ? {
-        estimatedCredits: estimateGrokCredits(text),
+        estimatedCredits: TTS_MODELS.xai.estimateCredits(text, ''),
       }
     : mockGeminiEstimateCreditsResponse;
 

@@ -1,12 +1,15 @@
 import { captureException } from '@sentry/nextjs';
 import { cache } from 'react';
 
+import {
+  CALL_CHARACTER_COLUMNS,
+  OWN_CHARACTER_COLUMNS,
+  PUBLIC_CHARACTER_COLUMNS,
+} from '@/lib/calls/characters';
+import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
-import {
-  FREE_USER_CALL_LIMIT_SECONDS,
-  MAX_FREE_GENERATIONS,
-} from './constants';
+import { FREE_USER_CALL_LIMIT_SECONDS } from './constants';
 import { createClient } from './server';
 
 // Types for usage event tracking
@@ -33,50 +36,24 @@ export async function getCallVoices() {
 
 // ─── Characters ───
 
-/**
- * Get public (predefined) call characters for SSR.
- * Joins with voices to get voice name + sample_url.
- * Does NOT include prompt text — predefined prompts never reach the client.
- */
+/** Predefined call characters for SSR. Their prompt text stays on the server. */
 export async function getPublicCallCharacters() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('characters')
-    .select(
-      `
-      id, name, localized_descriptions, image, session_config, sort_order, is_public,
-      localized_sample_urls,
-      voice_id,
-      voices ( name, sample_url ),
-      prompt_id,
-      prompts ( type )
-    `,
-    )
-    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
-    // Only prompt metadata (type) is joined.
+    .select(PUBLIC_CHARACTER_COLUMNS)
     .eq('is_public', true)
     .order('sort_order');
   if (error) throw error;
   return data;
 }
 
-/**
- * Get user's custom call characters for SSR.
- * Joins with prompts (to get editable prompt text) and voices.
- */
+/** A user's custom call characters for SSR, with their editable prompts. */
 export async function getUserCallCharacters(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('characters')
-    .select(
-      `
-      id, name, localized_descriptions, image, session_config, sort_order, is_public,
-      voice_id,
-      voices ( name, sample_url ),
-      prompt_id,
-      prompts ( prompt, localized_prompts )
-    `,
-    )
+    .select(OWN_CHARACTER_COLUMNS)
     .eq('is_public', false)
     .eq('user_id', userId)
     .order('sort_order');
@@ -96,30 +73,22 @@ export async function countUserCallCharacters(userId: string): Promise<number> {
   return count ?? 0;
 }
 
-// ─── Prompts (admin — for call-token resolution) ───
-
 /**
- * Resolve the prompt for a character by character ID.
- * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ * A character and its prompts for call-token. The admin client reads
+ * predefined prompt text, which never leaves the server.
  */
-export async function resolveCharacterPrompt(characterId: string) {
+export async function getCallCharacter(characterId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('characters')
-    .select(
-      `
-      id, is_public, user_id, voice_id,
-      voices ( id, name ),
-      prompts ( prompt, localized_prompts )
-    `,
-    )
+    .select(CALL_CHARACTER_COLUMNS)
     .eq('id', characterId)
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-export interface InsertUsageEventParams {
+interface InsertUsageEventParams {
   apiKeyId?: string | null;
   creditsUsed: number;
   dollarAmount?: number | null;
@@ -194,22 +163,20 @@ function toCreditDebitError(error: unknown): unknown {
   });
 }
 
-/**
- * Voice names repeat across models (the same Gemini identity exists as
- * `gpro`, `gpro31`, and `gpro38` rows), so pass `models` whenever the caller
- * knows the model. Without it the oldest matching row wins, which keeps
- * existing name-only callers on the voice they resolved before newer rows
- * were added. Equal timestamps are ordered by ID for a stable result.
- */
+/** Scope name lookups by model; equal timestamps are ordered by ID. */
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
   models?: readonly string[],
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const supabase = await createClient();
   let query = supabase
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('name', voiceName)
     .eq('is_public', isPublic);
   if (models) query = query.in('model', [...models]);
@@ -217,7 +184,7 @@ export async function getVoiceIdByName(
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -226,14 +193,18 @@ export async function getVoiceIdByName(
 
 export async function getVoiceById(
   voiceId: string,
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('id', voiceId)
     .eq('is_public', true)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -567,7 +538,6 @@ export const insertTopupCreditTransaction = async (
 
   const isFirstTopup = !existingTopup || existingTopup.length === 0;
 
-  // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     amount: creditAmount,
     description: `Credit top-up - $${dollarAmount}`,
@@ -729,11 +699,15 @@ export async function getVoiceIdByNameAdmin(
   voiceName: string,
   isPublic = true,
   models?: readonly string[],
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const admin = createAdminClient();
   let query = admin
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('name', voiceName)
     .eq('is_public', isPublic);
   if (models) query = query.in('model', [...models]);
@@ -741,7 +715,7 @@ export async function getVoiceIdByNameAdmin(
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -751,15 +725,19 @@ export async function getVoiceIdByNameAdmin(
 export async function getVoiceByIdAdmin(
   voiceId: string,
   isPublic = true,
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('id', voiceId)
     .eq('feature', 'tts')
     .eq('is_public', isPublic)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -851,22 +829,3 @@ export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
 
   return (data?.length ?? 0) > 0;
 }
-
-export const isFreemiumUserOverLimit = async (
-  userId: string,
-): Promise<boolean> => {
-  const supabase = await createClient();
-  // TODO: use redis instead
-  // If the user is a freemium user, count their voice model 'gpro' audio files.
-  const { count, error } = await supabase
-    .from('audio_files')
-    .select('id, voices!inner(model)', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('voices.model', 'gpro');
-
-  if (error) {
-    throw error;
-  }
-
-  return (count ?? 0) >= MAX_FREE_GENERATIONS;
-};

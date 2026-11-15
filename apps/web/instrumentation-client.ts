@@ -8,46 +8,25 @@ import {
 } from '@sentry/nextjs';
 
 import { initPostHog } from '@/lib/posthog-browser';
-import { shouldDropClientSentryEvent } from '@/lib/sentry/client-filters';
+import {
+  CLIENT_ALLOW_URLS,
+  IGNORED_CLIENT_ERRORS,
+  shouldDropClientSentryEvent,
+} from '@/lib/sentry/client-filters';
+import {
+  isClientSentryEnabled,
+  SENTRY_DSN,
+  TRACES_SAMPLE_RATE,
+} from '@/lib/sentry/config';
 
 init({
-  // Only capture errors from sexyvoice.ai domain
-  allowUrls: [/https?:\/\/(www\.)?sexyvoice\.ai/],
-
-  beforeSend(event) {
-    const eventUrl = event.request?.url ?? '';
-
-    // Additional filtering for app:// protocol (browser extensions)
-    if (eventUrl.includes('app://')) {
-      return null;
-    }
-
-    if (shouldDropClientSentryEvent(event)) {
-      return null;
-    }
-
-    return event;
-  },
-
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
+  allowUrls: CLIENT_ALLOW_URLS,
+  beforeSend: (event) => (shouldDropClientSentryEvent(event) ? null : event),
   debug: false,
-  dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
-
+  dsn: SENTRY_DSN,
   enableLogs: true,
-
-  // Inlined at build time: CI E2E builds set it so their browser sessions
-  // never report into the production Sentry environment.
-  enabled: process.env.NEXT_PUBLIC_E2E_TEST_MODE !== 'true',
-
-  // Ignore specific error messages from browser extensions and wallets
-  ignoreErrors: [
-    // Browser extension errors
-    /extension not found/i,
-    /Cannot assign to read only property/i,
-    // Wallet-related errors
-    /MetaMask/i,
-    /tronLink/i,
-  ],
+  enabled: isClientSentryEnabled(),
+  ignoreErrors: IGNORED_CLIENT_ERRORS,
 
   // Replay is added lazily (see below) so its bundle stays off the first-paint
   // critical path. Keep this empty here.
@@ -59,8 +38,7 @@ init({
 
   replaysSessionSampleRate: 0,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 0.1,
+  tracesSampleRate: TRACES_SAMPLE_RATE,
 });
 
 // This export will instrument router navigations, and is only relevant if you enable tracing.

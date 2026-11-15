@@ -69,7 +69,7 @@ function createQueryBuilder(tableName: string) {
   const _table = tableName;
   let _operation: 'select' | 'insert' | 'update' | 'delete' = 'select';
   // Track the "real" mutation so .select() after .insert()/.update() doesn't lose it
-  let _mutationOp: 'insert' | 'update' | null = null;
+  let _mutationOp: 'insert' | 'update' | 'delete' | null = null;
   const _filters: Array<{ column: string; value: unknown }> = [];
   let _selectFields = '*';
   let _insertData: Record<string, unknown> | null = null;
@@ -111,6 +111,7 @@ function createQueryBuilder(tableName: string) {
 
   builder.delete = () => {
     _operation = 'delete';
+    _mutationOp = 'delete';
     return builder;
   };
 
@@ -162,7 +163,7 @@ function createQueryBuilder(tableName: string) {
       if (_operation === 'delete') {
         const promptId = _filters.find((f) => f.column === 'id')?.value;
         if (promptId) deletedPromptIds.push(String(promptId));
-        return { data: null, error: null };
+        return { data: promptId ? [{ id: promptId }] : [], error: null };
       }
     }
 
@@ -174,7 +175,7 @@ function createQueryBuilder(tableName: string) {
           ..._insertData,
           id: 'new-char-id-0000-0000-000000000000',
           prompts: { localized_prompts: {}, prompt: _insertData!.prompt || '' },
-          voices: { name: 'Ara', sample_url: null },
+          voices: { sample_url: null },
         };
         return { data: returnData, error: null };
       }
@@ -324,7 +325,6 @@ function validCreateBody(overrides: Record<string, unknown> = {}) {
       temperature: 0.8,
       voice: 'Ara',
     },
-    voiceName: 'Ara',
     ...overrides,
   };
 }
@@ -386,7 +386,6 @@ describe('/api/characters', () => {
       mockReferenceOwner = owner;
       mockReferenceProvider = provider;
       const body = validCreateBody({
-        voiceName: 'My voice',
         sessionConfig: {
           ...validCreateBody().sessionConfig,
           model,
@@ -484,12 +483,55 @@ describe('/api/characters', () => {
       expect(json.error).toContain('5000');
     });
 
-    it('returns 400 when voiceName is missing', async () => {
-      const res = await POST(makeRequest(validCreateBody({ voiceName: '' })));
+    it('returns 400 when the voice is missing', async () => {
+      const res = await POST(
+        makeRequest(
+          validCreateBody({
+            sessionConfig: { ...validCreateBody().sessionConfig, voice: '' },
+          }),
+        ),
+      );
       expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.error).toContain('Voice');
+      expect(json.error).toBe('Voice is required');
     });
+
+    it.each([
+      ['localizedPrompts', 5001, 'Prompt must be 5000 characters or fewer'],
+      [
+        'localizedDescriptions',
+        201,
+        'Description must be 200 characters or fewer',
+      ],
+    ])(
+      'returns 400 when a %s value is too long',
+      async (field, length, error) => {
+        const res = await POST(
+          makeRequest(validCreateBody({ [field]: { de: 'X'.repeat(length) } })),
+        );
+        expect(res.status).toBe(400);
+        expect(await res.json()).toMatchObject({ error });
+        expect(insertedPrompts).toHaveLength(0);
+      },
+    );
+
+    it.each([0, -1, 1.5])(
+      'returns 400 for %s max output tokens',
+      async (maxOutputTokens) => {
+        const res = await POST(
+          makeRequest(
+            validCreateBody({
+              sessionConfig: {
+                ...validCreateBody().sessionConfig,
+                maxOutputTokens,
+              },
+            }),
+          ),
+        );
+        expect(res.status).toBe(400);
+        expect(insertedPrompts).toHaveLength(0);
+      },
+    );
 
     it('returns 400 when sessionConfig is missing', async () => {
       const res = await POST(
@@ -517,7 +559,14 @@ describe('/api/characters', () => {
     it('returns 400 when voice does not exist in DB', async () => {
       mockVoiceExists = false;
       const res = await POST(
-        makeRequest(validCreateBody({ voiceName: 'NonExistentVoice' })),
+        makeRequest(
+          validCreateBody({
+            sessionConfig: {
+              ...validCreateBody().sessionConfig,
+              voice: 'NonExistentVoice',
+            },
+          }),
+        ),
       );
       expect(res.status).toBe(400);
       const json = await res.json();
@@ -566,13 +615,11 @@ describe('/api/characters', () => {
       expect(insertedCharacters[0].name).toBe('Padded Name');
     });
 
-    it('upgrades a retired model id before persisting session_config', async () => {
-      // Otherwise a stale client writes the dead id straight back into the
-      // JSONB column after it has been cleaned up.
+    it('replaces an unknown model id before persisting session_config', async () => {
       const body = validCreateBody({
         sessionConfig: {
           maxOutputTokens: null,
-          model: 'grok-voice-think-fast-1.0',
+          model: 'retired-model',
           temperature: 0.8,
           voice: 'Ara',
         },
@@ -641,7 +688,7 @@ describe('/api/characters', () => {
 
   // ─── DELETE ────────────────────────────────────────────────────────
   describe('DELETE: delete character', () => {
-    it('deletes character and its prompt (happy path)', async () => {
+    it('deletes the prompt, which cascades to the character', async () => {
       const res = await DELETE(
         makeRequest({ id: fakeUserCharacter.id }, 'DELETE'),
       );
@@ -650,8 +697,8 @@ describe('/api/characters', () => {
       expect(json.success).toBe(true);
       expect(mockGetUser).not.toHaveBeenCalled();
 
-      expect(deletedCharacterIds).toContain(fakeUserCharacter.id);
-      expect(deletedPromptIds).toContain(fakeUserCharacter.prompt_id);
+      expect(deletedPromptIds).toEqual([fakeUserCharacter.prompt_id]);
+      expect(deletedCharacterIds).toEqual([]);
     });
 
     it('returns 404 for non-owned character', async () => {

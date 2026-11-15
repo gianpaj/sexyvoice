@@ -1,0 +1,31 @@
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.editor-content .tiptap.ProseMirror p.is-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  content: attr(data-placeholder);
+}
+
+.editor-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  grid-column: content-start / content-end;
+  width: 100%;
+  height: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .editor-content {
+    max-width: 768px;
+    margin: 0 auto;
+  }
+}

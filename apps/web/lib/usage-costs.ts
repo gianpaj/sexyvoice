@@ -1,4 +1,5 @@
-import { calculateGenerateApiDollarAmount } from './api/pricing';
+import { callModelCostPerMinute } from './calls/models';
+import { speechProviderCost } from './tts/provider-cost';
 
 export type UsageEventCostInput = Pick<
   Tables<'usage_events'>,
@@ -31,12 +32,7 @@ function dimension(value: unknown): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-// Model-specific rates, verified against https://docs.x.ai/developers/pricing.
 // Unknown models stay unpriced; customer credit buckets are not provider time.
-const CALL_RATES: Record<string, number> = {
-  'grok-voice-think-fast-1.0': 0.08,
-  'grok-voice-think-fast-2.0': 0.08,
-};
 // xAI billed think-fast-1.0 at $0.05/min until it moved 1.0 traffic to the
 // 2.0 rate; its billing API shows the switch at this instant.
 const THINK_FAST_1_LEGACY_UNTIL = Date.parse('2026-09-13T06:00:00Z');
@@ -49,7 +45,7 @@ function callRate(model: string, at: string | undefined): number | undefined {
   ) {
     return 0.05;
   }
-  return CALL_RATES[model];
+  return callModelCostPerMinute(model);
 }
 export const GEMINI_MODELS = new Set([
   'gemini-2.5-flash-preview-tts',
@@ -129,13 +125,11 @@ export function resolveUsageCost(
     output !== null &&
     output > 0
   ) {
-    const amount = calculateGenerateApiDollarAmount({
+    const amount = speechProviderCost({
       candidatesTokenCount: output,
       model,
       occurredAt: event.occurred_at,
       promptTokenCount: input,
-      provider: 'google',
-      sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
     });
     if (Number.isFinite(amount) && amount > 0) {
       return { amount, basis: 'estimated' };

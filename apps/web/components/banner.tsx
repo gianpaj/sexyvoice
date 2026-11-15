@@ -19,16 +19,12 @@ interface TimeRemaining {
 }
 
 function calculateTimeRemaining(endDate: string): TimeRemaining | null {
-  const parsedEnd = new Date(endDate);
-  if (Number.isNaN(parsedEnd.getTime())) {
+  const distance = Date.parse(endDate) - Date.now();
+  if (Number.isNaN(distance)) {
     return null;
   }
 
-  const now = Date.now();
-  const end = parsedEnd.getTime();
-  const distance = end - now;
-
-  if (isBannerCountdownExpired(endDate, now)) {
+  if (distance <= 0) {
     return { days: 0, expired: true, hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -51,7 +47,6 @@ function ArtworkPicture({
   return (
     <picture>
       <source media="(width < 40rem)" srcSet={artwork.mobile.src} />
-      {/* biome-ignore lint/performance/noImgElement: next/image cannot swap art-directed sources */}
       <img
         alt=""
         className={className}
@@ -118,9 +113,7 @@ export function Banner({
   banner: ResolvedBanner;
   inDashboard?: boolean;
 }) {
-  const countdownEndDate = banner.countdown?.enabled
-    ? banner.countdown.endDate
-    : undefined;
+  const countdownEndDate = banner.countdown?.endDate;
   const [isVisible, setIsVisible] = useState(inDashboard === true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
@@ -135,19 +128,11 @@ export function Banner({
       inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
     );
 
-    const resolveVisibility = async () => {
-      if (!banner.dismissible) {
-        return true;
-      }
-
-      const cookieValue = await getCookie(banner.dismiss.cookieKey);
-      return !cookieValue;
-    };
-
-    resolveVisibility()
-      .then((visible) => {
-        const shouldShow =
-          visible && !isBannerCountdownExpired(countdownEndDate);
+    getCookie(banner.dismiss.cookieKey)
+      .then((cookieValue) => {
+        const shouldShow = !(
+          cookieValue || isBannerCountdownExpired(countdownEndDate)
+        );
         if (!(isCancelled || (inDashboard && shouldShow))) {
           setIsVisible(shouldShow);
         }
@@ -157,20 +142,15 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [
-    banner.dismiss.cookieKey,
-    banner.dismissible,
-    countdownEndDate,
-    inDashboard,
-  ]);
+  }, [banner.dismiss.cookieKey, countdownEndDate, inDashboard]);
 
   useEffect(() => {
-    if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
+    if (!countdownEndDate) {
       setTimeRemaining(null);
       return;
     }
 
-    const initial = calculateTimeRemaining(banner.countdown.endDate);
+    const initial = calculateTimeRemaining(countdownEndDate);
     setTimeRemaining(initial);
 
     if (initial === null) {
@@ -183,7 +163,7 @@ export function Banner({
     }
 
     const interval = setInterval(() => {
-      const remaining = calculateTimeRemaining(banner.countdown?.endDate || '');
+      const remaining = calculateTimeRemaining(countdownEndDate);
 
       if (remaining === null) {
         setTimeRemaining(null);
@@ -200,7 +180,7 @@ export function Banner({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [banner.countdown?.enabled, banner.countdown?.endDate]);
+  }, [countdownEndDate]);
 
   const handleDismissBanner = async () => {
     const expiryDate = new Date();
@@ -251,34 +231,32 @@ export function Banner({
             {banner.text}
           </p>
 
-          {banner.countdown?.enabled &&
-            timeRemaining &&
-            !timeRemaining.expired && (
-              <div className="flex items-center gap-4">
-                <p className="font-semibold text-sm text-white">
-                  {banner.countdown.labels.prefix}
-                </p>
-                <div className="flex gap-0 font-mono text-xs sm:text-sm">
-                  {[
-                    timeRemaining.days,
-                    timeRemaining.hours,
-                    timeRemaining.minutes,
-                    timeRemaining.seconds,
-                  ].map((num, index) => (
-                    <Fragment key={`${banner.id}-${index}`}>
-                      {index !== 0 && (
-                        <span className="font-bold text-lg sm:text-xl">:</span>
-                      )}
-                      <div className="flex flex-col items-center">
-                        <span className="font-bold text-lg sm:text-xl">
-                          {String(num).padStart(2, '0')}
-                        </span>
-                      </div>
-                    </Fragment>
-                  ))}
-                </div>
+          {banner.countdown && timeRemaining && !timeRemaining.expired && (
+            <div className="flex items-center gap-4">
+              <p className="font-semibold text-sm text-white">
+                {banner.countdown.prefix}
+              </p>
+              <div className="flex gap-0 font-mono text-xs sm:text-sm">
+                {[
+                  timeRemaining.days,
+                  timeRemaining.hours,
+                  timeRemaining.minutes,
+                  timeRemaining.seconds,
+                ].map((num, index) => (
+                  <Fragment key={`${banner.id}-${index}`}>
+                    {index !== 0 && (
+                      <span className="font-bold text-lg sm:text-xl">:</span>
+                    )}
+                    <div className="flex flex-col items-center">
+                      <span className="font-bold text-lg sm:text-xl">
+                        {String(num).padStart(2, '0')}
+                      </span>
+                    </div>
+                  </Fragment>
+                ))}
               </div>
-            )}
+            </div>
+          )}
         </div>
 
         <div
@@ -301,21 +279,19 @@ export function Banner({
             <Link href={banner.ctaLink}>{banner.ctaText}</Link>
           </Button>
 
-          {banner.dismissible && (
-            <Button
-              aria-label={banner.ariaLabelDismiss}
-              className={cn(
-                'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
-                inDashboard &&
-                  'absolute top-0 right-0 size-11 p-0 lg:top-1/2 lg:right-2 lg:-translate-y-1/2',
-              )}
-              onClick={handleDismissBanner}
-              size="sm"
-              variant="ghost"
-            >
-              <XIcon size={18} strokeWidth={3} />
-            </Button>
-          )}
+          <Button
+            aria-label={banner.ariaLabelDismiss}
+            className={cn(
+              'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
+              inDashboard &&
+                'absolute top-0 right-0 size-11 p-0 lg:top-1/2 lg:right-2 lg:-translate-y-1/2',
+            )}
+            onClick={handleDismissBanner}
+            size="sm"
+            variant="ghost"
+          >
+            <XIcon size={18} strokeWidth={3} />
+          </Button>
         </div>
       </div>
     </div>

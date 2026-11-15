@@ -1,23 +1,16 @@
 #!/usr/bin/env -S pnpm exec tsx
-import { spawnSync } from 'node:child_process';
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
 import { fal } from '@fal-ai/client';
 
-import { loadScriptEnv } from './lib/env.mts';
-
-const { values, positionals } = parseArgs({
-  allowPositionals: true,
-  args: process.argv.slice(2).filter((argument) => argument !== '--'),
-  options: {
-    'dry-run': { type: 'boolean' },
-    'env-file': { multiple: true, type: 'string' },
-    help: { short: 'h', type: 'boolean' },
-    'max-seconds': { default: '60', type: 'string' },
-    out: { default: 'generated-speech/audio-cleanup', type: 'string' },
-  },
-});
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { probeDurationSeconds, runAudioTool } from './lib/ffmpeg.mts';
+import { replaceJson } from './lib/files.mts';
 
 const AUDIO_EXTENSIONS = new Set([
   '.aac',
@@ -84,28 +77,6 @@ interface SampleResult {
   results: CleanResult[];
   slug: string;
   sourceFilename: string;
-}
-
-function run(command: string, args: string[]): string {
-  const result = spawnSync(command, args, { encoding: 'utf8' });
-  if (result.error) throw result.error;
-  if (result.status !== 0)
-    throw new Error(`${command} failed: ${result.stderr}`);
-  return result.stdout;
-}
-
-function probeDuration(file: string): number {
-  return Number(
-    run('ffprobe', [
-      '-v',
-      'error',
-      '-show_entries',
-      'format=duration',
-      '-of',
-      'default=noprint_wrappers=1:nokey=1',
-      file,
-    ]).trim(),
-  );
 }
 
 async function exists(file: string): Promise<boolean> {
@@ -236,6 +207,16 @@ ${entries}</html>\n`,
 }
 
 async function main(): Promise<void> {
+  const { values, positionals } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      'dry-run': { type: 'boolean' },
+      'env-file': { multiple: true, type: 'string' },
+      help: { short: 'h', type: 'boolean' },
+      'max-seconds': { default: '60', type: 'string' },
+      out: { type: 'string' },
+    },
+  });
   if (values.help || positionals.length === 0) {
     console.log(`Compare fal audio cleanup models on local files. Writes a listen.html page.
 
@@ -254,11 +235,11 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
 
   const maxSeconds = Number(values['max-seconds']);
   if (!(maxSeconds > 0)) throw new Error('--max-seconds must be positive');
-  const files = await collectAudioFiles(positionals);
+  const files = await collectAudioFiles(positionals.map(inputPath));
   if (files.length === 0) throw new Error('No audio files found');
 
   const estimates = files.map((file) => ({
-    durationSeconds: Math.min(probeDuration(file), maxSeconds),
+    durationSeconds: Math.min(probeDurationSeconds(file), maxSeconds),
     file,
   }));
   for (const { durationSeconds, file } of estimates)
@@ -276,7 +257,9 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
   if (!process.env.FAL_KEY) throw new Error('Missing FAL_KEY');
   fal.config({ credentials: process.env.FAL_KEY });
 
-  const output = path.resolve(values.out);
+  const output = values.out
+    ? inputPath(values.out)
+    : path.resolve('generated-speech/audio-cleanup');
   await mkdir(output, { recursive: true });
 
   const slugs = new Set<string>();
@@ -290,17 +273,21 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
     const sourceFilename = `${slug}.original.wav`;
     const sourcePath = path.join(output, sourceFilename);
     if (!(await exists(sourcePath)))
-      run('ffmpeg', [
-        '-v',
-        'error',
-        '-y',
-        '-i',
-        file,
-        '-vn',
-        '-t',
-        String(maxSeconds),
-        sourcePath,
-      ]);
+      runAudioTool(
+        'ffmpeg',
+        [
+          '-v',
+          'error',
+          '-y',
+          '-i',
+          file,
+          '-vn',
+          '-t',
+          String(maxSeconds),
+          sourcePath,
+        ],
+        { task: `to trim ${file}` },
+      );
 
     console.log(`Cleaning ${slug}`);
     const results = await Promise.all(
@@ -324,14 +311,11 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
       slug,
       sourceFilename,
     });
-    await writeFile(
-      path.join(output, 'results.json'),
-      `${JSON.stringify(samples, null, 2)}\n`,
-    );
+    await replaceJson(path.join(output, 'results.json'), samples);
     await writeListeningPage(output, samples);
   }
 
   console.log(`Open ${path.join(output, 'listen.html')}`);
 }
 
-await main();
+runScript(import.meta.url, main);

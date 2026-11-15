@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { IconSwap } from '@/components/motion-primitives/icon-swap';
 import { attemptPlayback } from '@/lib/media-playback';
-import { GrokTaggedText } from './grok-tagged-text';
+import { TaggedText } from './speech-tags/tagged-text';
 import { Button } from './ui/button';
 
 const PROMPT_TAG_CLASS =
@@ -31,22 +31,18 @@ export function AudioPreviewCard({
 
   const togglePlay = async () => {
     if (isPlaying) {
-      // Pause the current audio
       if (audioElement) {
         audioElement.pause();
       }
       setIsPlaying(false);
     } else {
-      // Stop any existing audio first
       audioElement?.pause();
 
-      // Create new audio element
       const audio = new Audio(audioSrc);
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
       });
 
-      // Play and store the reference
       setIsPlaying(true);
       setAudioElement(audio);
       await attemptPlayback(
@@ -85,7 +81,7 @@ export function AudioPreviewCard({
         lang={lang}
         title={prompt}
       >
-        <GrokTaggedText className={PROMPT_TAG_CLASS} text={prompt} />
+        <TaggedText className={PROMPT_TAG_CLASS} text={prompt} />
       </div>
     </div>
   );

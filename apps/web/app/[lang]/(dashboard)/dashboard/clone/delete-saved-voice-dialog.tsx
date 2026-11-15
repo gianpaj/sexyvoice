@@ -2,8 +2,8 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/services/toast';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { SavedCallVoice } from '@/lib/calls/voices';
 
 /**
  * Confirms and deletes a saved voice. Characters that use it are named,

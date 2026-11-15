@@ -28,7 +28,7 @@ beforeEach(() => {
   mocks.create.mockResolvedValue({ id: 'provider-voice' });
   mocks.remove.mockResolvedValue({});
   mocks.speech.mockResolvedValue({
-    audioData: Buffer.from('RIFFsample').toString('base64'),
+    audioData: Buffer.from('RIFF\0\0\0\0WAVEsample').toString('base64'),
   });
   mocks.insert.mockReturnValue({ select: () => ({ single: mocks.single }) });
 });
@@ -79,9 +79,20 @@ describe('saved Mistral profiles', () => {
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
       expect.any(String),
-      Buffer.from('RIFFsample'),
+      Buffer.from('RIFF\0\0\0\0WAVEsample'),
       'audio/wav',
     );
+  });
+
+  it('rejects a sample that is not WAV and removes the provider voice', async () => {
+    mocks.speech.mockResolvedValueOnce({
+      audioData: Buffer.from('ID3 mp3 frames').toString('base64'),
+    });
+    await expect(
+      saveMistralVoice(Buffer.from('sample'), 'Mine', 'en', 'owner'),
+    ).rejects.toThrow('valid WAV');
+    expect(mocks.remove).toHaveBeenCalledWith({ voiceId: 'provider-voice' });
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   it('removes the provider voice if the database write fails', async () => {

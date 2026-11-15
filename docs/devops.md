@@ -115,7 +115,9 @@ a secret, identify every producer and consumer that must change together.
 
 ### Core application
 
-- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SITE_URL`: the public origin for redirects, canonical URLs,
+  hreflang, the sitemap, structured data and agent markdown. Production must
+  be `https://sexyvoice.ai`.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: safe for browser clients; RLS controls
   database access.
@@ -185,6 +187,8 @@ without the column, the call page fails to load.
 - `XAI_SUMMARY_MODEL`: optional call-analysis model override; default `grok-4.3`.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
+- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN`: optional style text the Generate
+  page's style field starts with.
 
 ### LiveKit and call analysis
 
@@ -223,12 +227,6 @@ redirect URLs for each deployment environment.
   first-time subscribers.
 - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT`: displayed first-month
   discount when the coupon is configured.
-
-### Edge Config
-
-Set `EDGE_CONFIG` when using dynamic call instructions. The `call-instructions`
-payload contains `defaultInstructions`, `initialInstruction`, and
-`presetInstructions`. Keep private prompt contents server-side.
 
 ### Monitoring, analytics, and support
 
@@ -403,15 +401,15 @@ Release checks:
   reconciled batches and the new submission (the lifecycle is
   `pending -> submitted -> completed | failed`, with `pending` again on a
   retryable failure, visible in `call_analysis_queue.status` and its
-  timestamps; `attempts` counts batches xAI accepted, so an upload outage
-  never spends a session's retry budget).
+  timestamps; `attempts` counts failed analyses, so an upload outage never
+  spends a session's retry budget).
 - A batch still unsettled 24 hours after submission is reported to Sentry as
   `Call analysis batch appears stuck`; inspect it in the xAI console.
 - Sessions that reach the terminal `failed` state (attempts exhausted,
   unusable transcript, session gone) are reported to Sentry as
   `Call analysis sessions parked as failed` with their ids and errors. A
-  redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
-  to reprocess.
+  redelivered webhook does not revive them; run
+  `pnpm backfill-call-analysis --retry-failed` to reprocess.
 - Read-only check for stuck or failed work:
 
   ```sql
@@ -429,7 +427,7 @@ Release checks:
 `gpro38` uses Gemini 3.8 Flash TTS on both dashboard and external API routes.
 Deploy application support before adding its catalog rows. Existing voice rows
 keep their model assignments. Provider costs use the dated standard rates in
-`apps/web/lib/api/pricing.ts`; historical recovery uses `usage_events.occurred_at`.
+`apps/web/lib/tts/provider-cost.ts`; historical recovery uses `usage_events.occurred_at`.
 
 Generate previews locally, review them in `listen.html`, and use the separate R2
 uploader before preparing executable catalog SQL. See the

@@ -4,6 +4,7 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
+import { isPromoEnabled } from '@/lib/promo';
 import {
   AccountBillingError,
   type AccountBillingErrorCode,
@@ -279,7 +280,7 @@ export async function createCheckoutSession(
             packageId,
             type: 'topup',
             userId: claims.sub,
-            ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
+            ...(isPromoEnabled() && {
               promo: process.env.NEXT_PUBLIC_PROMO_ID,
             }),
           };

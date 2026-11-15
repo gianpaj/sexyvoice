@@ -1,19 +1,17 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-import { RATE_LIMIT_DEFAULT } from '@/lib/api/constants';
-
 const redis = Redis.fromEnv();
 const WINDOW_SECONDS = 60;
 const WINDOW_DURATION = `${WINDOW_SECONDS} s` as const;
-const BUCKET_MAX_SIZE = RATE_LIMIT_DEFAULT.requestsPerMinute;
+const REQUESTS_PER_MINUTE = 60;
 
 const ratelimit = new Ratelimit({
   analytics: true,
   limiter: Ratelimit.tokenBucket(
-    RATE_LIMIT_DEFAULT.requestsPerMinute,
+    REQUESTS_PER_MINUTE,
     WINDOW_DURATION,
-    BUCKET_MAX_SIZE,
+    REQUESTS_PER_MINUTE,
   ),
   prefix: 'external_api:ratelimit',
   redis,
@@ -30,7 +28,7 @@ export async function consumeRateLimit(
   identifier: string,
 ): Promise<RateLimitState> {
   const result = await ratelimit.limit(identifier);
-  const limit = result.limit ?? RATE_LIMIT_DEFAULT.requestsPerMinute;
+  const limit = result.limit ?? REQUESTS_PER_MINUTE;
   const remaining = Math.max(0, result.remaining ?? 0);
   const resetAt = new Date(result.reset ?? Date.now()).toISOString();
 
@@ -53,8 +51,8 @@ export function createRateLimitHeaders(rateLimit: RateLimitState): Headers {
 export function createDefaultRateLimitState(): RateLimitState {
   return {
     allowed: true,
-    limit: RATE_LIMIT_DEFAULT.requestsPerMinute,
-    remaining: RATE_LIMIT_DEFAULT.requestsPerMinute,
+    limit: REQUESTS_PER_MINUTE,
+    remaining: REQUESTS_PER_MINUTE,
     resetAt: new Date(Date.now() + WINDOW_SECONDS * 1000).toISOString(),
   };
 }

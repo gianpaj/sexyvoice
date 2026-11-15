@@ -123,7 +123,6 @@
       "originalVoice": "Original optagelse",
       "hearOriginal": "Hør originalen",
       "backToClone": "Tilbage til klonen",
-      "tryVoice": "Brug denne udtryksform",
       "signUpAndClone": "Tilmeld dig og klon",
       "seek": "Lydposition",
       "preparedExamplesCaption": "Forberedte eksempler. Det er gratis at lytte; generering bruger credits.",
@@ -211,23 +210,7 @@
         "action": "Klon din stemme"
       }
     },
-    "generator": {
-      "title": "Prøv det nu",
-      "subtitle": "Generer din første stemmeprøve",
-      "selectVoice": "Vælg en stemme",
-      "enterText": "Indtast tekst til konvertering",
-      "speed": "Hastighed",
-      "pitch": "Tonehøjde",
-      "generating": "Genererer...",
-      "play": "Afspil",
-      "pause": "Pause",
-      "reset": "Nulstil",
-      "download": "Download"
-    },
     "popular": {
-      "title": "Populære lydprøver",
-      "subtitle": "Lyt til hvad andre har skabt",
-      "loading": "Indlæser populære lydklip...",
       "trySamplesTitle": "Prøv vores stemmeprøver",
       "trySamplesSubtitle": "Lyt til stemmeprøver skabt med vores avancerede AI-teknologi"
     },
@@ -241,7 +224,7 @@
           "questions": [
             {
               "question": "Hvilke sprog kan jeg generere tale på?",
-              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.1-stemmer understøtter over 70 sprog, mens Gemini 2.5-stemmer understøtter 24. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
+              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.8-stemmer understøtter over 130 sprog. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -511,12 +494,10 @@
     "downloadAudio": "Download lyd",
     "enhanceTextTitle": "Forbedr tekst med AI-følelsestags",
     "error": "Kunne ikke generere lyd",
-    "GEMINI_OUTPUT_LIMIT": "Stemmen nåede sin grænse for lydoutput. Forkort teksten, og prøv igen.",
     "errorEstimating": "Kunne ikke estimere credits",
     "estimateCreditsButton": "Estimér credits",
     "fullscreenTitle": "Fuld skærm",
     "generating": "Genererer",
-    "gproLimitExceeded": "Du har nået gratisgrænsen på __COUNT__ genereringer med denne model. Køb kreditter for at fortsætte med den.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
@@ -579,8 +560,9 @@
       "multilingualGroupLabel": "Flersprogede 🌍",
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
-      "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS understøtter over 130 sprog. Stilinstruktioner styrer tone og tempo; indlejrede tags tilføjer stemmelyde.",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
+      "orpheusInfo": "Model: Orpheus-TTS (AI-model til tekst-til-tale) - Kommerciel brug ✔️",
       "featuredBadge": "Fremhævet",
       "selectVoicePlaceholder": "Vælg en stemme...",
       "searchPlaceholder": "Søg efter navn, stil eller model...",
@@ -595,26 +577,27 @@
       "voiceListLabel": "Stemmer"
     },
     "split": {
+      "characterCount": "{characters} tegn -> {segments} segmenter",
       "segmentPreviews": "Segmentforhåndsvisninger",
-      "segmentLabel": "Segment __INDEX__",
+      "segmentLabel": "Segment {INDEX}",
       "downloadAll": "Download alle",
       "joiningWav": "Sammensætter lyd...",
       "preparingJoiner": "Forbereder lydsammensætter...",
       "retry": "Prøv igen",
       "segmentCannotBeEmpty": "Segmenttekst må ikke være tom.",
-      "segmentFailed": "Segment __INDEX__ fejlede. Generering stoppet.",
-      "segmentGenerated": "Segment __INDEX__ genereret.",
-      "segmentRetryFailed": "Segment __INDEX__ forsøg mislykkedes.",
+      "segmentFailed": "Segment {INDEX} fejlede. Generering stoppet.",
+      "segmentGenerated": "Segment {INDEX} genereret.",
+      "segmentRetryFailed": "Segment {INDEX} forsøg mislykkedes.",
       "progressTitle": "Lydgenerering",
-      "progressTitleWithVoice": "__VOICE__ generering",
-      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "progressTitleWithVoice": "{VOICE} generering",
+      "progressSegment": "Segment {CURRENT}/{TOTAL}",
       "statusGenerated": "Genereret",
       "statusGenerating": "Genererer...",
       "statusFailed": "Fejlet",
       "statusPending": "Afventer",
       "splitToggleLabel": "Opdel i segmenter",
       "splitToggleDisabled": "Opdeling af tekst i lydfiler er tilgængelig for betalende brugere.",
-      "tooManySegments": "Opdelt tekst må højst have __COUNT__ segmenter. Forkort teksten eller saml segmenter, før du genererer.",
+      "tooManySegments": "Opdelt tekst må højst have {COUNT} segmenter. Forkort teksten eller saml segmenter, før du genererer.",
       "downloadAllFailed": "Kunne ikke downloade alle segmenter."
     },
     "advancedSettings": {
@@ -631,13 +614,6 @@
         "description": "Fastlås et seed for reproducerbare resultater. Lad feltet stå tomt for et tilfældigt seed.",
         "placeholder": "Tilfældig",
         "randomize": "Tilfældigt seed"
-      },
-      "streaming": {
-        "label": "Streaming",
-        "description": "Stream lyd, mens den genereres (kun Gemini 3.1).",
-        "auto": "Auto",
-        "on": "Til",
-        "off": "Fra"
       },
       "temperature": {
         "label": "Temperatur",
@@ -670,7 +646,11 @@
     "instructionsRejected": "Opkaldet kunne ikke starte, fordi karakteren eller scenen ikke bestod AI-udbyderens sikkerhedstjek. Rediger karakteren eller scenen, og prøv igen.",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "microphoneUnavailable": "Kunne ikke få adgang til din mikrofon. Kontrollér, at den er tilsluttet, luk andre apps, der bruger den, og prøv igen.",
+    "upgradeRequired": "Egne karakterer og scener kræver en betalt plan. Køb kreditter for at bruge dem.",
+    "characterUnavailable": "Denne karakter eller dens stemme er ikke længere tilgængelig. Genindlæs siden, og prøv igen.",
+    "agentError": "Der opstod en fejl under opkaldet. Prøv igen.",
     "disconnected": "Afbrudt",
+    "allowAudio": "Klik for at tillade lydafspilning",
     "availableInputs": "Tilgængelige input",
     "audioSettings": "Lydindstillinger",
     "enhancedNoiseFilter": "Forbedret støjfilter",
@@ -852,7 +832,7 @@
       "recorded": "Optaget",
       "recordAgain": "Optag igen",
       "dropFile": "Træk en lydfil hertil, eller <browse>gennemse</browse>",
-      "fileHint": "MP3, WAV eller M4A · op til {size} · én person, der taler, ingen musik",
+      "fileHint": "MP3, WAV eller OGG · op til {size} · én person, der taler, ingen musik",
       "removeFile": "Fjern fil",
       "fileTooLarge": "Filen er større end {size}.",
       "needRecording": "Optag mindst {seconds} sekunder først.",
@@ -889,7 +869,7 @@
     "errorCloning": "Kunne ikke klone stemme",
     "errorTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
     "errorTitle": "Fejl",
-    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. {SIZE})",
     "generating": "Genererer",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",
@@ -904,23 +884,24 @@
     "textAreaPlaceholder": "Indtast den tekst, du vil konvertere til tale...",
     "textToConvertLabel": "Indtast tekst for at generere tale",
     "title": "Klon en stemme",
-    "tryDemo": "Eller prøv med en demo:",
     "uploadAudioFile": "Upload lydfil",
     "orUseMicrophone": "eller brug din mikrofon",
     "micRecord": "Optag",
     "micStop": "Stop",
+    "micChoose": "Vælg mikrofon",
+    "micInputs": "Tilgængelige input",
+    "micReset": "Nulstil mikrofon",
     "errors": {
       "noAudioFile": "Vælg venligst en lydfil.",
       "noText": "Indtast venligst noget tekst at konvertere til tale.",
-      "ffmpegLoading": "Lydkonverteren indlæses stadig. Prøv igen om et øjeblik",
       "audioConversionFailed": "Lydformatet kunne ikke konverteres. Upload MP3, OGG, Opus eller WAV.",
       "audioConversionRequiredWebm": "WebM-lyd skal konverteres før upload. Prøv at optage igen.",
-      "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
-      "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
+      "audioDurationInvalidFallback": "Audio skal være mindst {MIN} sekunder.",
+      "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst {MIN} sekunder til stemmekloning.",
       "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
       "fileTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
       "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
-      "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
+      "insufficientCredits": "Du skal bruge {CREDITS} kreditter for at klone denne lyd.",
       "internalError": "Kunne ikke klone stemmen. Prøv igen.",
       "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",
       "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
@@ -928,8 +909,8 @@
       "missingRequiredParameters": "Indtast tekst, og vælg en lydfil.",
       "providerRequestRejected": "Stemmeudbyderen kunne ikke bruge denne optagelse eller tekst. Prøv en anden.",
       "referenceAudioEnhancementInputTooLarge": "Referenceaudioen er for stor til at blive forbedret. Brug en mindre fil, eller slå lydrensning fra.",
-      "referenceAudioEnhancementInputTooLong": "Rensning af referenceaudio understøtter klip på op til __MAX__ sekunder.",
-      "textTooLong": "Teksten overskrider den maksimale længde på __MAX__ tegn.",
+      "referenceAudioEnhancementInputTooLong": "Rensning af referenceaudio understøtter klip på op til {MAX} sekunder.",
+      "textTooLong": "Teksten overskrider den maksimale længde på {MAX} tegn.",
       "unsupportedAudioFormat": "Ikke-understøttet lydformat til stemmekloning. Brug MP3, OGG/Opus, WebM eller WAV.",
       "unsupportedLocale": "Dette sprog understøttes ikke til stemmekloning.",
       "userNotFound": "Log ind for at klone en stemme.",
@@ -938,12 +919,7 @@
       "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
       "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog.",
       "savedVoiceNotFound": "Denne gemte stemme findes ikke længere.",
-      "savedVoiceLimitReached": "Du kan gemme op til __MAX__ stemmer. Slet en for at gemme en ny."
-    },
-    "sampleCard": {
-      "sourceAudio": "Kildelyd",
-      "exampleOutput": "Eksempel",
-      "loadSource": "Indlæs kilde"
+      "savedVoiceLimitReached": "Du kan gemme op til {MAX} stemmer. Slet en for at gemme en ny."
     },
     "crossLanguageInfo": {
       "title": "Stemmekloning på tværs af sprog",
@@ -953,23 +929,19 @@
     "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål.",
     "referenceAudioEnhancementLabel": "Rens referenceaudioen",
     "referenceAudioEnhancementHelp": "Fjerner baggrundsstøj og forbedrer taleaudio. Anbefales til støjende optagelser eller optagelser fra mobiltelefon. Dette koster 10 kreditter pr. sekund af det trimmede referenceaudio.",
-    "errorEnhancingReferenceAudio": "Referenceaudio kunne ikke forbedres. Prøv igen, eller slå forbedring af referenceaudio fra.",
     "failedToLoadAudioProcessor": "Kunne ikke indlæse lydprocessoren",
-    "failedToStartRecording": "Kunne ikke starte optagelse: __ERROR__",
+    "failedToStartRecording": "Kunne ikke starte optagelse: {ERROR}",
     "microphoneError": "Mikrofonfejl",
-    "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
-    "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
-    "paidTextLimitTooltip": "Du kan generere længere tale med op til __MAX__ tegn.",
-    "upgradeTextLimitTooltip": "Køb kreditter for at generere længere tale med op til __MAX__ tegn.",
-    "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
-    "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
-    "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
+    "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst {MIN} sekunder. Kun de første {TRIM_SECONDS} sekunder bruges.",
+    "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst {MIN} sekunder. Kun de første {TRIM_SECONDS} sekunder bruges.",
+    "paidTextLimitTooltip": "Du kan generere længere tale med op til {MAX} tegn.",
+    "upgradeTextLimitTooltip": "Køb kreditter for at generere længere tale med op til {MAX} tegn.",
     "audioConversionFailed": "Lydkonvertering mislykkedes. Prøv at optage igen.",
-    "audioConversionFailedWithMessage": "Lydkonvertering mislykkedes: __ERROR__",
+    "audioConversionFailedWithMessage": "Lydkonvertering mislykkedes: {ERROR}",
     "unexpectedError": "Der opstod en uventet fejl",
     "loadingAudioProcessor": "Indlæser lydprocessor...",
     "audioProcessorError": "Lydprocessorfejl",
-    "preparingAudioProcessor": "Forbereder lydprocessor til __LANGUAGE__...",
+    "preparingAudioProcessor": "Forbereder lydprocessor til {LANGUAGE}...",
     "removeFile": "Fjern fil",
     "convertingAudio": "Konverterer lyd",
     "savedVoice": {
@@ -1117,10 +1089,8 @@
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
     "titleVoiceCloning": "AI-stemmekloning",
     "descriptionVoiceCloning": "Klon en stemme ud fra 10 sekunders lyd, og hør den tale naturligt på 28 sprog.",
-    "/": "",
-    "/voice-call": "Stemmeopkald",
-    "/login": "Log ind",
-    "/signup": "Tilmeld med e-mail eller Google",
+    "titleLogin": "Log ind",
+    "titleSignup": "Tilmeld med e-mail eller Google",
     "/dashboard/call": "Opkald",
     "/dashboard/generate": "Generer",
     "/dashboard/clone": "Klon",
@@ -1262,11 +1232,7 @@
       "ctaLoggedOut": "Få tilbud",
       "ariaLabelDismiss": "Luk Black Friday-banner",
       "countdown": {
-        "prefix": "Tilbud udløber om:",
-        "days": "Dage",
-        "hours": "Timer",
-        "minutes": "Min",
-        "seconds": "Sek"
+        "prefix": "Tilbud udløber om:"
       },
       "pricing": {
         "bannerText": "Black Friday-udsalg"
@@ -1290,7 +1256,7 @@
       "ariaLabelDismiss": "Luk besked om opkald med klonet stemme"
     },
     "expressiveVoicesLaunch": {
-      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.8, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
@@ -1417,6 +1383,33 @@
           "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Lydtransskription, Tale til tekst, 99+ sprog, Offline-behandling, Tidsstempler, Videotransskription, Oversættelse til engelsk",
+      "open": {
+        "name": "Åbn transskriptionsværktøjet",
+        "text": "Gå til det gratis lydtransskriptionsværktøj på SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Tilføj din lyd",
+        "text": "Træk og slip en lyd- eller videofil i upload-feltet, klik for at gennemse, eller optag direkte med din mikrofon."
+      },
+      "chooseModel": {
+        "name": "Vælg en Whisper-model",
+        "text": "Vælg {tiny} for hurtig transskription eller {small} for højere nøjagtighed."
+      },
+      "selectLanguage": {
+        "name": "Vælg sprog og opgave",
+        "text": "Vælg sproget i din lyd. Vælg \"{transcribe}\" for at beholde originalsproget, eller \"{translate}\"."
+      },
+      "transcribe": {
+        "name": "Transskriber",
+        "text": "Klik på \"{button}\". Modellen downloades én gang og gemmes til senere brug."
+      },
+      "copy": {
+        "name": "Kopiér din transskription",
+        "text": "Din transskription med tidsstempler vises med det samme. Kopiér den med ét klik."
+      }
     }
   },
   "audioJoiner": {
@@ -1460,13 +1453,42 @@
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
     "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder.",
-    "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen."
+    "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen.",
+    "GEMINI_OUTPUT_LIMIT": "Stemmen nåede sin grænse for lydoutput. Forkort teksten, og prøv igen."
   },
   "ttsEditor": {
+    "filterTags": "Filtrer...",
+    "tagSuggestions": "Forslag",
     "label": "Taletekst",
     "effects": "Stemmeeffekter",
     "emotions": "Følelser",
     "pace": "Tempo",
     "vocalSounds": "Stemmelyde"
+  },
+  "blogPost": {
+    "audienceCreators": "indholdsskabere",
+    "audienceLabel": "Målgruppe:",
+    "audienceStorytellers": "historiefortællere",
+    "by": "Af",
+    "level": "Begynder til øvet",
+    "published": "Udgivet: {date}",
+    "readingTime": "{minutes} min. læsning",
+    "resourceType": "vejledning",
+    "resourceTypeLabel": "Ressourcetype:",
+    "seriesNote": "Denne artikel er en del af vores komplette guide til AI-stemmeteknologi.",
+    "topics": {
+      "speechSynthesis": "Talesyntese",
+      "voiceAi": "Stemme-AI",
+      "voiceCloning": "Stemmekloning"
+    },
+    "topicsLabel": "Emner:",
+    "wordCount": "{count, plural, one {# ord} other {# ord}}"
+  },
+  "policy": {
+    "updated": "Opdateret {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "Kanonisk URL: {url}",
+    "features": "Funktioner"
   }
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env -S pnpm exec tsx
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
 
+import { inputPath, parseCliArgs, runScript } from './lib/cli.mts';
 import {
   readGenerationManifest,
   type UploadManifest,
@@ -16,20 +16,19 @@ import {
   type VoiceCatalog,
 } from './lib/voice-catalog-sql.mts';
 
-const { values } = parseArgs({
-  args: process.argv.slice(2).filter((argument) => argument !== '--'),
-  options: {
-    catalog: { type: 'string' },
-    draft: { type: 'boolean' },
-    help: { short: 'h', type: 'boolean' },
-    out: { type: 'string' },
-    samples: { type: 'string' },
-  },
-});
 async function main(): Promise<void> {
+  const { values } = parseCliArgs({
+    options: {
+      catalog: { type: 'string' },
+      draft: { type: 'boolean' },
+      help: { short: 'h', type: 'boolean' },
+      out: { type: 'string' },
+      samples: { type: 'string' },
+    },
+  });
   if (values.help) {
     console.log(
-      'Prepare additive SQL without executing it.\n\npnpm prepare-gemini-voice-sql --catalog gemini-38-catalog.json --out add-gemini-38-voices.sql --draft\n\nAfter listening and uploading, replace --draft with --samples generated-speech/gemini-38.',
+      'Prepare additive SQL without executing it.\n\npnpm prepare-gemini-voice-sql --catalog scripts/gemini-38-catalog.json --out scripts/add-gemini-38-voices.sql --draft\n\nAfter listening and uploading, replace --draft with --samples scripts/generated-speech/gemini-38.',
     );
     return;
   }
@@ -39,17 +38,18 @@ async function main(): Promise<void> {
     );
   if (values.draft && values.samples)
     throw new Error('Choose --draft or --samples');
-  const catalog = (await readSampleCatalog(values.catalog)) as VoiceCatalog;
-  const generated = values.samples
-    ? await readGenerationManifest(values.samples)
-    : undefined;
-  if (generated && values.samples) {
+  const catalog = (await readSampleCatalog(
+    inputPath(values.catalog),
+  )) as VoiceCatalog;
+  const samples = values.samples && inputPath(values.samples);
+  const generated = samples ? await readGenerationManifest(samples) : undefined;
+  if (generated && samples) {
     for (const sample of generated.samples)
-      await readVerifiedSample(values.samples, sample);
+      await readVerifiedSample(samples, sample);
   }
-  const uploads = values.samples
+  const uploads = samples
     ? (JSON.parse(
-        await readFile(path.join(values.samples, 'uploads.json'), 'utf8'),
+        await readFile(path.join(samples, 'uploads.json'), 'utf8'),
       ) as UploadManifest)
     : undefined;
   const sql = prepareVoiceCatalogSql(catalog, {
@@ -57,12 +57,9 @@ async function main(): Promise<void> {
     generated,
     uploads,
   });
-  await writeFile(values.out, sql);
+  await writeFile(inputPath(values.out), sql);
   console.log(
     `Prepared ${catalog.voices.length} rows in ${values.out}. No SQL executed.`,
   );
 }
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

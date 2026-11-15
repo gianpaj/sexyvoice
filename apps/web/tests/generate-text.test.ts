@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-text/route';
-import { GEMINI_38_AUDIO_TAGS, GEMINI_AUDIO_TAGS } from '@/lib/ai';
+import { GEMINI_38_AUDIO_TAGS } from '@/lib/tts/models';
 
 const { streamText } = vi.hoisted(() => ({ streamText: vi.fn() }));
 vi.mock('ai', () => ({ streamText }));
@@ -34,19 +34,7 @@ describe('/api/generate-text', () => {
     });
 
     expect(systemPrompt()).toContain(GEMINI_38_AUDIO_TAGS);
-    expect(systemPrompt()).not.toContain(GEMINI_AUDIO_TAGS);
     expect(systemPrompt()).not.toContain('[cheerfully]');
-  });
-
-  it('keeps the Gemini 3.1 audio tags for gpro31 voices', async () => {
-    await enhance({
-      selectedVoiceLanguage: 'multiple',
-      ttsProvider: 'gemini',
-      voiceModel: 'gpro31',
-    });
-
-    expect(systemPrompt()).toContain(GEMINI_AUDIO_TAGS);
-    expect(systemPrompt()).not.toContain(GEMINI_38_AUDIO_TAGS);
   });
 
   it('uses Orpheus emotion tags by language for Replicate voices', async () => {

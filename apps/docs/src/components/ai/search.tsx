@@ -25,6 +25,7 @@ import {
 
 import type { ChatUIMessage, SearchTool } from '../../app/api/chat/route';
 import { cn } from '../../lib/cn';
+import { appName } from '../../lib/shared';
 import { Markdown } from '../markdown';
 import { buttonVariants } from '../ui/button';
 
@@ -273,7 +274,7 @@ function Input(props: ComponentProps<'textarea'>) {
 
 const roleName: Record<string, string> = {
   user: 'you',
-  assistant: 'fumadocs',
+  assistant: appName,
 };
 
 function Message({

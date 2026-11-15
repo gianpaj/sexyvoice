@@ -45,7 +45,6 @@ export default async function DashboardLayout(props: {
     dismissedCookieKeys,
     lang,
     messages,
-    placement: 'dashboard',
   });
 
   const e2e = await getE2ECallUser();

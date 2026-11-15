@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { callMemoryPreference } from '@/lib/calls/memory';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function MemorySettingForm({
@@ -21,7 +22,7 @@ export function MemorySettingForm({
     setIsSaving(true);
     try {
       const { error } = await getSupabaseBrowserClient().auth.updateUser({
-        data: { call_memory_enabled: checked },
+        data: callMemoryPreference(checked),
       });
       if (error) {
         throw error;

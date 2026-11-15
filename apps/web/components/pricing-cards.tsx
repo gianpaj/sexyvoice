@@ -16,7 +16,7 @@ import {
 } from '@/lib/stripe/pricing';
 import { cn } from '@/lib/utils';
 
-export type BillingMode = 'monthly' | 'one-time';
+type BillingMode = 'monthly' | 'one-time';
 
 type CheckoutPlanId = 'starter' | 'standard' | 'pro';
 

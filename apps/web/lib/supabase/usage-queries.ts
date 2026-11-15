@@ -26,15 +26,12 @@ export interface MonthlyUsageSummary {
   totalOperations: number;
 }
 
-export interface GetUsageEventsOptions {
+interface GetUsageEventsOptions {
   page: number;
   pageSize: number;
   sourceType?: UsageSourceType;
 }
 
-/**
- * Get paginated usage events for a user
- */
 export async function getUsageEventsPaginated(
   client: TypedSupabaseClient,
   userId: string,
@@ -43,7 +40,6 @@ export async function getUsageEventsPaginated(
   const { page, pageSize, sourceType } = options;
   const offset = (page - 1) * pageSize;
 
-  // Build the query
   let query = client
     .from('usage_events')
     .select('*', { count: 'exact' })
@@ -51,7 +47,6 @@ export async function getUsageEventsPaginated(
     .order('occurred_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  // Apply source type filter if provided
   if (sourceType) {
     query = query.eq('source_type', sourceType);
   }
@@ -68,9 +63,6 @@ export async function getUsageEventsPaginated(
   };
 }
 
-/**
- * Build a MonthlyUsageSummary from RPC results
- */
 function buildSummaryFromRpcData(
   data: Array<{
     source_type: UsageSourceType;
@@ -116,7 +108,6 @@ export async function getMonthlyUsageSummary(
   client: TypedSupabaseClient,
   userId: string,
 ): Promise<MonthlyUsageSummary> {
-  // Get start of current month
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 

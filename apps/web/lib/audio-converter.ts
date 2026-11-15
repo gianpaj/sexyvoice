@@ -1,8 +1,9 @@
 /**
  * Audio converter utility using wasm-audio-decoders
  *
- * Converts MP3, OGG (Opus/Vorbis), and WebM/Opus audio files to WAV format
- * for use with voice cloning APIs that require WAV input.
+ * Converts MP3 and OGG (Opus/Vorbis) audio files to WAV format for use with
+ * voice cloning APIs that require WAV input. The browser converts WebM
+ * recordings before upload.
  *
  * Uses:
  * - mpg123-decoder for MP3 files
@@ -14,7 +15,9 @@ import { OggVorbisDecoder } from '@wasm-audio-decoders/ogg-vorbis';
 import { MPEGDecoder } from 'mpg123-decoder';
 import { OggOpusDecoder } from 'ogg-opus-decoder';
 
-export type SupportedAudioFormat = 'mp3' | 'ogg' | 'opus' | 'vorbis' | 'webm';
+import { isWav } from './audio';
+
+type SupportedAudioFormat = 'mp3' | 'ogg' | 'vorbis' | 'webm';
 
 export class AudioDecodeError extends Error {
   decoderMessage?: string;
@@ -181,14 +184,10 @@ async function decodeOggVorbis(audioData: Uint8Array): Promise<DecodedAudio> {
   }
 }
 
-/**
- * Convert Float32 PCM samples to Int16 PCM samples
- */
 function float32ToInt16(float32Array: Float32Array): Int16Array {
   const int16Array = new Int16Array(float32Array.length);
 
   for (let i = 0; i < float32Array.length; i++) {
-    // Clamp the value to [-1, 1] range
     const sample = Math.max(-1, Math.min(1, float32Array[i]));
     // Convert to 16-bit integer
     int16Array[i] = sample < 0 ? sample * 0x80_00 : sample * 0x7f_ff;
@@ -197,9 +196,6 @@ function float32ToInt16(float32Array: Float32Array): Int16Array {
   return int16Array;
 }
 
-/**
- * Interleave multiple audio channels into a single array
- */
 function interleaveChannels(channelData: Float32Array[]): Float32Array {
   const numChannels = channelData.length;
   if (numChannels === 0) {
@@ -221,9 +217,6 @@ function interleaveChannels(channelData: Float32Array[]): Float32Array {
   return interleaved;
 }
 
-/**
- * Create a WAV file buffer from PCM data
- */
 function createWavBuffer(
   pcmData: Int16Array,
   sampleRate: number,
@@ -301,11 +294,7 @@ export function trimWavBuffer(
   wavBuffer: Buffer,
   maxDurationSeconds: number,
 ): Buffer | null {
-  if (
-    wavBuffer.length < 44 ||
-    wavBuffer.subarray(0, 4).toString('ascii') !== 'RIFF' ||
-    wavBuffer.subarray(8, 12).toString('ascii') !== 'WAVE'
-  ) {
+  if (wavBuffer.length < 44 || !isWav(wavBuffer)) {
     return null;
   }
 
@@ -387,8 +376,7 @@ export async function convertToWav(
         decoded = await decodeMp3(audioData);
         break;
 
-      case 'ogg':
-      case 'opus': {
+      case 'ogg': {
         // Try Opus first, fall back to Vorbis.
         // Some files (e.g. WhatsApp .opus) are parsed by ogg-opus-decoder without
         // throwing but return 0 decoded channels — treat that as a decode failure
@@ -425,13 +413,10 @@ export async function convertToWav(
     throw decodeError;
   }
 
-  // Interleave channels if stereo/multi-channel
   const interleaved = interleaveChannels(decoded.channelData);
 
-  // Convert Float32 to Int16
   const int16Data = float32ToInt16(interleaved);
 
-  // Create WAV buffer
   const wavBuffer = createWavBuffer(
     int16Data,
     decoded.sampleRate,
@@ -454,9 +439,6 @@ export function needsConversion(mimeType: string): boolean {
   );
 }
 
-/**
- * Check if the audio format is supported for conversion
- */
 export function isConversionSupported(
   mimeType: string,
   filename?: string,

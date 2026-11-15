@@ -8,6 +8,7 @@ import { Header } from '@/components/header';
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
+  headerStatic: vi.fn((_props: { signedIn?: boolean }) => null),
   getClaims: vi.fn(),
   getCreditsQuery: vi.fn(),
   getCreditTransactionAmounts: vi.fn(),
@@ -48,7 +49,9 @@ vi.mock('next-intl/server', () => ({
   getTranslations: async () => (key: string) => key,
 }));
 vi.mock('@/components/footer', () => ({ default: () => null }));
-vi.mock('@/components/header-static', () => ({ HeaderStatic: () => null }));
+vi.mock('@/components/header-static', () => ({
+  HeaderStatic: mocks.headerStatic,
+}));
 vi.mock('@/app/[lang]/cli/login/cli-login-client', () => ({
   CliLoginClient: () => null,
 }));
@@ -112,9 +115,8 @@ describe('layout, CLI login, and header claims', () => {
   });
 
   it('shows authenticated header links with a verified subject', async () => {
-    const html = renderToStaticMarkup(await Header({ lang: 'en' }));
-    expect(html).toContain('/dashboard/generate');
-    expect(html).not.toContain('href="/login"');
+    renderToStaticMarkup(await Header());
+    expect(mocks.headerStatic.mock.lastCall?.[0]).toEqual({ signedIn: true });
     expect(mocks.getUser).not.toHaveBeenCalled();
   });
 
@@ -132,9 +134,10 @@ describe('layout, CLI login, and header claims', () => {
       mocks.getClaims.mockResolvedValue(response);
       expect(await layout()).toBeNull();
       await expect(cli()).rejects.toThrow('/en/login?redirect_to=');
-      const html = renderToStaticMarkup(await Header({ lang: 'en' }));
-      expect(html).toContain('href="/login"');
-      expect(html).not.toContain('/dashboard/generate');
+      renderToStaticMarkup(await Header());
+      expect(mocks.headerStatic.mock.lastCall?.[0]).toEqual({
+        signedIn: false,
+      });
       expect(mocks.from).not.toHaveBeenCalled();
       expect(mocks.hasUserPaid).not.toHaveBeenCalled();
       expect(mocks.getCreditTransactionAmounts).not.toHaveBeenCalled();

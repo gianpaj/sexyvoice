@@ -1,53 +1,53 @@
 #!/usr/bin/env -S pnpm exec tsx
-import { spawnSync } from 'node:child_process';
 import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
 import { GoogleGenAI } from '@google/genai';
 
-import pricing from '../apps/web/lib/api/pricing.ts';
 import audioHelpers from '../apps/web/lib/audio.ts';
 import geminiPrompt from '../apps/web/lib/tts/gemini-prompt.ts';
 import geminiResponse from '../apps/web/lib/tts/gemini-response.ts';
-import { loadScriptEnv } from './lib/env.mts';
+import providerCost from '../apps/web/lib/tts/provider-cost.ts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { runAudioTool } from './lib/ffmpeg.mts';
+import { replaceJson, sha256 } from './lib/files.mts';
 import {
   readSampleCatalog,
   readVerifiedSample,
+  SAMPLE_PROVIDER_MODEL,
+  SAMPLE_VOICE_MODEL,
   type SampleManifest,
-  sha256,
-  writeJson,
   writeListeningPage,
 } from './lib/speech-samples.mts';
 
-const { calculateGenerateApiDollarAmount } = pricing;
+const { speechProviderCost } = providerCost;
 const { convertToWav } = audioHelpers;
-const { buildGeminiTtsContents, buildGeminiVoiceConfig, GEMINI_TTS_38 } =
-  geminiPrompt;
+const { buildGeminiTtsContents, buildGeminiVoiceConfig } = geminiPrompt;
 const { classifyGeminiTtsResponse } = geminiResponse;
 
-const { values } = parseArgs({
-  args: process.argv.slice(2).filter((argument) => argument !== '--'),
-  options: {
-    catalog: { type: 'string' },
-    'dry-run': { type: 'boolean' },
-    'env-file': { multiple: true, type: 'string' },
-    help: { short: 'h', type: 'boolean' },
-    'keep-wav': { type: 'boolean' },
-    out: { type: 'string' },
-  },
-});
-
-function ffmpeg(args: string[]): void {
-  const result = spawnSync('ffmpeg', args, { encoding: 'utf8' });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`ffmpeg failed: ${result.stderr}`);
+function writeManifest(file: string, manifest: SampleManifest) {
+  return replaceJson(file, manifest, { mode: 0o600 });
 }
 
 async function main(): Promise<void> {
+  const { values } = parseCliArgs({
+    options: {
+      catalog: { type: 'string' },
+      'dry-run': { type: 'boolean' },
+      'env-file': { multiple: true, type: 'string' },
+      help: { short: 'h', type: 'boolean' },
+      'keep-wav': { type: 'boolean' },
+      out: { type: 'string' },
+    },
+  });
   if (values.help) {
     console.log(`Generate local Gemini 3.8 MP3 samples. Never uploads or writes to the database.
 
-pnpm generate-gemini-speech-samples --catalog catalog.json --out generated-speech/gemini-38
+pnpm generate-gemini-speech-samples --catalog scripts/gemini-38-catalog.json --out scripts/generated-speech/gemini-38
 
 --catalog <file>    Version 1 gpro38 catalog with voices (id, name, language, text, style, filename)
 --out <directory>   Dedicated output directory; completed samples resume after hash verification
@@ -60,8 +60,8 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
   }
   if (!(values.catalog && values.out))
     throw new Error('--catalog and --out are required');
-  const catalog = await readSampleCatalog(values.catalog);
-  const output = path.resolve(values.out);
+  const catalog = await readSampleCatalog(inputPath(values.catalog));
+  const output = inputPath(values.out);
   for (const voice of catalog.voices)
     console.log(
       `${voice.name} (${voice.language}) -> ${path.join(output, voice.filename)}`,
@@ -70,7 +70,7 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
   loadScriptEnv(values['env-file']);
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) throw new Error('Missing GOOGLE_GENERATIVE_AI_API_KEY');
-  ffmpeg(['-version']);
+  runAudioTool('ffmpeg', ['-version'], { task: 'to start' });
   await mkdir(output, { recursive: true });
   const manifestPath = path.join(output, 'manifest.json');
   let manifest: SampleManifest;
@@ -80,13 +80,18 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
     ) as SampleManifest;
     if (
       manifest.version !== 1 ||
-      manifest.model !== GEMINI_TTS_38 ||
+      manifest.model !== SAMPLE_PROVIDER_MODEL ||
       !Array.isArray(manifest.samples)
     )
       throw new Error('Invalid generation manifest');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    manifest = { failures: [], model: GEMINI_TTS_38, samples: [], version: 1 };
+    manifest = {
+      failures: [],
+      model: SAMPLE_PROVIDER_MODEL,
+      samples: [],
+      version: 1,
+    };
   }
   if (
     manifest.samples.some(
@@ -140,15 +145,15 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
         config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
-            voiceConfig: buildGeminiVoiceConfig(voice.name, 'gpro38'),
+            voiceConfig: buildGeminiVoiceConfig(voice.name, SAMPLE_VOICE_MODEL),
           },
         },
         contents: buildGeminiTtsContents({
-          model: 'gpro38',
+          model: SAMPLE_VOICE_MODEL,
           styleVariant: voice.style,
           text: voice.text,
         }),
-        model: GEMINI_TTS_38,
+        model: SAMPLE_PROVIDER_MODEL,
       });
       const candidate = response.candidates?.[0];
       const audioParts =
@@ -181,25 +186,27 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
       await writeFile(wavPath, convertToWav(audio.data, audio.mimeType), {
         flag: 'wx',
       });
-      ffmpeg([
-        '-n',
-        '-hide_banner',
-        '-loglevel',
-        'error',
-        '-i',
-        wavPath,
-        '-codec:a',
-        'libmp3lame',
-        '-q:a',
-        '2',
-        mp3Path,
-      ]);
+      runAudioTool(
+        'ffmpeg',
+        [
+          '-n',
+          '-hide_banner',
+          '-loglevel',
+          'error',
+          '-i',
+          wavPath,
+          '-codec:a',
+          'libmp3lame',
+          '-q:a',
+          '2',
+          mp3Path,
+        ],
+        { task: `to encode ${mp3Path}` },
+      );
       const bytes = await readFile(mp3Path);
-      const dollarAmount = calculateGenerateApiDollarAmount({
-        model: GEMINI_TTS_38,
+      const dollarAmount = speechProviderCost({
+        model: SAMPLE_PROVIDER_MODEL,
         occurredAt: generatedAt,
-        provider: 'google',
-        sourceType: 'tts',
         ...usage,
       });
       manifest.samples.push({
@@ -210,17 +217,17 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
         sha256: sha256(bytes),
         usage,
       });
-      await writeJson(manifestPath, manifest);
+      await writeManifest(manifestPath, manifest);
       if (!values['keep-wav']) await rm(wavPath);
       console.log(`Saved ${voice.filename} ($${dollarAmount.toFixed(6)})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       manifest.failures.push({ error: message, id: voice.id });
-      await writeJson(manifestPath, manifest);
+      await writeManifest(manifestPath, manifest);
       console.error(`${voice.name}: ${message}`);
     }
   }
-  await writeJson(manifestPath, manifest);
+  await writeManifest(manifestPath, manifest);
   await writeListeningPage(output, manifest.samples);
   console.log(
     `${manifest.samples.length} samples; ${manifest.failures.length} failures. Manifest: ${manifestPath}`,
@@ -228,7 +235,4 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
   if (manifest.failures.length) process.exitCode = 1;
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

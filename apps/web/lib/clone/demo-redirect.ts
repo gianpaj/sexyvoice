@@ -1,11 +1,11 @@
 import { CLONE_DEMO_VOICES, getCloneDemoTakes } from '@/data/clone-demo-config';
-import { i18n } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 
 /** Only prepared voice/take pairs can be carried through signup. */
 export function getCloneDemoRedirect(path: unknown): string | null {
   if (typeof path !== 'string') return null;
   const match = path.match(/^(\/([^/]+)\/dashboard\/clone)\?([^#]*)$/);
-  if (!(match && i18n.locales.some((locale) => locale === match[2])))
+  if (!(match && routing.locales.some((locale) => locale === match[2])))
     return null;
   const params = new URLSearchParams(match[3]);
   const voice = CLONE_DEMO_VOICES.find(({ id }) => id === params.get('demo'));

@@ -6,9 +6,9 @@ import { useCreditsQuery } from '@/hooks/use-credits-query';
 import { isCreditBalance } from '@/lib/credit-balance';
 import { Link } from '@/lib/i18n/navigation';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
+import { ProgressCircle } from './circular-progress';
 import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
-import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 

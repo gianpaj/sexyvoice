@@ -13,6 +13,8 @@ import path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
+import { isNodeError } from './guards.mts';
+
 const SIMPLE_ETAG_PATTERN = /^[a-f\d]{32}$/i;
 const SIZE_PATTERN = /^(\d+(?:\.\d+)?)\s*(KB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i;
 
@@ -108,6 +110,20 @@ export interface DownloadResult {
     | 'existing-checksum'
     | 'existing-size'
     | 'missing-from-r2';
+}
+
+/** Map key for an object: bucket and key joined by a NUL, which neither contains. */
+export function objectIdentity(
+  object: Pick<R2ObjectMetadata, 'bucket' | 'key'>,
+): string {
+  return `${object.bucket}\0${object.key}`;
+}
+
+/** Map key for a bucket and prefix. */
+export function locationIdentity(
+  location: Pick<R2Location, 'bucket' | 'prefix'>,
+): string {
+  return `${location.bucket}\0${location.prefix}`;
 }
 
 export function assertR2BucketName(bucket: string): void {
@@ -494,13 +510,6 @@ async function assertNoSymlinkComponents(
       throw error;
     }
   }
-}
-
-function isNodeError(
-  error: unknown,
-  code: string,
-): error is NodeJS.ErrnoException {
-  return error instanceof Error && 'code' in error && error.code === code;
 }
 
 function createByteLimitTransform(maxBytes: number): Transform {

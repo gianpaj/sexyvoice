@@ -10,6 +10,7 @@ import {
   type S3Client,
 } from '@aws-sdk/client-s3';
 
+import { sha256 } from './lib/files.mts';
 import {
   planSampleUploads,
   type UploadManifest,
@@ -22,7 +23,6 @@ import {
   readSampleCatalog,
   readVerifiedSample,
   type SampleManifest,
-  sha256,
 } from './lib/speech-samples.mts';
 import {
   prepareVoiceCatalogSql,

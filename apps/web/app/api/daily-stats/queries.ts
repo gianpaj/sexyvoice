@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
+import { VOICE_CLONING_MODELS } from '@/lib/clone/providers';
 import type { DailyStatsProfileRelation } from './types';
 import {
   applyPageCursor,

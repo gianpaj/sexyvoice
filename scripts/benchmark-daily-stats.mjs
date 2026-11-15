@@ -5,11 +5,13 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, promisify } from 'node:util';
+import { promisify } from 'node:util';
+
+import { parseCliArgs, runScript } from './lib/cli.mts';
 
 const exec = promisify(execFile);
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const help = `Usage: node scripts/benchmark-daily-stats.mjs --label <name> --date YYYY-MM-DD [options]
+const help = `Usage: pnpm benchmark-daily-stats --label <name> --date YYYY-MM-DD [options]
 
   --label       Required filename label: letters, digits, underscores, hyphens
                 Start with a letter or digit; maximum 80 characters
@@ -31,7 +33,7 @@ Reports and headers stay in private local files. Console output excludes reports
 function options() {
   let values;
   try {
-    ({ values } = parseArgs({
+    ({ values } = parseCliArgs({
       options: {
         date: { type: 'string' },
         help: { short: 'h', type: 'boolean' },
@@ -261,7 +263,4 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

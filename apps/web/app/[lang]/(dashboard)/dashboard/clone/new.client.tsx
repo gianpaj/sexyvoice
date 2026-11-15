@@ -11,13 +11,12 @@ import {
   useRef,
   useState,
 } from 'react';
+import { toast } from 'sonner';
 
-import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
 import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
-import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,10 +26,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { SamplePlayerProvider } from '@/hooks/use-sample-player';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { SavedCallVoice } from '@/lib/calls/voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneSuccessResponse,
@@ -41,32 +41,36 @@ import {
   INWORLD_EXTRA_ACCENT_CODES,
   inworldAccent,
   MAX_SAVED_CALL_VOICES,
+  savedVoiceProvider,
   supportsCallCloneLocale,
   toCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
-  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
-  VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
-import { formatCloneMessage, readCloneError } from '@/lib/clone/error-message';
+import { readCloneError } from '@/lib/clone/error-message';
 import {
   createMicrophoneReferenceAudioFile,
-  isWebmAudioBlob,
+  needsWavConversion,
 } from '@/lib/clone/microphone-reference-audio';
 import {
-  getCloneTextMaxLength,
-  getSavedVoiceTextMaxLength,
-} from '@/lib/clone/text-limits';
+  CLONE_PROVIDERS,
+  cloneTextLimit,
+  oneOffCloneProvider,
+} from '@/lib/clone/providers';
+import {
+  REFERENCE_AUDIO_ACCEPT,
+  REFERENCE_AUDIO_MAX_BYTES,
+  VOICE_NAME_MAX_LENGTH,
+} from '@/lib/clone/reference-audio';
 import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { CloneAudioInput } from './clone-audio-input';
 import {
@@ -77,9 +81,6 @@ import { CloneLanguageSelect } from './clone-language-select';
 import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
-
-const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
@@ -242,13 +243,9 @@ function NewVoiceClientInner({
     text,
   } = cloneState;
 
-  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
-  // Saving for calls clones with the call provider; otherwise the locale
-  // picks Voxtral or Chatterbox.
-  let referenceProvider: keyof typeof CLONE_MIN_AUDIO_SECONDS = usesVoxtral
-    ? 'mistral'
-    : 'replicate';
-  if (saveVoiceOnly) referenceProvider = callCloneProvider;
+  const oneOffProvider = oneOffCloneProvider(selectedLocaleCode);
+  const usesVoxtral = oneOffProvider === 'mistral';
+  const referenceProvider = saveVoiceOnly ? callCloneProvider : oneOffProvider;
   const canSaveVoice = supportsCallCloneLocale(
     callCloneProvider,
     selectedLocaleCode,
@@ -284,15 +281,15 @@ function NewVoiceClientInner({
       }
       await startRecording();
     } catch (error) {
+      // Release the microphone so the next press starts over.
+      clearMediaStream();
       const errorMsg =
         error instanceof Error
           ? error.message
           : t('failedToLoadAudioProcessor');
       dispatch({
         patch: {
-          errorMessage: formatCloneMessage(t('failedToStartRecording'), {
-            ERROR: errorMsg,
-          }),
+          errorMessage: t('failedToStartRecording', { ERROR: errorMsg }),
           ffmpegError: errorMsg,
         },
         type: 'patch',
@@ -316,10 +313,7 @@ function NewVoiceClientInner({
     onError: (err) => {
       console.error(err);
       dispatch({
-        patch: {
-          ffmpegError:
-            err instanceof Error ? err.message : t('microphoneError'),
-        },
+        patch: { ffmpegError: t('microphoneError') },
         type: 'patch',
       });
     },
@@ -378,33 +372,27 @@ function NewVoiceClientInner({
       ({ code }) => code === resolveBaseCloneLocale(selectedLocaleCode),
     )?.name ?? selectedLocaleCode;
 
-  const onFilesAdded = useCallback(() => {
-    dispatch({
-      patch: {
-        errorMessage: '',
-        status: 'idle',
-      },
-      type: 'patch',
-    });
-  }, []);
-
+  // Saved voices belong to paid users, so they get the paid limit.
   const textMaxLength = selectedVoice
-    ? getSavedVoiceTextMaxLength(selectedVoice.provider)
-    : getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
+    ? cloneTextLimit(savedVoiceProvider(selectedVoice.provider), true)
+    : cloneTextLimit(oneOffProvider, userHasPaid);
 
-  const [fileState, fileActions] = useFileUpload({
-    accept: ALLOWED_TYPES,
-    maxSize: CLONING_FILE_MAX_SIZE,
-    multiple: false,
-    onFilesAdded,
+  const upload = useFileUpload({
+    accept: REFERENCE_AUDIO_ACCEPT,
+    maxSize: REFERENCE_AUDIO_MAX_BYTES,
+    // A new pick replaces the previous error.
+    onFileChosen: (accepted) =>
+      dispatch({
+        patch: accepted
+          ? { errorMessage: '', status: 'idle' }
+          : { errorMessage: '' },
+        type: 'patch',
+      }),
   });
-  const { files, errors } = fileState;
-  const { clearErrors } = fileActions;
-
-  const file = files[0]?.file instanceof File ? files[0].file : null;
+  const { file } = upload;
 
   const applyInitialReference = useEffectEvent((reference: File) => {
-    if (!(file || micBlob || micRecording)) fileActions.addFiles([reference]);
+    if (!(file || micBlob || micRecording)) upload.addFile(reference);
   });
   const reportInitialReferenceError = useEffectEvent(() => {
     dispatch({
@@ -428,13 +416,6 @@ function NewVoiceClientInner({
       });
     return () => controller.abort();
   }, [initialDemo?.speakerId, initialDemo?.takeId]);
-
-  // Clear custom error message when file upload errors change
-  useEffect(() => {
-    if (errors.length > 0) {
-      dispatch({ patch: { errorMessage: '' }, type: 'patch' });
-    }
-  }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
   const queryClient = useQueryClient();
@@ -469,7 +450,7 @@ function NewVoiceClientInner({
     }
 
     // Clear both custom errors and file upload errors
-    clearErrors();
+    upload.clearError();
     dispatch({
       patch: {
         errorMessage: '',
@@ -479,9 +460,9 @@ function NewVoiceClientInner({
     });
 
     let voiceRes: Response | undefined;
+    const controller = new AbortController();
+    abortController.current = controller;
     try {
-      abortController.current = new AbortController();
-
       let formData: FormData;
       if (selectedVoice) {
         formData = new FormData();
@@ -497,7 +478,7 @@ function NewVoiceClientInner({
       } else {
         let audioToProcess = file;
         if (micBlob && !file) {
-          const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+          const shouldConvertMicAudio = needsWavConversion(micBlob);
 
           if (shouldConvertMicAudio) {
             dispatch({
@@ -522,12 +503,9 @@ function NewVoiceClientInner({
               patch: {
                 errorMessage:
                   convertError instanceof Error
-                    ? formatCloneMessage(
-                        t('audioConversionFailedWithMessage'),
-                        {
-                          ERROR: convertError.message,
-                        },
-                      )
+                    ? t('audioConversionFailedWithMessage', {
+                        ERROR: convertError.message,
+                      })
                     : t('audioConversionFailed'),
                 status: 'error',
               },
@@ -576,7 +554,7 @@ function NewVoiceClientInner({
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
-        signal: abortController.current.signal,
+        signal: controller.signal,
       });
 
       // The route settles its reservation and any refund before it responds, so
@@ -604,18 +582,12 @@ function NewVoiceClientInner({
       const voiceResult = (await voiceRes.json()) as
         | CloneSuccessResponse
         | SaveVoiceSuccessResponse;
-      if ('audioReferenceId' in voiceResult) {
-        setSavedVoiceId(voiceResult.audioReferenceId);
+      if ('voice' in voiceResult) {
+        const savedVoice = voiceResult.voice;
+        setSavedVoiceId(savedVoice.id);
         setSavedVoices((voices) => [
-          {
-            id: voiceResult.audioReferenceId,
-            name: voiceName.trim(),
-            locale: selectedLocaleCode,
-            provider: voiceResult.provider,
-          },
-          ...voices.filter(
-            (voice) => voice.id !== voiceResult.audioReferenceId,
-          ),
+          savedVoice,
+          ...voices.filter((voice) => voice.id !== savedVoice.id),
         ]);
         dispatch({ patch: { status: 'idle' }, type: 'patch' });
         toast.success(t('savedVoice.success'));
@@ -633,10 +605,7 @@ function NewVoiceClientInner({
         type: 'patch',
       });
     } catch (err) {
-      if (
-        err instanceof Error &&
-        err.message === 'signal is aborted without reason'
-      ) {
+      if (controller.signal.aborted) {
         return;
       }
       let errorMsg = '';
@@ -671,7 +640,12 @@ function NewVoiceClientInner({
   };
 
   const onToggleMicrophone = async () => {
-    if (micStatus === 'idle' || micStatus === 'stopped') {
+    // A failed start (blocked microphone) can be retried once access is allowed.
+    if (
+      micStatus === 'idle' ||
+      micStatus === 'stopped' ||
+      micStatus === 'failed'
+    ) {
       clearMediaStream();
       // Request microphone access on first toggle
       await getMediaStream();
@@ -711,7 +685,8 @@ function NewVoiceClientInner({
   };
 
   const textIsOverLimit = text.length > textMaxLength;
-  const minAudioSeconds = CLONE_MIN_AUDIO_SECONDS[referenceProvider];
+  const { maxReferenceSeconds, minReferenceSeconds: minAudioSeconds } =
+    CLONE_PROVIDERS[referenceProvider];
   const micTooShort =
     !file &&
     Boolean(micBlob) &&
@@ -742,24 +717,6 @@ function NewVoiceClientInner({
       micTooShort ||
       (!saveVoiceOnly && textIsOverLimit) ||
       !legalConsentChecked;
-
-  // Cmd/Ctrl+Enter does what the Generate button does, only when it is enabled.
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (!((event.metaKey || event.ctrlKey) && event.key === 'Enter')) return;
-    event.preventDefault();
-    if (generateDisabled) return;
-    handleGenerate().catch((error) => {
-      console.error('Keyboard shortcut clone generation failed:', error);
-    });
-  });
-
-  // onKeyDown is a useEffectEvent, so its identity is stable.
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
 
   return (
     <Card>
@@ -826,8 +783,7 @@ function NewVoiceClientInner({
                     error: ffmpegError,
                     loading: Boolean(ffmpegLoading),
                   }}
-                  fileActions={fileActions}
-                  fileState={fileState}
+                  maxAudioSeconds={maxReferenceSeconds}
                   mic={{
                     blob: micBlob,
                     mediaBlob: recorderMediaBlob,
@@ -842,6 +798,7 @@ function NewVoiceClientInner({
                   minAudioSeconds={minAudioSeconds}
                   selectedLocaleCode={selectedLocaleCode}
                   selectedLocaleName={selectedLocaleName}
+                  upload={upload}
                   usesVoxtral={usesVoxtral}
                 />
               )}
@@ -912,7 +869,7 @@ function NewVoiceClientInner({
                     <Input
                       disabled={status === 'generating'}
                       id="saved-voice-name"
-                      maxLength={50}
+                      maxLength={VOICE_NAME_MAX_LENGTH}
                       onChange={(e) => {
                         setVoiceName(e.target.value);
                         setSavedVoiceId(null);

@@ -4,7 +4,7 @@ import type React from 'react';
 
 import { cn } from '@/lib/utils';
 
-export interface TextShimmerProps {
+interface TextShimmerProps {
   children: string;
   className?: string;
   duration?: number;

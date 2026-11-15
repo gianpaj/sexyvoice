@@ -3,23 +3,14 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import {
-  buildCallAnalysisPrompt,
-  type CallSessionForAnalysis,
-} from '@/lib/ai/analyze-call';
+import type { CallSessionForAnalysis } from '@/lib/ai/analyze-call';
 import {
   type CallAnalysisBatchContext,
+  callAnalysisContext,
   collectCallAnalysisBatchResults,
   createCallAnalysisBatch,
   prepareCallAnalysisBatch,
 } from '@/lib/ai/call-analysis-batch';
-import {
-  getBatchState,
-  isBatchSettled,
-  waitForBatch,
-} from '@/lib/ai/xai-batch';
-import { APIErrorResponse } from '@/lib/error-ts';
-import { createAdminClient } from '@/lib/supabase/admin';
 import {
   claimPendingCallAnalyses,
   expireStaleCallAnalysisClaims,
@@ -27,14 +18,20 @@ import {
   getInFlightCallAnalysisBatches,
   getPendingCallAnalyses,
   getSubmittedCallAnalysesForBatch,
-  MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
-  markCallAnalysisFailed,
   type QueuedCallSession,
+  recordCallAnalysisFailure,
   releaseCallAnalysisClaims,
+  saveCallSessionAnalysis,
   setCallAnalysisBatchId,
-  upsertCallSessionAnalysis,
-} from '@/lib/supabase/call-analysis-queries';
+} from '@/lib/ai/call-analysis-queue';
+import {
+  getBatchState,
+  isBatchSettled,
+  waitForBatch,
+} from '@/lib/ai/xai-batch';
+import { APIErrorResponse } from '@/lib/error-ts';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { TypedSupabaseClient } from '@/lib/supabase/client';
 
 /**
@@ -60,9 +57,9 @@ const POLL_BUDGET_MS = 150_000;
 /** In-flight batches older than this are reported to Sentry as stuck. */
 const STALE_BATCH_MS = 24 * 60 * 60 * 1000;
 /**
- * In-flight batches older than this are abandoned: their rows go back to
- * `pending` (bounded by `attempts`) so a batch cancelled or purged at xAI
- * cannot hold sessions in `submitted` forever.
+ * In-flight batches older than this are abandoned: each row counts a failed
+ * attempt, so a batch cancelled or purged at xAI cannot hold sessions in
+ * `submitted` forever.
  */
 const ABANDON_BATCH_MS = 48 * 60 * 60 * 1000;
 /**
@@ -85,10 +82,6 @@ interface SettleSummary {
   retried: number;
 }
 
-function toSession(row: QueuedCallSession): CallSessionForAnalysis | null {
-  return row.call_sessions;
-}
-
 const SESSION_GONE_ERROR = 'Call session no longer available';
 
 /** Per-run record of sessions that reached the terminal `failed` state. */
@@ -105,25 +98,17 @@ interface RunLog {
 async function failSession(
   supabase: TypedSupabaseClient,
   run: RunLog,
-  sessionId: string,
+  row: Pick<QueuedCallSession, 'attempts' | 'session_id'>,
   error: string,
-  retry: boolean,
+  final = false,
 ) {
-  const status = await markCallAnalysisFailed(supabase, sessionId, error, {
-    retry,
+  const status = await recordCallAnalysisFailure(supabase, row, error, {
+    final,
   });
   if (status === 'failed') {
-    run.parked.push({ error, sessionId });
+    run.parked.push({ error, sessionId: row.session_id });
   }
   return status;
-}
-
-function toContext(session: CallSessionForAnalysis): CallAnalysisBatchContext {
-  return {
-    assistantOnlyNote:
-      buildCallAnalysisPrompt(session)?.assistantOnlyNote ?? null,
-    session,
-  };
 }
 
 /** Collect a settled batch and update queue + analysis rows accordingly. */
@@ -141,13 +126,10 @@ async function settleBatch(
   };
 
   const contexts = new Map<string, CallAnalysisBatchContext>();
-  const attemptsBySession = new Map<string, number>();
+  const rowsBySession = new Map(rows.map((row) => [row.session_id, row]));
   for (const row of rows) {
-    const session = toSession(row);
-    attemptsBySession.set(row.session_id, row.attempts);
-    if (session) {
-      contexts.set(session.id, toContext(session));
-    }
+    const context = row.call_sessions && callAnalysisContext(row.call_sessions);
+    if (context) contexts.set(row.session_id, context);
   }
 
   const results = await collectCallAnalysisBatchResults(batchId, contexts);
@@ -156,22 +138,19 @@ async function settleBatch(
   for (const result of results) {
     const context = contexts.get(result.sessionId);
     if (result.analysis && context) {
-      await upsertCallSessionAnalysis(
-        supabase,
-        context.session,
-        result.analysis,
-      );
+      await saveCallSessionAnalysis(supabase, context.session, result.analysis);
       completed.push(result.sessionId);
       continue;
     }
 
-    const attempts = attemptsBySession.get(result.sessionId) ?? 0;
     const status = await failSession(
       supabase,
       run,
-      result.sessionId,
+      rowsBySession.get(result.sessionId) ?? {
+        attempts: 0,
+        session_id: result.sessionId,
+      },
       result.error ?? 'Unknown batch failure',
-      attempts < MAX_CALL_ANALYSIS_ATTEMPTS,
     );
     if (status === 'pending') {
       summary.retried += 1;
@@ -183,13 +162,7 @@ async function settleBatch(
   // Rows whose session vanished (cascade) or had no context get no result.
   for (const row of rows) {
     if (!contexts.has(row.session_id)) {
-      await failSession(
-        supabase,
-        run,
-        row.session_id,
-        SESSION_GONE_ERROR,
-        false,
-      );
+      await failSession(supabase, run, row, SESSION_GONE_ERROR, true);
       summary.failed += 1;
     }
   }
@@ -199,7 +172,7 @@ async function settleBatch(
   return summary;
 }
 
-/** Give up on a batch that outlived ABANDON_BATCH_MS; rows retry via attempts. */
+/** Give up on a batch that outlived ABANDON_BATCH_MS; each row counts a failure. */
 async function abandonBatch(
   supabase: TypedSupabaseClient,
   run: RunLog,
@@ -210,9 +183,8 @@ async function abandonBatch(
     await failSession(
       supabase,
       run,
-      row.session_id,
+      row,
       `Batch ${batchId} did not settle within ${ABANDON_BATCH_MS / 3_600_000}h`,
-      row.attempts < MAX_CALL_ANALYSIS_ATTEMPTS,
     );
   }
   return rows.length;
@@ -300,13 +272,12 @@ async function reconcileInFlightBatches(
  */
 async function recordBatchId(
   supabase: TypedSupabaseClient,
-  rows: Pick<QueuedCallSession, 'attempts' | 'session_id'>[],
+  sessionIds: string[],
   batchId: string,
 ) {
-  const sessionIds = rows.map((row) => row.session_id);
   for (let attempt = 0; ; attempt++) {
     try {
-      await setCallAnalysisBatchId(supabase, rows, batchId);
+      await setCallAnalysisBatchId(supabase, sessionIds, batchId);
       return;
     } catch (error) {
       const delay = BATCH_ID_WRITE_DELAYS_MS[attempt];
@@ -344,25 +315,28 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
   const sessions: CallSessionForAnalysis[] = [];
   let gone = 0;
   for (const row of candidates) {
-    const session = toSession(row);
-    if (session) {
-      sessions.push(session);
+    if (row.call_sessions) {
+      sessions.push(row.call_sessions);
       continue;
     }
     // The FK cascade should make this impossible, but a row with no session
     // would otherwise stay pending and be re-selected (FIFO) on every run.
-    await failSession(supabase, run, row.session_id, SESSION_GONE_ERROR, false);
+    await failSession(supabase, run, row, SESSION_GONE_ERROR, true);
     gone += 1;
   }
 
   const prepared = prepareCallAnalysisBatch(sessions);
+  const rowsBySession = new Map(candidates.map((row) => [row.session_id, row]));
   for (const rejected of prepared.rejected) {
     await failSession(
       supabase,
       run,
-      rejected.sessionId,
+      rowsBySession.get(rejected.sessionId) ?? {
+        attempts: 0,
+        session_id: rejected.sessionId,
+      },
       rejected.error ?? 'Unusable transcript',
-      false,
+      true,
     );
   }
   const skipped = alreadyAnalyzed.size + prepared.rejected.length + gone;
@@ -393,11 +367,7 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
     await releaseCallAnalysisClaims(supabase, claimed, message);
     throw error;
   }
-  await recordBatchId(
-    supabase,
-    candidates.filter((row) => claimedSet.has(row.session_id)),
-    batchId,
-  );
+  await recordBatchId(supabase, claimed, batchId);
 
   // Small batches usually settle within a couple of minutes; wait while the
   // function budget allows so results land in this run. Otherwise the next

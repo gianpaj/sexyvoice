@@ -50,22 +50,31 @@ const subject = 'claims-user-id';
 const presetId = '123e4567-e89b-12d3-a456-426614174000';
 const character = {
   id: presetId,
+  image: null,
   is_public: false,
+  localized_descriptions: null,
+  localized_sample_urls: null,
+  name: 'Tutor',
   prompts: { localized_prompts: null, prompt: 'Server-only prompt' },
-  user_id: subject,
-  voice_id: 'voice-eve-id',
-  voices: { id: 'voice-eve-id', name: 'eve' },
-};
-const callBody = {
-  instructions: 'Test instructions',
-  selectedPresetId: null,
-  sessionConfig: {
+  session_config: {
     maxOutputTokens: null,
     model: 'grok-voice-think-fast-1.0',
     temperature: 0.8,
     voice: 'eve',
   },
+  user_id: subject,
+  voices: { sample_url: null },
 };
+const callBody = { characterId: presetId };
+const savedVoiceCharacter = (model: string, audioReferenceId: string) => ({
+  ...character,
+  session_config: {
+    ...character.session_config,
+    audioReferenceId,
+    model,
+    voice: 'My voice',
+  },
+});
 
 function jsonRequest(route: string, body: object) {
   return new Request(`http://localhost/api/${route}`, {
@@ -97,6 +106,7 @@ const routes = [
       jsonRequest('generate-text', {
         prompt: 'Hello world',
         selectedVoiceLanguage: 'en',
+        voiceModel: 'gpro38',
       }),
   },
   {
@@ -155,7 +165,7 @@ describe('Generation route claims authentication', () => {
       toTextStreamResponse: () => new Response('Enhanced text'),
     });
     vi.spyOn(queries, 'isFreeUserOverCallLimit').mockResolvedValue(false);
-    vi.spyOn(queries, 'resolveCharacterPrompt').mockResolvedValue(character);
+    vi.spyOn(queries, 'getCallCharacter').mockResolvedValue(character);
     vi.mocked(queries.getCredits).mockResolvedValue(1000);
     vi.mocked(queries.hasUserPaid).mockReset().mockResolvedValue(false);
     vi.stubEnv('LIVEKIT_API_KEY', 'test-key');
@@ -258,8 +268,7 @@ describe('Generation route claims authentication', () => {
         queries.getVoiceById,
         queries.getVoiceIdByName,
         queries.isFreeUserOverCallLimit,
-        queries.isFreemiumUserOverLimit,
-        queries.resolveCharacterPrompt,
+        queries.getCallCharacter,
         queries.reduceCredits,
         queries.reduceCreditsUpTo,
         queries.restoreCredits,
@@ -299,17 +308,16 @@ describe('Generation route claims authentication', () => {
   });
 
   it.each([
-    { paid: false, preference: undefined, requested: undefined, enabled: true },
-    { paid: true, preference: undefined, requested: true, enabled: true },
-    { paid: false, preference: true, requested: true, enabled: true },
-    { paid: false, preference: false, requested: undefined, enabled: false },
-    { paid: true, preference: false, requested: true, enabled: false },
-    { paid: true, preference: true, requested: false, enabled: false },
+    { paid: false, preference: undefined, enabled: true },
+    { paid: true, preference: undefined, enabled: true },
+    { paid: false, preference: true, enabled: true },
+    { paid: false, preference: false, enabled: false },
+    { paid: true, preference: false, enabled: false },
   ])(
-    'applies memory preference $preference for paid=$paid, requested=$requested',
-    async ({ paid, preference, requested, enabled }) => {
+    'applies memory preference $preference for paid=$paid',
+    async ({ paid, preference, enabled }) => {
       vi.mocked(queries.hasUserPaid).mockResolvedValue(paid);
-      vi.mocked(queries.resolveCharacterPrompt).mockResolvedValue({
+      vi.mocked(queries.getCallCharacter).mockResolvedValue({
         ...character,
         is_public: true,
       });
@@ -333,13 +341,7 @@ describe('Generation route claims authentication', () => {
         error: null,
       });
 
-      const response = await callToken(
-        jsonRequest('call-token', {
-          ...callBody,
-          memory: requested,
-          selectedPresetId: presetId,
-        }),
-      );
+      const response = await callToken(jsonRequest('call-token', callBody));
 
       expect(response.status).toBe(200);
       expect(JSON.parse(mocks.token.mock.calls[0][2].metadata)).toMatchObject({
@@ -347,7 +349,6 @@ describe('Generation route claims authentication', () => {
         memory_scope: 'both',
       });
       expect(queries.hasUserPaid).not.toHaveBeenCalled();
-      if (requested === false) expect(mocks.getUser).not.toHaveBeenCalled();
     },
   );
 
@@ -445,17 +446,11 @@ describe('Generation route claims authentication', () => {
         error: null,
       });
 
-      const response = await callToken(
-        jsonRequest('call-token', {
-          ...callBody,
-          sessionConfig: {
-            ...callBody.sessionConfig,
-            model: 'inworld-tts',
-            audioReferenceId: voiceId,
-            voice: 'My voice',
-          },
-        }),
+      vi.mocked(queries.getCallCharacter).mockResolvedValue(
+        savedVoiceCharacter('inworld-tts', voiceId),
       );
+
+      const response = await callToken(jsonRequest('call-token', callBody));
 
       expect(response.status).toBe(200);
       expect(JSON.parse(mocks.token.mock.calls[0][2].metadata)).toMatchObject({
@@ -485,17 +480,10 @@ describe('Generation route claims authentication', () => {
         error: null,
       });
       vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
-      const response = await callToken(
-        jsonRequest('call-token', {
-          ...callBody,
-          sessionConfig: {
-            ...callBody.sessionConfig,
-            model,
-            audioReferenceId: id,
-            voice: 'My voice',
-          },
-        }),
+      vi.mocked(queries.getCallCharacter).mockResolvedValue(
+        savedVoiceCharacter(model, id),
       );
+      const response = await callToken(jsonRequest('call-token', callBody));
       expect(response.status).toBe(accessible ? 200 : 404);
       expect(mocks.referenceEq.mock.calls).toEqual([
         ['id', id],
@@ -508,19 +496,21 @@ describe('Generation route claims authentication', () => {
           model,
           voice: id,
           user_id: subject,
-          instructions: callBody.instructions,
+          instructions: 'Server-only prompt',
         });
         expect(JSON.stringify(metadata)).not.toContain('provider-voice');
       } else expect(mocks.token).not.toHaveBeenCalled();
     },
   );
 
-  it('rejects an empty unsaved personality before issuing a token', async () => {
+  it('rejects a character without a prompt before issuing a token', async () => {
     vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
-    const response = await callToken(
-      jsonRequest('call-token', { ...callBody, instructions: '  ' }),
-    );
-    expect(response.status).toBe(400);
+    vi.mocked(queries.getCallCharacter).mockResolvedValue({
+      ...character,
+      prompts: { localized_prompts: null, prompt: '  ' },
+    });
+    const response = await callToken(jsonRequest('call-token', callBody));
+    expect(response.status).toBe(404);
     expect(mocks.token).not.toHaveBeenCalled();
   });
 
@@ -545,19 +535,14 @@ describe('Generation route claims authentication', () => {
   ])(
     'checks custom character ownership and payment: $status',
     async ({ owner, paid, status }) => {
-      vi.mocked(queries.resolveCharacterPrompt).mockResolvedValueOnce({
+      vi.mocked(queries.getCallCharacter).mockResolvedValueOnce({
         ...character,
         user_id: owner,
       });
 
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(paid);
 
-      const response = await callToken(
-        jsonRequest('call-token', {
-          ...callBody,
-          selectedPresetId: presetId,
-        }),
-      );
+      const response = await callToken(jsonRequest('call-token', callBody));
 
       expect(response.status).toBe(status);
       if (status === 200) {

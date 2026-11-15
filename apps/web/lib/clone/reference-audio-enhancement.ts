@@ -15,11 +15,10 @@ interface FalEnhancedAudioResponse {
   };
 }
 
-export interface EnhancedReferenceAudioResult {
+interface EnhancedReferenceAudioResult {
   buffer: Buffer;
   mimeType: string;
   modelUsed: string;
-  publicUrl: string;
   requestId: string;
 }
 
@@ -181,7 +180,6 @@ export async function enhanceReferenceAudio({
     buffer: enhancedAudioBuffer,
     mimeType: normalizedMimeType,
     modelUsed: REFERENCE_AUDIO_ENHANCEMENT_MODEL,
-    publicUrl: enhancedAudioUrl,
     requestId: falResult.requestId,
   };
 }

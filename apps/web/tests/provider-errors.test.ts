@@ -4,7 +4,10 @@ import {
   getProviderUnavailableMessage,
   PROVIDER_UNAVAILABLE_TEMPLATE,
 } from '@/lib/errors/provider-unavailable-message';
-import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
+import {
+  type ErrorCodesTranslator,
+  resolveErrorMessage,
+} from '@/lib/errors/resolve-error-message';
 import {
   formatProviderDisplayName,
   getProviderUnavailableDetails,
@@ -20,13 +23,13 @@ const providers = [
   ['replicate', 'Replicate'],
 ] as const;
 
-function createTranslator(hasKey = true) {
+function createTranslator(hasKey = true): ErrorCodesTranslator {
   return Object.assign(
-    (_key: 'PROVIDER_UNAVAILABLE', details: Record<string, string>) =>
-      `${details.provider} is unavailable in this locale.`,
-    {
-      has: (_key: 'PROVIDER_UNAVAILABLE') => hasKey,
-    },
+    (key: string, values?: Record<string, string>) =>
+      key === 'PROVIDER_UNAVAILABLE'
+        ? `${values?.provider} is unavailable in this locale.`
+        : 'Shorten the text in this locale.',
+    { has: () => hasKey },
   );
 }
 
@@ -79,6 +82,17 @@ describe('resolveErrorMessage', () => {
         serverFallback,
       ),
     ).toBe('Gemini is unavailable in this locale.');
+  });
+
+  it('returns a translated output-limit error', () => {
+    expect(
+      resolveErrorMessage(
+        createTranslator(),
+        'GEMINI_OUTPUT_LIMIT',
+        undefined,
+        serverFallback,
+      ),
+    ).toBe('Shorten the text in this locale.');
   });
 
   it('returns the server fallback for an unknown code', () => {

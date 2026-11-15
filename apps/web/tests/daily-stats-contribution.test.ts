@@ -9,7 +9,7 @@ import {
 } from '../app/api/daily-stats/contribution';
 import { summarizeOverhead } from '../app/api/daily-stats/overhead';
 // biome-ignore lint/performance/noNamespaceImport: spy on pricing inputs without changing production rates
-import * as pricing from '../lib/api/pricing';
+import * as providerCost from '../lib/tts/provider-cost';
 import {
   type CallSessionCostInput,
   GEMINI_MODELS,
@@ -467,7 +467,7 @@ describe('cost provenance', () => {
     'invalid Gemini price %s stays unknown',
     (amount) => {
       const spy = vi
-        .spyOn(pricing, 'calculateGenerateApiDollarAmount')
+        .spyOn(providerCost, 'speechProviderCost')
         .mockReturnValue(amount);
       try {
         expect(
@@ -517,28 +517,21 @@ describe('cost provenance', () => {
     ).toBeCloseTo(0.010_05);
     expect(resolveUsageCost(usage).basis).toBe('unknown');
   });
-  test.each(['tts', 'api_tts'] as const)(
-    'preserves the %s source when estimating Gemini cost',
-    (source_type) => {
-      const spy = vi.spyOn(pricing, 'calculateGenerateApiDollarAmount');
-      try {
-        resolveUsageCost(
-          event({
-            dollar_amount: null,
-            model: 'gemini-2.5-pro-preview-tts',
-            source_type,
-          }),
-          undefined,
-          { candidatesTokenCount: 1000, promptTokenCount: 100 },
-        );
-        expect(spy).toHaveBeenCalledWith(
-          expect.objectContaining({ sourceType: source_type }),
-        );
-      } finally {
-        spy.mockRestore();
-      }
-    },
-  );
+  test('prices dashboard and API Gemini events alike', () => {
+    const cost = (source_type: 'tts' | 'api_tts') =>
+      resolveUsageCost(
+        event({
+          dollar_amount: null,
+          model: 'gemini-2.5-pro-preview-tts',
+          source_type,
+        }),
+        undefined,
+        { candidatesTokenCount: 1000, promptTokenCount: 100 },
+      );
+
+    expect(cost('tts')).toEqual(cost('api_tts'));
+    expect(cost('tts')).toEqual({ amount: 0.0201, basis: 'estimated' });
+  });
   test('linked provider token counts override conflicting event metadata', () => {
     const result = resolveUsageCost(
       event({

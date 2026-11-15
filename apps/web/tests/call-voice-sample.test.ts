@@ -17,9 +17,7 @@ vi.mock('@/lib/supabase/call-voices', () => ({
   getOwnedCallVoice: mocks.owned,
 }));
 vi.mock('@/lib/clone/mistral', () => ({
-  getMistralClient: () => ({
-    audio: { voices: { getSampleAudio: mocks.sample } },
-  }),
+  getMistralVoiceSample: mocks.sample,
 }));
 vi.mock('@/lib/clone/inworld', () => ({
   getInworldVoiceSample: mocks.inworldSample,
@@ -57,13 +55,11 @@ describe('saved voice sample', () => {
       voice_id: 'provider-id',
       provider: 'mistral',
     });
-    mocks.sample.mockResolvedValue(
-      Buffer.from('RIFFsample').toString('base64'),
-    );
+    mocks.sample.mockResolvedValue(Buffer.from('RIFFsample'));
     const response = await request();
     expect(await response.text()).toBe('RIFFsample');
     expect(response.headers.get('cache-control')).toBe('private, no-store');
-    expect(mocks.sample).toHaveBeenCalledWith({ voiceId: 'provider-id' });
+    expect(mocks.sample).toHaveBeenCalledWith('provider-id');
   });
   it('plays an owned Inworld preview as private MP3 audio', async () => {
     mocks.owned.mockResolvedValue({

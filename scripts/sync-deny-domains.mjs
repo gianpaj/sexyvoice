@@ -12,7 +12,7 @@
  * minified. TypeScript widens a homogeneous JSON array to `string[]`, so the
  * import stays cheap to type-check.
  *
- * Run: pnpm --filter @sexyvoice/scripts sync-deny-domains
+ * Run: pnpm sync-deny-domains
  */
 
 import { execFileSync } from 'node:child_process';
@@ -20,16 +20,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parseCliArgs, runScript } from './lib/cli.mts';
+import { AMIEIRO_REPO, DENY_DOMAINS_FILE } from './lib/deny-domains.mts';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const AMIEIRO_REPO = 'https://github.com/amieiro/disposable-email-domains';
 const CACHE_DIR = join(__dirname, '.cache');
 const REPO_DIR = join(CACHE_DIR, 'disposable-email-domains');
 const DENY_FILE = join(REPO_DIR, 'denyDomains.txt');
-const OUT_FILE = join(
-  __dirname,
-  '../apps/web/lib/disposable-email/deny-domains.json',
-);
 
 function ensureRepo() {
   if (!existsSync(CACHE_DIR)) {
@@ -49,8 +47,7 @@ function ensureRepo() {
     );
   }
   if (!existsSync(DENY_FILE)) {
-    console.error(`denyDomains.txt not found at ${DENY_FILE}`);
-    process.exit(1);
+    throw new Error(`denyDomains.txt not found at ${DENY_FILE}`);
   }
 }
 
@@ -66,13 +63,22 @@ function loadDomains() {
 }
 
 function main() {
+  const { values } = parseCliArgs({
+    options: { help: { default: false, short: 'h', type: 'boolean' } },
+  });
+  if (values.help) {
+    console.log(
+      'Regenerate apps/web/lib/disposable-email/deny-domains.json from amieiro/disposable-email-domains.\n\nUsage: pnpm sync-deny-domains',
+    );
+    return;
+  }
   ensureRepo();
   const domains = loadDomains();
   console.log(`Loaded ${domains.length} unique domains`);
 
   // Minified JSON array — kept out of the formatter via .biomeignore.
-  writeFileSync(OUT_FILE, JSON.stringify(domains), 'utf8');
-  console.log(`Wrote ${domains.length} domains to ${OUT_FILE}`);
+  writeFileSync(DENY_DOMAINS_FILE, JSON.stringify(domains), 'utf8');
+  console.log(`Wrote ${domains.length} domains to ${DENY_DOMAINS_FILE}`);
 }
 
-main();
+runScript(import.meta.url, main);

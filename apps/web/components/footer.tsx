@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import { getMessages } from 'next-intl/server';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
+import { SITE_NAME, SOCIAL_LINKS } from '@/lib/site';
 
 async function Footer({ lang }: { lang: Locale }) {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).footer;
@@ -16,33 +17,33 @@ async function Footer({ lang }: { lang: Locale }) {
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <Link
               className="inline-block font-bold text-foreground text-lg tracking-tight"
-              href={`/${lang}`}
+              href="/"
             >
-              SexyVoice.ai
+              {SITE_NAME}
             </Link>
             <p className="mt-2 max-w-xs text-muted-foreground text-sm leading-relaxed">
               {dict.tagline}
             </p>
             {/* Social icons */}
             <div className="mt-5 flex items-center gap-3">
-              <Link
+              <a
                 aria-label="Twitter/X"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://x.com/sexyvoiceai"
+                href={SOCIAL_LINKS.x}
                 rel="noopener noreferrer"
                 target="_blank"
               >
                 <span className="iconify logos--x" />
-              </Link>
-              <Link
+              </a>
+              <a
                 aria-label="Instagram"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://instagram.com/sexyvoice_ai"
+                href={SOCIAL_LINKS.instagram}
                 rel="noopener noreferrer"
                 target="_blank"
               >
                 <span className="iconify logos--instagram-icon" />
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -55,7 +56,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/voice-call`}
+                  href="/voice-call"
                 >
                   {dict.voiceCalling}
                 </Link>
@@ -63,7 +64,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/voice-cloning`}
+                  href="/voice-cloning"
                 >
                   {dict.voiceCloning}
                 </Link>
@@ -80,7 +81,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/tools/audio-converter`}
+                  href="/tools/audio-converter"
                 >
                   {dict.audioConverter}
                 </Link>
@@ -88,7 +89,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/tools/transcribe`}
+                  href="/tools/transcribe"
                 >
                   {dict.transcribe}
                 </Link>
@@ -96,7 +97,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/tools/audio-joiner`}
+                  href="/tools/audio-joiner"
                 >
                   {dict.audioJoiner}
                 </Link>
@@ -132,7 +133,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/privacy-policy`}
+                  href="/privacy-policy"
                 >
                   {dict.privacyPolicy}
                 </Link>
@@ -140,7 +141,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/terms`}
+                  href="/terms"
                 >
                   {dict.termsAndConditions}
                 </Link>

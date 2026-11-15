@@ -18,9 +18,7 @@ function creditsHref(lang: Locale) {
 
 const bannerRegistry = {
   blackFridayBanner: {
-    countdown: {
-      endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
-    },
+    countdown: true,
     cta: {
       loggedInHref: creditsHref,
       loggedOutHref: signupHref,
@@ -28,7 +26,6 @@ const bannerRegistry = {
     dismiss: getPromoDismiss('banner-black-friday-dismissed'),
     id: 'blackFridayBanner',
     kind: 'promo',
-    placements: ['landing', 'dashboard', 'blog'],
     priority: 100,
   },
   clonedVoiceCallsLaunch: {
@@ -42,7 +39,6 @@ const bannerRegistry = {
     },
     id: 'clonedVoiceCallsLaunch',
     kind: 'announcement',
-    placements: ['landing', 'dashboard', 'blog'],
     priority: 90,
     theme: 'blue',
   },
@@ -57,7 +53,6 @@ const bannerRegistry = {
     },
     id: 'expressiveVoicesLaunch',
     kind: 'announcement',
-    placements: ['landing', 'dashboard', 'blog'],
     priority: 90,
     theme: 'blue',
   },
@@ -81,7 +76,6 @@ const bannerRegistry = {
     dismiss: getPromoDismiss('banner-halloween-dismissed'),
     id: 'halloweenBanner',
     kind: 'promo',
-    placements: ['landing', 'dashboard', 'blog'],
     priority: 100,
   },
   winterSaleBanner: {
@@ -92,7 +86,6 @@ const bannerRegistry = {
     dismiss: getPromoDismiss('banner-winter-sale-dismissed'),
     id: 'winterSaleBanner',
     kind: 'promo',
-    placements: ['landing', 'dashboard', 'blog'],
     priority: 100,
   },
 } satisfies Record<string, BannerDefinition>;

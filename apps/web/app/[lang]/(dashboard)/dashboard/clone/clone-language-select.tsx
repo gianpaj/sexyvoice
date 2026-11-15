@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import type { CloneStateAction } from './clone-state';
 
-export interface SupportedLocale {
+interface SupportedLocale {
   code: string;
   name: string;
 }

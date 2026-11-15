@@ -1,4 +1,4 @@
-import { callVoiceProvider } from '@/lib/call-voices';
+import { callVoiceProvider } from '@/lib/calls/models';
 import {
   CALL_CLONE_PROVIDERS,
   type CallCloneProvider,

@@ -88,11 +88,11 @@ describe('Estimate Credits API Route', () => {
 
     expect(response.status).toBe(400);
     expect(json.error).toBe(
-      'Credit estimation currently supports only gpro and grok voices',
+      'Credit estimation currently supports only Gemini and Grok voices',
     );
   });
 
-  it('returns tokens and credits for gpro voices', async () => {
+  it('returns tokens and credits for Gemini 3.8 voices', async () => {
     vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
     mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
 
@@ -112,8 +112,8 @@ describe('Estimate Credits API Route', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.tokens).toBe(384);
-    expect(json.estimatedCredits).toBe(423);
+    expect(json.tokens).toBe(379);
+    expect(json.estimatedCredits).toBe(417);
     expect(mockCountTokens).toHaveBeenCalledOnce();
   });
 
@@ -194,6 +194,28 @@ describe('Estimate Credits API Route', () => {
     expect(response.status).toBe(400);
     expect(json.error).toContain('Text exceeds the maximum length');
     expect(json.error).toContain('500 characters');
+  });
+
+  it('returns 400 when a Gemini style exceeds the style limit', async () => {
+    mockCountTokens.mockClear();
+
+    const response = await POST(
+      new Request('http://localhost/api/estimate-credits', {
+        body: JSON.stringify({
+          styleVariant: 's'.repeat(1001),
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe(
+      'Style exceeds the maximum length of 1000 characters',
+    );
+    expect(mockCountTokens).not.toHaveBeenCalled();
   });
 
   it('returns 400 when request body has malformed JSON', async () => {

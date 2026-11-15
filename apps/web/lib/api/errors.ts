@@ -4,7 +4,7 @@ import { ErrorResponseSchema, type ErrorTypeSchema } from '@/lib/api/schemas';
 
 type ErrorType = z.infer<typeof ErrorTypeSchema>;
 
-export interface ApiErrorBody {
+interface ApiErrorBody {
   error: {
     message: string;
     type: ErrorType;

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { levelFromDb } from '@/lib/audio-level';
+
 /**
  * Web Audio API hook that analyses an HTMLAudioElement's frequency data
  * and returns average normalized band values for waveform visualisation and
@@ -28,13 +30,11 @@ export function useAudioAnalyser(
   const rafIdRef = useRef<number | null>(null);
 
   const cleanup = useCallback(() => {
-    // Cancel animation frame
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
     }
 
-    // Disconnect source
     if (sourceRef.current) {
       try {
         sourceRef.current.disconnect();
@@ -44,7 +44,6 @@ export function useAudioAnalyser(
       sourceRef.current = null;
     }
 
-    // Disconnect analyser
     if (analyserRef.current) {
       try {
         analyserRef.current.disconnect();
@@ -54,7 +53,6 @@ export function useAudioAnalyser(
       analyserRef.current = null;
     }
 
-    // Close audio context
     if (audioContextRef.current) {
       try {
         audioContextRef.current.close();
@@ -73,7 +71,6 @@ export function useAudioAnalyser(
       return;
     }
 
-    // Create AudioContext
     const ctx = new AudioContext();
     if (ctx.state === 'suspended') {
       ctx.resume();
@@ -125,12 +122,7 @@ export function useAudioAnalyser(
         const count = end - start;
 
         for (let i = start; i < end; i++) {
-          // Raw values are in dB (typically -100 to 0).
-          // Clamp to [-100, -10], map to 0–1, apply sqrt for perceptual scaling.
-          const db = dataArray[i];
-          const clamped = Math.max(-100, Math.min(-10, db));
-          const normalised = (clamped + 100) / 90; // 0–1
-          sum += Math.sqrt(normalised);
+          sum += levelFromDb(dataArray[i]);
         }
 
         result[b] = count > 0 ? sum / count : 0;

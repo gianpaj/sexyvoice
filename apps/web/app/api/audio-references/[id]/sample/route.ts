@@ -7,7 +7,7 @@ import {
   getCallVoiceSampleKey,
 } from '@/lib/clone/call-voice-sample';
 import { getInworldVoiceSample } from '@/lib/clone/inworld';
-import { getMistralClient } from '@/lib/clone/mistral';
+import { getMistralVoiceSample } from '@/lib/clone/mistral';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getFileFromR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -39,12 +39,7 @@ export async function GET(
     const inworld = reference.provider === 'inworld';
     const audio = inworld
       ? await getInworldVoiceSample(reference.voice_id)
-      : Buffer.from(
-          await getMistralClient().audio.voices.getSampleAudio({
-            voiceId: reference.voice_id,
-          }),
-          'base64',
-        );
+      : await getMistralVoiceSample(reference.voice_id);
     return new NextResponse(new Uint8Array(audio), {
       headers: {
         'Content-Type': inworld ? 'audio/mpeg' : 'audio/wav',

@@ -25,7 +25,7 @@ The cleanup command and shared script helpers are implemented. The approved plan
 
 - `scripts/.gitignore` already ignores `*.json`, so inventory manifests and action reports under `scripts/backups/` need no new ignore rule.
 - `scripts/tsconfig.json` type-checks the TypeScript maintenance commands and their shared modules.
-- `reset-freeloader-credits.mts` is the only migrated command that enables Supabase session persistence.
+- `createScriptAdminClient` never persists a Supabase session; a secret-key client has none to keep.
 
 ## Verification
 

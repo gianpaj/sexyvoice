@@ -2,8 +2,12 @@ import { createTranslator } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
 import { type PlanData, PricingCards } from '@/components/pricing-cards';
-import { getActivePromoBannerId } from '@/lib/banners/resolve-banner';
+import {
+  getActivePromoPricingText,
+  getPromoTheme,
+} from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isPromoEnabled } from '@/lib/promo';
 import {
   getSubscriptionPackages,
   getTopupPackages,
@@ -25,21 +29,14 @@ async function PricingTable({
   shouldShowSubscriptionPlans?: boolean;
 }) {
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const { credits, promos } = messages;
+  const { credits } = messages;
   const plansT = createTranslator({
     locale: lang,
     messages,
     namespace: 'credits.plans',
   });
 
-  const activePromoBannerId = getActivePromoBannerId();
-  const bannerTranslations =
-    activePromoBannerId && Object.hasOwn(promos, activePromoBannerId)
-      ? promos[activePromoBannerId as keyof typeof promos]
-      : undefined;
-
   const { plans: pPlans, billing } = credits;
-  const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
   const topupPackages = getTopupPackages(lang);
   const subscriptionPackages = getSubscriptionPackages(lang, {
     applyFirstMonthDiscount: applyFirstMonthSubscriptionDiscount,
@@ -206,16 +203,14 @@ async function PricingTable({
     },
   ];
 
-  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink';
-
   return (
     <PricingCards
       checkoutEnabled={checkoutEnabled}
       className={className}
       disableSubscriptionToggle={!shouldShowSubscriptionPlans}
-      isPromoEnabled={isPromoEnabled}
-      promoBannerText={bannerTranslations?.pricing.bannerText}
-      promoTheme={promoTheme}
+      isPromoEnabled={isPromoEnabled()}
+      promoBannerText={getActivePromoPricingText(messages)}
+      promoTheme={getPromoTheme()}
       subscriptionPlans={subscriptionPlans}
       topupPlans={topupPlans}
     />

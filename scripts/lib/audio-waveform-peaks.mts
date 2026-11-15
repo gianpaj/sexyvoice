@@ -1,6 +1,7 @@
-import { spawnSync } from 'node:child_process';
 import { statSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+import { runAudioTool } from './ffmpeg.mts';
 
 export const DEFAULT_WAVEFORM_POINTS = 256;
 const PCM_MAX_BUFFER = 64 * 1024 * 1024;
@@ -54,37 +55,6 @@ export function extractWaveformPeaks(
   );
 }
 
-function runAudioTool(
-  tool: 'ffprobe' | 'ffmpeg',
-  args: string[],
-  path: string,
-): Buffer {
-  const timeout = tool === 'ffprobe' ? 10_000 : 120_000;
-  const result = spawnSync(tool, args, {
-    timeout,
-    maxBuffer: tool === 'ffprobe' ? 1024 * 1024 : PCM_MAX_BUFFER,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  if (result.error || result.status !== 0) {
-    const code = (result.error as NodeJS.ErrnoException | undefined)?.code;
-    let advice = 'Check that the input is a readable, valid local audio file.';
-    if (code === 'ENOENT') {
-      advice = `Install FFmpeg and ensure ${tool} is on PATH.`;
-    } else if (code === 'ETIMEDOUT') {
-      advice = `Processing exceeded ${timeout / 1000} seconds; use a shorter input.`;
-    } else if (code === 'ENOBUFS') {
-      advice =
-        'Output exceeded the buffer limit (PCM: 64 MiB); use a shorter input.';
-    }
-    const detail = result.error?.message || result.stderr?.toString().trim();
-    throw new Error(
-      `${tool} failed for ${JSON.stringify(path)}: ${detail || `exit ${result.status}, signal ${result.signal}`}. ${advice}`,
-      { cause: result.error },
-    );
-  }
-  return result.stdout;
-}
-
 export function extractAudioWaveform(
   path: string,
   points = DEFAULT_WAVEFORM_POINTS,
@@ -101,7 +71,8 @@ export function extractAudioWaveform(
     );
   }
 
-  const metadata = runAudioTool(
+  const task = `for ${JSON.stringify(input)}`;
+  const { stdout: metadata } = runAudioTool(
     'ffprobe',
     [
       '-v',
@@ -116,7 +87,7 @@ export function extractAudioWaveform(
       'json',
       input,
     ],
-    input,
+    { task, timeoutMs: 10_000 },
   );
   let probe: {
     streams?: { channels?: number }[];
@@ -146,7 +117,7 @@ export function extractAudioWaveform(
     );
   }
 
-  const pcm = runAudioTool(
+  const { stdout: pcm } = runAudioTool(
     'ffmpeg',
     [
       '-hide_banner',
@@ -170,7 +141,7 @@ export function extractAudioWaveform(
       'f32le',
       'pipe:1',
     ],
-    input,
+    { maxBuffer: PCM_MAX_BUFFER, task },
   );
   return {
     durationSeconds,

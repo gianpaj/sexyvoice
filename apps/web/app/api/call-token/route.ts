@@ -4,60 +4,32 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { callScenes } from '@/data/call-scenes';
 import {
-  defaultLanguage,
-  getInitialInstruction,
-  languageInitialInstructions,
-} from '@/data/playground-state';
-import { isCallMemoryEnabled } from '@/lib/call-memory';
-import {
-  type CallTokenPlaygroundState,
-  callTokenPlaygroundStateSchema,
-} from '@/lib/call-token-schema';
-import { callVoiceProvider } from '@/lib/call-voices';
+  buildAgentMetadata,
+  callTokenRequestSchema,
+} from '@/lib/calls/call-token';
+import { characterPrompt, toCharacter } from '@/lib/calls/characters';
+import type { CallErrorCode } from '@/lib/calls/errors';
+import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
+import { getCallMemoryPreference } from '@/lib/calls/memory';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
-import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
+  FREE_USER_CALL_LIMIT_SECONDS,
+  MINIMUM_CREDITS_FOR_CALL,
+} from '@/lib/supabase/constants';
+import {
+  getCallCharacter,
   getCredits,
   hasUserPaid,
   isFreeUserOverCallLimit,
-  resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-function appendSceneInstructions(
-  instructions: string,
-  sceneInstructions?: string | null,
-): string {
-  const trimmedSceneInstructions = sceneInstructions?.trim();
-  if (!trimmedSceneInstructions) {
-    return instructions;
-  }
-
-  return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
-}
-
-async function resolveMemoryPreference(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<boolean> {
-  try {
-    // biome-ignore lint/plugin/use-verified-claims: Read the saved preference so stale JWT metadata cannot override an opt-out.
-    const { data, error } = await supabase.auth.getUser();
-    if (error || data?.user?.id !== userId) {
-      throw new Error('Memory preference unavailable');
-    }
-    return isCallMemoryEnabled(data.user.user_metadata);
-  } catch {
-    logger.warn('Memory preference unavailable; starting call without memory', {
-      user: { id: userId },
-    });
-    return false;
-  }
-}
+/** A refusal the browser explains by its `code`. */
+const refuse = (message: string, status: number, code: CallErrorCode) =>
+  APIErrorResponse(message, status, { code });
 
 export async function POST(request: Request) {
   let user: { id: string; email?: string } | null = null;
@@ -84,25 +56,25 @@ export async function POST(request: Request) {
         extra: { currentCreditsAmount: currentAmount },
         user: { email: user.email, id: user.id },
       });
-      return APIErrorResponse('Insufficient credits', 402);
+      return refuse('Insufficient credits', 402, 'insufficient_credits');
     }
 
-    // Check if free user has exceeded the 5-minute call limit
     if (isOverCallLimit) {
       logger.info('Free user exceeded call limit', {
         user: { email: user.email, id: user.id },
       });
-      return APIErrorResponse(
-        'Free users are limited to 5 minutes of calls. Please upgrade to continue.',
+      return refuse(
+        `Free users are limited to ${FREE_USER_CALL_LIMIT_SECONDS / 60} minutes of calls`,
         403,
+        'free_call_limit',
       );
     }
 
-    let playgroundState: CallTokenPlaygroundState;
+    let callRequest: z.output<typeof callTokenRequestSchema>;
 
     try {
-      const body = await request.json();
-      const validationResult = callTokenPlaygroundStateSchema.safeParse(body);
+      const body: unknown = await request.json();
+      const validationResult = callTokenRequestSchema.safeParse(body);
 
       if (!validationResult.success) {
         const formattedError = z.treeifyError(validationResult.error);
@@ -114,7 +86,7 @@ export async function POST(request: Request) {
         });
       }
 
-      playgroundState = validationResult.data;
+      callRequest = validationResult.data;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
         error: Error.isError(error) ? error.message : String(error),
@@ -133,170 +105,80 @@ export async function POST(request: Request) {
     }
 
     const {
-      instructions: clientInstructions,
-      language = defaultLanguage,
-      sceneInstructions,
-      selectedPresetId,
-      selectedSceneId,
-      memory,
+      characterId,
       clientTime,
+      language = DEFAULT_CALL_LANGUAGE,
+      sceneId = null,
+      sceneText,
       timeZone,
-      sessionConfig: { model, voice, temperature, maxOutputTokens },
-    } = playgroundState;
+    } = callRequest;
 
-    const selectedLanguage = languageInitialInstructions[language]
-      ? language
-      : defaultLanguage;
+    const memoryPreference = getCallMemoryPreference(supabase, user.id);
 
-    const memoryPreference = memory
-      ? resolveMemoryPreference(supabase, user.id)
-      : Promise.resolve(false);
-
-    // Validate voice exists in DB
-    const voiceObj = await resolveCallVoice(
-      playgroundState.sessionConfig,
-      user.id,
-    );
-
-    if (!voiceObj) {
-      captureException('Voice not found', { extra: { voice } });
-      return APIErrorResponse('Voice not found', 404);
+    // Prompt, model, voice and temperature come from the saved character.
+    const row = await getCallCharacter(characterId);
+    if (!row) {
+      return refuse('Character not found', 404, 'character_not_found');
     }
+    const character = toCharacter(row);
 
-    // ─── Resolve instructions ───
-    // Always resolve selected presets from DB (public and custom).
-    // Only non-preset calls (no selectedPresetId) can use client-sent instructions.
-    let resolvedInstructions = clientInstructions;
     let isPaidUser: boolean | undefined;
-
-    if (selectedPresetId) {
-      try {
-        const character = await resolveCharacterPrompt(selectedPresetId);
-
-        if (!character) {
-          return APIErrorResponse('Character not found', 404);
-        }
-
-        if (character.is_public) {
-          // ── Predefined character ──
-          // Resolve localized prompt, falling back to English
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
-          // Client-sent instructions are IGNORED for predefined characters
-        } else {
-          // ── Custom character ──
-          // Verify ownership
-          if (character.user_id !== user.id) {
-            return APIErrorResponse('Character not found', 404);
-          }
-
-          // Verify user has paid (custom characters require paid account)
-          isPaidUser = await hasUserPaid(user.id);
-          if (!isPaidUser) {
-            return APIErrorResponse(
-              'Custom characters require a paid account',
-              403,
-            );
-          }
-
-          // Resolve prompt from DB (not from client)
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
-        }
-      } catch (error) {
-        captureException(error, {
-          extra: {
-            context: 'resolveCharacterPrompt',
-            selectedPresetId,
-            userId: user.id,
-          },
-        });
-        return APIErrorResponse('Failed to resolve character prompt', 500);
+    if (!character.isPublic) {
+      if (row.user_id !== user.id) {
+        return refuse('Character not found', 404, 'character_not_found');
       }
-    }
-
-    if (!selectedPresetId || callVoiceProvider(model)) {
-      isPaidUser ??= await hasUserPaid(user.id);
+      isPaidUser = await hasUserPaid(user.id);
       if (!isPaidUser) {
-        return APIErrorResponse(
+        return refuse(
           'Custom characters require a paid account',
           403,
+          'paid_character',
         );
       }
-      if (!resolvedInstructions.trim()) {
-        return APIErrorResponse('A personality prompt is required', 400);
-      }
     }
 
-    if (sceneInstructions?.trim()) {
-      if (isPaidUser === undefined) {
-        isPaidUser = await hasUserPaid(user.id);
-      }
+    const prompt = characterPrompt(character, language);
+    if (!prompt.trim()) {
+      return refuse('Character prompt not found', 404, 'character_not_found');
+    }
+
+    const { sessionConfig } = character;
+    const voice = await resolveCallVoice(sessionConfig, user.id);
+    if (!voice) {
+      captureException('Voice not found', {
+        extra: { voice: sessionConfig.voice },
+      });
+      return refuse('Voice not found', 404, 'voice_not_found');
+    }
+
+    const scene = sceneText?.trim() ?? '';
+    if (scene) {
+      isPaidUser ??= await hasUserPaid(user.id);
       if (!isPaidUser) {
-        return APIErrorResponse('Scenes require a paid account', 403);
+        return refuse('Scenes require a paid account', 403, 'paid_scene');
       }
-
-      resolvedInstructions = appendSceneInstructions(
-        resolvedInstructions,
-        sceneInstructions,
-      );
     }
 
-    const memoryEnabled = await memoryPreference;
+    const metadata = buildAgentMetadata({
+      characterId,
+      clientTime,
+      language,
+      // The profile preference, read fresh for every call.
+      memory: await memoryPreference,
+      prompt,
+      sceneId,
+      sceneText: scene,
+      sessionConfig,
+      timeZone,
+      userId: user.id,
+      voiceId: voice.id,
+    });
 
-    const defaultSceneText = callScenes.find(
-      (s) => s.id === selectedSceneId,
-    )?.text;
-    const sceneModified =
-      selectedSceneId !== null &&
-      selectedSceneId !== undefined &&
-      (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
-
-    // Create metadata for agent to start with
-    const metadata = {
-      character_id: selectedPresetId,
-      client_time: clientTime,
-      time_zone: timeZone,
-      initial_instruction: getInitialInstruction(selectedLanguage, model),
-      instructions: resolvedInstructions,
-      language: selectedLanguage,
-      max_output_tokens: maxOutputTokens,
-      // The account preference and an explicit per-call opt-out both apply.
-      memory: memoryEnabled,
-      memory_scope: 'both',
-      model,
-      scene_id: selectedSceneId ?? null,
-      scene_modified: sceneModified,
-      temperature,
-      user_id: user.id,
-      voice: voiceObj.id,
-    };
-
-    // Create access token
     const at = new AccessToken(apiKey, apiSecret, {
       identity: 'human',
       metadata: JSON.stringify(metadata),
     });
 
-    // Add room grants
     at.addGrant({
       canPublish: true,
       canPublishData: true,
@@ -319,12 +201,11 @@ export async function POST(request: Request) {
 
     logger.info('Generated LiveKit token', {
       extra: {
-        characterId: selectedPresetId,
-        model,
+        characterId,
+        model: sessionConfig.model,
         roomName,
-        selectedPresetId,
-        selectedSceneId,
-        voice,
+        sceneId,
+        voice: sessionConfig.voice,
       },
       user: { id: user.id },
     });
@@ -338,8 +219,7 @@ export async function POST(request: Request) {
     captureException(error, {
       user: user ? { email: user.email, id: user.id } : undefined,
     });
-    return APIErrorResponse('Error generating token', 500, {
-      details: Error.isError(error) ? error.message : JSON.stringify(error),
-    });
+    // Sentry has the error; the browser shows its generic connection error.
+    return APIErrorResponse('Error generating token', 500);
   }
 }

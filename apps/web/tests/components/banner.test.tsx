@@ -12,15 +12,8 @@ import { setCookie } from '@/lib/cookies';
 
 const DISMISS_COOKIE = 'banner-expressive-voices-launch-dismissed';
 const expiredCountdown = {
-  enabled: true,
   endDate: '2000-01-01T00:00:00Z',
-  labels: {
-    days: 'Days',
-    hours: 'Hours',
-    minutes: 'Min',
-    prefix: 'Ends in:',
-    seconds: 'Sec',
-  },
+  prefix: 'Ends in:',
 };
 const banner = {
   ariaLabelDismiss: 'Dismiss expressive voices announcement',
@@ -30,9 +23,7 @@ const banner = {
     cookieKey: DISMISS_COOKIE,
     days: 14,
   },
-  dismissible: true,
   id: 'expressiveVoicesLaunch',
-  kind: 'announcement',
   text: 'Generate with new expressive voices.',
   theme: 'blue',
 } satisfies ResolvedBanner;
@@ -221,17 +212,6 @@ describe('Banner', () => {
       expect(dismiss).not.toHaveClass('hover:text-accent-foreground');
     },
   );
-
-  it('renders a non-dismissible dashboard banner without a close button', async () => {
-    render(<Banner banner={{ ...banner, dismissible: false }} inDashboard />);
-
-    expect(
-      await screen.findByRole('link', { name: banner.ctaText }),
-    ).toBeVisible();
-    expect(
-      screen.queryByRole('button', { name: banner.ariaLabelDismiss }),
-    ).not.toBeInTheDocument();
-  });
 
   it('stores dismissal locally without making a request', async () => {
     const user = userEvent.setup();

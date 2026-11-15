@@ -20,8 +20,11 @@ export default async function UpdatePasswordPage(props: {
 
   return (
     <>
-      <Header lang={lang} />
-      <div className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0">
+      <Header />
+      <main
+        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
+        id="main-content"
+      >
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">
@@ -33,7 +36,7 @@ export default async function UpdatePasswordPage(props: {
             <UpdatePasswordForm lang={lang} message={searchParams} />
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

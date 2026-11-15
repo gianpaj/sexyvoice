@@ -1,3 +1,5 @@
+import { getTtsModelId, TTS_MODEL_IDS } from '@/lib/tts/models';
+
 const FEATURED_VOICE_SORT_ORDER = 0;
 
 function isFeaturedVoice(voice: Pick<Tables<'voices'>, 'sort_order'>): boolean {
@@ -6,19 +8,21 @@ function isFeaturedVoice(voice: Pick<Tables<'voices'>, 'sort_order'>): boolean {
 
 type SortableVoice = Pick<Tables<'voices'>, 'model' | 'name' | 'sort_order'>;
 
+function catalogOrder(dbModel: string): number {
+  const id = getTtsModelId(dbModel);
+  return id ? TTS_MODEL_IDS.indexOf(id) : TTS_MODEL_IDS.length;
+}
+
 /**
- * Shared voice order: featured first, then by name. The same Gemini identity
- * (`achernar`, `kore`, ...) exists under several models at the same
- * `sort_order`, so ties follow `VOICE_MODELS`, which puts the newest Gemini
- * first. The generate page sorts its voice list with this before rendering
- * the picker or choosing the default voice.
+ * Voice order: featured first, then by name, then by catalog model. The
+ * generate page sorts its voice list with this before rendering the picker or
+ * choosing the default voice.
  */
 export function compareVoices(a: SortableVoice, b: SortableVoice): number {
   return (
     a.sort_order - b.sort_order ||
     a.name.localeCompare(b.name) ||
-    VOICE_MODELS.indexOf(getDisplayModel(a.model)) -
-      VOICE_MODELS.indexOf(getDisplayModel(b.model))
+    catalogOrder(a.model) - catalogOrder(b.model)
   );
 }
 
@@ -29,39 +33,6 @@ export function getFeaturedVoice(
   return voices.find(isFeaturedVoice);
 }
 
-// ── Voice selector types & constants ─────────────────────────────────────────
-
-export type VoiceModel =
-  | 'Gemini 2.5'
-  | 'Gemini 3.1'
-  | 'Gemini 3.8'
-  | 'Grok'
-  | 'Replicate';
 export type VoiceGender = 'Female' | 'Male' | 'Neutral';
 
-export const VOICE_MODELS: VoiceModel[] = [
-  'Gemini 3.8',
-  'Gemini 3.1',
-  'Gemini 2.5',
-  'Grok',
-  'Replicate',
-];
-
 export const VOICE_GENDERS: VoiceGender[] = ['Female', 'Male', 'Neutral'];
-
-export const MODEL_COLORS: Record<VoiceModel, string> = {
-  'Gemini 2.5': '#F163A8',
-  'Gemini 3.1': '#B898EC',
-  'Gemini 3.8': '#72B5E9',
-  Grok: '#65B88F',
-  Replicate: '#EEBB2D',
-};
-
-/** Maps the raw DB model string to a human-readable VoiceModel label. */
-export function getDisplayModel(dbModel: string): VoiceModel {
-  if (dbModel === 'gpro') return 'Gemini 2.5';
-  if (dbModel === 'gpro38') return 'Gemini 3.8';
-  if (dbModel === 'gpro31') return 'Gemini 3.1';
-  if (dbModel === 'xai') return 'Grok';
-  return 'Replicate';
-}

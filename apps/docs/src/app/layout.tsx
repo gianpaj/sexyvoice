@@ -2,21 +2,17 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { appName, docsUrl } from '@/lib/shared';
 
 const inter = Inter({
   subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://docs.sexyvoice.ai'),
+  metadataBase: new URL(docsUrl),
   alternates: {
     types: {
-      'application/rss+xml': [
-        {
-          title: 'SexyVoice Docs',
-          url: 'https://docs.sexyvoice.ai/index.xml',
-        },
-      ],
+      'application/rss+xml': [{ title: appName, url: `${docsUrl}/rss.xml` }],
     },
   },
 };

@@ -1,14 +1,16 @@
 # Shared speech tag editor
 
-The shared `TTSEditor` takes a Grok or Voxtral provider. Tag catalogs configure
-parsing, inline chips, suggestions, highlighting, and serialization. The Grok
-wrapper keeps existing callers compatible. Voxtral cloning uses the shared
-editor; Chatterbox locales retain their textarea.
+The shared `TagEditor` in `apps/web/components/speech-tags/` takes a Grok or
+Voxtral provider. The tag catalogs in `catalog.ts` configure parsing, inline
+chips, suggestions, highlighting, serialization, and split-safe cutting.
+Voxtral cloning uses the shared editor; Chatterbox locales retain their
+textarea.
 
 Sharing the editor preserves the existing selection handling and character
 limits. A separate Voxtral editor would duplicate that behavior and its fixes.
-Voxtral has no paired wrappers or Grok language selector. Its picker groups
-34 emotions, five paces, and the documented vocal sounds by category.
+Voxtral has no paired wrappers. Its picker groups 34 emotions, five paces, and
+the documented vocal sounds by category. The Grok language picker is a
+generation setting outside the editor.
 
 Plain text is the form and API contract. Tags survive copy, paste, provider
 changes, and multiline serialization. Unknown tags remain editable text and

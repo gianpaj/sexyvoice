@@ -1,8 +1,16 @@
 import { generateFiles } from 'fumadocs-openapi';
-import { openapi } from '@/lib/openapi';
+import { createOpenAPI } from 'fumadocs-openapi/server';
+import { OPENAPI_URL, openapi } from '@/lib/openapi';
+
+// Accept a local schema for branch validation while preserving the published ID.
+const input = process.argv[2]
+  ? createOpenAPI({
+      input: { [OPENAPI_URL]: process.argv[2] },
+    })
+  : openapi;
 
 void generateFiles({
-  input: openapi,
+  input,
   output: './content/docs/api-reference/endpoints',
   // we recommend to enable it
   // make sure your endpoint description doesn't break MDX syntax.

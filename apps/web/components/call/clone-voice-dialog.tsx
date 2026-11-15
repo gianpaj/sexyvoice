@@ -4,7 +4,6 @@ import { Check, Mic, Play, Square, Upload, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
-import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneVisualizer } from '@/components/audio/microphone-visualizer';
 import {
   Dialog,
@@ -12,10 +11,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatBytes } from '@/hooks/use-file-upload';
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/call-voices';
+import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/calls/voices';
+import { formatClock } from '@/lib/clock';
 import {
   CLONE_FORM_FIELDS,
   type SaveVoiceSuccessResponse,
@@ -24,15 +24,18 @@ import {
   type CallCloneProvider,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
-import { CLONE_MIN_AUDIO_SECONDS } from '@/lib/clone/constants';
 import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import { cn } from '@/lib/utils';
+import { CLONE_PROVIDERS } from '@/lib/clone/providers';
+import {
+  REFERENCE_AUDIO_MAX_BYTES,
+  SAVED_VOICE_AUDIO_ACCEPT,
+  VOICE_NAME_MAX_LENGTH,
+} from '@/lib/clone/reference-audio';
+import { cn, formatBytes } from '@/lib/utils';
 import { PlayingBars } from './listen-button';
 
 const MAX_RECORDING_SECONDS = 60;
-const MAX_NAME_LENGTH = 50;
 
 type Step = 'record' | 'confirm' | 'processing' | 'ready';
 type Source = 'record' | 'upload';
@@ -50,9 +53,6 @@ interface CloneVoiceDialogProps {
   savedCount: number;
 }
 
-const formatSeconds = (seconds: number) =>
-  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-
 const secondaryButton =
   'h-11 rounded-[10px] border border-slate-700/70 px-4 font-medium text-[15px] text-slate-200 hover:bg-slate-800/60 disabled:pointer-events-none disabled:opacity-50';
 const primaryButton =
@@ -69,7 +69,8 @@ export function CloneVoiceDialog({
 }: CloneVoiceDialogProps) {
   const t = useTranslations('call.clone');
   const tClone = useTranslations('clone');
-  const minRecordingSeconds = CLONE_MIN_AUDIO_SECONDS[callCloneProvider];
+  const minRecordingSeconds =
+    CLONE_PROVIDERS[callCloneProvider].minReferenceSeconds;
   const translateErrorCode = useTranslations('errorCodes');
   const player = useSamplePlayer();
   const { convert, ensureLoaded } = useFFmpeg({ lazyLoad: true });
@@ -78,13 +79,7 @@ export function CloneVoiceDialog({
     savedCount
       ? t('defaultNameNumbered', { count: savedCount + 1 })
       : t('defaultName');
-  // Browsers without MediaRecorder can still upload a clip.
-  const [canRecord] = useState(
-    () => typeof window !== 'undefined' && 'MediaRecorder' in window,
-  );
-  const initialSource: Source = canRecord ? 'record' : 'upload';
   const [step, setStep] = useState<Step>('record');
-  const [source, setSource] = useState<Source>(initialSource);
   const [recording, setRecording] = useState<Blob | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -104,7 +99,7 @@ export function CloneVoiceDialog({
   const recorder = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
     onError: () => {
-      if (canRecord) setProblem(t('micError'));
+      if (recorder.supported) setProblem(t('micError'));
     },
     onStart: () => {
       discardStop.current = false;
@@ -121,11 +116,10 @@ export function CloneVoiceDialog({
     },
   });
   const isRecording = recorder.status === 'recording';
-
-  // A blocked microphone fails inside the recorder without calling onError.
-  useEffect(() => {
-    if (canRecord && recorder.status === 'failed') setProblem(t('micError'));
-  }, [canRecord, recorder.status, t]);
+  // Browsers without MediaRecorder can still upload a clip.
+  const canRecord = recorder.supported;
+  const initialSource: Source = canRecord ? 'record' : 'upload';
+  const [source, setSource] = useState<Source>(initialSource);
 
   const discardRecording = () => {
     if (isRecording) {
@@ -187,10 +181,10 @@ export function CloneVoiceDialog({
 
   const chooseFile = (chosen: File | undefined) => {
     if (!chosen) return;
-    if (chosen.size > CLONING_FILE_MAX_SIZE) {
+    if (chosen.size > REFERENCE_AUDIO_MAX_BYTES) {
       setFile(null);
       setProblem(
-        t('fileTooLarge', { size: formatBytes(CLONING_FILE_MAX_SIZE) }),
+        t('fileTooLarge', { size: formatBytes(REFERENCE_AUDIO_MAX_BYTES) }),
       );
       return;
     }
@@ -261,14 +255,7 @@ export function CloneVoiceDialog({
         }
         return;
       }
-      const { audioReferenceId, provider } =
-        (await response.json()) as SaveVoiceSuccessResponse;
-      const voice = {
-        id: audioReferenceId,
-        locale,
-        name: name.trim(),
-        provider,
-      };
+      const { voice } = (await response.json()) as SaveVoiceSuccessResponse;
       onCreated(voice);
       if (!current()) return;
       setCreated(voice);
@@ -329,11 +316,11 @@ export function CloneVoiceDialog({
       </span>
       <span className="text-[13px] text-slate-400">
         {t('fileHint', {
-          size: formatBytes(CLONING_FILE_MAX_SIZE),
+          size: formatBytes(REFERENCE_AUDIO_MAX_BYTES),
         })}
       </span>
       <input
-        accept="audio/*"
+        accept={SAVED_VOICE_AUDIO_ACCEPT}
         className="absolute inset-0 cursor-pointer opacity-0"
         onChange={(event) => chooseFile(event.target.files?.[0])}
         type="file"
@@ -498,11 +485,7 @@ export function CloneVoiceDialog({
                         aria-label={t('startRecording')}
                         className="flex size-14 shrink-0 items-center justify-center rounded-full bg-red-600 disabled:opacity-50"
                         disabled={recorder.status === 'acquiring_media'}
-                        onClick={() => {
-                          recorder
-                            .startRecording()
-                            .catch(() => setProblem(t('micError')));
-                        }}
+                        onClick={() => recorder.startRecording()}
                         type="button"
                       >
                         <span className="size-[18px] rounded-full bg-white" />
@@ -519,7 +502,7 @@ export function CloneVoiceDialog({
                             isRecording ? 'text-red-300' : 'text-slate-400',
                           )}
                         >
-                          {formatSeconds(seconds)}
+                          {formatClock(seconds)}
                         </span>
                       </div>
                       <div
@@ -576,7 +559,7 @@ export function CloneVoiceDialog({
                       : 'border-slate-700/70',
                   )}
                   id="clone-voice-name"
-                  maxLength={MAX_NAME_LENGTH}
+                  maxLength={VOICE_NAME_MAX_LENGTH}
                   onChange={(event) => setName(event.target.value)}
                   type="text"
                   value={name}

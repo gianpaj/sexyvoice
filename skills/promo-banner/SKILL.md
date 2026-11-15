@@ -1,19 +1,20 @@
 ---
 name: promo-banner
-description: Configure and verify promotional campaigns using the shared banner system. Use when enabling or reusing seasonal offers, setting bonus credits, selecting banner themes and placements, or testing promo pricing, countdowns, and dismissal across the homepage, dashboard, and blog.
+description: Configure and verify promotional campaigns using the shared banner system. Use when enabling or reusing seasonal offers, setting bonus credits, selecting banner themes, or testing promo pricing, countdowns, and dismissal across the homepage, dashboard, and blog.
 ---
 
 # Promo banner setup
 
-Configure a promotional banner through the shared banner registry. Existing
-placements already resolve and render the highest-priority active banner.
+Configure a promotional banner through the shared banner registry. The public
+pages and the dashboard already resolve and render the highest-priority active
+banner.
 
 ## Inspect the campaign
 
 Inspect `apps/web/lib/banners/registry.ts`, existing copy under `promos` in
 `apps/web/messages/*.json`, relevant environment values, and
 `apps/web/lib/stripe/pricing.ts` before editing. Reuse a registered banner when
-its offer, placements, and dismissal behavior fit; add an entry only when needed.
+its offer and dismissal behavior fit; add an entry only when needed.
 
 Confirm the target environment (local, preview, or production), offer type,
 package bonuses, and campaign end time. Inspect only relevant configuration;
@@ -94,9 +95,7 @@ banner a stable, unique dismissal cookie.
 
 ```ts
 yourPromoBanner: {
-  countdown: {
-    endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
-  },
+  countdown: true,
   cta: {
     loggedInHref: creditsHref,
     loggedOutHref: signupHref,
@@ -107,13 +106,12 @@ yourPromoBanner: {
   },
   id: 'yourPromoBanner',
   kind: 'promo',
-  placements: ['landing', 'dashboard', 'blog'],
   priority: 100,
 },
 ```
 
-Omit `countdown` when the banner has no deadline. Choose only the placements
-where the banner belongs.
+Omit `countdown` when the banner has no deadline. A countdown runs to
+`NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` and hides the banner when it passes.
 
 ## Add localized copy
 
@@ -129,11 +127,7 @@ supported locales are `en`, `es`, `de`, `da`, `it`, and `fr`.
       "ctaLoggedOut": "Sign up now",
       "ariaLabelDismiss": "Dismiss promotion",
       "countdown": {
-        "prefix": "Ends in:",
-        "days": "Days",
-        "hours": "Hours",
-        "minutes": "Min",
-        "seconds": "Sec"
+        "prefix": "Ends in:"
       },
       "pricing": {
         "bannerText": "Your promotion"
@@ -147,24 +141,22 @@ Omit `countdown` copy when the registry entry has no countdown.
 
 ## Rendering and priority
 
-`apps/web/lib/banners/resolve-banner.ts` selects one active banner for each
-placement. Promo banners use priority `100`, ahead of ordinary announcements.
-Pages pass the resolved value to `apps/web/components/banner.tsx`, so adding a
-registry entry does not require another banner component.
+`apps/web/lib/banners/resolve-banner.ts` selects the one banner to show. Promo
+banners use priority `100`, ahead of ordinary announcements. Public pages
+render it through `apps/web/components/marketing-page.tsx`, and the dashboard
+layout passes it to `DashboardUI`; both use `apps/web/components/banner.tsx`,
+so adding a registry entry does not require another banner component. A new
+public page shows the banner by rendering `MarketingPage` with `banner`.
 
-Add page wiring only when introducing a new placement. Resolve the banner on
-the server and render the shared `Banner` component.
-
-The landing, voice-cloning, and voice-call pages omit request cookies to keep
-their static caching. On those pages, the client can hide a dismissed banner,
-but it cannot replace it with the next eligible banner because the server sent
-only the highest-priority banner. If a promo and announcement are active
+Public pages read no request cookies, so they stay static. On those pages, the
+client can hide a dismissed banner, but it cannot replace it with the next
+eligible banner because the server sent only the highest-priority banner. If a promo and announcement are active
 together, dismissing the promo leaves the banner slot empty on those pages.
 Expiry has the same limitation: the client hides a promo that expires after the
 static page is built, but an announcement cannot replace it until the page is
 regenerated, such as by a new deployment.
-Blog and dashboard pages pass dismissal cookies to the resolver, so a subsequent
-server render can select the next eligible announcement. Client-side dismissal
+The dashboard passes dismissal cookies to the resolver, so a subsequent server
+render can select the next eligible announcement. Client-side dismissal
 alone hides the current banner; it does not immediately resolve a replacement.
 
 ## Theme colors
@@ -173,8 +165,10 @@ Set `NEXT_PUBLIC_PROMO_THEME` to `pink`, `orange`, or `blue`. Theme variables
 live in `apps/web/app/globals.css` under `[data-promo-theme]` selectors.
 
 When adding a theme, extend `BannerTheme` in
-`apps/web/lib/banners/types.ts`, add its CSS variables, and update the example
-environment values.
+`apps/web/lib/banners/types.ts` and `BANNER_THEMES` in
+`apps/web/lib/banners/resolve-banner.ts`, add its CSS variables, and update the
+example environment values. An unknown `NEXT_PUBLIC_PROMO_THEME` falls back to
+`pink`.
 
 Use promo color tokens for banner hover and keyboard-focus treatments, not
 generic gray button states. In `apps/web/components/pricing-cards.tsx`, both
@@ -231,7 +225,7 @@ stays sticky.
 
 Keep text centered with clearance around both controls, and align the first
 mobile text line with the icons. Preserve navigation when the banner is
-dismissed, disabled, or non-dismissible. Leave exact spacing in the components.
+dismissed or disabled. Leave exact spacing in the components.
 
 ## Dismissal behavior
 
@@ -259,19 +253,19 @@ When checkout or fulfillment behavior changes, also run the relevant
 
 Verify the following states before deployment:
 
-- Mobile and desktop: each supported placement, wrapping in supported locales,
+- Mobile and desktop: public pages and the dashboard, wrapping in supported locales,
   text/icon alignment, control clearance, and themed hover and keyboard focus.
 - Banner visible, dismissed, and disabled: sidebar navigation works in each
   dashboard state. Use a fresh browser context or clear the specific dismissal
   cookie to distinguish misconfiguration from a dismissed banner.
-- Logged-in and logged-out CTAs: check the actual placement's audience and target;
-  the cacheable homepage resolves the logged-out CTA.
+- Logged-in and logged-out CTAs: check each page's audience and target; the
+  cacheable public pages resolve the logged-out CTA.
 - Monthly and one-time pricing, with promos enabled and disabled: compare credit
   totals, prices, translated bonus labels, and theme colors against the offer.
 - Countdown-supported campaigns: check expiry without assuming bonus credits or
   a Stripe coupon have ended.
 - Overlapping promo and announcement: check immediate dismissal and a subsequent
-  server render on both cacheable and cookie-aware pages.
+  server render on both the public pages and the dashboard.
 
 Capture screenshots from an authenticated dashboard and public pages at mobile
 and desktop widths. If authentication blocks inspection, report it; do not claim
@@ -281,7 +275,7 @@ visual verification from component tests alone.
 
 1. Inspect and reuse existing campaign definitions before adding entries.
 2. Confirm the environment, offer, totals, deadline, and shutdown procedure.
-3. Check CTA targets, placements, priority, and stable dismissal cookies.
+3. Check CTA targets, priority, and stable dismissal cookies.
 4. Add or update campaign copy in all six locales when needed.
 5. Set the promo flag and explicit banner id; configure theme, metadata, bonuses,
    and supported countdown settings for the intended offer.

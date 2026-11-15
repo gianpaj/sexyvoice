@@ -1,15 +1,12 @@
 'use client';
-import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import { AudioProvider } from '@/components/audio-provider';
+import { ExpandableTextarea } from '@/components/expandable-textarea';
+import { ttsTagProvider } from '@/components/speech-tags/catalog';
+import { TaggedText } from '@/components/speech-tags/tagged-text';
 import {
   Card,
   CardContent,
@@ -19,21 +16,25 @@ import {
 } from '@/components/ui/card';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { VoicePicker } from '@/components/voice-picker';
-import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
-import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
+import { getTtsModel, type TtsProvider } from '@/lib/tts/models';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { cn, getTtsProvider } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
-import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+
+const MODEL_INFO_KEYS = {
+  gemini: 'voiceSelector.geminiInfo',
+  grok: 'voiceSelector.grokInfo',
+  replicate: 'voiceSelector.orpheusInfo',
+} as const satisfies Record<TtsProvider, string>;
 
 export function VoiceSettingsCard({
   publicVoices,
@@ -51,27 +52,17 @@ export function VoiceSettingsCard({
   isPaidUser?: boolean;
 }) {
   const t = useTranslations('generate');
-  const provider = getTtsProvider(selectedVoice?.model);
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
-  const emotionTags = selectedVoice ? getEmotionTags(selectedVoice) : undefined;
-  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
-  // and the style, enforced in the generator; the standalone character counter
-  // below only applies to the character-bounded Gemini 2.5 style prompt.
-  const isGemini31 = selectedVoice?.model === 'gpro31';
-  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const ttsModel = getTtsModel(selectedVoice?.model);
+  const tagProvider = ttsTagProvider(ttsModel);
+  const emotionTags =
+    selectedVoice && ttsModel
+      ? ttsModel.inlineTags(selectedVoice.language)
+      : undefined;
+  const styleCheck = ttsModel
+    ? validateGenerationInput(ttsModel, { isPaidUser, style: selectedStyle })
+    : null;
+  const styleCharacterLimit = styleCheck?.styleLimit ?? null;
   const styleLength = selectedStyle?.length ?? 0;
-  const isStyleOverLimit =
-    isGeminiVoice && !isGemini31 && styleLength > styleCharacterLimit;
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we need selectedStyle
-  useEffect(() => {
-    if (textareaRef.current && !isFullscreen) {
-      resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
-    }
-  }, [selectedStyle]);
 
   return (
     <Card>
@@ -90,14 +81,7 @@ export function VoiceSettingsCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
-                {isGeminiVoice && <p>{t('voiceSelector.geminiInfo')}</p>}
-                {isGrokVoice && <p>{t('voiceSelector.grokInfo')}</p>}
-                {!(isGeminiVoice || isGrokVoice) && (
-                  <p>
-                    Model: Orpheus-TTS (text-to-speech AI model) - Commercial
-                    use ✔️
-                  </p>
-                )}
+                {ttsModel && <p>{t(MODEL_INFO_KEYS[ttsModel.provider])}</p>}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -122,10 +106,11 @@ export function VoiceSettingsCard({
               <div>
                 <p className="text-muted-foreground text-sm">
                   <b>{getVoiceDisplayName(selectedVoice)}</b> sample prompt:{' '}
-                  {isGrokVoice ? (
+                  {tagProvider ? (
                     <span className="whitespace-break-spaces">
-                      <GrokTaggedText
+                      <TaggedText
                         className="inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-gray-200 text-xs"
+                        provider={tagProvider}
                         text={selectedVoice.sample_prompt ?? ''}
                       />
                     </span>
@@ -161,58 +146,39 @@ export function VoiceSettingsCard({
             </div>
           )}
         </AudioProvider>
-        {isGeminiVoice && (
+        {styleCharacterLimit !== null && (
           <div className="relative">
-            <Textarea
-              className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
+            <ExpandableTextarea
+              className="pr-10"
+              compactHeight="4rem"
               data-testid="generate-style-textarea"
               maxLength={styleCharacterLimit + CHARACTERS_LIMIT_GRACE}
+              minRows={4}
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={t('voiceSelector.selectStyleTextareaPlaceholder')}
-              ref={textareaRef}
-              style={
-                {
-                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
-                } as React.CSSProperties
-              }
               value={selectedStyle}
             />
-            <Button
-              className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              size="icon"
-              title="Fullscreen"
-              variant="ghost"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
+            <div
+              className={cn(
+                'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+                styleCheck?.styleTooLong && 'text-red-500',
               )}
-            </Button>
-            {!isGemini31 && (
-              <div
-                className={cn(
-                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                  isStyleOverLimit && 'text-red-500',
-                )}
+            >
+              <p
+                className="mt-1 text-right"
+                data-testid="generate-style-character-count"
               >
-                <p
-                  className="mt-1 text-right"
-                  data-testid="generate-style-character-count"
-                >
-                  {styleLength}/{styleCharacterLimit}
-                </p>
-                <UpgradeCrown
-                  paid={isPaidUser}
-                  tooltip={
-                    isPaidUser
-                      ? t('paidStyleLimitTooltip')
-                      : t('upgradeStyleLimitTooltip')
-                  }
-                />
-              </div>
-            )}
+                {styleLength}/{styleCharacterLimit}
+              </p>
+              <UpgradeCrown
+                paid={isPaidUser}
+                tooltip={
+                  isPaidUser
+                    ? t('paidStyleLimitTooltip')
+                    : t('upgradeStyleLimitTooltip')
+                }
+              />
+            </div>
           </div>
         )}
       </CardContent>

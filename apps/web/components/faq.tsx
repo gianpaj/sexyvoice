@@ -1,13 +1,11 @@
 import {
   ChevronRightIcon,
   Coins,
-  Languages,
   type LucideIcon,
   PhoneCall,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import Link from 'next/link';
 import { getMessages } from 'next-intl/server';
 
 import {
@@ -15,8 +13,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { type FaqQuestion, faqGroups } from '@/lib/landing-content';
 import {
   Accordion,
   AccordionContent,
@@ -24,73 +22,47 @@ import {
   AccordionTrigger,
 } from './ui/accordion';
 
-const faqIconMap: Record<string, LucideIcon> = {
-  languages: Languages,
+// Groups without an icon here show Sparkles.
+const FAQ_ICONS: Record<string, LucideIcon> = {
   liveCalling: PhoneCall,
   pricingAndAccess: Coins,
   trustAndPolicies: ShieldCheck,
-  voiceCreation: Sparkles,
 };
 
-// Default group ids surfaced first, in this order. Pages reuse this component
-// but each can lead with its own group via the `priorityGroupIds` prop; the
-// general landing page keeps `liveCalling` first.
-const DEFAULT_FAQ_GROUP_PRIORITY = ['liveCalling'];
-
-// Any group not listed in `priority` keeps its original position from the
-// message file (stable sort).
-function sortFaqGroups<T extends { id: string }>(
-  groups: readonly T[],
-  priority: readonly string[],
-): T[] {
-  const priorityIndex = (id: string) => {
-    const index = priority.indexOf(id);
-    return index === -1 ? Number.POSITIVE_INFINITY : index;
-  };
-  return [...groups].sort((a, b) => priorityIndex(a.id) - priorityIndex(b.id));
-}
-
-interface FaqLink {
-  text: string;
-  url: string;
-}
-
-function renderAnswer(answer: string, link?: FaqLink) {
-  const processed = faqAnswerText(answer);
-  if (!link) return processed;
-  const parts = processed.split('{link}');
-  if (parts.length !== 2) return processed;
+function Answer({ faq }: { faq: FaqQuestion }) {
+  if (!faq.linked) {
+    return faq.answer;
+  }
   return (
     <>
-      {parts[0]}
-      <Link
+      {faq.linked.before}
+      <a
         className="text-primary underline underline-offset-4 hover:no-underline"
-        href={link.url}
+        href={faq.linked.url}
         rel="noopener noreferrer"
         target="_blank"
       >
-        {link.text}
-      </Link>
-      {parts[1]}
+        {faq.linked.text}
+      </a>
+      {faq.linked.after}
     </>
   );
 }
 
 export const FAQComponent = async ({
   lang,
-  priorityGroupIds = DEFAULT_FAQ_GROUP_PRIORITY,
+  priorityGroupIds,
 }: {
   lang: Locale;
   /**
-   * Group ids to surface first, in order; the first present group also opens by
-   * default. Lets each page lead with its own group (e.g. the voice cloning
-   * page passes `['voiceCloning']`). Defaults to `liveCalling`.
+   * Group ids to show first, in order; the first group also opens. The
+   * voice cloning page leads with `voiceCloning`; the default is live calling.
    */
   priorityGroupIds?: readonly string[];
 }) => {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
     .faq;
-  const groups = sortFaqGroups(dict.groups, priorityGroupIds);
+  const groups = faqGroups(dict, priorityGroupIds);
   return (
     <>
       <div className="mb-12 text-left">
@@ -105,7 +77,7 @@ export const FAQComponent = async ({
         type="single"
       >
         {groups.map((group) => {
-          const Icon = faqIconMap[group.id] ?? Sparkles;
+          const Icon = FAQ_ICONS[group.id] ?? Sparkles;
 
           return (
             <AccordionItem
@@ -134,10 +106,7 @@ export const FAQComponent = async ({
                       {faq.question}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="whitespace-pre-wrap pb-4 text-sm">
-                      {renderAnswer(
-                        faq.answer,
-                        (faq as { link?: FaqLink }).link,
-                      )}
+                      <Answer faq={faq} />
                     </CollapsibleContent>
                   </Collapsible>
                 ))}

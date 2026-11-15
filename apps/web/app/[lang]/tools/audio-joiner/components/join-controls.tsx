@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { JoinerOutputFormat } from '../hooks/use-ffmpeg-joiner';
+import type { JoinerOutputFormat } from '@/hooks/use-ffmpeg-joiner';
 
 interface JoinControlsProps {
   canJoin: boolean;

@@ -1,42 +1,23 @@
-import { allPosts } from 'contentlayer/generated';
-
-import type { Locale } from '@/lib/i18n/i18n-config';
-import {
-  buildMarkdownResponse,
-  renderBlogPostMarkdown,
-} from '@/lib/markdown-for-agents';
+import { listPosts } from '@/lib/content';
+import { markdownResponse } from '@/lib/markdown-for-agents';
 import { routing } from '@/src/i18n/routing';
+
+// The proxy rewrites `/{lang}/blog/{slug}.md`, and post requests that ask for
+// `Accept: text/markdown`, to this route.
 
 export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return allPosts
-    .filter((post) => !post.draft)
-    .map((post) => ({
-      lang: post.locale,
-      slug: post.slugAsParams,
-    }));
+  return routing.locales.flatMap((lang) =>
+    listPosts(lang).map((post) => ({ lang, slug: post.slug })),
+  );
 }
 
 export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ lang: Locale; slug: string }> },
+  _request: Request,
+  { params }: { params: Promise<{ lang: string; slug: string }> },
 ) {
   const { lang, slug } = await params;
-
-  if (!routing.locales.includes(lang)) {
-    return new Response('Not Found', { status: 404 });
-  }
-
-  const post = allPosts.find(
-    (p) => p.slugAsParams === slug && p.locale === lang && !p.draft,
-  );
-
-  if (!post) {
-    return new Response('Not Found', { status: 404 });
-  }
-
-  const body = renderBlogPostMarkdown(post);
-  return buildMarkdownResponse(body);
+  return markdownResponse(lang, `/blog/${slug}`);
 }

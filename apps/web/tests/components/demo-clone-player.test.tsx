@@ -265,18 +265,17 @@ describe('Hear the difference', () => {
     expect(pause.mock.contexts).toContain(element);
   });
 
-  it('offers the dashboard callback only for a real ready selection', () => {
-    const onTryVoice = vi.fn();
-    render(<DemoClonePlayer {...props} locale="it" onTryVoice={onTryVoice} />);
+  it('links to the Clone page only for a real ready selection', () => {
+    render(<DemoClonePlayer {...props} locale="it" />);
     expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
-    expect(onTryVoice).not.toHaveBeenCalled();
     selectLanguage('de');
     selectTake('calmSlow');
-    fireEvent.click(screen.getByTestId('demo-clone-try'));
-    expect(onTryVoice).toHaveBeenCalledExactlyOnceWith('heike', 'calmSlow');
+    expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
+      'href',
+      '/dashboard/clone?demo=heike&take=calmSlow',
+    );
     selectLanguage('fr');
     expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
-    expect(onTryVoice).toHaveBeenCalledOnce();
   });
   it('lists Same as original first for Kat while keeping Natural selected by default', () => {
     render(<DemoClonePlayer {...props} />);
@@ -722,32 +721,14 @@ describe('Hear the difference', () => {
     expect(audio().getAttribute('src')).toContain('kat-natural.mp3');
   });
 
-  it('uses a signup CTA publicly and an apply action in the dashboard', () => {
-    const { rerender } = render(<DemoClonePlayer {...props} />);
-    expect(
-      screen.getByRole('link', { name: labels.signUpAndClone }),
-    ).toHaveAttribute('href', '/dashboard/clone?demo=kat&take=natural');
-    rerender(<DemoClonePlayer {...props} onTryVoice={vi.fn()} />);
-    expect(
-      screen.getByRole('button', { name: labels.tryVoice }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: labels.signUpAndClone }),
-    ).not.toBeInTheDocument();
-  });
-
   it.each(['sameOriginal', 'natural', 'sarcastic', 'calmSlow'] as const)(
-    'passes the exact %s delivery to the dashboard action',
+    'links the signup CTA to the exact %s delivery',
     (takeId) => {
-      const onTryVoice = vi.fn();
-      const { rerender } = render(
-        <DemoClonePlayer {...props} onTryVoice={onTryVoice} />,
-      );
+      render(<DemoClonePlayer {...props} />);
       selectTake(takeId);
-      fireEvent.click(screen.getByTestId('demo-clone-try'));
-      expect(onTryVoice).toHaveBeenCalledExactlyOnceWith('kat', takeId);
-      rerender(<DemoClonePlayer {...props} applying onTryVoice={onTryVoice} />);
-      expect(screen.getByTestId('demo-clone-try')).toBeDisabled();
+      expect(
+        screen.getByRole('link', { name: labels.signUpAndClone }),
+      ).toHaveAttribute('href', `/dashboard/clone?demo=kat&take=${takeId}`);
     },
   );
 });

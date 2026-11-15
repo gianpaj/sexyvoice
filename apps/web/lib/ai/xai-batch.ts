@@ -25,7 +25,7 @@ function getApiKey(): string {
   return apiKey;
 }
 
-export interface XaiBatchState {
+interface XaiBatchState {
   num_cancelled?: number;
   num_error?: number;
   num_pending?: number;
@@ -219,7 +219,7 @@ export async function getBatchOutcomes(
   return outcomes;
 }
 
-export interface WaitForBatchOptions {
+interface WaitForBatchOptions {
   /** Called on every poll with the latest state (progress logging). */
   onPoll?: (state: XaiBatchState) => void;
   pollIntervalMs?: number;

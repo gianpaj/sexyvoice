@@ -1,111 +1,75 @@
-import { allPolicyPages } from 'contentlayer/generated';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getMessages } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
+import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
+import {
+  getPolicy,
+  isPolicySlug,
+  POLICY_SLUGS,
+  policyLocales,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
-
-const POLICY_CONFIG = {
-  'privacy-policy': {
-    fallbackTitle: 'Privacy Policy',
-  },
-  terms: {
-    fallbackTitle: 'Terms and Conditions',
-  },
-} as const;
-
-type PolicySlug = keyof typeof POLICY_CONFIG;
 
 interface Props {
   params: Promise<{ lang: Locale; policySlug: string }>;
 }
 
-const isPolicySlug = (value: string): value is PolicySlug =>
-  value in POLICY_CONFIG;
+async function policyFromParams({ params }: Props) {
+  const { lang, policySlug } = await params;
+  const policy = isPolicySlug(policySlug)
+    ? getPolicy(lang, policySlug)
+    : undefined;
 
-const getPolicyByLocale = (lang: Locale, policySlug: PolicySlug) => {
-  const localized = allPolicyPages.find(
-    (policy) => policy.slug === policySlug && policy.locale === lang,
-  );
+  if (!policy) {
+    notFound();
+  }
 
-  if (localized) return localized;
-
-  return allPolicyPages.find(
-    (policy) =>
-      policy.slug === policySlug && policy.locale === routing.defaultLocale,
-  );
-};
+  return { lang, policy, policySlug };
+}
 
 export const dynamicParams = false;
 
 export const generateStaticParams = () =>
   routing.locales.flatMap((lang) =>
-    (Object.keys(POLICY_CONFIG) as PolicySlug[]).map((policySlug) => ({
-      lang,
-      policySlug,
-    })),
+    POLICY_SLUGS.map((policySlug) => ({ lang, policySlug })),
   );
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang, policySlug } = await params;
-
-  if (!isPolicySlug(policySlug)) {
-    return {
-      title: 'Policy',
-    } satisfies Metadata;
-  }
-
-  const policy = getPolicyByLocale(lang, policySlug);
-
-  if (!policy) {
-    return {
-      title: POLICY_CONFIG[policySlug].fallbackTitle,
-    } satisfies Metadata;
-  }
-
-  return {
-    alternates: {
-      canonical: `https://sexyvoice.ai/${lang}/${policySlug}`,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [locale, `/${locale}/${policySlug}`]),
-      ),
-    },
-    description: policy.description,
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { lang, policy, policySlug } = await policyFromParams(props);
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  // An untranslated policy shows the English text, so its canonical URL is
+  // the English page, as in its agent markdown.
+  return pageMetadata({
+    description: policy.description ?? t('description'),
+    lang: policy.locale as Locale,
+    locales: policyLocales(policySlug),
+    path: `/${policySlug}`,
     title: policy.title,
-  } satisfies Metadata;
+  });
 }
 
-export default async function PolicyPage({ params }: Props) {
-  const { lang, policySlug } = await params;
-  await getMessages({ locale: lang });
-
-  if (!(routing.locales.includes(lang) && isPolicySlug(policySlug))) {
-    redirect(`/${routing.defaultLocale}/privacy-policy`);
-  }
-
-  const policy = getPolicyByLocale(lang, policySlug);
-
-  if (!policy) {
-    redirect(`/${routing.defaultLocale}/${policySlug}`);
-  }
+export default async function PolicyPage(props: Props) {
+  const { lang, policy } = await policyFromParams(props);
+  const t = await getTranslations({ locale: lang, namespace: 'policy' });
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800">
-      <HeaderStatic />
+    <MarketingPage
+      className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800"
+      lang={lang}
+    >
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1>{policy.title}</h1>
         <p className="mt-2 text-muted-foreground text-sm">
-          Updated {policy.updated}
+          {t('updated', { date: policy.updated })}
         </p>
         <div className="prose prose-invert mt-6 prose-h1:mb-4 prose-h2:mb-4 prose-p:mb-4 prose-h1:font-bold prose-h2:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg">
           <Mdx code={policy.body.code} />
         </div>
       </div>
-      <Footer lang={lang} />
-    </main>
+    </MarketingPage>
   );
 }

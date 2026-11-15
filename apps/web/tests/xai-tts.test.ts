@@ -1,25 +1,51 @@
+import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 
-import { normalizeXaiTtsSpeed } from '@/lib/tts/xai';
+import { GROK_LANGUAGES } from '@/lib/tts/models';
+import { generateXaiTts } from '@/lib/tts/xai';
+import { server } from './setup';
 
-describe('normalizeXaiTtsSpeed', () => {
-  it('returns undefined for missing or invalid values', () => {
-    expect(normalizeXaiTtsSpeed(undefined)).toBeUndefined();
-    expect(normalizeXaiTtsSpeed(Number.NaN)).toBeUndefined();
-    expect(normalizeXaiTtsSpeed('1.2' as any)).toBeUndefined();
+async function xaiRequestBody(input: { language: string; speed?: number }) {
+  let body: Record<string, unknown> = {};
+  server.use(
+    http.post('https://api.x.ai/v1/tts', async ({ request }) => {
+      body = (await request.json()) as Record<string, unknown>;
+      return HttpResponse.arrayBuffer(new Uint8Array([1]).buffer, {
+        headers: { 'Content-Type': 'audio/mpeg' },
+      });
+    }),
+  );
+  await generateXaiTts({ text: 'Hello', voiceId: 'eve', ...input });
+  return body;
+}
+
+describe('generateXaiTts', () => {
+  it.each(GROK_LANGUAGES)(
+    'sends the offered language %s as is',
+    async (language) => {
+      expect((await xaiRequestBody({ language })).language).toBe(language);
+    },
+  );
+
+  it.each([
+    ['ar', 'ar-SA'],
+    ['es', 'es-ES'],
+    ['pt', 'pt-BR'],
+    ['en-US', 'en'],
+    ['fr-CA', 'fr'],
+    ['multiple', 'auto'],
+    ['', 'auto'],
+    ['xx-YY', 'auto'],
+  ])('sends %s as %s', async (language, expected) => {
+    expect((await xaiRequestBody({ language })).language).toBe(expected);
   });
 
-  it('passes through values within the supported range', () => {
-    expect(normalizeXaiTtsSpeed(1)).toBe(1);
-    expect(normalizeXaiTtsSpeed(0.7)).toBe(0.7);
-    expect(normalizeXaiTtsSpeed(1.5)).toBe(1.5);
-    expect(normalizeXaiTtsSpeed(1.2)).toBe(1.2);
-  });
-
-  it('clamps values outside the 0.7–1.5 range', () => {
-    expect(normalizeXaiTtsSpeed(0.1)).toBe(0.7);
-    expect(normalizeXaiTtsSpeed(0)).toBe(0.7);
-    expect(normalizeXaiTtsSpeed(3)).toBe(1.5);
-    expect(normalizeXaiTtsSpeed(-5)).toBe(0.7);
+  it('sends a speed only when one is set', async () => {
+    expect(await xaiRequestBody({ language: 'en', speed: 1.2 })).toMatchObject({
+      speed: 1.2,
+    });
+    expect(await xaiRequestBody({ language: 'en' })).not.toHaveProperty(
+      'speed',
+    );
   });
 });

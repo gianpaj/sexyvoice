@@ -1,6 +1,10 @@
 import { createOpenAPI } from 'fumadocs-openapi/server';
 
+import { siteUrl } from '@/lib/shared';
+
+/** The published API schema, which also identifies the generated pages. */
+export const OPENAPI_URL = `${siteUrl}/api/v1/openapi`;
+
 export const openapi = createOpenAPI({
-  // the OpenAPI schema, you can also give it an external URL.
-  input: ['https://sexyvoice.ai/api/v1/openapi'],
+  input: [OPENAPI_URL],
 });

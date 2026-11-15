@@ -1,10 +1,10 @@
 ---
-title: 'Generate'
-description: 'Convert text to natural-sounding speech with AI voices'
+title: "Generate"
+description: "Convert text to natural-sounding speech with AI voices"
 # icon: "wand-2"
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Step, Steps } from "fumadocs-ui/components/steps";
 
 Generate lets you turn any text into lifelike audio using AI voices. Choose from a variety of voices, enter your text, and download the audio file.
 
@@ -30,7 +30,7 @@ Generate lets you turn any text into lifelike audio using AI voices. Choose from
 
 ## Voice models
 
-The public catalog has 63 voices: 57 text-to-speech voices across four voice
+The available public catalog has 41 voices: 35 text-to-speech voices across two voice
 families and 6 built-in voices for [AI calls](./voice-call).
 The text limits below apply to the dashboard; the form shows the limit for your
 selected voice. For API limits, see the [API quickstart](../guides/api).
@@ -38,15 +38,13 @@ selected voice. For API limits, see the [API quickstart](../guides/api).
 | Voice model           | Character Limit      | Output Formats | Special Features                                                                                                                   |
 | --------------------- | -------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **Gemini 3.8 voices** | 500 free; 1,000 paid | WAV            | Speech style instructions plus inline emotion tags like `<sigh>` and `<short pause>`; includes Spanish voices for Spain and Mexico |
-| **Gemini 3.1 voices** | 500 free; 1,000 paid | WAV            | Speech style instructions plus inline emotion tags like `[whispering]` and `[pause]`                                               |
-| **Gemini 2.5 voices** | 500 free; 1,000 paid | WAV            | Speech style instructions for tone/emotion                                                                                         |
 | **Grok voices**       | 500 free; 1,000 paid | MP3, WAV       | Multi-language support with expressive tags                                                                                        |
 
 <Callout>
   Gemini voices show a text box where you can describe how you want the voice to
-  sound (e.g., "warm and friendly" or "serious and professional"). The same
-  voice name, such as `kore` or `zephyr`, is available on Gemini 2.5, 3.1, and
-  3.8, so pick the model version you prefer.
+  sound (e.g., "warm and friendly" or "serious and professional"). Choose a
+  Gemini 3.8 voice, such as `kore`, `zephyr`, or a Spanish voice for Spain or
+  Mexico.
 </Callout>
 
 <Callout>

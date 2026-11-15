@@ -70,9 +70,23 @@ function renderGenerateUI(publicVoices: Tables<'voices'>[]) {
 describe('GenerateUI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
-  it('lists and selects Gemini 3.8 before the same-named 3.1 voice', () => {
+  it.each([null, { seed: 42, speed: 1.2, streamMode: 'on', temperature: 0.8 }])(
+    'loads supported settings from stored value %j',
+    (stored) => {
+      localStorage.setItem('generation-settings', JSON.stringify(stored));
+      renderGenerateUI([createVoice({ model: 'gpro38' })]);
+      expect(mockAudioGenerator.mock.calls[0][0].settings).toEqual({
+        seed: stored?.seed ?? null,
+        speed: stored?.speed ?? null,
+        temperature: stored?.temperature ?? null,
+      });
+    },
+  );
+
+  it('excludes retired voices before selecting a Gemini 3.8 default', () => {
     const featured = (model: string) =>
       createVoice({
         id: `achernar-${model}`,
@@ -91,14 +105,14 @@ describe('GenerateUI', () => {
     const props = mockVoiceSettingsCard.mock.calls[0][0];
     expect(
       props.publicVoices.map((voice: Tables<'voices'>) => voice.id),
-    ).toEqual(['achernar-gpro38', 'achernar-gpro31', 'kore-gpro']);
+    ).toEqual(['achernar-gpro38']);
     expect(props.selectedVoice?.id).toBe('achernar-gpro38');
   });
 
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
-      model: 'gpro',
+      model: 'gpro38',
       name: 'kore',
     });
 
@@ -126,53 +140,32 @@ describe('GenerateUI', () => {
     );
   });
 
-  it('omits Gemini style for Grok voices', () => {
+  it('keeps the style across voices and leaves the model rule to the children', () => {
+    const geminiVoice = createVoice({
+      id: 'voice-gemini',
+      model: 'gpro38',
+      name: 'kore',
+    });
     const grokVoice = createVoice({
       id: 'voice-grok',
       model: 'xai',
       name: 'eve',
     });
+    renderGenerateUI([geminiVoice, grokVoice]);
 
-    renderGenerateUI([grokVoice]);
-
-    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: grokVoice,
-      }),
-    );
-
-    expect(mockAudioGenerator).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: grokVoice,
-      }),
-    );
-  });
-
-  it('omits Gemini style for Replicate voices', () => {
-    const replicateVoice = createVoice({
-      id: 'voice-replicate',
-      model:
-        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-      name: 'tara',
+    act(() => {
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedStyle('Speak warmly');
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedVoice('voice-grok');
     });
 
-    renderGenerateUI([replicateVoice]);
-
-    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: replicateVoice,
-      }),
-    );
-
-    expect(mockAudioGenerator).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: replicateVoice,
-      }),
-    );
+    for (const child of [mockVoiceSettingsCard, mockAudioGenerator]) {
+      expect(child).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selectedStyle: 'Speak warmly',
+          selectedVoice: grokVoice,
+        }),
+      );
+    }
   });
 
   it('uses the featured voice as the initial selected voice when present', () => {
@@ -190,7 +183,7 @@ describe('GenerateUI', () => {
     });
     const thirdVoice = createVoice({
       id: 'voice-third',
-      model: 'gpro',
+      model: 'gpro38',
       name: 'kore',
     });
 
@@ -218,7 +211,7 @@ describe('GenerateUI', () => {
     });
     const secondVoice = createVoice({
       id: 'voice-second',
-      model: 'gpro',
+      model: 'gpro38',
       name: 'zephyr',
     });
 

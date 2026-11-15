@@ -35,16 +35,15 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { attemptPlayback } from '@/lib/media-playback';
+import {
+  getTtsModel,
+  TTS_MODEL_IDS,
+  TTS_MODELS,
+  type TtsModel,
+} from '@/lib/tts/models';
 import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
-import {
-  getDisplayModel,
-  MODEL_COLORS,
-  VOICE_GENDERS,
-  VOICE_MODELS,
-  type VoiceGender,
-  type VoiceModel,
-} from '@/lib/voices';
+import { VOICE_GENDERS, type VoiceGender } from '@/lib/voices';
 
 interface VoicePickerProps {
   className?: string;
@@ -57,14 +56,14 @@ function ModelDot({
   model,
   className,
 }: {
-  model: VoiceModel;
+  model: TtsModel;
   className?: string;
 }) {
   return (
     <span
       aria-hidden
       className={cn('inline-block size-2 shrink-0 rounded-full', className)}
-      style={{ backgroundColor: MODEL_COLORS[model] }}
+      style={{ backgroundColor: model.color }}
     />
   );
 }
@@ -104,7 +103,7 @@ export function VoicePicker({
   const t = useTranslations('generate.voiceSelector');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [modelFilter, setModelFilter] = useState<VoiceModel | null>(null);
+  const [modelFilter, setModelFilter] = useState<TtsModel | null>(null);
   const [genderFilter, setGenderFilter] = useState<VoiceGender | null>(null);
   const [internalValue, setInternalValue] = useState<string | undefined>(value);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -219,16 +218,16 @@ export function VoicePicker({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return voices.filter((v) => {
-      const displayModel = getDisplayModel(v.model);
+      const voiceModel = getTtsModel(v.model);
       const gender = v.type ?? '';
-      if (modelFilter && displayModel !== modelFilter) return false;
+      if (modelFilter && voiceModel !== modelFilter) return false;
       if (genderFilter && gender !== genderFilter) return false;
       if (!q) return true;
       return (
         v.name.toLowerCase().includes(q) ||
         getVoiceDisplayName(v).toLowerCase().includes(q) ||
         (v.description ?? '').toLowerCase().includes(q) ||
-        displayModel.toLowerCase().includes(q) ||
+        (voiceModel?.label ?? '').toLowerCase().includes(q) ||
         gender.toLowerCase().includes(q)
       );
     });
@@ -257,8 +256,8 @@ export function VoicePicker({
   // Only show model filter chips that are represented in the voices list
   const presentModels = useMemo(
     () =>
-      VOICE_MODELS.filter((m) =>
-        voices.some((v) => getDisplayModel(v.model) === m),
+      TTS_MODEL_IDS.map((id): TtsModel => TTS_MODELS[id]).filter((model) =>
+        voices.some((v) => getTtsModel(v.model) === model),
       ),
     [voices],
   );
@@ -268,7 +267,7 @@ export function VoicePicker({
     [voices],
   );
 
-  const selectedModel = selected ? getDisplayModel(selected.model) : null;
+  const selectedModel = getTtsModel(selected?.model);
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -291,7 +290,7 @@ export function VoicePicker({
                 </span>
                 <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
-                  {selectedModel} &middot; {selected.description ?? ''}
+                  {selectedModel?.label} &middot; {selected.description ?? ''}
                 </span>
               </span>
             </span>
@@ -354,7 +353,7 @@ export function VoicePicker({
                   {presentModels.map((model) => (
                     <FilterChip
                       active={modelFilter === model}
-                      key={model}
+                      key={model.label}
                       onClick={() =>
                         setModelFilter((prev) =>
                           prev === model ? null : model,
@@ -362,7 +361,7 @@ export function VoicePicker({
                       }
                     >
                       <ModelDot model={model} />
-                      {model}
+                      {model.label}
                     </FilterChip>
                   ))}
                 </div>
@@ -415,7 +414,7 @@ export function VoicePicker({
                 const isSelected = voice.id === selectedId;
                 const isPlaying = voice.id === playingId;
                 const isHighlighted = index === highlightedIndex;
-                const displayModel = getDisplayModel(voice.model);
+                const displayModel = getTtsModel(voice.model);
                 const hasSample = Boolean(voice.sample_url);
                 return (
                   <div
@@ -507,8 +506,8 @@ export function VoicePicker({
                           )}
                         </span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-muted-foreground text-xs">
-                          <ModelDot model={displayModel} />
-                          {displayModel}
+                          {displayModel && <ModelDot model={displayModel} />}
+                          {displayModel?.label}
                           {voice.type && (
                             <>
                               <span className="text-border">|</span>

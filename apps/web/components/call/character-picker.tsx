@@ -4,15 +4,15 @@ import { Mic, PenLine, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
-import type { Preset } from '@/data/presets';
-import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import {
-  getPresetDescription,
-  getPresetSampleUrl,
+  type Character,
+  characterDescription,
+  characterSampleUrl,
   MAX_CUSTOM_CHARACTERS,
-} from '@/lib/characters';
+} from '@/lib/calls/characters';
 import { Link } from '@/lib/i18n/navigation';
+import { useCallSetup } from './call-setup';
 import { CharacterCard } from './character-card';
 
 interface CharacterPickerProps {
@@ -21,12 +21,12 @@ interface CharacterPickerProps {
   highlightId?: string | null;
   isPaidUser: boolean;
   /** Starts a call with the character. */
-  onCall: (presetId: string) => void;
+  onCall: (characterId: string) => void;
   onCreate: () => void;
-  onDelete: (preset: Preset) => void;
-  onDuplicate: (presetId: string) => void;
-  onEdit: (presetId: string) => void;
-  onOpen: (presetId: string) => void;
+  onDelete: (character: Character) => void;
+  onDuplicate: (characterId: string) => void;
+  onEdit: (characterId: string) => void;
+  onOpen: (characterId: string) => void;
 }
 
 // auto-fit drops empty columns, so a short row of capped cards is centred.
@@ -60,39 +60,38 @@ export function CharacterPicker({
   onOpen,
 }: CharacterPickerProps) {
   const t = useTranslations('call.picker');
-  const { pgState, helpers } = usePlaygroundState();
+  const { atCharacterLimit, customCharacters, language, predefinedCharacters } =
+    useCallSetup();
   const player = useSamplePlayer();
-  const own = pgState.customCharacters;
-  const featured = helpers.getDefaultPresets().filter((preset) => preset.image);
-  const canAddMore = own.length < MAX_CUSTOM_CHARACTERS;
+  const featured = predefinedCharacters.filter(({ image }) => image);
 
-  const renderCard = (preset: Preset, isOwn: boolean) => {
-    const key = `character:${preset.id}`;
+  const renderCard = (character: Character, isOwn: boolean) => {
+    const key = `character:${character.id}`;
     return (
       <CharacterCard
-        connecting={connectingId === preset.id}
-        description={getPresetDescription(preset, pgState.language)}
+        character={character}
+        connecting={connectingId === character.id}
+        description={characterDescription(character, language)}
         disabled={connectingId !== null}
-        highlighted={highlightId === preset.id}
-        key={preset.id}
+        highlighted={highlightId === character.id}
+        key={character.id}
         menu={
           isOwn
             ? {
-                onDelete: () => onDelete(preset),
-                onDuplicate: canAddMore
-                  ? () => onDuplicate(preset.id)
-                  : undefined,
-                onEdit: () => onEdit(preset.id),
+                onDelete: () => onDelete(character),
+                onDuplicate: atCharacterLimit
+                  ? undefined
+                  : () => onDuplicate(character.id),
+                onEdit: () => onEdit(character.id),
               }
             : undefined
         }
-        onCall={() => onCall(preset.id)}
+        onCall={() => onCall(character.id)}
         onListen={() =>
-          player.toggle(key, getPresetSampleUrl(preset, pgState.language))
+          player.toggle(key, characterSampleUrl(character, language))
         }
-        onOpen={() => onOpen(preset.id)}
+        onOpen={() => onOpen(character.id)}
         playing={player.playingKey === key}
-        preset={preset}
       />
     );
   };
@@ -133,7 +132,16 @@ export function CharacterPicker({
         </span>
       </Link>
     );
-  } else if (canAddMore) {
+  } else if (atCharacterLimit) {
+    createCard = (
+      <div className={createCardClass}>
+        <span className="font-semibold text-[17px]">{t('createTitle')}</span>
+        <span className="text-slate-400 text-sm leading-snug">
+          {t('createLimit', { count: MAX_CUSTOM_CHARACTERS })}
+        </span>
+      </div>
+    );
+  } else {
     createCard = (
       <button
         className={`${createCardClass} transition-colors hover:bg-violet-950/30 focus-visible:outline-2 focus-visible:outline-violet-400`}
@@ -152,15 +160,6 @@ export function CharacterPicker({
         </span>
       </button>
     );
-  } else {
-    createCard = (
-      <div className={createCardClass}>
-        <span className="font-semibold text-[17px]">{t('createTitle')}</span>
-        <span className="text-slate-400 text-sm leading-snug">
-          {t('createLimit', { count: MAX_CUSTOM_CHARACTERS })}
-        </span>
-      </div>
-    );
   }
 
   return (
@@ -169,7 +168,7 @@ export function CharacterPicker({
         <SectionHeading id="call-own">{t('yourCharacters')}</SectionHeading>
         <div className={GRID}>
           {createCard}
-          {own.map((preset) => renderCard(preset, true))}
+          {customCharacters.map((character) => renderCard(character, true))}
         </div>
       </section>
       {featured.length > 0 && (
@@ -179,7 +178,7 @@ export function CharacterPicker({
         >
           <SectionHeading id="call-featured">{t('featured')}</SectionHeading>
           <div className={GRID}>
-            {featured.map((preset) => renderCard(preset, false))}
+            {featured.map((character) => renderCard(character, false))}
           </div>
         </section>
       )}

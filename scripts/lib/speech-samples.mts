@@ -1,11 +1,16 @@
-import { lstat, readFile, rename, writeFile } from 'node:fs/promises';
+import { lstat, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { GenerateContentResponseUsageMetadata } from '@google/genai';
 
+import geminiPrompt from '../../apps/web/lib/tts/gemini-prompt.ts';
+import type { TtsModelId } from '../../apps/web/lib/tts/models.ts';
 import voiceNames from '../../apps/web/lib/voice-names.ts';
-import { sha256 } from './r2-file-upload.mts';
+import { sha256 } from './files.mts';
 
-export { sha256 } from './r2-file-upload.mts';
+/** The catalog model (`voices.model`) the samples belong to. */
+export const SAMPLE_VOICE_MODEL = 'gpro38' satisfies TtsModelId;
+/** The provider model that renders the samples. */
+export const SAMPLE_PROVIDER_MODEL = geminiPrompt.GEMINI_TTS_38;
 
 export interface SampleVoice {
   filename: string;
@@ -17,7 +22,7 @@ export interface SampleVoice {
 }
 
 export interface SampleCatalog {
-  model: 'gpro38';
+  model: typeof SAMPLE_VOICE_MODEL;
   version: 1;
   voices: SampleVoice[];
 }
@@ -32,7 +37,7 @@ export interface GeneratedSample extends SampleVoice {
 
 export interface SampleManifest {
   failures: { id: string; error: string }[];
-  model: 'gemini-3.8-flash-tts';
+  model: typeof SAMPLE_PROVIDER_MODEL;
   samples: GeneratedSample[];
   version: 1;
 }
@@ -81,11 +86,13 @@ export async function readSampleCatalog(
   const catalog = JSON.parse(await readFile(filename, 'utf8')) as SampleCatalog;
   if (
     catalog.version !== 1 ||
-    catalog.model !== 'gpro38' ||
+    catalog.model !== SAMPLE_VOICE_MODEL ||
     !Array.isArray(catalog.voices) ||
     !catalog.voices.length
   ) {
-    throw new Error('Expected a version 1 gpro38 catalog with voices');
+    throw new Error(
+      `Expected a version 1 ${SAMPLE_VOICE_MODEL} catalog with voices`,
+    );
   }
   for (const voice of catalog.voices) assertSampleVoice(voice);
   assertUniqueSamples(catalog.voices);
@@ -109,17 +116,6 @@ export async function readVerifiedSample(
   return bytes;
 }
 
-export async function writeJson(
-  filename: string,
-  value: unknown,
-): Promise<void> {
-  const temporary = `${filename}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, {
-    mode: 0o600,
-  });
-  await rename(temporary, filename);
-}
-
 function escapeHtml(text: string): string {
   return text
     .replaceAll('&', '&amp;')
@@ -137,7 +133,7 @@ export async function writeListeningPage(
     .map(
       (
         sample,
-      ) => `<article><h2>${escapeHtml(voiceNames.getVoiceDisplayName({ model: 'gpro38', name: sample.name }))} <small>${escapeHtml(sample.language)}</small></h2>
+      ) => `<article><h2>${escapeHtml(voiceNames.getVoiceDisplayName({ model: SAMPLE_VOICE_MODEL, name: sample.name }))} <small>${escapeHtml(sample.language)}</small></h2>
 <p>${escapeHtml(sample.text)}</p><p><small>${escapeHtml(sample.style)}</small></p>
 <audio controls preload="none" src="${encodeURIComponent(sample.filename)}"></audio>
 <p><small>Catalog ID: ${escapeHtml(sample.id)}</small></p></article>`,

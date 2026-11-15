@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/i18n-config';
+import { isPromoEnabled } from '../promo';
 
 /**
  * Discount rate of the pro top-up plan vs the standard top-up plan,
@@ -55,17 +56,16 @@ function getFirstMonthSubscriptionDiscountMultiplier({
 }
 
 export const getTopupPackages = (lang: Locale) => {
-  const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+  const promoEnabled = isPromoEnabled();
 
-  // Get promo bonuses
   const promoBonuses = {
-    pro: isPromoEnabled
+    pro: promoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)
       : 0,
-    standard: isPromoEnabled
+    standard: promoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0', 10)
       : 0,
-    starter: isPromoEnabled
+    starter: promoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0', 10)
       : 0,
   };
@@ -90,11 +90,11 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // credits to add
       get credits() {
-        return isPromoEnabled
+        return promoEnabled
           ? this.baseCredits + promoBonuses.starter // 12_000
           : this.baseCredits;
       },
-      // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
+      // pricePer1kCredits: promoEnabled ? 0.4166 : 0.5,
       dollarAmount: 5, // $5.00
       priceId: process.env.STRIPE_TOPUP_STARTER_PRICE_ID,
       promoBonus: promoBonuses.starter.toLocaleString(lang),
@@ -106,7 +106,7 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // credits to add
       get credits() {
-        return isPromoEnabled
+        return promoEnabled
           ? this.baseCredits + promoBonuses.standard // 32_500
           : this.baseCredits;
       },
@@ -125,7 +125,7 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // credits to add
       get credits() {
-        return isPromoEnabled
+        return promoEnabled
           ? this.baseCredits + promoBonuses.pro // 405_000
           : this.baseCredits;
       },

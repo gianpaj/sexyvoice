@@ -1,7 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
 import type * as React from 'react';
-import { forwardRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -26,14 +25,6 @@ const buttonVariants = cva(
         expandIcon: 'group relative gap-0',
         ringHover:
           'transition-all duration-200 hover:ring-2 hover:ring-primary-active hover:ring-offset-2',
-        gooeyRight:
-          'relative z-0 overflow-hidden from-white/40 transition-all duration-500 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-linear-to-r before:transition-transform before:duration-1000 hover:before:translate-x-[0%] hover:before:translate-y-[0%]',
-        gooeyLeft:
-          'relative z-0 overflow-hidden from-white/40 transition-all duration-500 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-linear-to-l after:transition-transform after:duration-1000 hover:after:translate-x-[0%] hover:after:translate-y-[0%]',
-        underline:
-          'no-underline! relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-left after:scale-x-100 after:bg-primary after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-right hover:after:scale-x-0',
-        hoverUnderline:
-          'no-underline! relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-left hover:after:scale-x-100',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -111,30 +102,4 @@ function Button({
   );
 }
 
-const ButtonGroup = forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<'div'> & {
-    orientation?: 'horizontal' | 'vertical';
-  }
->(({ className, children, orientation = 'vertical', ...props }, ref) => {
-  return (
-    <div
-      className={cn(
-        'flex',
-        orientation === 'vertical'
-          ? 'min-w-max flex-col items-start [&>button]:w-full'
-          : 'flex-row items-center gap-0.5',
-        className,
-      )}
-      data-orientation={orientation}
-      ref={ref}
-      role="group"
-      {...props}
-    >
-      {children}
-    </div>
-  );
-});
-ButtonGroup.displayName = 'ButtonGroup';
-
-export { Button, ButtonGroup, buttonVariants };
+export { Button, buttonVariants };

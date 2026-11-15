@@ -96,6 +96,7 @@ function suggestionMenuReducer(
 export const SuggestionMenu = ({
   editor: providedEditor,
   floatingOptions,
+  label,
   selector = 'tiptap-suggestion-menu',
   children,
   maxHeight = 384,
@@ -339,7 +340,7 @@ export const SuggestionMenu = ({
       ref={ref}
       style={style}
       {...getFloatingProps()}
-      aria-label="Suggestions"
+      aria-label={label}
       className="tiptap-suggestion-menu"
       data-selector={selector}
       onPointerDown={(e) => e.preventDefault()}

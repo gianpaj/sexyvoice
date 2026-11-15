@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe('VoicePicker order', () => {
-  it('lists each Gemini 3.8 voice before its same-named 3.1 voice', async () => {
+  it('lists featured Gemini 3.8 voices before other voices', async () => {
     const [tara] = voices;
     const featured = (model: string): Tables<'voices'> => ({
       ...tara,
@@ -79,9 +79,7 @@ describe('VoicePicker order', () => {
       sort_order: 0,
     });
     // The generate page sorts the query result, whose ties have no defined order.
-    const sorted = [featured('gpro31'), tara, featured('gpro38')].sort(
-      compareVoices,
-    );
+    const sorted = [tara, featured('gpro38')].sort(compareVoices);
     const user = userEvent.setup();
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -93,7 +91,6 @@ describe('VoicePicker order', () => {
 
     expect(screen.getAllByRole('option').map((option) => option.id)).toEqual([
       'voice-item-achernar-gpro38',
-      'voice-item-achernar-gpro31',
       'voice-item-tara',
     ]);
   });
