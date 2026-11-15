@@ -823,7 +823,11 @@
       "mute": "Mute",
       "unmute": "Unmute",
       "end": "End call",
-      "audioSettings": "Audio settings"
+      "audioSettings": "Audio settings",
+      "record": "Record",
+      "stopRecording": "Stop recording",
+      "recordVoice": "Voice only",
+      "recordVideo": "Voice and video"
     },
     "ended": {
       "title": "Call with {name} ended · {duration}",
@@ -831,7 +835,9 @@
       "callAgain": "Call again",
       "edit": "Edit {name}",
       "makeYourOwn": "Make your own version",
-      "back": "Back to characters"
+      "back": "Back to characters",
+      "downloadAudio": "Download audio",
+      "downloadVideo": "Download video"
     },
     "clone": {
       "title": "Clone a voice",

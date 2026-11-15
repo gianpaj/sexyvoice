@@ -7,7 +7,16 @@ import {
 } from '@livekit/components-react';
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
 import { ConnectionState } from 'livekit-client';
-import { Mic, MicOff, PhoneOff, SlidersHorizontal } from 'lucide-react';
+import {
+  AudioLines,
+  Disc,
+  Film,
+  Mic,
+  MicOff,
+  PhoneOff,
+  SlidersHorizontal,
+  Square,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,12 +25,14 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Preset } from '@/data/presets';
 import { useAgent } from '@/hooks/use-agent';
+import { type CallRecording, canRecordCalls } from '@/hooks/use-call-recording';
 import { useConnection } from '@/hooks/use-connection';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { CharacterAvatar } from './character-avatar';
@@ -141,13 +152,54 @@ function AudioSettingsMenu() {
   );
 }
 
+function RecordButton({ recording }: { recording: CallRecording }) {
+  const t = useTranslations('call.inCall');
+  if (recording.mode) {
+    return (
+      <button
+        aria-label={t('stopRecording')}
+        className={`${roundButton} border border-red-500/60 bg-red-950/40 text-red-400 hover:bg-red-950/60`}
+        onClick={recording.stop}
+        type="button"
+      >
+        <Square aria-hidden="true" className="size-5 fill-current" />
+      </button>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          aria-label={t('record')}
+          className={`${roundButton} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
+          type="button"
+        >
+          <Disc aria-hidden="true" className="size-6" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
+        <DropdownMenuItem onSelect={() => recording.start('audio')}>
+          <AudioLines aria-hidden="true" />
+          {t('recordVoice')}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => recording.start('video')}>
+          <Film aria-hidden="true" />
+          {t('recordVideo')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function InCallView({
   elapsed,
   preset,
+  recording,
 }: {
   /** Formatted call duration. */
   elapsed: string;
   preset: Preset;
+  recording: CallRecording;
 }) {
   const t = useTranslations('call.inCall');
   const connectionState = useConnectionState();
@@ -203,6 +255,9 @@ export function InCallView({
             <Mic aria-hidden="true" className="size-6" />
           )}
         </button>
+        {connected && canRecordCalls() && (
+          <RecordButton recording={recording} />
+        )}
         <button
           aria-label={t('end')}
           className={`${roundButton} bg-red-600 text-white hover:bg-red-500`}

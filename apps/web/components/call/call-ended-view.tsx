@@ -1,9 +1,10 @@
 'use client';
 
-import { Loader2, Pencil, PhoneCall } from 'lucide-react';
+import { AudioLines, Film, Loader2, Pencil, PhoneCall } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { Preset } from '@/data/presets';
+import type { CallRecordingFiles } from '@/hooks/use-call-recording';
 import { CharacterAvatar } from './character-avatar';
 
 interface CallEndedViewProps {
@@ -15,7 +16,12 @@ interface CallEndedViewProps {
   /** Omitted when the user cannot make another character. */
   onRemix?: () => void;
   preset: Preset;
+  /** Files recorded in the browser during the call. */
+  recording?: CallRecordingFiles;
 }
+
+const downloadLink =
+  'inline-flex h-9 items-center gap-1.5 rounded-[10px] px-3 font-medium text-sm text-violet-300 hover:bg-violet-950/40';
 
 const secondaryButton =
   'inline-flex h-[46px] items-center gap-2 rounded-[10px] border border-slate-700/70 bg-slate-800/60 px-[18px] font-semibold text-[15px] text-slate-200 hover:bg-slate-800';
@@ -28,6 +34,7 @@ export function CallEndedView({
   onEdit,
   onRemix,
   preset,
+  recording = {},
 }: CallEndedViewProps) {
   const t = useTranslations('call.ended');
   const isOwn = !preset.isPublic;
@@ -85,6 +92,30 @@ export function CallEndedView({
           {t('back')}
         </button>
       </div>
+      {(recording.audio || recording.video) && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {recording.audio && (
+            <a
+              className={downloadLink}
+              download={recording.audio.filename}
+              href={recording.audio.url}
+            >
+              <AudioLines aria-hidden="true" className="size-4" />
+              {t('downloadAudio')}
+            </a>
+          )}
+          {recording.video && (
+            <a
+              className={downloadLink}
+              download={recording.video.filename}
+              href={recording.video.url}
+            >
+              <Film aria-hidden="true" className="size-4" />
+              {t('downloadVideo')}
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -825,7 +825,11 @@
       "mute": "Couper le micro",
       "unmute": "Réactiver le micro",
       "end": "Raccrocher",
-      "audioSettings": "Paramètres audio"
+      "audioSettings": "Paramètres audio",
+      "record": "Enregistrer",
+      "stopRecording": "Arrêter l'enregistrement",
+      "recordVoice": "Voix seulement",
+      "recordVideo": "Voix et vidéo"
     },
     "ended": {
       "title": "Appel avec {name} terminé · {duration}",
@@ -833,7 +837,9 @@
       "callAgain": "Rappeler",
       "edit": "Modifier {name}",
       "makeYourOwn": "Créer votre propre version",
-      "back": "Retour aux personnages"
+      "back": "Retour aux personnages",
+      "downloadAudio": "Télécharger l'audio",
+      "downloadVideo": "Télécharger la vidéo"
     },
     "clone": {
       "title": "Cloner une voix",

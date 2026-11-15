@@ -821,7 +821,11 @@
       "mute": "Slå mikrofon fra",
       "unmute": "Slå mikrofon til",
       "end": "Afslut opkald",
-      "audioSettings": "Lydindstillinger"
+      "audioSettings": "Lydindstillinger",
+      "record": "Optag",
+      "stopRecording": "Stop optagelse",
+      "recordVoice": "Kun stemme",
+      "recordVideo": "Stemme og video"
     },
     "ended": {
       "title": "Opkald med {name} afsluttet · {duration}",
@@ -829,7 +833,9 @@
       "callAgain": "Ring igen",
       "edit": "Rediger {name}",
       "makeYourOwn": "Lav din egen version",
-      "back": "Tilbage til karaktererne"
+      "back": "Tilbage til karaktererne",
+      "downloadAudio": "Download lyd",
+      "downloadVideo": "Download video"
     },
     "clone": {
       "title": "Klon en stemme",

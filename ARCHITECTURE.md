@@ -517,6 +517,12 @@ offers Call again and editing. The in-call timer starts when the agent first
 reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
 starts billing.
 
+The in-call Record button offers Voice only or Voice and video.
+`hooks/use-call-recording.ts` records in the browser: a stereo audio file (the
+user on the left, the character on the right) and, for video, a square video of
+the avatar, name and timer. A recording stops when the user stops it or the
+call ends. The ended view links the files for download. Nothing is uploaded.
+
 Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
