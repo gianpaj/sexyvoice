@@ -8,8 +8,9 @@ later; this fix does not claim to resolve a locale-specific call outage.
 
 ## Decision
 
-`PresetSave` omits the ID for creation. `SaveCharacterPayload.id` is optional;
-updates retain the existing character UUID. Server UUID validation stays strict.
+`buildSaveCharacterPayload` omits the ID for creation.
+`SaveCharacterPayload.id` is optional; updates retain the existing character
+UUID. Server UUID validation stays strict.
 Accepting empty IDs on the server would conceal the client contract mismatch
 and weaken validation for all callers.
 
