@@ -9,10 +9,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CallExperience } from '@/components/call/call-experience';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
+import type { CallLanguage } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import type { SavedCallVoice } from '@/lib/call-voices';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import messages from '@/messages/en.json';
 
 const connection = vi.hoisted(() => ({
@@ -96,6 +98,10 @@ const featured: Preset = {
   instructions: '',
   isPublic: true,
   localizedDescriptions: { en: 'Shy, warm, and playful.' },
+  localizedInstructions: {
+    en: 'You are Lily, a warm conversation partner.',
+    es: 'Eres Lily, una compañera de conversación amable.',
+  },
   name: 'Lily',
   sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   voiceName: 'Ara',
@@ -140,18 +146,22 @@ let fetchMock: ReturnType<typeof vi.fn>;
 function renderExperience({
   customCharacters = [own],
   isPaidUser = true,
+  locale = 'en',
+  callLanguage = locale,
   returnFromClone = null,
 }: {
   customCharacters?: Preset[];
   isPaidUser?: boolean;
+  locale?: Locale;
+  callLanguage?: CallLanguage;
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <PlaygroundStateProvider
         defaultPresets={[featured]}
         initialCustomCharacters={customCharacters}
-        initialState={{ selectedPresetId: featured.id }}
+        initialState={{ language: callLanguage, selectedPresetId: featured.id }}
       >
         <CallExperience
           callVoices={callVoices}
@@ -403,22 +413,43 @@ describe('CallExperience panel', () => {
     expect(screen.getByTestId('call-panel')).toBeInTheDocument();
   });
 
-  it('starts a remix of a featured character without its prompt', async () => {
-    const user = userEvent.setup();
-    renderExperience();
+  it.each([
+    ['en', 'en', featured.localizedInstructions?.en],
+    ['en', 'es', featured.localizedInstructions?.en],
+    ['es', 'en', featured.localizedInstructions?.es],
+    ['fr', 'fr', featured.localizedInstructions?.en],
+  ] as const)(
+    'prefills a featured copy in website locale %s with call language %s',
+    async (locale, callLanguage, instructions) => {
+      const user = userEvent.setup();
+      renderExperience({ callLanguage, locale });
 
-    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'Make your own version' }),
-    );
+      await user.click(screen.getByRole('button', { name: 'Open Lily' }));
+      await user.click(
+        await screen.findByRole('button', { name: 'Make your own version' }),
+      );
 
-    const creator = await screen.findByTestId('character-creator');
-    expect(within(creator).getByLabelText('Name')).toHaveValue('My Lily');
-    expect(
-      within(creator).getByRole('textbox', { name: 'Personality' }),
-    ).toHaveValue('');
-    expect(within(creator).getByRole('radio', { name: /Ara/ })).toBeChecked();
-  });
+      const creator = await screen.findByTestId('character-creator');
+      expect(within(creator).getByLabelText('Name')).toHaveValue('My Lily');
+      expect(
+        within(creator).getByRole('textbox', { name: 'Personality' }),
+      ).toHaveValue(instructions);
+      expect(within(creator).getByRole('radio', { name: /Ara/ })).toBeChecked();
+
+      await user.click(
+        within(creator).getByRole('button', { name: 'Save character' }),
+      );
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(lastPostBody()).not.toHaveProperty('id');
+      expect(lastPostBody()).toMatchObject({
+        localizedDescriptions: {
+          [callLanguage]: featured.localizedDescriptions?.en,
+        },
+        localizedPrompts: { [callLanguage]: instructions },
+        prompt: instructions,
+      });
+    },
+  );
 });
 
 describe('CallExperience creator', () => {
@@ -548,6 +579,56 @@ describe('CallExperience creator', () => {
     expect(toastMock.success).toHaveBeenCalledWith('Marco updated');
   });
 
+  it.each([
+    ['Edit', 'Save changes', true],
+    ['Duplicate', 'Save character', false],
+  ] as const)(
+    '%s uses the call language when it differs from the website locale',
+    async (action, saveLabel, updating) => {
+      const user = userEvent.setup();
+      renderExperience({
+        callLanguage: 'es',
+        customCharacters: [
+          {
+            ...own,
+            localizedInstructions: {
+              ...own.localizedInstructions,
+              es: 'Eres Marco, un profesor paciente.',
+            },
+          },
+        ],
+        locale: 'en',
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'More options for Marco' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: action }));
+      const creator = await screen.findByTestId('character-creator');
+      const personality = within(creator).getByRole('textbox', {
+        name: 'Personality',
+      });
+      expect(personality).toHaveValue('Eres Marco, un profesor paciente.');
+
+      await user.clear(personality);
+      await user.type(personality, 'Eres Marco, un profesor estricto.');
+      await user.click(
+        within(creator).getByRole('button', { name: saveLabel }),
+      );
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(lastPostBody()).toMatchObject({
+        localizedPrompts: {
+          en: own.instructions,
+          es: 'Eres Marco, un profesor estricto.',
+        },
+        prompt: own.instructions,
+      });
+      if (updating) expect(lastPostBody().id).toBe(own.id);
+      else expect(lastPostBody()).not.toHaveProperty('id');
+    },
+  );
+
   it('asks before discarding unsaved changes', async () => {
     const user = userEvent.setup();
     renderExperience();
@@ -587,89 +668,101 @@ describe('CallExperience creator', () => {
     ).not.toBeChecked();
   });
 
-  it('clones a voice from an upload and selects it', async () => {
-    const user = userEvent.setup();
-    renderExperience();
+  it.each(['create', 'remix'] as const)(
+    'clones a voice in the call language from the %s creator',
+    async (intent) => {
+      const user = userEvent.setup();
+      renderExperience({ callLanguage: 'ja', locale: 'en' });
 
-    await user.click(
-      screen.getByRole('button', { name: /Create a character/ }),
-    );
-    const creator = await screen.findByTestId('character-creator');
-    await user.click(
-      within(creator).getByRole('button', { name: /Clone a voice/ }),
-    );
-    const dialog = await screen.findByTestId('clone-voice-dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
-    expect(
-      within(dialog).getByText('Record at least 10 seconds first.'),
-    ).toBeInTheDocument();
+      if (intent === 'remix') {
+        await user.click(screen.getByRole('button', { name: 'Open Lily' }));
+        await user.click(
+          await screen.findByRole('button', { name: 'Make your own version' }),
+        );
+      } else {
+        await user.click(
+          screen.getByRole('button', { name: /Create a character/ }),
+        );
+      }
+      const creator = await screen.findByTestId('character-creator');
+      await user.click(
+        within(creator).getByRole('button', { name: /Clone a voice/ }),
+      );
+      const dialog = await screen.findByTestId('clone-voice-dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+      expect(
+        within(dialog).getByText('Record at least 10 seconds first.'),
+      ).toBeInTheDocument();
 
-    await user.click(
-      within(dialog).getByRole('button', { name: 'Upload a file' }),
-    );
-    const sample = new File(['audio'], 'sample.wav', { type: 'audio/wav' });
-    await user.upload(
-      dialog.querySelector('input[type="file"]') as HTMLInputElement,
-      sample,
-    );
-    expect(within(dialog).getByText('sample.wav')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Upload a file' }),
+      );
+      const sample = new File(['audio'], 'sample.wav', { type: 'audio/wav' });
+      await user.upload(
+        dialog.querySelector('input[type="file"]') as HTMLInputElement,
+        sample,
+      );
+      expect(within(dialog).getByText('sample.wav')).toBeInTheDocument();
+      await user.click(within(dialog).getByRole('button', { name: 'Next' }));
 
-    const name = within(dialog).getByLabelText('Name this voice');
-    expect(name).toHaveValue('My voice 2');
-    await user.clear(name);
-    await user.type(name, 'Radio voice');
-    await user.click(
-      within(dialog).getByRole('button', { name: 'Create voice' }),
-    );
-    expect(
-      within(dialog).getByText(
-        'Please confirm you have permission to clone this voice.',
-      ),
-    ).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+      const name = within(dialog).getByLabelText('Name this voice');
+      expect(name).toHaveValue('My voice 2');
+      await user.clear(name);
+      await user.type(name, 'Radio voice');
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Create voice' }),
+      );
+      expect(
+        within(dialog).getByText(
+          'Please confirm you have permission to clone this voice.',
+        ),
+      ).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
 
-    await user.click(within(dialog).getByRole('checkbox'));
-    await user.click(
-      within(dialog).getByRole('button', { name: 'Create voice' }),
-    );
-    expect(
-      await within(dialog).findByText('“Radio voice” is ready'),
-    ).toBeInTheDocument();
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('/api/clone-voice');
-    const form = init.body as FormData;
-    expect(form.get('saveVoiceName')).toBe('Radio voice');
-    expect(form.get('voiceConsent')).toBe('true');
-    expect(form.get('locale')).toBe('en');
-    expect(form.get('file')).toBe(sample);
+      await user.click(within(dialog).getByRole('checkbox'));
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Create voice' }),
+      );
+      expect(
+        await within(dialog).findByText('“Radio voice” is ready'),
+      ).toBeInTheDocument();
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('/api/clone-voice');
+      const form = init.body as FormData;
+      expect(form.get('saveVoiceName')).toBe('Radio voice');
+      expect(form.get('voiceConsent')).toBe('true');
+      expect(form.get('locale')).toBe('ja');
+      expect(form.get('file')).toBe(sample);
 
-    await user.click(
-      within(dialog).getByRole('button', { name: 'Use this voice' }),
-    );
-    expect(screen.queryByTestId('clone-voice-dialog')).not.toBeInTheDocument();
-    expect(
-      within(creator).getByRole('radio', { name: /Radio voice/ }),
-    ).toBeChecked();
-    expect(within(creator).getByText('New')).toBeInTheDocument();
-    await user.type(within(creator).getByLabelText('Name'), 'Radio host');
-    await user.click(
-      within(creator).getByRole('button', { name: 'Interview coach' }),
-    );
-    await user.click(
-      within(creator).getByRole('button', { name: 'Save character' }),
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId('call-panel')).toBeInTheDocument(),
-    );
-    expect(lastPostBody()).toMatchObject({
-      sessionConfig: {
-        model: ModelId.INWORLD_TTS,
-        audioReferenceId: clonedVoiceId,
-        voice: 'Radio voice',
-      },
-    });
-  });
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Use this voice' }),
+      );
+      expect(
+        screen.queryByTestId('clone-voice-dialog'),
+      ).not.toBeInTheDocument();
+      expect(
+        within(creator).getByRole('radio', { name: /Radio voice/ }),
+      ).toBeChecked();
+      expect(within(creator).getByText('New')).toBeInTheDocument();
+      await user.type(within(creator).getByLabelText('Name'), 'Radio host');
+      await user.click(
+        within(creator).getByRole('button', { name: 'Interview coach' }),
+      );
+      await user.click(
+        within(creator).getByRole('button', { name: 'Save character' }),
+      );
+      await waitFor(() =>
+        expect(screen.getByTestId('call-panel')).toBeInTheDocument(),
+      );
+      expect(lastPostBody()).toMatchObject({
+        sessionConfig: {
+          model: ModelId.INWORLD_TTS,
+          audioReferenceId: clonedVoiceId,
+          voice: 'Radio voice',
+        },
+      });
+    },
+  );
 });
 
 describe('CallExperience clone without MediaRecorder', () => {

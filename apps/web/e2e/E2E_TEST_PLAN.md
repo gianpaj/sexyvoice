@@ -166,6 +166,8 @@ Reason:
 - the Clone a voice dialog opens and asks for a recording before Next
 - paid users create, duplicate and edit characters on the English and German
   sites; the duplicate keeps the prompt and the edit leaves the original alone
+- paid users making a private version of a featured character start with its
+  instructions in the website locale on the English and German sites
 - deleting a character waits for the Undo toast, and Undo sends no request
 - the picker and creator fit desktop and mobile widths
 
@@ -182,7 +184,8 @@ Reason:
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
 call voices, saved Mistral profiles for paid users, credit transactions, and
-instruction config.
+instruction config. Paid users receive synthetic localized Lily instructions
+for the featured character creator; free users receive no character prompt text.
 Custom characters start empty. Authentication still runs.
 
 The character scenarios intercept `/api/characters` with a per-test in-memory

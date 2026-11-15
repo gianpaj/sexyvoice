@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { getTranslations } from 'next-intl/server';
 
 import { CallExperience } from '@/components/call/call-experience';
@@ -16,19 +17,18 @@ import {
   E2E_CALL_INSTRUCTION_CONFIG,
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
+  E2E_PUBLIC_CALL_CHARACTER_PROMPTS,
   E2E_PUBLIC_CALL_CHARACTERS,
   E2E_SAVED_CALL_VOICES,
 } from '@/lib/e2e-mocks';
-import {
-  applyPresetInstructionOverrides,
-  getCallInstructionConfig,
-} from '@/lib/edge-config/call-instructions';
+import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getSavedCallVoices } from '@/lib/supabase/call-voices';
 import {
   getCallVoices,
   getCreditTransactionAmounts,
+  getPublicCallCharacterPrompts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
@@ -70,7 +70,7 @@ export default async function Call(props: {
     isPaidUser,
     callVoices,
     savedVoices,
-    { defaultInstructions, initialInstruction, presetInstructions },
+    { defaultInstructions, initialInstruction },
     publicCharacters,
   ] = e2e
     ? [
@@ -89,14 +89,30 @@ export default async function Call(props: {
         getCallInstructionConfig(),
         getPublicCallCharacters(),
       ]);
-  const userCharacters =
-    !e2e && isPaidUser ? await getUserCallCharacters(userId) : [];
+  const [userCharacters, publicCharacterPrompts] =
+    !e2e && isPaidUser
+      ? await Promise.all([
+          getUserCallCharacters(userId),
+          getPublicCallCharacterPrompts().catch((error) => {
+            captureException(error, {
+              tags: { area: 'call-character-prefill' },
+            });
+            return [];
+          }),
+        ])
+      : [[], e2e && isPaidUser ? E2E_PUBLIC_CALL_CHARACTER_PROMPTS : []];
+  const promptsByCharacter = new Map(
+    (publicCharacterPrompts ?? []).map(({ id, prompts }) => [id, prompts]),
+  );
 
-  const defaultPresets = applyPresetInstructionOverrides(
-    (publicCharacters ?? []).map((character) =>
-      mapCharacterToPreset(character as CharacterRow),
-    ),
-    presetInstructions,
+  const defaultPresets = (publicCharacters ?? []).map((character) =>
+    mapCharacterToPreset({
+      ...character,
+      prompts: {
+        ...character.prompts,
+        ...promptsByCharacter.get(character.id),
+      },
+    } as CharacterRow),
   );
   const initialCustomCharacters = (userCharacters ?? []).map((character) =>
     mapCharacterToPreset(character as CharacterRow),
