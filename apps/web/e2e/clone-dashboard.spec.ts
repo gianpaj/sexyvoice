@@ -1,4 +1,5 @@
 import { argosScreenshot } from './argos-screenshot';
+import { setE2ECallUser } from './e2e-call-user';
 import { expect, test } from './fixtures';
 import { ClonePage } from './pages/clone.page';
 
@@ -19,7 +20,9 @@ import { ClonePage } from './pages/clone.page';
 test.describe('Clone Dashboard - Authenticated User', () => {
   let clonePage: ClonePage;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ baseURL, page }) => {
+    // Paid, so the screenshot includes the fixture saved voices.
+    await setE2ECallUser(page, baseURL, 'paid');
     clonePage = new ClonePage(page);
     await clonePage.goto();
   });

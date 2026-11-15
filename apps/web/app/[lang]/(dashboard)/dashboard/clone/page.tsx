@@ -7,6 +7,8 @@ import { getDemoCloneSelection } from '@/data/demo-clone';
 import { savedVoiceUsers } from '@/lib/call-voices';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
+import { getE2ECallUser } from '@/lib/e2e-call-user';
+import { E2E_SAVED_CALL_VOICES } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getSavedCallVoices } from '@/lib/supabase/call-voices';
@@ -50,6 +52,10 @@ export default async function NewVoicePage(props: {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
+  // E2E fixes entitlement and saved voices so Argos screenshots don't track
+  // the test account's live data. See lib/e2e-mocks.ts.
+  const e2e = await getE2ECallUser();
+  const e2eSavedVoices = e2e?.isPaidUser ? E2E_SAVED_CALL_VOICES : [];
   const [
     creditBalance,
     creditTransactions,
@@ -59,9 +65,9 @@ export default async function NewVoicePage(props: {
   ] = await Promise.all([
     getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
     getCreditTransactionAmounts(userId),
-    hasUserPaid(userId),
-    getSavedCallVoices(userId),
-    getUserCallCharacters(userId),
+    e2e ? e2e.isPaidUser : hasUserPaid(userId),
+    e2e ? e2eSavedVoices : getSavedCallVoices(userId),
+    e2e ? [] : getUserCallCharacters(userId),
   ]);
 
   return (

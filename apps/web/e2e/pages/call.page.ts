@@ -6,7 +6,7 @@ import { E2E_PUBLIC_CALL_CHARACTERS } from '@/lib/e2e-mocks-shared';
  * Page Object Model for Call Dashboard
  *
  * The page has three screens and a panel:
- * - Picker: "Your characters" (Create card first) and "Featured" grids
+ * - Picker: "Your characters" (Create card last) and "Featured" grids
  * - Creator: name, personality and voice sections with a sticky save bar
  * - Call panel: a sheet with voice, language, scene, microphone and Start call
  * - In call / ended (not covered: tests never connect to LiveKit)
