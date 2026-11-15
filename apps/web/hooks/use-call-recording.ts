@@ -48,7 +48,7 @@ const MIME_TYPES: Record<CallRecordingMode, string[]> = {
 };
 const BITRATES: Record<CallRecordingMode, MediaRecorderOptions> = {
   audio: { audioBitsPerSecond: 128_000 },
-  video: { audioBitsPerSecond: 128_000, videoBitsPerSecond: 2_500_000 },
+  video: { audioBitsPerSecond: 128_000, videoBitsPerSecond: 1_000_000 },
 };
 
 // Recordings put the user on the left channel and the character on the right.
@@ -64,6 +64,11 @@ interface Session {
   stop: () => void;
 }
 
+interface SessionEvents {
+  onError: () => void;
+  onFile: (kind: CallRecordingMode, blob: Blob, mimeType: string) => void;
+}
+
 /** Whether this browser can record a call. */
 export function canRecordCalls() {
   return (
@@ -76,7 +81,7 @@ export function canRecordCalls() {
 function record(
   stream: MediaStream,
   kind: CallRecordingMode,
-  onFile: (blob: Blob, mimeType: string) => void,
+  events: SessionEvents,
 ) {
   const supported =
     MIME_TYPES[kind].find((type) => MediaRecorder.isTypeSupported(type)) ?? '';
@@ -88,10 +93,14 @@ function record(
   const stopped = new Promise<void>((resolve) => {
     recorder.onstop = () => {
       const mimeType = recorder.mimeType || supported;
-      if (chunks.length) onFile(new Blob(chunks, { type: mimeType }), mimeType);
+      if (chunks.length) {
+        events.onFile(kind, new Blob(chunks, { type: mimeType }), mimeType);
+      }
       resolve();
     };
   });
+  // The recorder stops itself after an error and still reports what it has.
+  recorder.onerror = events.onError;
   recorder.ondataavailable = (event) => {
     if (event.data.size) chunks.push(event.data);
   };
@@ -102,7 +111,7 @@ function record(
   };
 }
 
-function extension(mimeType: string, kind: CallRecordingMode) {
+export function recordingExtension(mimeType: string, kind: CallRecordingMode) {
   if (mimeType.includes('mp4')) return kind === 'audio' ? 'm4a' : 'mp4';
   return 'webm';
 }
@@ -110,7 +119,7 @@ function extension(mimeType: string, kind: CallRecordingMode) {
 /** Draws one frame of the in-call screen: avatar, voice halo, name, time. */
 function paint(
   ctx: CanvasRenderingContext2D,
-  preset: Preset,
+  character: Preset,
   avatar: HTMLImageElement | null,
   level: number,
   elapsed: string,
@@ -152,7 +161,7 @@ function paint(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(
-      (preset.name.trim().charAt(0) || '?').toUpperCase(),
+      (character.name.trim().charAt(0) || '?').toUpperCase(),
       center,
       avatarY,
     );
@@ -163,7 +172,7 @@ function paint(
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#f8fafc';
   ctx.font = `700 44px ${FONT}`;
-  ctx.fillText(preset.name, center, 520, VIDEO_SIZE - 80);
+  ctx.fillText(character.name, center, 520, VIDEO_SIZE - 80);
   ctx.fillStyle = '#94a3b8';
   ctx.font = `500 28px ${FONT}`;
   ctx.fillText(elapsed, center, 568);
@@ -174,24 +183,24 @@ function paint(
 
 /**
  * Records a square video of the in-call screen with the call audio, redrawn
- * every animation frame. Returns its recorder's stop function.
+ * every animation frame. Returns its stop function.
  */
 function recordVideo(
   context: AudioContext,
   mix: AudioNode,
   audio: MediaStream,
-  preset: Preset,
-  onFile: (blob: Blob, mimeType: string) => void,
+  character: Preset,
+  events: SessionEvents,
 ) {
   const canvas = document.createElement('canvas');
   canvas.width = VIDEO_SIZE;
   canvas.height = VIDEO_SIZE;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
+  if (!ctx) throw new Error('Canvas 2D is unavailable');
   let avatar: HTMLImageElement | null = null;
-  if (preset.image) {
+  if (character.image) {
     avatar = new Image();
-    avatar.src = `/characters/${preset.image}`;
+    avatar.src = `/characters/${character.image}`;
   }
   const analyser = context.createAnalyser();
   analyser.fftSize = 1024;
@@ -208,79 +217,84 @@ function recordVideo(
     for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
     level = Math.max(Math.min(1, peak * 2), level * 0.9);
     const seconds = Math.floor((performance.now() - startedAt) / 1000);
-    paint(ctx, preset, avatar, level, formatTime(seconds));
+    paint(ctx, character, avatar, level, formatTime(seconds));
   };
   draw();
 
-  // Safari ends a recording when a track is added to a running recorder,
-  // so the video gets its own recorder over a stream built up front.
-  const stream = canvas.captureStream(VIDEO_FPS);
-  for (const track of audio.getAudioTracks()) stream.addTrack(track);
-  const stop = record(stream, 'video', onFile);
-  return () => {
+  try {
+    // Safari ends a recording when a track is added to a running recorder,
+    // so the video gets its own recorder over a stream built up front.
+    const stream = canvas.captureStream(VIDEO_FPS);
+    for (const track of audio.getAudioTracks()) stream.addTrack(track);
+    const stop = record(stream, 'video', events);
+    return () => {
+      cancelAnimationFrame(frame);
+      return stop();
+    };
+  } catch (error) {
     cancelAnimationFrame(frame);
-    return stop();
-  };
+    throw error;
+  }
 }
 
 /**
  * Mixes both voices into a stereo audio file and, in video mode, also records
- * the in-call screen. Reports each file once its recorder stops.
+ * the in-call screen. Throws, with everything released, when a part fails to
+ * start.
  */
 function startSession(
-  preset: Preset,
+  character: Preset,
   mode: CallRecordingMode,
-  onFile: (kind: CallRecordingMode, file: CallRecordingFile) => void,
+  events: SessionEvents,
 ): Session {
   const context = new AudioContext();
-  context.resume().catch(() => undefined);
-  const merger = context.createChannelMerger(2);
-  const destination = context.createMediaStreamDestination();
-  destination.channelCount = 2;
-  merger.connect(destination);
-
-  const save = (kind: CallRecordingMode) => (blob: Blob, mimeType: string) =>
-    onFile(kind, {
-      filename: `${preset.name} - SexyVoice.${extension(mimeType, kind)}`,
-      url: URL.createObjectURL(blob),
-    });
-
-  const stops = [record(destination.stream, 'audio', save('audio'))];
-  if (mode === 'video') {
-    const stopVideo = recordVideo(
-      context,
-      merger,
-      destination.stream,
-      preset,
-      save('video'),
-    );
-    if (stopVideo) stops.push(stopVideo);
-  }
-
-  return {
-    connect: (track, channel) => {
-      const source = context.createMediaStreamSource(new MediaStream([track]));
-      source.connect(merger, 0, channel);
-      return () => source.disconnect();
-    },
-    stop: () => {
-      Promise.all(stops.map((stop) => stop()))
-        .then(() => context.close())
-        .catch(() => undefined);
-    },
+  const stops: (() => Promise<void>)[] = [];
+  const stop = () => {
+    Promise.all(stops.map((stopRecorder) => stopRecorder()))
+      .then(() => context.close())
+      .catch(() => undefined);
   };
+  try {
+    context.resume().catch(() => undefined);
+    const merger = context.createChannelMerger(2);
+    const destination = context.createMediaStreamDestination();
+    destination.channelCount = 2;
+    merger.connect(destination);
+
+    stops.push(record(destination.stream, 'audio', events));
+    if (mode === 'video') {
+      stops.push(
+        recordVideo(context, merger, destination.stream, character, events),
+      );
+    }
+
+    return {
+      connect: (track, channel) => {
+        const source = context.createMediaStreamSource(
+          new MediaStream([track]),
+        );
+        source.connect(merger, 0, channel);
+        return () => source.disconnect();
+      },
+      stop,
+    };
+  } catch (error) {
+    stop();
+    throw error;
+  }
 }
 
 /**
  * Records the call in the browser on request: a stereo audio file (you left,
  * the character right) and, in video mode, a square video of the in-call
- * screen. A recording stops when the user stops it or the call ends. The
- * files stay on the device until the user downloads them.
+ * screen. A recording stops when the user stops it or the call ends. Files
+ * belong to one call: a new call or a new recording clears them. They stay
+ * on the device until the user downloads them.
  *
  * Must be used inside a LiveKit room.
  */
 export function useCallRecording(
-  preset: Preset | undefined,
+  character: Preset | undefined,
   inCall: boolean,
 ): CallRecording {
   const { microphoneTrack } = useLocalParticipant();
@@ -291,25 +305,48 @@ export function useCallRecording(
   const [session, setSession] = useState<Session | null>(null);
   const [files, setFiles] = useState<CallRecordingFiles>({});
   const urls = useRef<string[]>([]);
+  // Recorders report after they stop. Only the latest recording, while the
+  // hook is mounted, may add files.
+  const current = useRef<object | null>(null);
 
-  const begin = useEffectEvent((recordingMode: CallRecordingMode) => {
-    if (!(preset && canRecordCalls())) return null;
+  const clearFiles = () => {
+    current.current = null;
     for (const url of urls.current) URL.revokeObjectURL(url);
     urls.current = [];
     setFiles({});
+  };
+
+  const begin = useEffectEvent((recordingMode: CallRecordingMode) => {
+    if (!(character && canRecordCalls())) return null;
+    clearFiles();
+    const token = {};
+    current.current = token;
+    const { name } = character;
     try {
-      return startSession(preset, recordingMode, (kind, file) => {
-        urls.current.push(file.url);
-        setFiles((current) => ({ ...current, [kind]: file }));
+      return startSession(character, recordingMode, {
+        onError: () => {
+          if (current.current === token) setMode(null);
+        },
+        onFile: (kind, blob, mimeType) => {
+          if (current.current !== token) return;
+          const url = URL.createObjectURL(blob);
+          urls.current.push(url);
+          const filename = `${name} - SexyVoice.${recordingExtension(mimeType, kind)}`;
+          setFiles((previous) => ({ ...previous, [kind]: { filename, url } }));
+        },
       });
     } catch (error) {
       console.warn('Call recording could not start', error);
+      current.current = null;
       return null;
     }
   });
 
+  const startCall = useEffectEvent(clearFiles);
+
   useEffect(() => {
-    if (!inCall) setMode(null);
+    if (inCall) startCall();
+    else setMode(null);
   }, [inCall]);
 
   useEffect(() => {
@@ -338,6 +375,7 @@ export function useCallRecording(
 
   useEffect(
     () => () => {
+      current.current = null;
       for (const url of urls.current) URL.revokeObjectURL(url);
     },
     [],

@@ -11,8 +11,7 @@ Users had no way to keep a call's audio. The agent stores the transcript only.
 `useCallRecording` in `apps/web/hooks/use-call-recording.ts` records a call
 in the browser when the user asks. The in-call Record button opens a menu with
 Voice only and Voice and video; while recording, the same button stops it. The
-recording also stops when the call ends. Starting again replaces the earlier
-files.
+recording also stops when the call ends or a recorder reports an error.
 
 - One `AudioContext` merges the local microphone track into the left channel
   and the agent's audio track into the right. A `MediaRecorder` writes that
@@ -26,7 +25,11 @@ files.
 - Source nodes reconnect when LiveKit replaces a track, for example after a
   microphone switch.
 - `CallEndedView` shows Download audio and Download video links to blob URLs.
-  The hook revokes them when the next call starts or the page unmounts.
+- Files belong to one call. A new call or a new recording revokes and clears
+  them. Recorders report after they stop, so each recording has a token, and
+  a report from a replaced recording, or after unmount, is dropped.
+- Starting is all or nothing: if the video part fails, the audio recorder
+  stops and the `AudioContext` closes.
 
 The pattern follows Haru's conversation recorder
 (`higurashi-ai/Haru`, `client/src/pages/Conversation`).
@@ -46,8 +49,9 @@ The pattern follows Haru's conversation recorder
 ## Consequences
 
 - No upload, storage, or privacy surface: the files exist only in the tab.
-- Recordings stay in memory until download. The video is capped at
-  2.5 Mbps; the mostly static frame encodes far below that.
+- Recordings stay in memory until download, with no length limit. The video
+  is capped at 1 Mbps, about 450 MB an hour at most; the mostly static frame
+  encodes far below that.
 - Browsers throttle `requestAnimationFrame` in background tabs, so the video
   freezes while the tab is hidden. The audio keeps recording.
 - Firefox webm files have no duration metadata.
