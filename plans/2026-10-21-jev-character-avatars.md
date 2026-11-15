@@ -76,8 +76,8 @@ targets and calculations, not measurements.
   avatars. It interprets image values as `/characters/<filename>` and uses initials
   when no image exists. Generated image values need their own renderer branch.
 - No reusable application TypeSafe client exists; the only Jev use is the
-  issue-labeling workflow. `docs/devops.md` documents `TYPESAFE_API_KEY` for GitHub Actions;
-  application runtime access must be configured separately.
+  issue-labeling workflow. `docs/devops.md` documents `TYPESAFE_API_KEY` for
+  GitHub Actions; application runtime access must be configured separately.
 - `apps/web/lib/inngest/client.ts` exists, but the Inngest route registers no
   functions. This feature does not need a durable job system for its first version.
 
