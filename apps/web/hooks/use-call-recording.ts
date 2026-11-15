@@ -111,7 +111,7 @@ function record(
   };
 }
 
-export function recordingExtension(mimeType: string, kind: CallRecordingMode) {
+function recordingExtension(mimeType: string, kind: CallRecordingMode) {
   if (mimeType.includes('mp4')) return kind === 'audio' ? 'm4a' : 'mp4';
   return 'webm';
 }
