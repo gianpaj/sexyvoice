@@ -270,6 +270,11 @@ The call spec also uses inline route handlers to mock:
 This spec is intentionally UI-focused.
 It currently does **not** submit a real clone request and does **not** exercise the preview success state.
 
+In E2E mode the page reads entitlement from the `e2e-call-user` cookie, like
+the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
+users and are empty for free users; custom characters are empty. The spec sets
+no cookie, so it renders the free page.
+
 ---
 
 ## 4. Credits Dashboard
