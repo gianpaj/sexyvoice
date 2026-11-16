@@ -4,6 +4,7 @@ import { chat, createModel, extendAdapter } from '@tanstack/ai';
 import { createGrokText } from '@tanstack/ai-grok';
 
 import type { ProbeProviders, SpeechChunk } from './probe';
+import { OUTPUT_SAMPLE_RATE } from './protocol';
 import { grokLiveTranscription } from './upstream/grok';
 import { transcriptionSession } from './upstream/session';
 
@@ -65,7 +66,10 @@ export async function* streamInworldSpeech(
       text,
       voiceId: 'Ashley',
       modelId: 'inworld-tts-2',
-      audioConfig: { audioEncoding: 'PCM', sampleRateHertz: 48_000 },
+      audioConfig: {
+        audioEncoding: 'PCM',
+        sampleRateHertz: OUTPUT_SAMPLE_RATE,
+      },
     }),
   });
   if (!(response.ok && response.body))

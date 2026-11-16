@@ -33,6 +33,12 @@ recovery nor long-call viability. It reuses the exact Grok 4.20 model through
 TanStack's model-extension API and keeps the unmerged STT code attributed and
 isolated. Memory and customer billing remain production-readiness gates.
 
+Audio uses 24 kHz PCM and waits for each socket write before pulling another
+provider chunk. A five-second stalled write ends the probe. This bounds burst
+buffering and leaves bandwidth for the planned 1 Mbps network experiment;
+48 kHz base64 PCM alone would exceed that profile. Transport completion is not
+a playback acknowledgement.
+
 ## Alternatives considered
 
 - Keep Python/LiveKit: a tested voice runtime, but retains two languages and

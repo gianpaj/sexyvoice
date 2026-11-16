@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   clientMessageSchema,
   MAX_FRAME_BYTES,
+  OUTPUT_SAMPLE_RATE,
   type ServerEvent,
 } from './protocol';
 import type { TranscriptionSession } from './upstream/session';
@@ -32,6 +33,10 @@ export interface ProbeProviders {
 export function createVoiceProbe(options: {
   providers: ProbeProviders;
   emit: (event: ServerEvent) => void;
+  emitAudio: (
+    event: Extract<ServerEvent, { type: 'audio' }>,
+    signal: AbortSignal,
+  ) => Promise<void>;
   close: (code: number, reason: string) => void;
   leaseMs: number;
 }) {
@@ -131,7 +136,15 @@ export function createVoiceProbe(options: {
         )) {
           if (disposed || current !== turn) return;
           if (chunk.type === 'audio')
-            send({ type: 'audio', id, audio: chunk.audio, sampleRate: 48_000 });
+            await options.emitAudio(
+              {
+                type: 'audio',
+                id,
+                audio: chunk.audio,
+                sampleRate: OUTPUT_SAMPLE_RATE,
+              },
+              current.controller.signal,
+            );
           else
             send({
               type: 'usage',

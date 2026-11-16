@@ -4,6 +4,7 @@ import { createVoiceProbe, type ProbeProviders } from '@/lib/voice-spike/probe';
 import {
   clientMessageSchema,
   isSpikeAllowed,
+  type ServerEvent,
 } from '@/lib/voice-spike/protocol';
 
 function setup() {
@@ -29,15 +30,24 @@ function setup() {
     })),
   };
   const close = vi.fn();
+  const emitAudio = vi.fn(
+    async (
+      event: Extract<ServerEvent, { type: 'audio' }>,
+      _signal: AbortSignal,
+    ) => {
+      events.push(event);
+    },
+  );
   const probe = createVoiceProbe({
     close,
+    emitAudio,
     emit: (event) => {
       events.push(event);
     },
     providers,
     leaseMs: 60_000,
   });
-  return { close, closeStt, events, probe, providers, send };
+  return { close, closeStt, emitAudio, events, probe, providers, send };
 }
 
 async function settle() {
@@ -168,7 +178,7 @@ describe('voice probe concurrent provider lifecycle', () => {
       expect.objectContaining({
         type: 'audio',
         audio: 'AAA=',
-        sampleRate: 48_000,
+        sampleRate: 24_000,
       }),
     );
     probe.receive(JSON.stringify({ type: 'call.stop' }));
@@ -185,6 +195,54 @@ describe('voice probe concurrent provider lifecycle', () => {
       { role: 'assistant', content: 'Reply 1' },
       { role: 'user', content: 'What is my name?' },
     ]);
+    probe.dispose();
+  });
+
+  it('pauses provider audio while transport is busy and aborts that wait on interruption', async () => {
+    const { probe, providers, emitAudio, events } = setup();
+    const transcript = new TransformStream<
+      import('@/lib/voice-spike/upstream/adapter').LiveTranscriptionEvent
+    >();
+    const writer = transcript.writable.getWriter();
+    vi.mocked(providers.stt).mockResolvedValue({
+      send: vi.fn(),
+      close: async () => {
+        await writer.close();
+      },
+      [Symbol.asyncIterator]: () => transcript.readable[Symbol.asyncIterator](),
+    });
+    let chunksPulled = 0;
+    providers.speech = async function* () {
+      for (let i = 0; i < 10; i++) {
+        chunksPulled++;
+        yield { type: 'audio', audio: 'AAA=' };
+      }
+    };
+    let signal: AbortSignal | undefined;
+    emitAudio.mockImplementation((_event, current) => {
+      signal = current;
+      return new Promise((_resolve, reject) => {
+        current.addEventListener('abort', () => reject(current.reason), {
+          once: true,
+        });
+      });
+    });
+    probe.receive(JSON.stringify({ type: 'call.start', sampleRate: 48_000 }));
+    await settle();
+    await writer.write({ type: 'final', text: 'hello' });
+    await writer.write({ type: 'turn-end' });
+    await settle();
+    expect(chunksPulled).toBe(1);
+    probe.receive(JSON.stringify({ type: 'interrupt' }));
+    await settle();
+    expect(signal?.aborted).toBe(true);
+    expect(chunksPulled).toBe(1);
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'text.end', status: 'interrupted' }),
+    );
+    expect(events).not.toContainEqual(
+      expect.objectContaining({ type: 'error', code: 'provider' }),
+    );
     probe.dispose();
   });
 

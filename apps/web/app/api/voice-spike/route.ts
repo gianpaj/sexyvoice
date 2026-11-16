@@ -13,6 +13,7 @@ import {
   MAX_FRAME_BYTES,
 } from '@/lib/voice-spike/protocol';
 import { createProbeProviders } from '@/lib/voice-spike/providers';
+import { createAudioSender } from '@/lib/voice-spike/transport';
 
 export const runtime = 'nodejs';
 // Start within the all-plan ceiling. Short leases expose teardown and rotation
@@ -70,6 +71,10 @@ export async function GET(request: Request) {
         probe = createVoiceProbe({
           leaseMs,
           providers: createProbeProviders(),
+          emitAudio: createAudioSender(socket, () => {
+            socket.close(1008, 'Client stalled');
+            end();
+          }),
           close: (code, reason) => {
             socket.close(code, reason);
             end();

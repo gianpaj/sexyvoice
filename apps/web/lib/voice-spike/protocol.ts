@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+export const OUTPUT_SAMPLE_RATE = 24_000;
 export const MAX_FRAME_BYTES = 32_768;
 export const MAX_BUFFERED_BYTES = 262_144;
 const id = z.string().min(1).max(100);
@@ -46,7 +47,12 @@ export type ServerEvent =
       status: 'completed' | 'interrupted' | 'failed';
     }
   | { type: 'transcript'; text: string; final: boolean }
-  | { type: 'audio'; id: string; audio: string; sampleRate: 48000 }
+  | {
+      type: 'audio';
+      id: string;
+      audio: string;
+      sampleRate: typeof OUTPUT_SAMPLE_RATE;
+    }
   | { type: 'usage'; modality: 'llm' | 'tts'; usage: unknown }
   | { type: 'error'; code: 'invalid_message' | 'busy' | 'limit' | 'provider' }
   | { type: 'rotate'; recoverable: false };

@@ -53,7 +53,7 @@ describe('Inworld HTTP streaming', () => {
     expect(request.headers.Authorization).toBe('Basic test-key');
     expect(JSON.parse(request.body)).toMatchObject({
       modelId: 'inworld-tts-2',
-      audioConfig: { audioEncoding: 'PCM', sampleRateHertz: 48_000 },
+      audioConfig: { audioEncoding: 'PCM', sampleRateHertz: 24_000 },
     });
     expect(request.signal).toBe(controller.signal);
   });

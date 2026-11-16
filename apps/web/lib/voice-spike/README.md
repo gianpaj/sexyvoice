@@ -76,13 +76,16 @@ and one pending reply. A connection holds at most 40 history entries.
 
 Supported input rates are 8,000, 16,000, 22,050, 24,000, 44,100 and 48,000 Hz.
 The server sends `transcript` events and `audio` events with independent base64
-PCM16, 48,000 Hz, mono, and a turn ID. Clients must clear queued playback on
+PCM16, 24,000 Hz, mono, and a turn ID. Clients must clear queued playback on
 interruption, interim speech, disconnect and hangup. `text.end` indicates
 server output completion, not that audio has finished playing.
 
 Incoming frames are bounded to 32 KiB and 100 per second. Audio is bounded to
-two seconds of PCM per one-second window. A slow socket is disconnected above
-256 KiB buffered output. Output is capped at 256 model tokens, 4,000 UTF-16
+two seconds of PCM per one-second window. Audio writes wait for the socket
+callback before consuming another provider chunk. A write stalled for five
+seconds closes the connection; interruption cancels that wait. Control output
+is capped at 256 KiB buffered. At 24 kHz, base64 PCM uses about 512 kbit/s
+before framing, leaving headroom on the 1 Mbps network profile. Output is capped at 256 model tokens, 4,000 UTF-16
 code units and 6 MB decoded PCM per reply. Requested leases are 10–240 seconds,
 default 60; the function limit is 300 seconds, with deadline headroom.
 
