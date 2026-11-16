@@ -483,11 +483,11 @@ and protected call links. Paid chat and stream replay require runtime work.
 Validation against an isolated local database passed eight pgTAP files and
 130 assertions, including 48 conversation assertions. Production is unchanged.
 
-For a local Supabase project started by the developer, the developer applies
-pending migrations from `apps/web`:
+For the worktree's local Supabase project, apply pending migrations from
+`apps/web`:
 
 ```sh
-supabase db push --local
+supabase migration up --local
 ```
 
 After the migrations are applied, run the repository checks from its root:
@@ -500,7 +500,8 @@ pnpm generate-supabase-types:local
 Use the project's configured local ports. If another worktree owns those ports,
 create an isolated local project using Supabase's workdir/configuration options
 and pass its `--workdir` to the database tasks. No maintainer-local script is
-required. Follow [AGENTS.md](../AGENTS.md): agents do not apply migrations.
+required. Follow [AGENTS.md](../AGENTS.md): database writes target only the
+local project; production changes belong to the user.
 
 TanStack adapters, billing transactions, Python handoff, and mobile/network
 behavior require their runtime tests. The schema alone establishes none of

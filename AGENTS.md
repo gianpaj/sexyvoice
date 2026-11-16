@@ -20,9 +20,9 @@ Nested guidance:
 - For other changes, `pnpm fixall` and `pnpm type-check` must pass.
 - When you touch the web app's tests or shared code, also run `pnpm test`
   (or the focused file) and make sure the suite is green.
-- When you change Supabase migrations or pgTAP tests, run `pnpm test:db`
-  against a local database with all pending migrations applied. Agents must not
-  apply migrations; ask the user to apply them when necessary.
+- When you change Supabase migrations or pgTAP tests, apply pending migrations
+  to the local database with `supabase migration up --local`, then run
+  `pnpm test:db`.
 
 ## Mandatory Rules
 
@@ -32,12 +32,14 @@ Nested guidance:
   suite. Run broader tests when the change affects shared behavior.
 - When asked to work "step by step," keep working. Only pause when blocked or
   looping.
-- Never execute `supabase` CLI commands or SQL queries that can write data.
-  Read-only commands such as `supabase status` are allowed.
-- Never run a migration file's SQL with `supabase db query` or any other ad hoc
-  SQL, even when the user asks for a query. Only `supabase db push` applies a
-  migration and records it in the migration history; run directly, the change
-  lands but the history does not. Offer the user the `db push` instead.
+- Database writes are local only: every Supabase command that changes schema
+  or data must pass `--local`. Never run `supabase db push` or `supabase link`,
+  or pass `--linked` or `--db-url` to a write. Only the user changes production,
+  even when a change looks safe. If the target is unclear, stop and ask.
+- Apply a migration with the migration commands, not by running its SQL with
+  `supabase db query` or other ad hoc SQL. Run directly, the change lands but
+  the migration history does not record it. For the linked project, offer the
+  user `supabase db push` instead of running it.
 - Do not revert user changes unless the user explicitly asks.
 - Follow the validation scope in Task Completion Requirements before committing.
 - When UI behaviour changes, grep `apps/web/e2e/` and
