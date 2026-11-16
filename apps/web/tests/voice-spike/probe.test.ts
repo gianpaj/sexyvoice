@@ -140,14 +140,38 @@ describe('voice probe boundaries', () => {
     vi.restoreAllMocks();
   });
 
-  it('aborts a pending provider request on expiry and reports rotation without replay claims', () => {
+  it('aborts a pending provider request on expiry and reports rotation without replay claims', async () => {
     vi.useFakeTimers();
-    const { probe, events, close } = setup();
-    vi.advanceTimersByTime(60_000);
-    expect(events).toContainEqual({ type: 'rotate', recoverable: false });
-    expect(close).toHaveBeenCalledWith(1012, 'Probe lease expired');
-    probe.dispose();
-    vi.useRealTimers();
+    const { probe, providers, events, close } = setup();
+    let signal: AbortSignal | undefined;
+    providers.reply = async function* (_history, controller) {
+      signal = controller.signal;
+      await new Promise<void>((resolve) => {
+        controller.signal.addEventListener('abort', () => resolve(), {
+          once: true,
+        });
+      });
+      yield { type: 'text', text: 'Late result' };
+    };
+    try {
+      probe.receive(
+        JSON.stringify({ type: 'text', id: 'pending', text: 'hello' }),
+      );
+      await settle();
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(signal?.aborted).toBe(true);
+      expect(events).toContainEqual({ type: 'rotate', recoverable: false });
+      expect(close).toHaveBeenCalledExactlyOnceWith(
+        1012,
+        'Probe lease expired',
+      );
+      expect(events.some((event) => event.type === 'text.delta')).toBe(false);
+      expect(events.some((event) => event.type === 'error')).toBe(false);
+    } finally {
+      probe.dispose();
+      vi.useRealTimers();
+    }
   });
 });
 
