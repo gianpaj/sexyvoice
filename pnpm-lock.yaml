@@ -80,6 +80,7 @@ overrides:
   undici@<5.28.4: '>=5.28.4'
   undici@<=5.28.2: '>=5.28.3'
   undici@>=4.5.0 <5.28.5: '>=5.28.5'
+  undici@>=7.0.0 <7.30.2: 7.30.2
   ultracite>zod: 4.6.6
   unbash>zod: 4.6.6
   vite@>=7.0.0 <7.3.2: 7.3.7
@@ -308,7 +309,7 @@ importers:
         version: 1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6)
       '@tanstack/ai-grok':
         specifier: 1.1.1
-        version: 1.1.1(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)
+        version: 1.1.1(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)
       '@tanstack/react-query':
         specifier: 5.91.0
         version: 5.91.0(react@19.3.1)
@@ -9061,8 +9062,8 @@ packages:
     resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
     engines: {node: '>=18.17'}
 
-  undici@7.28.0:
-    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
+  undici@7.30.2:
+    resolution: {integrity: sha512-mLyPQnHwUxaM/rideoK/+KL8DaAJLRl4aBCfmX444aCSLnIaomqPLtNRe2jdCYcsk5wZzXrDIQC8ZeYNRAYyIA==}
     engines: {node: '>=20.18.1'}
 
   unicorn-magic@0.3.0:
@@ -13559,12 +13560,12 @@ snapshots:
     dependencies:
       '@tanstack/devtools-event-client': 0.4.4
 
-  '@tanstack/ai-grok@1.1.1(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)':
+  '@tanstack/ai-grok@1.1.1(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)':
     dependencies:
       '@tanstack/ai': 1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6)
       '@tanstack/ai-utils': 1.1.0
-      '@tanstack/openai-base': 1.0.4(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)
-      openai: 7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)
+      '@tanstack/openai-base': 1.0.4(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)
+      openai: 7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)
     optionalDependencies:
       google-auth-library: 10.9.1(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -13593,11 +13594,11 @@ snapshots:
 
   '@tanstack/devtools-event-client@0.4.4': {}
 
-  '@tanstack/openai-base@1.0.4(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)':
+  '@tanstack/openai-base@1.0.4(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(@tanstack/ai@1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6))(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)':
     dependencies:
       '@tanstack/ai': 1.4.0(@opentelemetry/api@1.9.1)(zod@4.6.6)
       '@tanstack/ai-utils': 1.1.0
-      openai: 7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6)
+      openai: 7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6)
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@smithy/hash-node'
@@ -16081,7 +16082,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.2
-      undici: 7.28.0
+      undici: 7.30.2
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -17147,12 +17148,12 @@ snapshots:
 
   oo-ascii-tree@1.112.0: {}
 
-  openai@7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.28.0)(ws@8.23.0)(zod@4.6.6):
+  openai@7.57.0(@aws-sdk/credential-provider-node@3.972.84)(@smithy/signature-v4@5.7.4)(google-auth-library@10.9.1(supports-color@8.1.1))(undici@7.30.2)(ws@8.23.0)(zod@4.6.6):
     optionalDependencies:
       '@aws-sdk/credential-provider-node': 3.972.84
       '@smithy/signature-v4': 5.7.4
       google-auth-library: 10.9.1(supports-color@8.1.1)
-      undici: 7.28.0
+      undici: 7.30.2
       ws: 8.23.0
       zod: 4.6.6
 
@@ -18550,7 +18551,7 @@ snapshots:
 
   undici@6.28.0: {}
 
-  undici@7.28.0: {}
+  undici@7.30.2: {}
 
   unicorn-magic@0.3.0: {}
 
