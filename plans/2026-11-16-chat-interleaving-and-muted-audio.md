@@ -67,7 +67,7 @@ microphone track when `stopOnMute` is enabled.
 
 ## Current application code
 
-- [SessionManager](../src/session_manager.py) starts and replaces sessions with
+- [SessionManager](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/session_manager.py) starts and replaces sessions with
   one `session.start(room=..., agent=...)` each. There is no extra manual
   RoomIO to remove. Both paths need the same explicit RoomOptions.
 - Its `_session_op_lock` already coordinates replacement, warnings, and
@@ -75,8 +75,8 @@ microphone track when `stopOnMute` is enabled.
   Reuse those mechanisms instead of writing a second transcript or turn queue.
 - `PlaygroundAgent.on_user_turn_completed()` prepares cascade recall when
   preload is incomplete. A text callback needs to share that preparation.
-- [voice_pipeline.py](../src/voice_pipeline.py) creates the common STT/LLM/TTS
-  session used by [Inworld](../src/inworld_voice.py) and Mistral.
+- [voice_pipeline.py](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/voice_pipeline.py) creates the common STT/LLM/TTS
+  session used by [Inworld](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/inworld_voice.py) and Mistral.
 - Sexyvoice `apps/web/components/call/in-call-view.tsx` already toggles
   `setMicrophoneEnabled()`. `room-wrapper.tsx` sets `audio={true}` and
   `stopMicTrackOnMute: true`. Preserve both for the approved scope.

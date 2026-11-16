@@ -1,7 +1,8 @@
 # TanStack AI voice and text in Next.js: feasibility spike
 
-Status: approved to implement as an isolated experiment; production runtime
-selection depends on the results below. Written 2026-11-16.
+Status: step 1 transport/provider probe implemented; mobile, durability, memory
+and deployed soaks remain pending. Production runtime selection depends on
+those results. Written 2026-11-16.
 
 ## Question
 
@@ -82,6 +83,19 @@ measurements without putting diagnostic controls into the product UI.
    Measure provider adapters separately before joining the cascade.
 4. Run focused protocol/provider tests, formatting, and type checks. Commit the
    first useful slice separately from this plan. Record what it proves.
+
+The [probe runbook](../apps/web/lib/voice-spike/README.md) records the current
+wire contract and limits. Local tests pass through the installed Vercel upgrade
+helper and real TanStack chat adapter with synthetic providers and mocked
+request context. This does not verify a deployed Vercel connection or live
+provider behavior. The probe uses connection-local history, whole-reply HTTP
+synthesis, a fixed test assistant/voice, and short leases that close explicitly.
+It does not implement replay, distributed admission, wallet writes, or memory.
+
+The inspected Python baseline uses VAD interruption, STT turn detection,
+LiveKit LLM inference with `xai/grok-4.20-0309-non-reasoning`, and contextual
+Inworld WebSocket synthesis. Its previous-request context retains up to five
+replies within 1,500 characters. Include these in the parity comparison.
 
 ## Step 2: mobile vertical slice
 

@@ -186,6 +186,21 @@ without the column, the call page fails to load.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
 
+### Internal Next.js voice probe
+
+`VOICE_SPIKE_USER_IDS` is an optional comma-separated list of Supabase test
+user UUIDs. Leave it empty in production; the handler also rejects production
+regardless of this value. The development/preview probe reuses `XAI_API_KEY` and
+`INWORLD_API_KEY`. It charges no customer credits and must remain internal.
+
+For a preview test, add the allowlist with
+`vercel env add VOICE_SPIKE_USER_IDS preview` from `apps/web`. Do not put provider
+keys in public variables. Local WebSocket tests require Vercel CLI 54.14.2+ and
+`vercel dev`; `next dev` cannot run the upgrade helper. The probe uses a
+300-second function limit and 10–240 second leases. It does not resume after a
+lease expires. See [the runbook](../apps/web/lib/voice-spike/README.md) and
+[the long-call experiments](../plans/2026-11-16-tanstack-nextjs-voice-spike.md).
+
 ### LiveKit and call analysis
 
 - `LIVEKIT_URL`: server URL returned by `/api/call-token`.

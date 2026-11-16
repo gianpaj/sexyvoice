@@ -21,21 +21,21 @@ Production has not been changed.
 ## What the current code stores
 
 Sexyvoice's `call_sessions.transcript` is a JSONB call snapshot. Python's
-[TranscriptCollector](../src/transcript_collector.py) writes `messages`,
+[TranscriptCollector](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/transcript_collector.py) writes `messages`,
 `user_transcriptions`, room name, and timestamps. Its in-memory utterance-ID map
 deduplicates repeated user transcription events. Those IDs do not survive in
 the saved message dictionaries; assistant messages also omit the SDK item ID
 and interruption flag.
 
-[SessionManager](../src/session_manager.py) checkpoints the snapshot every ten
+[SessionManager](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/session_manager.py) checkpoints the snapshot every ten
 seconds and saves it during finalization. A new call's `chat_ctx` currently
 receives preloaded memory, when enabled. It does not reload an earlier call's
 verbatim transcript. Retained memory facts provide a different kind of continuity.
 
-The existing [memory store](../src/supabase_memory.py) preloads pinned and recent
+The existing [memory store](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/supabase_memory.py) preloads pinned and recent
 slots, searches overflow with hybrid vector/full-text retrieval, and stores
 shared user facts plus character relationships and episodes. Its
-[extractor and verification pass](../src/memory_extraction.py) check proposed
+[extractor and verification pass](https://github.com/gianpaj/sexycall/blob/23cac3548c49c7aeeeb1f59ac57da761908bdf34/src/memory_extraction.py) check proposed
 facts against the user's words. Call shutdown triggers extraction.
 
 The reviewed local commits are Sexyvoice

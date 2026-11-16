@@ -160,6 +160,8 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `XAI_API_KEY` - Your xAI API key for Grok speech generation and call transcript analysis
      - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
      - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
+   - Internal voice spike
+     - `VOICE_SPIKE_USER_IDS` - Optional comma-separated Supabase test user IDs; empty disables the preview/development probe. See the [probe runbook](apps/web/lib/voice-spike/README.md).
    - Real-time Calls (LiveKit)
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`

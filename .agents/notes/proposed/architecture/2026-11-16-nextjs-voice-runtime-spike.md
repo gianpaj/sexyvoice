@@ -1,6 +1,6 @@
 # Agent Note: Next.js voice runtime spike
 
-Status: proposed — user authorized an isolated feasibility implementation
+Status: proposed — transport/provider probe implemented; deployment and mobile parity unverified
 
 ## Problem
 
@@ -15,13 +15,23 @@ Evaluate the pinned TanStack live-transcription PR with a Next.js TypeScript
 cascade and Inworld TTS. Keep the production call flow separate. The
 [spike plan](../../../../plans/2026-11-16-tanstack-nextjs-voice-spike.md) owns
 experiments, safety bounds, source references and acceptance criteria.
-The [product decision](../../feature/2026-11-16-chat-first-conversations.md)
+The [product decision](../feature/2026-11-16-chat-first-conversations.md)
 retains ownership of chat UX, pricing, history and shared-memory requirements.
 
 Vercel WebSockets inherit function duration. A 60-minute logical call needs
 reconnection and external recovery state even with the 30-minute duration beta.
 The upstream PR implements STT; the application still owns turn orchestration,
 playback, cancellation, persistence, memory and billing.
+
+## Probe boundary
+
+The [internal runbook](../../../../apps/web/lib/voice-spike/README.md) owns the
+wire contract, test configuration and implemented limits. Production is blocked;
+only configured test users can connect. The first probe has connection-local
+history and short leases, so its passing local tests establish neither durable
+recovery nor long-call viability. It reuses the exact Grok 4.20 model through
+TanStack's model-extension API and keeps the unmerged STT code attributed and
+isolated. Memory and customer billing remain production-readiness gates.
 
 ## Alternatives considered
 

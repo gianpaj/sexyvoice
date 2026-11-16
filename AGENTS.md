@@ -269,6 +269,12 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   so those modules must use relative imports with `.ts` extensions and no `@/`
   aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency bypass.
 
+### Internal voice spike
+
+`VOICE_SPIKE_USER_IDS` restricts the Next.js voice probe to explicit Supabase
+test users in development/preview. Empty disables it; production is blocked.
+See [the probe runbook](apps/web/lib/voice-spike/README.md) for setup and limits.
+
 ## Banners
 
 - Banner definitions live in `apps/web/lib/banners/registry.ts`.
