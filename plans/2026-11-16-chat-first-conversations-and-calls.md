@@ -471,43 +471,40 @@ promise zero idle STT provider spend from mute alone.
 
 ## Readiness for the first implementation
 
-The approved first slice is prepared in Sexyvoice branch
-`feat/character-conversations`, worktree
-`/home/gianpaj/github/gianpaj/sexyvoice.feat-character-conversations`:
+The repository includes the conversation-history foundation:
 
 - `apps/web/supabase/migrations/20261116140000_create_conversations.sql`
 - `apps/web/supabase/tests/conversations.test.sql`
 - `apps/web/lib/supabase/types.d.ts`, generated from the applied local schema
 - `.agents/notes/proposed/database/2026-11-16-conversation-history.md`
 
-The migration contains only conversation history, visible text parts, revisions,
-and protected call links. It adds neither paid chat nor stream replay by itself.
-The migration is recorded in the isolated local migration history. The complete
-pgTAP suite passes: eight files, 130 assertions. The 48 conversation assertions
-pass, and Supabase types are generated from that applied schema. Production
-has not been changed.
+The migration contains conversation history, visible text parts, revisions,
+and protected call links. Paid chat and stream replay require runtime work.
+Validation against an isolated local database passed eight pgTAP files and
+130 assertions, including 48 conversation assertions. Production is unchanged.
 
-Default local ports belong to another worktree. The isolated local project in
-`/tmp/sexyvoice-character-conversations` uses API/database ports 55321/55322 and
-symlinks to this worktree's migrations and tests. The versioned Supabase
-configuration is unchanged. Its setup command is:
+For a local Supabase project started by the developer, the developer applies
+pending migrations from `apps/web`:
 
 ```sh
-bash /tmp/sexyvoice-character-conversations/start-and-migrate.sh
+supabase db push --local
 ```
 
-After setup, run the repository's pgTAP task against that project from the
-Sexyvoice worktree:
+After the migrations are applied, run the repository checks from its root:
 
 ```sh
-pnpm --filter @sexyvoice/web run test:db --workdir /tmp/sexyvoice-character-conversations
+pnpm test:db
+pnpm generate-supabase-types:local
 ```
 
-TypeScript checks and scoped `fixall` pass with the generated types. The web
-unit suite passes 2,199 tests across 143 files, with 18 tests skipped. SQL,
-trigger bodies, and embedded pgTAP statements parse offline; the migrated
-PostgreSQL suite verifies behavior. TanStack adapters, billing transactions,
-Python handoff, and mobile/network behavior require their later runtime tests.
+Use the project's configured local ports. If another worktree owns those ports,
+create an isolated local project using Supabase's workdir/configuration options
+and pass its `--workdir` to the database tasks. No maintainer-local script is
+required. Follow [AGENTS.md](../AGENTS.md): agents do not apply migrations.
+
+TanStack adapters, billing transactions, Python handoff, and mobile/network
+behavior require their runtime tests. The schema alone establishes none of
+those behaviors.
 
 These prerequisites remain for the later runtime and paid rollout:
 
