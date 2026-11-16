@@ -76,6 +76,9 @@ This records visible text, not the portion of audio the browser has played.
 | `call.stop`                    | Abort the reply, close STT, retain connection-local history |
 | `interrupt`                    | Abort LLM/TTS; discard subsequent chunks from that turn     |
 
+Mute and hangup abort STT and discard speech not yet transcribed; it is not
+flushed or replayed on unmute.
+
 Supported input rates are 8,000, 16,000, 22,050, 24,000, 44,100 and 48,000 Hz.
 The server sends `transcript` events and `audio` events with independent base64
 PCM16, 24,000 Hz, mono, and a turn ID. Clients must clear queued playback on

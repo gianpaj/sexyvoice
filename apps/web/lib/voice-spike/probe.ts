@@ -91,7 +91,7 @@ export function createVoiceProbe(options: {
     sttController = undefined;
     const previous = stt;
     stt = undefined;
-    // Abort closes the socket immediately; close() may also flush provider state.
+    // Mute and call.stop abort immediately, dropping untranscribed speech.
     previous?.close().catch(() => undefined);
   }
   function dispose() {
