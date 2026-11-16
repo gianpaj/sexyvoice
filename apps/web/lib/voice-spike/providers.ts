@@ -126,7 +126,7 @@ export function createProbeProviders(): ProbeProviders {
         }),
         threadId,
         abortController: controller,
-        messages: history,
+        messages: history.map(({ role, content }) => ({ role, content })),
         systemPrompts: [
           'You are a conversational test assistant. Reply briefly, in one or two sentences.',
         ],

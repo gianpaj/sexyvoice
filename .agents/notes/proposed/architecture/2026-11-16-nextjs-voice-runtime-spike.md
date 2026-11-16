@@ -37,7 +37,9 @@ Audio uses 24 kHz PCM and waits for each socket write before pulling another
 provider chunk. A five-second stalled write ends the probe. This bounds burst
 buffering and leaves bandwidth for the planned 1 Mbps network experiment;
 48 kHz base64 PCM alone would exceed that profile. Transport completion is not
-a playback acknowledgement.
+a playback acknowledgement. Interrupted history keeps the emitted text prefix
+and excludes late chunks; heard-audio reconciliation requires client playback
+acknowledgements in the mobile experiment.
 
 ## Alternatives considered
 

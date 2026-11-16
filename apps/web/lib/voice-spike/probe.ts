@@ -11,6 +11,7 @@ import type { TranscriptionSession } from './upstream/session';
 export interface ProbeMessage {
   content: string;
   role: 'user' | 'assistant';
+  status?: 'interrupted';
 }
 export type ReplyChunk =
   | { type: 'text'; text: string }
@@ -49,7 +50,9 @@ export function createVoiceProbe(options: {
   let sampleRate = 48_000;
   let stt: TranscriptionSession | undefined;
   let sttController: AbortController | undefined;
-  let turn: { id: string; controller: AbortController } | undefined;
+  let turn:
+    | { id: string; controller: AbortController; answer: string }
+    | undefined;
   let lastTextAt = 0;
   let audioWindowAt = Date.now();
   let audioWindowBytes = 0;
@@ -73,6 +76,12 @@ export function createVoiceProbe(options: {
   function interrupt() {
     const previous = turn;
     turn = undefined;
+    if (previous?.answer)
+      history.push({
+        role: 'assistant',
+        content: previous.answer,
+        status: 'interrupted',
+      });
     previous?.controller.abort();
     if (previous)
       send({ type: 'text.end', id: previous.id, status: 'interrupted' });
@@ -100,17 +109,16 @@ export function createVoiceProbe(options: {
 
   async function runTurn(id: string, text: string, voice: boolean) {
     if (disposed || turn) return;
-    if (history.length >= 40) {
+    if (history.length > 38) {
       send({ type: 'error', code: 'limit' });
       return;
     }
-    const current = { id, controller: new AbortController() };
+    const current = { id, controller: new AbortController(), answer: '' };
     turn = current;
     acceptedIds.add(id);
     history.push({ role: 'user', content: text });
     send({ type: 'text.start', id });
     send({ type: 'state', state: 'thinking' });
-    let answer = '';
     try {
       for await (const chunk of providers.reply(
         [...history],
@@ -120,18 +128,18 @@ export function createVoiceProbe(options: {
         if (chunk.type === 'usage')
           send({ type: 'usage', modality: 'llm', usage: chunk.usage });
         else {
-          if (answer.length + chunk.text.length > 4000)
+          if (current.answer.length + chunk.text.length > 4000)
             throw new Error('Output limit exceeded');
-          answer += chunk.text;
+          current.answer += chunk.text;
           send({ type: 'text.delta', id, text: chunk.text });
         }
       }
       if (disposed || current !== turn) return;
       // The first probe measures whole-reply synthesis. Phrase pipelining follows
       // after transport and cancellation are measured on the preview deployment.
-      if (voice && answer.trim()) {
+      if (voice && current.answer.trim()) {
         for await (const chunk of providers.speech(
-          answer,
+          current.answer,
           current.controller.signal,
         )) {
           if (disposed || current !== turn) return;
@@ -154,7 +162,7 @@ export function createVoiceProbe(options: {
         }
       }
       if (disposed || current !== turn) return;
-      history.push({ role: 'assistant', content: answer });
+      history.push({ role: 'assistant', content: current.answer });
       turn = undefined;
       send({ type: 'text.end', id, status: 'completed' });
       state();

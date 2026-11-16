@@ -277,7 +277,22 @@ describe('voice probe concurrent provider lifecycle', () => {
       id: 'one',
       status: 'completed',
     });
+    const reply = vi.fn<ProbeProviders['reply']>(async function* () {
+      yield { type: 'text', text: 'Next reply' };
+    });
+    providers.reply = reply;
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1001);
+    probe.receive(
+      JSON.stringify({ type: 'text', id: 'two', text: 'continue' }),
+    );
+    await settle();
+    expect(reply.mock.calls[0][0]).toEqual([
+      { role: 'user', content: 'hello' },
+      { role: 'assistant', content: 'First', status: 'interrupted' },
+      { role: 'user', content: 'continue' },
+    ]);
     probe.dispose();
+    vi.restoreAllMocks();
   });
 
   it('closes a late STT connection after mute instead of forwarding queued audio', async () => {

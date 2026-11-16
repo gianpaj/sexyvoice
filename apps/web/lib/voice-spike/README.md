@@ -62,7 +62,9 @@ transport probe.
 
 Client controls are validated as strict objects. IDs have 1–100 characters.
 Text has at most 2,000 Unicode code points, one accepted message per second,
-and one pending reply. A connection holds at most 40 history entries.
+and one pending reply. A connection holds at most 40 history entries. Interruption retains the text
+already emitted as an interrupted assistant entry; late chunks are discarded.
+This records visible text, not the portion of audio the browser has played.
 
 | Client message                 | Behavior                                                    |
 | ------------------------------ | ----------------------------------------------------------- |
