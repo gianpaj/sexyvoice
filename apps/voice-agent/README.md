@@ -106,7 +106,7 @@ The JS Inworld plugin does not expose Python's five-reply/1,500-character
 ## Browser transport findings
 
 The web app pins `livekit-client` 2.24.1, including the Python call page at
-`/dashboard/call`. The SDK version on `main` is 2.23.0. In the internal demo, Firefox receives
+`/dashboard/call`. In the internal demo, Firefox receives
 `rtcConfig.bundlePolicy = "max-bundle"` at connection time; Chrome, Safari,
 and iOS Firefox keep SDK defaults. This policy creates one ICE/DTLS transport
 for the SDK's initial media layout. See [WebRTC bundling](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#bundlepolicy).
