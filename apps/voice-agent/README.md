@@ -105,7 +105,8 @@ The JS Inworld plugin does not expose Python's five-reply/1,500-character
 
 ## Browser transport findings
 
-The internal demo uses `livekit-client` 2.24.1. Firefox receives
+The web app pins `livekit-client` 2.24.1, including the Python call page at
+`/dashboard/call`. The SDK version on `main` is 2.23.0. In the internal demo, Firefox receives
 `rtcConfig.bundlePolicy = "max-bundle"` at connection time; Chrome, Safari,
 and iOS Firefox keep SDK defaults. This policy creates one ICE/DTLS transport
 for the SDK's initial media layout. See [WebRTC bundling](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#bundlepolicy).
@@ -123,6 +124,12 @@ Startup allows 60 seconds for SDK fallback attempts and runtime discovery.
 A longer deadline alone does not resolve the default-path Firefox failure.
 The fix uses a public connection option; it needs no SDK downgrade, fork,
 forced reconnect, hardcoded TURN endpoint, or browser preference change.
+
+Before merging the SDK upgrade, verify a real Python-flow call through
+`/dashboard/call` in Chrome and Safari: microphone capture, greeting playback,
+mute/unmute, and hangup. The JS demo results do not cover that flow. The
+Firefox max-bundle option applies only to the demo; Python-flow Firefox
+connectivity with default bundling is unverified.
 
 Required browser targets are Chrome, Firefox, desktop Safari, and iOS Safari.
 Linux WebKit is an automated engine check, not Safari certification. Real Mac

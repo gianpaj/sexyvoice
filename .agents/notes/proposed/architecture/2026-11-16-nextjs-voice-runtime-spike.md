@@ -66,7 +66,10 @@ runtime discovery keeps the startup deadline rather than rejecting the call.
 The JS demo gives Firefox `rtcConfig.bundlePolicy = "max-bundle"` through
 LiveKit's public connection options. This shares one ICE/DTLS transport across
 the SDK's initial media sections. Chrome, Safari, and iOS Firefox keep defaults;
-the production Python call UI is outside this change. See the
+the Python call UI retains default bundling. The web app shares one SDK pin,
+so the 2.23.0 to 2.24.1 upgrade also affects the Python flow. Real Chrome and
+Safari calls through `/dashboard/call` remain a merge gate; JS demo tests do
+not cover them. Python-flow Firefox connectivity is also unverified. See the
 [browser evidence and remaining checks](../../../../apps/voice-agent/README.md#browser-transport-findings).
 
 LiveKit 2.24.1 with default bundling fails ICE in Linux Firefox 153. The same
