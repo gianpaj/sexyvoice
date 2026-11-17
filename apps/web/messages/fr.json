@@ -1478,5 +1478,27 @@
     "emotions": "Émotions",
     "pace": "Rythme",
     "vocalSounds": "Sons vocaux"
+  },
+  "voiceSpike": {
+    "title": "Démo d’appel JS",
+    "idle": "Prêt à appeler",
+    "connecting": "Connexion à l’agent JS…",
+    "connected": "En appel",
+    "reconnecting": "Reconnexion…",
+    "call": "Démarrer l’appel",
+    "hangup": "Terminer l’appel",
+    "mute": "Couper le microphone",
+    "unmute": "Activer le microphone",
+    "messages": "Conversation",
+    "message": "Message",
+    "placeholder": "Écrivez pendant l’appel",
+    "send": "Envoyer",
+    "thinking": "Réflexion…",
+    "notice": "Test interne · Ashley · anglais · limite de 5 minutes. Chaque appel repart de zéro. Aucune mémoire enregistrée ni aucun crédit débité.",
+    "workerMissing": "L’agent JS ne s’est pas connecté. Vérifiez que le processus de test fonctionne.",
+    "connectError": "Impossible de démarrer ou de poursuivre l’appel. Vérifiez votre connexion réseau et l’autorisation du microphone, puis réessayez.",
+    "providerError": "Un service vocal a échoué. Terminez l’appel et consultez les journaux du processus.",
+    "sendError": "Échec de l’envoi. Votre message est toujours ici.",
+    "ended": "L’appel est terminé. Vous pouvez en démarrer un autre."
   }
 }

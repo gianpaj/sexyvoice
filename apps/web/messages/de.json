@@ -1478,5 +1478,27 @@
     "emotions": "Emotionen",
     "pace": "Tempo",
     "vocalSounds": "Stimmliche Laute"
+  },
+  "voiceSpike": {
+    "title": "JS-Anrufdemo",
+    "idle": "Bereit zum Anrufen",
+    "connecting": "Verbindung zum JS-Agenten wird hergestellt…",
+    "connected": "Im Gespräch",
+    "reconnecting": "Verbindung wird wiederhergestellt…",
+    "call": "Anruf starten",
+    "hangup": "Anruf beenden",
+    "mute": "Mikrofon stummschalten",
+    "unmute": "Mikrofon aktivieren",
+    "messages": "Unterhaltung",
+    "message": "Nachricht",
+    "placeholder": "Während des Anrufs schreiben",
+    "send": "Senden",
+    "thinking": "Denkt nach…",
+    "notice": "Interner Test · Ashley · Englisch · 5 Minuten. Jeder Anruf beginnt neu. Keine gespeicherten Erinnerungen oder Credit-Gebühren.",
+    "workerMissing": "Der JS-Agent hat sich nicht verbunden. Prüfe, ob der Testprozess läuft.",
+    "connectError": "Der Anruf konnte nicht gestartet oder fortgesetzt werden. Prüfe deine Netzwerkverbindung und Mikrofonberechtigung und versuche es erneut.",
+    "providerError": "Ein Sprachanbieter ist ausgefallen. Beende den Anruf und prüfe die Prozessprotokolle.",
+    "sendError": "Senden fehlgeschlagen. Deine Nachricht ist noch hier.",
+    "ended": "Der Anruf wurde beendet. Du kannst erneut anrufen."
   }
 }

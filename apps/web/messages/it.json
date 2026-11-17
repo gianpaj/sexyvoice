@@ -1478,5 +1478,27 @@
     "emotions": "Emozioni",
     "pace": "Ritmo",
     "vocalSounds": "Suoni vocali"
+  },
+  "voiceSpike": {
+    "title": "Demo chiamata JS",
+    "idle": "Pronto per chiamare",
+    "connecting": "Connessione all’agente JS…",
+    "connected": "In chiamata",
+    "reconnecting": "Riconnessione…",
+    "call": "Avvia chiamata",
+    "hangup": "Termina chiamata",
+    "mute": "Disattiva microfono",
+    "unmute": "Attiva microfono",
+    "messages": "Conversazione",
+    "message": "Messaggio",
+    "placeholder": "Scrivi durante la chiamata",
+    "send": "Invia",
+    "thinking": "Sta pensando…",
+    "notice": "Test interno · Ashley · inglese · limite di 5 minuti. Ogni chiamata riparte da zero. Nessuna memoria salvata o addebito di crediti.",
+    "workerMissing": "L’agente JS non si è connesso. Verifica che il processo di test sia in esecuzione.",
+    "connectError": "Impossibile avviare o continuare la chiamata. Controlla la connessione di rete e il permesso del microfono, poi riprova.",
+    "providerError": "Un servizio vocale non funziona. Termina la chiamata e controlla i log del processo.",
+    "sendError": "Invio non riuscito. Il messaggio è ancora qui.",
+    "ended": "La chiamata è terminata. Puoi avviarne un’altra."
   }
 }

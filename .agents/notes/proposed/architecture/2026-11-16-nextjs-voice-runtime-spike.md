@@ -1,6 +1,6 @@
 # Agent Note: Next.js voice runtime spike
 
-Status: proposed — transport/provider probe implemented; deployment and mobile parity unverified
+Status: proposed — JS browser/provider call verified locally; runtime and mobile parity pending
 
 ## Problem
 
@@ -41,8 +41,59 @@ a playback acknowledgement. Interrupted history keeps the emitted text prefix
 and excludes late chunks; heard-audio reconciliation requires client playback
 acknowledgements in the mobile experiment.
 
+## JS comparison boundary
+
+The [JS call runbook](../../../../apps/voice-agent/README.md) owns the first
+browser demo and its evidence. A persistent Node 24 worker shares this
+repository with Next.js, while LiveKit carries media. Explicit JS dispatch
+and a runtime handshake keep its microphone from connecting to Python.
+The xAI plugin has a scoped model-selection patch with a wire contract test.
+
+A synthetic browser microphone exercised real speech and typed turns in one
+session, including mute/unmute. The local result supports continuing this
+comparison. It does not establish database context, pgvector parity, shared
+admission, billing, iOS reliability, or deployed duration. Each call starts
+fresh, and the internal demo has a five-minute limit and no wallet writes.
+Those omissions keep the runtime decision proposed.
+
+The 60-second startup deadline reports a connection failure until browser WebRTC connects.
+Only a connected browser waiting for the JS runtime reports a missing worker;
+a stalled runtime handshake reports a connection failure. This distinction avoids
+diagnosing blocked ICE as a stopped worker. Runtime discovery waits for media
+connection before sending RPCs or opening the microphone. A reconnect before
+runtime discovery keeps the startup deadline rather than rejecting the call.
+
+The local Firefox probe reproduces default-path ICE failure. Relay-only ICE
+also fails, while a diagnostic probe restricted to TURN/TLS connects. Chrome
+connects on both direct UDP and TLS relay. These observations do not establish
+the cause of Firefox's candidate-selection failure. The application retains
+SDK transport defaults; Firefox support remains an acceptance gap. The SDK
+is pinned to 2.24.1 for its documented initial-recovery and Safari fixes, but
+both the upgrade and the longer deadline are insufficient to establish Firefox
+reliability. The opt-in live Playwright matrix covers Chrome, Firefox, desktop
+WebKit, and mobile WebKit. The user reports Safari typing and speaking work. The report does not establish
+which desktop/iOS devices passed every scenario; mute, interruption, recovery,
+and long-call checks remain required. Linux WebKit results cannot establish
+Safari device permissions or audio behavior.
+A supported SDK/configuration fix needs a browser regression before changing
+transport. Forced reconnect diagnostics are absent from the application. Safari
+logs collected during a forced-reconnect experiment and Fast Refresh show SCTP
+channel closure; they do not isolate the cause of a stable-build failure.
+
+Remote development uses the configured `NEXT_PUBLIC_SITE_URL` as an exact
+additional origin for the internal token route; forwarded host headers cannot
+select it. A private HTTPS proxy covers microphone capture and a second proxy
+makes the isolated Supabase API reachable from the testing device. This is a
+development-only origin exception, with a regression test for scheme/port and
+hostname mismatches.
+
 ## Alternatives considered
 
+- [LiveKit Agents JS in this repository](../../../../plans/2026-11-16-livekit-agents-js-spike.md):
+  the preferred next comparison. It keeps LiveKit media handling and TypeScript
+  while requiring a persistent worker alongside Next.js. Its spike must verify
+  provider compatibility, shared history, memory, billing, and mobile calls
+  before runtime selection. This alternative remains under evaluation.
 - Keep Python/LiveKit: a tested voice runtime, but retains two languages and
   deployment units. Keep it available until the experiment demonstrates parity.
 - Direct provider media: avoids the Vercel relay lifetime, but changes trusted

@@ -547,3 +547,23 @@ When updating dashboard UI or flows, update the following together:
 - this document if scope or behavior meaningfully changes
 
 Treat this file as the source of truth for **implemented E2E coverage**, not proposed coverage.
+
+## Internal JS call experiment
+
+`/{lang}/dashboard/voice-spike` is gated by `VOICE_SPIKE_USER_IDS` in development
+or preview. The regular `call-dashboard.spec.ts` mocks the Python token route
+and does not cover this experiment. Component tests cover JS-only selection,
+startup cancellation/timeout (media connection versus missing worker), streamed
+transcripts, typed turns, and mute
+failure/reconnection. The [worker runbook](../../voice-agent/README.md) records
+the separate live browser/provider test and its synthetic microphone.
+`voice-spike.live.config.ts` explicitly runs real calls in Chromium, Firefox,
+desktop WebKit, and mobile WebKit using `voice-spike.live.ts`. It uses an
+ignored local-account storage state and does not load the regular E2E mocks.
+The call assertions include received audio playback, streamed typed replies,
+mute/unmute, and hangup. Browser support requires all browser targets to pass,
+including actual desktop/iOS Safari checks; Linux WebKit alone is insufficient.
+
+Physical iOS/Android capture, keyboard/safe-area behavior, bandwidth limits,
+packet loss, background/resume, and deployed 30/60-minute calls are pending.
+Do not treat the local 390px viewport check as those device/network results.

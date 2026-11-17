@@ -1474,5 +1474,27 @@
     "emotions": "Følelser",
     "pace": "Tempo",
     "vocalSounds": "Stemmelyde"
+  },
+  "voiceSpike": {
+    "title": "JS-opkaldsdemo",
+    "idle": "Klar til at ringe",
+    "connecting": "Forbinder til JS-agenten…",
+    "connected": "I opkald",
+    "reconnecting": "Genopretter forbindelse…",
+    "call": "Start opkald",
+    "hangup": "Afslut opkald",
+    "mute": "Slå mikrofon fra",
+    "unmute": "Slå mikrofon til",
+    "messages": "Samtale",
+    "message": "Besked",
+    "placeholder": "Skriv under opkaldet",
+    "send": "Send",
+    "thinking": "Tænker…",
+    "notice": "Intern test · Ashley · engelsk · 5 minutter. Hvert opkald starter forfra. Ingen gemte minder eller kreditbetaling.",
+    "workerMissing": "JS-agenten oprettede ikke forbindelse. Kontrollér, at testprocessen kører.",
+    "connectError": "Opkaldet kunne ikke startes eller fortsættes. Kontrollér din netværksforbindelse og mikrofontilladelse, og prøv igen.",
+    "providerError": "En stemmeudbyder fejlede. Afslut opkaldet, og kontrollér processens logfiler.",
+    "sendError": "Kunne ikke sende. Din besked er stadig her.",
+    "ended": "Opkaldet er afsluttet. Du kan starte et nyt."
   }
 }

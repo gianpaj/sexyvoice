@@ -15,6 +15,10 @@ customer experience, credit rates, trial estimates, and failure policies.
 This spike evaluates the runtime choice. It does not authorize a production
 cutover, replace existing minute billing, or claim parity with LiveKit.
 
+The [LiveKit Agents JS spike](2026-11-16-livekit-agents-js-spike.md) evaluates
+the official TypeScript worker alongside this custom relay. Compare that option
+before selecting a replacement for the Python runtime.
+
 ## Evidence and boundaries
 
 - [TanStack PR #1964](https://github.com/TanStack/ai/pull/1964) is open.
@@ -141,7 +145,9 @@ come from the authenticated server context, never a socket-supplied user ID.
   claim that reconnecting can recreate lost microphone samples.
 
 The current relational migration is already verified in isolated local Supabase.
-Any new migrations must be reviewable and user-applied under AGENTS.md.
+Apply any new migrations to the isolated local project with
+`supabase migration up --local`, then run `pnpm test:db`. Only the user applies
+production migrations, as required by AGENTS.md.
 
 ## Step 4: experiments and acceptance
 

@@ -76,6 +76,8 @@ overrides:
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
+  "@livekit/blingfire": false
+  "@livekit/local-inference": false
   "@google/genai": false
   "@parcel/watcher": true
   "@sentry/cli": true
@@ -93,3 +95,4 @@ allowBuilds:
 
 patchedDependencies:
   "@ffmpeg/ffmpeg@0.12.15": patches/@ffmpeg__ffmpeg@0.12.15.patch
+  '@livekit/agents-plugin-xai@1.10.0': patches/@livekit__agents-plugin-xai@1.10.0.patch
