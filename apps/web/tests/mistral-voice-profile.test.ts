@@ -19,6 +19,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
+import { CALL_VOICE_SAMPLE_TEXT } from '@/lib/clone/call-voice-sample';
 import { deleteMistralVoice, saveMistralVoice } from '@/lib/clone/mistral';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
@@ -71,8 +72,7 @@ describe('saved Mistral profiles', () => {
     });
     expect(mocks.speech).toHaveBeenCalledWith({
       model: 'voxtral-mini-tts-3-0',
-      input:
-        "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?",
+      input: CALL_VOICE_SAMPLE_TEXT,
       voiceId: 'provider-voice',
       responseFormat: 'wav',
       stream: false,
