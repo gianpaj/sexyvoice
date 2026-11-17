@@ -1,29 +1,60 @@
 # LiveKit Agents JS: shared chat and voice spike
 
-Status: internal browser/provider slice implemented and locally exercised;
-shared history, memory, billing, mobile devices, and deployed soaks pending.
+Status: internal JS call works with real providers. macOS Firefox retest,
+saved-clone parity, shared history, and deployed mobile calls remain open.
 Written 2026-11-16.
 
-## Implemented slice and evidence
+## What the internal call established
 
-The [JS call runbook](../apps/voice-agent/README.md) owns setup, exact limits,
-package compatibility, and local test evidence. This slice uses a separate
-JS-only token route, a persistent worker, real browser media, streaming
-transcripts, and typed turns within one call. It does not implement TanStack
-standalone chat or persistence. Each new call starts with fresh context.
+The [JS call runbook](../apps/voice-agent/README.md) owns setup, package pins,
+browser results, and operational limits. Next.js issues a token for the
+allowlisted JS worker. The browser sends media over LiveKit WebRTC, and the
+persistent Node 24 worker runs the cascade. The call has a five-minute cap.
+`packages/voice-spike` shares the dispatch and mute contracts with the web app.
 
-A Linux Node 24 worker and browser with a synthetic microphone completed a
-real xAI STT → Grok 4.20 → Inworld TTS turn. Speech recalled a fact from an
-earlier typed turn; mute, unmute, hangup, and the five-minute cutoff were
-exercised. A 390px viewport check is not an iOS device test.
+The tested cascade matches SexyCall's `inworld-tts` model defaults:
+`grok-voice-transcribe-2.0` → LiveKit Inference
+`xai/grok-4.20-0309-non-reasoning` → direct `inworld-tts-2` in `BALANCED`
+mode. Both use STT turn detection and Silero VAD for interruptions. The JS
+worker fixes the language to English, the voice to `Ashley`, and the reply
+budget to 256 completion tokens. The scoped xAI plugin patch pins the STT
+model on the wire.
 
-The test reused the configured LiveKit project under the separate agent name
-and generated rooms; authentication used a disposable local Supabase account.
-A dedicated test project remains the deployment target. Container boot,
-provider usage measurements, transactional admission, saved voice ownership,
-and every remaining parity gate below are pending. No production cutover is
-authorized by this local result. The first demo permits in-call typing for
-provider testing; this does not change the product's chat/call mode decision.
+Typed turns bypass STT, enter the same in-memory history as spoken turns, and
+produce a spoken reply and a transcript. A synthetic-mic call recalled a
+typed fact in a spoken turn. The mute test produced no transcript for the
+muted utterance and accepted fresh speech after unmute. A provider-side check
+for forwarded audio frames during mute remains open. Each call starts with
+fresh history. In-call typing exercises the shared session for this demo;
+the [product plan](2026-11-16-chat-first-conversations-and-calls.md) owns the
+chat and call UX.
+
+Playwright Chrome and Linux Firefox passed live calls with typed replies,
+Inworld playback, mic toggle, and hangup. Default bundling failed ICE in the
+Linux Firefox test. The spike uses LiveKit's public `max-bundle` option for
+desktop Firefox, and the user confirmed typing and speaking in Safari. The
+remaining manual JS demo check is Firefox 160 on macOS: connect, hear the
+greeting, type a message, speak a message, toggle mute, and hang up. Record
+the result and browser version. The [runbook's browser section](../apps/voice-agent/README.md#browser-transport-findings)
+also tracks the separate Python call page regression check for the shared
+browser SDK upgrade.
+
+## Next experiment
+
+Use a saved Inworld clone in a dedicated test LiveKit project. Resolve the
+caller's `audio_references` row by ID, owner, and provider before opening
+providers, then pass its Inworld `voice_id` to TTS. Compare JS and Python with
+the same voice, language, prompt, and turn policy. Measure first audio,
+interruption, delivery across successive replies, and provider usage. Python
+passes up to five previous replies within 1,500 characters to Inworld's
+`synthesisContext.previousRequests`; the JS worker currently sends no
+synthesis context. Test whether that difference affects delivery before
+choosing how to carry it over.
+
+The demo establishes that Agents JS can run the cascade, so continue with it
+as the next runtime candidate. Shared chat and call history, pgvector memory,
+billing, and deployed 30–60 minute mobile calls remain part of the runtime
+decision.
 
 ## Question and outcome
 
@@ -109,10 +140,14 @@ The behavioral baseline is Sexycall's `src/voice_pipeline.py`,
 
 ### 1. Dependency and provider feasibility
 
+The local Node 24 worker and the model pins are verified with Ashley. The
+target image, saved-clone parity, provider usage, and cancellation measurements
+remain open.
+
 1. Check registry versions, release age, peer dependencies, and native
    `rtc-node` support for Node 24 and the target Linux image. Pin a compatible
    published set in pnpm; GitHub `main` versions can differ from npm releases.
-   Build and boot the worker image before implementing UI or persistence.
+   Build and boot the worker image before running the deployed tests.
 2. Probe the exact baseline stack: `grok-voice-transcribe-2.0`, LiveKit inference
    `xai/grok-4.20-0309-non-reasoning`, and direct `inworld-tts-2` with the saved
    voice, language, and `BALANCED` delivery mode. Verify streaming, cancellation,
@@ -131,10 +166,13 @@ core cascade works or a small, testable compatibility patch resolves the gap.
 
 ### 2. One internal call
 
-1. Add the worker under a distinct dispatch name, such as
-   `sexyvoice-js-spike`. Use a dedicated test LiveKit project and synthetic
-   accounts. Add a separate authenticated development/preview token route;
-   keep production dispatch and the existing Python call route intact.
+The internal page, JS-only dispatch, live transcription, mute controls, and
+five-minute cap are implemented. Local calls used the configured LiveKit
+project and a disposable local Supabase account.
+
+1. Move the next experiment to a dedicated test LiveKit project with synthetic
+   accounts. Use the existing authenticated token route and `sexyvoice-js-spike`
+   dispatch.
 2. Derive user, character, voice ownership, scene, language, and memory
    preference on the server. Reuse the context plan's operation contract to
    admit one call per user transactionally before issuing a token. Implement
@@ -142,12 +180,9 @@ core cascade works or a small, testable compatibility patch resolves the gap.
    Bind the accepted operation to the room and verified participant; the worker
    claims and revalidates it before provider startup, heartbeats it, and releases
    it after finalization. Browser metadata cannot select another user's data.
-3. Reuse the existing call component for an internal page. Establish audible
-   streaming Inworld output, live transcriptions, interruption, hangup, and
-   provider cleanup before adding conversation integration.
-4. Use LiveKit's media capture and playback. Avoid a second AudioWorklet/PCM
-   queue or custom browser-to-Next.js audio relay. Verify iOS audio unlock and
-   permissions through the explicit call gesture.
+3. Use the existing internal page to verify interruption and provider cleanup
+   with the saved voice. Then confirm iOS audio unlock and microphone permission
+   from the call gesture.
 
 Deliverable: one real mobile call with timing and usage measurements. No
 customer credit writes; shadow accounting records provider spend separately.
@@ -294,9 +329,9 @@ as part of this experiment.
 
 Allow only explicit test users in development/preview, with production blocked
 at token issuance and worker startup. Use synthetic dialogue and a dedicated
-LiveKit project. Provider spend is real; use a hard 65-minute session cap,
-bounded output/context, and one admitted operation. Begin with short probes
-and record actual spend before the 30/60-minute sessions. Keep transcript
+LiveKit project. Keep the five-minute cap for short probes and record actual
+spend before the soak. For the deployed 30/60-minute sessions, use a hard
+65-minute cap, bounded output/context, and one admitted operation. Keep transcript
 content, prompts, memory, raw audio, and credentials out of diagnostic logs.
 
 Write contract tests before modifying lifecycle, context, or provider behavior.
