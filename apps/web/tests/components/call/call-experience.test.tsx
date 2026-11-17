@@ -51,6 +51,14 @@ vi.mock('@/hooks/use-connection', () => ({
     shouldConnect: connection.shouldConnect,
   }),
 }));
+vi.mock('@/hooks/use-call-recording', () => ({
+  useCallRecording: () => ({
+    files: {},
+    mode: null,
+    start: vi.fn(),
+    stop: vi.fn(),
+  }),
+}));
 vi.mock('@/hooks/use-call-timer', () => ({
   useCallTimer: () => ({ formattedTime: '01:42' }),
 }));

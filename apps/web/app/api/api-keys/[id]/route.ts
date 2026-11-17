@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { APIErrorResponse } from '@/lib/error-ts';
+import { revokeApiKeys } from '@/lib/supabase/api-keys';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
@@ -18,12 +19,7 @@ export async function DELETE(
     return APIErrorResponse('Unauthorized', 401);
   }
 
-  const { data, error } = await supabase
-    .from('api_keys')
-    .update({ is_active: false })
-    .eq('id', id)
-    .eq('user_id', claims.sub)
-    .select('id');
+  const { data, error } = await revokeApiKeys(supabase, claims.sub, id);
 
   if (error) {
     return APIErrorResponse('Failed to deactivate API key', 500);

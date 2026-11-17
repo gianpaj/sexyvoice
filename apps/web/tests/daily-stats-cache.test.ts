@@ -294,7 +294,7 @@ describe('GET /api/daily-stats cache', () => {
           status: 'failed',
         },
         {
-          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          model: 'grok-voice-think-fast-1.0',
           started_at: '2026-09-11T13:00:00Z',
           status: 'completed',
         },

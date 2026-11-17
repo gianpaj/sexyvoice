@@ -69,7 +69,7 @@ export class CreditsPage {
     // Package cards — scope to cards that contain a buy button to avoid
     // matching sidebar cards or unrelated dashboard sections.
     this.packageCards = page.locator('[class*="card"]').filter({
-      has: page.getByRole('button', { name: /buy credits/i }),
+      has: page.getByRole('button', { name: /^buy credits$/i }),
     });
     this.starterCard = this.packageCards
       .filter({ hasText: /starter/i })
@@ -78,7 +78,7 @@ export class CreditsPage {
       .filter({ hasText: /standard/i })
       .first();
     this.proCard = this.packageCards.filter({ hasText: /pro/i }).first();
-    this.buyButtons = page.getByRole('button', { name: /buy credits/i });
+    this.buyButtons = page.getByRole('button', { name: /^buy credits$/i });
     this.starterPrice = this.starterCard
       .locator('span')
       .filter({ hasText: /^\$\d+/ })
@@ -174,7 +174,7 @@ export class CreditsPage {
     } else {
       card = this.proCard;
     }
-    await card.getByRole('button', { name: /buy credits/i }).click();
+    await card.getByRole('button', { name: /^buy credits$/i }).click();
   }
 
   /**

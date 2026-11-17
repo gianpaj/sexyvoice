@@ -580,7 +580,7 @@ describe('/api/characters', () => {
       const res = await POST(makeRequest(body));
       expect(res.status).toBe(201);
       expect(insertedCharacters[0]).toMatchObject({
-        session_config: { model: 'grok-voice-think-fast-1.0' },
+        session_config: { model: 'grok-voice-think-fast-2.0' },
       });
     });
   });

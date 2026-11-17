@@ -46,6 +46,3 @@ not charge speech credits. No external API v1 contract changes are required.
 Tests cover both defaults, ownership, mismatched providers, compensation,
 preview formats, character saving, tokens, and the inline creator. A live
 Inworld call remains necessary to assess quality, interruptions, and latency.
-The browser suite requires fresh test authentication: the cached session
-expired on October 22 and its refresh token is rejected. Component and API
-tests cover the changed creation, saving, and model-selection flow.

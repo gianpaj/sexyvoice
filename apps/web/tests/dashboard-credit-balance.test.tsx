@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/server';
 import messages from '@/messages/en.json';
 
 const refresh = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/e2e-mocks', () => ({ E2E_SAVED_CALL_VOICES: [] }));
+vi.mock('@/lib/e2e-call-user', () => ({ getE2ECallUser: async () => null }));
 vi.mock('@/lib/i18n/navigation', () => ({ useRouter: () => ({ refresh }) }));
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
 vi.mock('next-intl/server', () => ({

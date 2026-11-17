@@ -100,6 +100,18 @@ export const E2E_SAVED_CALL_VOICES = [
     provider: 'mistral',
     locale: 'en',
   },
+  {
+    id: '22222222-2222-4222-8222-222222222222',
+    name: 'Late-night voice',
+    provider: 'inworld',
+    locale: 'en',
+  },
+  {
+    id: '33333333-3333-4333-8333-333333333333',
+    name: 'Voz suave',
+    provider: 'inworld',
+    locale: 'es',
+  },
 ];
 
 export const E2E_CALL_INSTRUCTION_CONFIG = {

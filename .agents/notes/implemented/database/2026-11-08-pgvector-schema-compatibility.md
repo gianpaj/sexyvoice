@@ -5,7 +5,7 @@ Production installs pgvector in `public`; local Supabase installs it in
 A fixed `extensions.vector` signature prevents the dual-scope migration from
 running against production.
 
-The pending dual-scope migration resolves the extension namespace through
+The dual-scope migration resolves the extension namespace through
 `pg_extension` and quotes it with `format` for the RPC argument type, cosine
 operators, drop signature, and execution grants. The function retains an empty
 search path and fully qualified table references. Missing pgvector produces an

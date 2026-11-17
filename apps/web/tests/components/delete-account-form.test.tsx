@@ -43,7 +43,7 @@ describe('DeleteAccountForm', () => {
         </NextIntlClientProvider>,
       );
 
-      await user.click(screen.getByRole('button', { name: 'Delete account' }));
+      await user.click(screen.getByRole('button', { name: 'Delete content' }));
       await user.click(screen.getByRole('button', { name: 'Continue' }));
 
       await waitFor(() => expect(toast.error).toHaveBeenCalled());

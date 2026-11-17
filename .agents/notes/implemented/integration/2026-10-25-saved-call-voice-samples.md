@@ -5,8 +5,7 @@
 `audio_references.sample_url` holds the R2 URL of a generated preview: MP3 for
 Inworld and WAV for Mistral, named by the key's extension.
 The nullable column lets profiles without a stored sample keep their provider
-preview. The migration is prepared for the user to apply; agents must not
-apply it. Checked-in database types include this pending column.
+preview.
 
 Both clone providers synthesize the exact English preview text using the saved
 provider voice ID. The shared persistence flow uploads the sample before
@@ -24,9 +23,3 @@ Account deletion removes the provider voice and stored sample, then deletes
 the owned profile row. Failed deletions retain the row for support to retry
 and are logged with the profile ID. Provider deletion accepts a missing voice
 so retries can complete after partial cleanup.
-
-## Verification and rollout
-
-Apply `20261025204441_add_audio_reference_sample_url.sql` before deploying the
-sample creation code. Database tests require the pending migration and are
-deferred until it is applied. No schema changes have been applied by this task.

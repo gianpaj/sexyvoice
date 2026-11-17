@@ -73,7 +73,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                |
 | Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus` |
 | Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                              |
-| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider    |
+| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider    |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                 |
 
 ## External REST API
@@ -471,6 +471,14 @@ it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters
 and custom scenes require a paid account.
 
+Every call-token request captures the browser clock as `clientTime`, an ISO
+timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
+these optional fields and forwards them as `client_time` and `time_zone` in
+LiveKit participant metadata. Invalid clock fields are ignored. SexyCall adds
+the caller's local date and time to the system prompt and exposes
+`get_current_time` for a fresh reading during the call. Clock context is
+independent of the selected language and long-term memory preference.
+
 Long-term memory is on by default for free and paid accounts. The Profile
 page's Voice Call Memory switch saves `call_memory_enabled` in Auth
 `user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
@@ -514,6 +522,12 @@ offers Call again and editing. The in-call timer starts when the agent first
 reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
 starts billing.
 
+The in-call Record button offers Voice only or Voice and video.
+`hooks/use-call-recording.ts` records in the browser: a stereo audio file (the
+user on the left, the character on the right) and, for video, a square video of
+the avatar, name and timer. A recording stops when the user stops it or the
+call ends. The ended view links the files for download. Nothing is uploaded.
+
 Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
@@ -548,7 +562,7 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 | Setting           | Current behavior                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
+| Model             | `grok-voice-think-fast-2.0`, `inworld-tts`, or `mistral-tts`                        |
 | Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
 | Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
 | Max output tokens | Nullable; defaults to the agent's model behavior                                    |
@@ -696,6 +710,17 @@ Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
 deleted files or characters.
 
+Account deletion clears `call_sessions.transcript` and revokes every owned API
+key through `lib/supabase/api-keys.ts`. Call-session metering fields and immutable
+`usage_events` remain available for billing and provider-cost reporting through
+`lib/usage-costs.ts`. API-key rows remain as audit references; setting
+`is_active = false` prevents them from authenticating external API requests.
+
+Transcript-derived `call_session_analysis` rows and aggregate reports remain as
+internal analytics. Deletion clears the transcript stored when cleanup runs.
+It does not end active calls or block later transcript writes. A running call
+can save its transcript again and trigger analysis.
+
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
 expiration. Successful requests release their reservations. A rejection releases
@@ -759,6 +784,16 @@ query retries. Direct browser reads remain single-attempt. The proxy's
 `ensureUserApplicationState` profile read also disables retries because repair
 is best-effort. Read, Auth lookup, and restoration failures are reported to
 Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit purchase information
+
+Paid credit validity and subscription renewal terms are defined in
+`apps/web/policies/terms.mdx`. Localized purchase questions live in the
+`landing.faq` message group `pricingAndAccess`. Both the landing FAQ and
+`CreditsFaq` on the credits page render that group. `FaqGroupAccordion` renders
+the individual questions for both `CreditsFaq` and `CallFaq`. `PricingCards` shows the
+billing commitment for the selected mode and displays the regular renewal
+price alongside an introductory monthly price.
 
 ### Credit balance sync
 

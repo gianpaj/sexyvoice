@@ -77,7 +77,7 @@ export async function getUserCallCharacters(userId: string) {
     )
     .eq('is_public', false)
     .eq('user_id', userId)
-    .order('sort_order');
+    .order('created_at', { ascending: false, nullsFirst: false });
   if (error) throw error;
   return data;
 }

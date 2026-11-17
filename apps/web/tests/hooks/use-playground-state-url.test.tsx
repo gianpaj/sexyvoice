@@ -190,4 +190,39 @@ describe('usePlaygroundState — preset URL', () => {
     expect(result.current.pgState.instructions).toBe('You are Luna, updated.');
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
+
+  it('puts new characters first and keeps edited ones in place', () => {
+    const olderCharacter: Preset = {
+      ...savedCharacter,
+      id: '3c0d1a52-5b7e-4f7a-9c2d-1b6e8f4a0c11',
+      name: 'Older',
+    };
+    const newCharacter: Preset = {
+      ...savedCharacter,
+      id: 'b6bb9bef-e128-406b-8869-72ab7a073eb7',
+      name: 'Newest',
+    };
+    const { result } = renderHook(() => usePlaygroundState(), {
+      wrapper: makeWrapper([savedCharacter, olderCharacter]),
+    });
+
+    act(() =>
+      result.current.dispatch({
+        payload: newCharacter,
+        type: 'SAVE_CUSTOM_CHARACTER',
+      }),
+    );
+    act(() =>
+      result.current.dispatch({
+        payload: { ...olderCharacter, name: 'Older, edited' },
+        type: 'SAVE_CUSTOM_CHARACTER',
+      }),
+    );
+
+    expect(
+      result.current.pgState.customCharacters.map(
+        (character) => character.name,
+      ),
+    ).toEqual(['Newest', 'luna2', 'Older, edited']);
+  });
 });

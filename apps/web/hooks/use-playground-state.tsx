@@ -109,16 +109,15 @@ function playgroundStateReducer(
     case 'SAVE_CUSTOM_CHARACTER': {
       const updatedPreset = action.payload;
 
-      const updatedCharacters = state.customCharacters.map((character) =>
-        character.id === updatedPreset.id ? updatedPreset : character,
+      const exists = state.customCharacters.some(
+        (character) => character.id === updatedPreset.id,
       );
-      if (
-        !updatedCharacters.some(
-          (character) => character.id === updatedPreset.id,
-        )
-      ) {
-        updatedCharacters.push(updatedPreset);
-      }
+      // Newest first, matching getUserCallCharacters.
+      const updatedCharacters = exists
+        ? state.customCharacters.map((character) =>
+            character.id === updatedPreset.id ? updatedPreset : character,
+          )
+        : [updatedPreset, ...state.customCharacters];
       return {
         ...state,
         customCharacters: updatedCharacters,
