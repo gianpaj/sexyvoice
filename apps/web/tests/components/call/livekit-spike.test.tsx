@@ -102,9 +102,31 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 describe('JS browser call', () => {
+  it.each([
+    [
+      'Mozilla/5.0 Firefox/159.0',
+      { rtcConfig: { bundlePolicy: 'max-bundle' } },
+    ],
+    ['Mozilla/5.0 Chrome/142.0.0.0 Safari/537.36', undefined],
+    ['Mozilla/5.0 Version/26.0 Safari/605.1.15', undefined],
+    ['Mozilla/5.0 FxiOS/159.0 Mobile/15E148 Safari/605.1.15', undefined],
+  ])(
+    'uses the expected connection options for %s',
+    async (userAgent, options) => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
+      view();
+      const room = await connect();
+      expect(room.connect).toHaveBeenCalledWith(
+        'wss://test',
+        'js-token',
+        options,
+      );
+    },
+  );
   it('requests only the JS route and waits for the JS runtime before opening the microphone', async () => {
     view();
     const room = await start();

@@ -63,22 +63,24 @@ diagnosing blocked ICE as a stopped worker. Runtime discovery waits for media
 connection before sending RPCs or opening the microphone. A reconnect before
 runtime discovery keeps the startup deadline rather than rejecting the call.
 
-The local Firefox probe reproduces default-path ICE failure. Relay-only ICE
-also fails, while a diagnostic probe restricted to TURN/TLS connects. Chrome
-connects on both direct UDP and TLS relay. These observations do not establish
-the cause of Firefox's candidate-selection failure. The application retains
-SDK transport defaults; Firefox support remains an acceptance gap. The SDK
-is pinned to 2.24.1 for its documented initial-recovery and Safari fixes, but
-both the upgrade and the longer deadline are insufficient to establish Firefox
-reliability. The opt-in live Playwright matrix covers Chrome, Firefox, desktop
-WebKit, and mobile WebKit. The user reports Safari typing and speaking work. The report does not establish
-which desktop/iOS devices passed every scenario; mute, interruption, recovery,
-and long-call checks remain required. Linux WebKit results cannot establish
-Safari device permissions or audio behavior.
-A supported SDK/configuration fix needs a browser regression before changing
-transport. Forced reconnect diagnostics are absent from the application. Safari
-logs collected during a forced-reconnect experiment and Fast Refresh show SCTP
-channel closure; they do not isolate the cause of a stable-build failure.
+The JS demo gives Firefox `rtcConfig.bundlePolicy = "max-bundle"` through
+LiveKit's public connection options. This shares one ICE/DTLS transport across
+the SDK's initial media sections. Chrome, Safari, and iOS Firefox keep defaults;
+the production Python call UI is outside this change. See the
+[browser evidence and remaining checks](../../../../apps/voice-agent/README.md#browser-transport-findings).
+
+LiveKit 2.24.1 with default bundling fails ICE in Linux Firefox 153. The same
+SDK with max-bundle connects through TURN/TLS and receives decoded audio.
+Two consecutive application calls pass text, audio playback, mute/unmute, and
+hangup in both Firefox and Chrome. These results identify a working configuration;
+they do not establish the underlying browser/server defect. The user reports
+Safari typing and speaking work. Firefox 160 on macOS still needs a user retest;
+Safari device coverage, interruption, network recovery, and long calls remain
+acceptance work. Linux WebKit is not a substitute for Safari devices.
+
+Forced reconnect diagnostics are absent from the application. Safari logs
+collected during a forced-reconnect experiment and Fast Refresh show SCTP
+channel closure; they do not isolate a stable-build failure.
 
 Remote development uses the configured `NEXT_PUBLIC_SITE_URL` as an exact
 additional origin for the internal token route; forwarded host headers cannot
@@ -88,6 +90,13 @@ development-only origin exception, with a regression test for scheme/port and
 hostname mismatches.
 
 ## Alternatives considered
+
+- Downgrade LiveKit or patch its preallocated media layout: isolated Firefox
+  calls work with 2.17.0 and with the layout removed from 2.24.1. Both add
+  maintenance or lose upstream fixes. The public max-bundle option works with
+  the pinned SDK and preserves its media layout. Relay-only mode, dual peer
+  connections, longer startup deadlines, and early microphone capture did not
+  resolve the reproduced failure. Forced TLS diagnostics were inconsistent.
 
 - [LiveKit Agents JS in this repository](../../../../plans/2026-11-16-livekit-agents-js-spike.md):
   the preferred next comparison. It keeps LiveKit media handling and TypeScript

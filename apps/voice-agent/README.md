@@ -105,18 +105,24 @@ The JS Inworld plugin does not expose Python's five-reply/1,500-character
 
 ## Browser transport findings
 
-Chrome via `agent-browser` and the live Playwright test receives Inworld audio,
-exchanges text, and completes microphone mute/unmute and hangup. Firefox
-reproduces ICE failures, including TURN error 701. A TLS-only diagnostic probe
-connects; an isolated regional TLS TURN URL also gathers a relay candidate.
-These observations do not establish a complete transport fix. The user reports
-a successful Safari call with both typed and spoken turns. Mute, interruption,
-network recovery, and long calls still need Safari verification.
+The internal demo uses `livekit-client` 2.24.1. Firefox receives
+`rtcConfig.bundlePolicy = "max-bundle"` at connection time; Chrome, Safari,
+and iOS Firefox keep SDK defaults. This policy creates one ICE/DTLS transport
+for the SDK's initial media layout. See [WebRTC bundling](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#bundlepolicy).
 
-The browser uses `livekit-client` 2.24.1, which includes initial-connection
-recovery and Safari compatibility fixes. Startup allows 60 seconds for the
-SDK's fallback attempts. Firefox also fails with this window, so increasing it
-is not a complete Firefox fix. SDK transport defaults remain in place.
+On Linux Firefox 153, SDK defaults fail ICE with TURN error 701. The max-bundle
+probe connects through a TLS relay and receives decoded audio samples. The
+application passes two consecutive Firefox calls and two Chrome calls with
+real Inworld playback, typed replies, microphone mute/unmute, and hangup.
+Unit checks protect the browser-specific configuration. The repeated calls use
+synthetic microphone tracks; recognizable speech through Firefox STT still needs
+a device check. The user reports Safari typing and speaking work; Firefox 160
+on macOS needs confirmation of this fix.
+
+Startup allows 60 seconds for SDK fallback attempts and runtime discovery.
+A longer deadline alone does not resolve the default-path Firefox failure.
+The fix uses a public connection option; it needs no SDK downgrade, fork,
+forced reconnect, hardcoded TURN endpoint, or browser preference change.
 
 Required browser targets are Chrome, Firefox, desktop Safari, and iOS Safari.
 Linux WebKit is an automated engine check, not Safari certification. Real Mac

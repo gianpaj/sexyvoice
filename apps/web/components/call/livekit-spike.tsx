@@ -203,7 +203,14 @@ export function LivekitSpike() {
         throw new Error('Invalid runtime');
       if (active.current !== current) return;
       await audioReady;
-      await current.connect(token.url, token.accessToken);
+      // A shared ICE transport avoids Firefox startup failures with this SDK's media layout.
+      await current.connect(
+        token.url,
+        token.accessToken,
+        /Firefox\//.test(navigator.userAgent)
+          ? { rtcConfig: { bundlePolicy: 'max-bundle' } }
+          : undefined,
+      );
       mediaConnected = true;
       if (active.current !== current) {
         await current.disconnect();
