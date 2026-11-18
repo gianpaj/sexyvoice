@@ -24,7 +24,7 @@
 ## 🌟 About
 
 - Generate AI voices in 24+ supported languages and locales
-- 57 public speech voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`), plus 6 built-in voices for calls
+- 35 public speech voices from Google Gemini (`gpro38`) and xAI Grok (`xai`), plus 6 built-in voices for calls
 - Voice cloning across 28 languages
 - Credit-based usage system
 - User authentication and profile management (Google)
@@ -43,7 +43,7 @@ dashboard. See [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Live AI Voice Calls**: Talk to AI characters in real time; paid users can create characters and choose a cloned voice
-- **Voice Selection System**: Choose from 57 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
+- **Voice Selection System**: Choose from 35 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 
@@ -422,23 +422,20 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 
 ### Supported Voice Families and Languages
 
-The public catalog has 63 voices: 57 text-to-speech voices and 6 voices for AI
+The available public catalog has 41 voices: 35 text-to-speech voices and 6 voices for AI
 voice calls. Public voices live in the `voices` table, and `GET /api/v1/voices`
 returns the text-to-speech subset.
 
 | Family               | Model alias | Feature | Public voices | Languages                              |
 | -------------------- | ----------- | ------- | ------------- | -------------------------------------- |
 | Gemini 3.8 Flash TTS | `gpro38`    | `tts`   | 28            | Multilingual, plus `es-ES` and `es-MX` |
-| Gemini 3.1 Flash TTS | `gpro31`    | `tts`   | 11            | Multilingual (70+ languages)           |
-| Gemini 2.5 Pro TTS   | `gpro`      | `tts`   | 11            | Multilingual (24 languages)            |
 | xAI Grok             | `xai`       | `tts`   | 7             | Multilingual with automatic detection  |
 | xAI Grok             | `xai`       | `call`  | 6             | Multilingual                           |
 
-#### Google Gemini multilingual voices (`gpro`, `gpro31`, `gpro38`)
+#### Google Gemini multilingual voices (`gpro38`)
 
-The same eleven Gemini voice identities exist under each Gemini model alias, so
-one name maps to three catalog rows. Select by `voiceId`, or pass the `model`
-alias together with the `voice` name.
+Select a Gemini voice by `voiceId`, or pass `model: "gpro38"` together with
+the `voice` name.
 
 | Voice        | Description |
 | ------------ | ----------- |
@@ -453,47 +450,6 @@ alias together with the `voice` name.
 | `puck`       | Upbeat      |
 | `sulafat`    | Warm        |
 | `zephyr`     | Bright      |
-
-Gemini 2.5 Pro (`gpro`) voices support style prompting and the following
-language/locale set:
-
-| Language               | BCP-47 Code              | Language             | BCP-47 Code |
-| ---------------------- | ------------------------ | -------------------- | ----------- |
-| Arabic (Egyptian)      | `ar-EG`                  | German (Germany)     | `de-DE`     |
-| English (US)           | `en-US`                  | Spanish (US)         | `es-US`     |
-| French (France)        | `fr-FR`                  | Hindi (India)        | `hi-IN`     |
-| Indonesian (Indonesia) | `id-ID`                  | Italian (Italy)      | `it-IT`     |
-| Japanese (Japan)       | `ja-JP`                  | Korean (Korea)       | `ko-KR`     |
-| Portuguese (Brazil)    | `pt-BR`                  | Russian (Russia)     | `ru-RU`     |
-| Dutch (Netherlands)    | `nl-NL`                  | Polish (Poland)      | `pl-PL`     |
-| Thai (Thailand)        | `th-TH`                  | Turkish (Turkey)     | `tr-TR`     |
-| Vietnamese (Vietnam)   | `vi-VN`                  | Romanian (Romania)   | `ro-RO`     |
-| Ukrainian (Ukraine)    | `uk-UA`                  | Bengali (Bangladesh) | `bn-BD`     |
-| English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
-| Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
-
-#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (`gpro31`)
-
-Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`.
-Voices returned as `gpro` stay on Gemini 2.5 Pro.
-
-Supports all 24 languages above, plus (non-exhaustive):
-Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
-Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
-Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
-Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
-Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
-Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
-Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
-Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
-Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
-Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
-Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
-Plus English, Spanish, French, Portuguese, and Arabic regional variants.
-
-> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
-
-Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
 
 #### Gemini 3.8 Flash TTS (`gpro38`)
 

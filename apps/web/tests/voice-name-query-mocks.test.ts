@@ -11,12 +11,12 @@ for (const [label, lookup] of [
 ] as const) {
   describe(`${label} voice-name fixture`, () => {
     it('keeps model scoping faithful to the production lookup', async () => {
-      await expect(lookup('kore', true, ['gpro38'])).resolves.toBeNull();
-      await expect(lookup('kore', true, ['gpro'])).resolves.toMatchObject({
-        model: 'gpro',
+      await expect(lookup('kore', true, ['xai'])).resolves.toBeNull();
+      await expect(lookup('kore', true, ['gpro38'])).resolves.toMatchObject({
+        model: 'gpro38',
         name: 'kore',
       });
-      await expect(lookup('kore')).resolves.toMatchObject({ model: 'gpro' });
+      await expect(lookup('kore')).resolves.toMatchObject({ model: 'gpro38' });
     });
   });
 }

@@ -90,7 +90,7 @@ function renderVoiceSettingsCard(
     createVoice({
       id: 'voice-gemini',
       language: 'en',
-      model: 'gpro',
+      model: 'gpro38',
       name: 'kore',
     }),
     createVoice({
@@ -122,7 +122,7 @@ describe('VoiceSettingsCard', () => {
       selectedStyle: 'warm and intimate',
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        model: 'gpro',
+        model: 'gpro38',
         name: 'kore',
       }),
     });
@@ -196,7 +196,7 @@ describe('VoiceSettingsCard', () => {
     renderVoiceSettingsCard({
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        model: 'gpro',
+        model: 'gpro38',
         name: 'kore',
       }),
     });

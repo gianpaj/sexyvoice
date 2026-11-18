@@ -1,7 +1,7 @@
 ---
-title: 'API Quickstart'
-description: 'How to authenticate, generate speech, and check billing with SexyVoice API'
-icon: 'code-xml'
+title: "API Quickstart"
+description: "How to authenticate, generate speech, and check billing with SexyVoice API"
+icon: "code-xml"
 ---
 
 Use the API when you want to generate speech from your own backend or app.
@@ -27,9 +27,9 @@ You can select a voice in either of two ways:
 - Pass `voice` + `model` for name-based lookup.
 - Pass `voiceId` from `GET /api/v1/voices`; the API derives the model from that voice ID.
 
-### Using `gpro` model
+### Using Gemini 3.8 Flash TTS
 
-Gemini voices (`gpro`, `gpro31`, and `gpro38`) accept an optional `temperature` (range `0`–`2`).
+Gemini voices (`gpro38`) accept an optional `temperature` (range `0`–`2`).
 Higher values make the delivery more varied and expressive; omit it to use the model
 default. `temperature` is ignored for non-Gemini voices.
 
@@ -38,7 +38,7 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "gpro",
+    "model": "gpro38",
     "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
@@ -47,32 +47,16 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   }'
 ```
 
-### Using Gemini 3.8 Flash TTS
-
 Select a voice returned by `/api/v1/voices` with `model: "gpro38"`.
 Send spoken words in `input` and delivery instructions in `style`.
 The API sends style as speech metadata, separate from the transcript.
 Use inline tags such as `<sigh>` or `<short pause>` for brief vocal events.
 
 Gemini 3.8 returns WAV audio and reports `gemini-3.8-flash-tts` in `usage.model`.
-Requests do not fall back to Gemini 2.5 because extended voice IDs require 3.8.
-Existing voice IDs and the `gpro` and `gpro31` models keep their behavior.
-
-### Using G31 (Gemini 3.1 Flash TTS)
-
-Gemini 3.1 supports 70+ languages and inline audio expression tags like `[cheerfully]`, `[whispering]`, and `[pause]`. Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`; `gpro` voices stay on Gemini 2.5 Pro.
-
-```bash
-curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "gpro31",
-    "voice": "achernar",
-    "input": "[cheerfully] Hello from Gemini 3.1! [pause] This supports 70+ languages.",
-    "seed": 1234
-  }'
-```
+The supported model aliases are `gpro38`, `xai`, and `orpheus`.
+Retired `gpro` and `gpro31` aliases return `400`; their voice IDs return `404`.
+Choose a supported voice from `/api/v1/voices` before generating. Audio already
+generated with retired voices remains available in your history.
 
 ### Using a `voiceId`
 
@@ -83,7 +67,7 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
   -H 'Content-Type: application/json' \
   -d '{
-    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc",
+    "voiceId": "1236ed64-eedc-4608-91b8-d545966b3777",
     "input": "Hello from a voice ID",
     "style": "calm"
   }'

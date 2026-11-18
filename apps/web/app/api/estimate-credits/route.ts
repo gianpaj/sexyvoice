@@ -8,9 +8,9 @@ import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
   buildGeminiTtsContents,
-  buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { isActiveTtsModel } from '@/lib/tts/models';
 import {
   calculateCreditsFromTokens,
   estimateGrokCredits,
@@ -77,7 +77,7 @@ async function validateVoice(
 ): Promise<ValidationResult<{ model: string }>> {
   const voiceObj = await getVoiceById(voiceId);
 
-  if (!voiceObj) {
+  if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
     return {
       ok: false,
       response: APIErrorResponse('Voice not found', 404),
@@ -90,7 +90,7 @@ async function validateVoice(
     return {
       ok: false,
       response: APIErrorResponse(
-        'Credit estimation currently supports only gpro and grok voices',
+        'Credit estimation currently supports only Gemini and Grok voices',
         400,
       ),
     };
@@ -172,21 +172,14 @@ export async function POST(request: Request) {
       return apiKeyResult.response;
     }
 
-    // Build the exact same prompt and target the same model the generation
-    // route will use, so the token count reflects the real request. The model
-    // and prompt format differ by voice (gpro31 vs gpro) and by user tier.
-    const finalText = buildGeminiTtsPrompt({ model, styleVariant, text });
-    const estimateModel = resolveGeminiTtsModel({
-      model,
-      userHasPaid: isPaidUser,
-    });
+    const estimateModel = resolveGeminiTtsModel({ model });
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
       contents: buildGeminiTtsContents({
         model,
         styleVariant,
-        text: finalText,
+        text,
       }),
       model: estimateModel,
     });
@@ -195,30 +188,18 @@ export async function POST(request: Request) {
 
     // Estimate output tokens for audio
     // Characters per second ~ 15 (faster speech)
-    // Tokens per second of audio ~ 32 (based on documentation)
+    // Gemini 3.8 produces about 25 audio tokens per second.
     const CHARACTERS_PER_SECOND = 15;
-    const TOKENS_PER_SECOND = model === 'gpro38' ? 25 : 32;
+    const TOKENS_PER_SECOND = 25;
 
-    // Base the audio-duration estimate on the full spoken payload. For gpro31
-    // the style is delivered as direction (it shapes pacing/delivery), so the
-    // combined length tracks real audio length better than the transcript alone.
-    // For gpro (2.5) the style is an inline `style: text` instruction rather
-    // than spoken content, so it doesn't add to the audio duration.
-    const spokenLength =
-      styleVariant && model === 'gpro31'
-        ? styleVariant.length + text.length
-        : text.length;
-    const estimatedDurationSeconds = spokenLength / CHARACTERS_PER_SECOND;
+    const estimatedDurationSeconds = text.length / CHARACTERS_PER_SECOND;
     const estimatedOutputTokens = Math.ceil(
       estimatedDurationSeconds * TOKENS_PER_SECOND,
     );
 
     const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
 
-    const credits = calculateCreditsFromTokens(totalEstimatedTokens, {
-      model,
-      userHasPaid: isPaidUser,
-    });
+    const credits = calculateCreditsFromTokens(totalEstimatedTokens);
 
     return NextResponse.json({
       estimatedCredits: credits,

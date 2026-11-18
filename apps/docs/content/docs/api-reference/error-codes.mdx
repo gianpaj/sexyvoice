@@ -47,8 +47,7 @@ All errors return this shape:
 
 `POST /api/v1/speech` returns HTTP `404` with `error.code = "voice_not_found"`
 when a voice ID is unavailable or a voice name does not exist for the requested
-model. This applies to every supported model, including `gpro`, `gpro31`,
-`orpheus`, and `xai`, as well as `gpro38`.
+model. This applies to every supported model, including `gpro38`, `orpheus`, and `xai`.
 
 If your client handles HTTP `400` with `model_not_found`, also handle HTTP `404`
 with `voice_not_found` for voice/model mismatches. Select an available voice ID

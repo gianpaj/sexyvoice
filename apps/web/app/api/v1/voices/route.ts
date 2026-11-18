@@ -10,6 +10,7 @@ import { resolveExternalModelId } from '@/lib/api/model';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { createClient } from '@/lib/supabase/server';
+import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
 
 export async function GET(request: Request) {
   const requestId = getExternalApiRequestId();
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
       .from('voices')
       .select('id, name, language, model, feature, is_public')
       .eq('feature', 'tts')
+      .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
       .eq('is_public', true)
       .order('sort_order')
       .order('name');
@@ -64,8 +66,7 @@ export async function GET(request: Request) {
           language: voice.language,
           model,
           name: voice.name,
-          supports_style:
-            model === 'gpro' || model === 'gpro31' || model === 'gpro38',
+          supports_style: model === 'gpro38',
         },
       ];
     });

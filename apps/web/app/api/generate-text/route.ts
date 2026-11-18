@@ -3,11 +3,7 @@ import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 import * as Sentry from '@sentry/nextjs';
 import { streamText } from 'ai';
 
-import {
-  GEMINI_38_AUDIO_TAGS,
-  GEMINI_AUDIO_TAGS,
-  getEmotionTags,
-} from '@/lib/ai';
+import { GEMINI_38_AUDIO_TAGS, getEmotionTags } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -32,17 +28,6 @@ Rules:
 5. Keep the original text completely intact, only add tags
 6. Return only the enhanced text with tags, no explanations`;
 
-const GEMINI_31_SYSTEM_PROMPT = `You are an expert at enhancing text for AI voice generation using Gemini audio tags.
-Add inline audio tags to make the voice output more expressive and engaging.
-
-Available tags: ${GEMINI_AUDIO_TAGS}
-
-Rules:
-1. Embed tags directly before the word or phrase they affect, e.g. "[cheerfully] Have a great day!"
-2. Use tags sparingly — 1-3 per sentence maximum
-3. Keep the original text completely intact, only add tags
-4. Return only the enhanced text with audio tags, no explanations`;
-
 function buildSystemPrompt({
   language,
   ttsProvider,
@@ -54,9 +39,6 @@ function buildSystemPrompt({
 }): string {
   if (ttsProvider === 'gemini' && voiceModel === 'gpro38') {
     return GEMINI_38_SYSTEM_PROMPT;
-  }
-  if (ttsProvider === 'gemini' && voiceModel === 'gpro31') {
-    return GEMINI_31_SYSTEM_PROMPT;
   }
   return `Below is a text. The text is missing annotations for a voice actor.
 You are an expert at enhancing text for AI voice generation. Your task is to add emotion tags to make the voice output more expressive and engaging.

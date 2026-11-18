@@ -71,3 +71,7 @@ agent-browser*.json
 
 # Agent-private memory (Claude Code) — must never be committed
 .claude-personal/
+
+# Local agent and Supabase CLI state
+/.superpowers/
+/supabase/.temp/

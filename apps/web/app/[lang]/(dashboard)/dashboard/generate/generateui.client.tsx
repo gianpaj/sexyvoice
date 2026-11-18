@@ -7,6 +7,7 @@ import { AudioProvider } from '@/components/audio-provider';
 import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { useGenerationSettings } from '@/hooks/use-generation-settings';
+import { isActiveTtsModel } from '@/lib/tts/models';
 import { getTtsProvider } from '@/lib/utils';
 import { compareVoices, getFeaturedVoice } from '@/lib/voices';
 
@@ -25,7 +26,9 @@ export function GenerateUI({
   isPaidUser,
 }: GenerateUIProps) {
   // One order for the picker and the default voice; see compareVoices.
-  const voices = [...publicVoices].sort(compareVoices);
+  const voices = publicVoices
+    .filter((voice) => isActiveTtsModel(voice.model))
+    .sort(compareVoices);
   const initialVoiceId = getFeaturedVoice(voices)?.id || voices[0]?.id || '';
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);

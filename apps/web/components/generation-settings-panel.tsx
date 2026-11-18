@@ -23,11 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type {
-  GenerationSettings,
-  StreamMode,
-} from '@/hooks/use-generation-settings';
-import { GEMINI_STREAMING_ENABLED } from '@/lib/ai';
+import type { GenerationSettings } from '@/hooks/use-generation-settings';
 import { getTtsProvider } from '@/lib/utils';
 
 interface GenerationSettingsPanelProps {
@@ -37,8 +33,6 @@ interface GenerationSettingsPanelProps {
   settings: GenerationSettings;
   updateSettings: (patch: Partial<GenerationSettings>) => void;
 }
-
-const STREAM_MODES: StreamMode[] = ['auto', 'on', 'off'];
 
 /**
  * Wraps a block of premium-only controls: for free users it dims and disables
@@ -167,7 +161,6 @@ export function GenerationSettingsPanel({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const isGemini31 = selectedVoice?.model === 'gpro31';
   const upgradeTooltip = t('upgradeToUnlock');
 
   const hasAnySettings = isGeminiVoice || isGrokVoice;
@@ -178,13 +171,6 @@ export function GenerationSettingsPanel({
   if (isGeminiVoice) {
     if (settings.seed !== null) activeCount += 1;
     if (settings.temperature !== null) activeCount += 1;
-    if (
-      isGemini31 &&
-      GEMINI_STREAMING_ENABLED &&
-      settings.streamMode !== 'auto'
-    ) {
-      activeCount += 1;
-    }
   } else if (isGrokVoice && settings.speed !== null) {
     activeCount += 1;
   }
@@ -291,33 +277,6 @@ export function GenerationSettingsPanel({
                   />
                 </SettingRow>
               </PremiumField>
-
-              {/* Streaming is a hotfix-disabled feature (GEMINI_STREAMING_ENABLED).
-                  Hide the override while it's off so we don't show a control
-                  that can't do anything; it returns when streaming is re-enabled. */}
-              {isGemini31 && GEMINI_STREAMING_ENABLED && (
-                <SettingRow
-                  description={t('streaming.description')}
-                  title={t('streaming.label')}
-                >
-                  <div className="grid grid-cols-3 gap-2">
-                    {STREAM_MODES.map((mode) => (
-                      <Button
-                        className="h-8"
-                        key={mode}
-                        onClick={() => updateSettings({ streamMode: mode })}
-                        size="sm"
-                        type="button"
-                        variant={
-                          settings.streamMode === mode ? 'default' : 'outline'
-                        }
-                      >
-                        {t(`streaming.${mode}`)}
-                      </Button>
-                    ))}
-                  </div>
-                </SettingRow>
-              )}
             </>
           )}
 

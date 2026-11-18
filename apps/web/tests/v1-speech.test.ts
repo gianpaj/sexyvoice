@@ -251,8 +251,8 @@ describe('V1 Speech API Route', () => {
   // -------------------------------------------------------------------------
   describe('Model body parameter', () => {
     it.each([
-      ['gpro', 'kore', 'gemini-2.5-pro-preview-tts'],
-      ['gpro31', 'achernar', 'gemini-3.1-flash-tts-preview'],
+      ['gpro38', 'kore', 'gemini-3.8-flash-tts'],
+      ['gpro38', 'achernar', 'gemini-3.8-flash-tts'],
     ] as const)(
       'should generate Gemini speech for model "%s" using %s',
       async (model, voice, expectedGeminiModel) => {
@@ -341,7 +341,7 @@ describe('V1 Speech API Route', () => {
       const response = await POST(
         speechRequest({
           input: 'Hello from a voice ID',
-          voiceId: 'voice-achernar-31-id',
+          voiceId: 'voice-achernar-38-id',
         }),
       );
       const json = await response.json();
@@ -352,11 +352,11 @@ describe('V1 Speech API Route', () => {
           contents: [
             { parts: [{ text: 'Hello from a voice ID' }], role: 'user' },
           ],
-          model: 'gemini-3.1-flash-tts-preview',
+          model: 'gemini-3.8-flash-tts',
         }),
       );
       expect(json.url).toContain('achernar-');
-      expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+      expect(json.usage.model).toBe('gemini-3.8-flash-tts');
     });
 
     it('should generate Orpheus speech for model "orpheus"', async () => {

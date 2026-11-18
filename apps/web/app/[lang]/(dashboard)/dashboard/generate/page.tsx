@@ -13,6 +13,7 @@ import {
   hasUserPaid,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
 import { GenerateUI } from './generateui.client';
 
 export const generateMetadata = createDashboardMetadata('/dashboard/generate');
@@ -51,6 +52,7 @@ export default async function GeneratePage(props: {
         .from('voices')
         .select('*')
         .eq('feature', 'tts')
+        .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
         .eq('is_public', true)
         .order('sort_order')
         .order('name'),

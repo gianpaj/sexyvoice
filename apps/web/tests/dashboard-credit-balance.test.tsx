@@ -44,6 +44,7 @@ async function renderPage(
   const query = {
     data: [],
     eq: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data, error }),
@@ -64,6 +65,7 @@ async function renderPage(
         : {
             data: [],
             eq: vi.fn().mockReturnThis(),
+            not: vi.fn().mockReturnThis(),
             in: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
             select: vi.fn().mockReturnThis(),
