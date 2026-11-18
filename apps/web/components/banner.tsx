@@ -148,8 +148,9 @@ export function Banner({
       .then((visible) => {
         const shouldShow =
           visible && !isBannerCountdownExpired(countdownEndDate);
-        if (!isCancelled) {
-          setIsVisible(shouldShow);
+        // Only hide: a late result must not undo a dismissal made meanwhile.
+        if (!(isCancelled || shouldShow)) {
+          setIsVisible(false);
         }
       })
       .catch(() => undefined);

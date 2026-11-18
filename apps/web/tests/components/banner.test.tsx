@@ -142,6 +142,26 @@ describe('Banner', () => {
     });
   });
 
+  it('keeps a banner dismissed while the cookie check is still pending', async () => {
+    let resolveCookie: (value: null) => void = () => undefined;
+    vi.stubGlobal('cookieStore', {
+      get: () =>
+        new Promise<null>((resolve) => {
+          resolveCookie = resolve;
+        }),
+      set: vi.fn().mockResolvedValue(undefined),
+    });
+    const user = userEvent.setup();
+    render(<Banner banner={banner} />);
+
+    await user.click(
+      screen.getByRole('button', { name: banner.ariaLabelDismiss }),
+    );
+    await act(async () => resolveCookie(null));
+
+    expect(screen.queryByText(banner.text)).toBeNull();
+  });
+
   it('centers the dashboard message and CTA without a fixed overlay', async () => {
     const { container } = render(<Banner banner={banner} inDashboard />);
     const cta = await screen.findByRole('link', { name: banner.ctaText });
