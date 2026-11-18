@@ -343,6 +343,17 @@ Apply any new migrations only to the isolated local project with
 Keep ports separate from other worktrees. Only the user applies production
 migrations. Update the owning Agent Note as results change the recommendation.
 
+Port the SexyCall behavior tests with each JS slice. Use the same inputs and
+expected outcomes where the behavior is shared. Keep the Python suite as the
+baseline for its worker.
+
+| SexyCall coverage                                                              | JS coverage to carry over                                                                                        |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `test_inworld_voice.py`                                                        | Owned clone resolution, streamed provider request and cancellation, reply context, and incomplete provider usage |
+| `test_memory.py`, `test_supabase_memory.py`, `test_memory_extraction.py`       | Opt-in, scope, preload, overflow retrieval, checked updates, and outages                                         |
+| `test_billing_buckets.py`, `test_call_tracker.py`, `test_credit_exhaustion.py` | First speech, minimum duration, bucket boundaries, low balance, exhaustion, timeout, and meter/finalize races    |
+| `test_call_sessions.py`, `test_final_usage.py`                                 | Concurrent admission, stale sessions, finalization, and accounting with unavailable costs                        |
+
 Implementation slices: compatibility probe → internal call → shared history
 and admission → mute/memory/accounting → deployed mobile soaks → recommendation.
 Stop at a failed prerequisite and report it; do not build later layers to hide
