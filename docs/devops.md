@@ -282,10 +282,11 @@ Application auth, retry, and cookie behavior is documented under
 
 #### Profile privacy migration
 
-Deploy the service-role Stripe customer lookup before an operator applies
+Deploy the service-role Stripe customer lookup and ID writer before an operator applies
 `20261118160059_restrict_profile_access.sql`. It removes public profile reads
-and replaces blanket profile grants with owner read/insert/update access plus
-privileged server access. It applies to existing databases and fresh installs;
+and replaces blanket profile grants with owner read and avatar-only update access plus
+privileged server access. Profile creation and email/Stripe identity updates
+are not granted to clients. It applies to existing databases and fresh installs;
 no email data is rewritten. Other tables' legacy bootstrap defaults are unchanged.
 
 After applying locally with `supabase migration up --local --workdir apps/web`,

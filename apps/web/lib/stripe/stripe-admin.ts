@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '../redis/queries';
+import { createAdminClient } from '../supabase/admin';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
-import { createClient } from '../supabase/server';
 
 const { logger, captureException } = Sentry;
 
@@ -184,7 +184,7 @@ export async function createOrRetrieveCustomer(
 
 // Helper function to update stripe_id in database
 const updateStripeId = async (userId: string, stripeId: string) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('profiles')
     .update({ stripe_id: stripeId })
