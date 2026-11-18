@@ -35,9 +35,7 @@ init({
 
   enableLogs: true,
 
-  // Inlined at build time: CI E2E builds set it so their browser sessions
-  // never report into the production Sentry environment.
-  enabled: process.env.NEXT_PUBLIC_E2E_TEST_MODE !== 'true',
+  enabled: process.env.NEXT_PUBLIC_SENTRY_CLIENT_ENABLED !== 'false',
 
   // Ignore specific error messages from browser extensions and wallets
   ignoreErrors: [

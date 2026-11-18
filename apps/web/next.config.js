@@ -1,6 +1,7 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
 const createNextIntlPlugin = require('next-intl/plugin');
+const { isE2E } = require('./lib/e2e-mode.ts');
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
@@ -9,11 +10,9 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
-// WebKit upgrades localhost asset requests to HTTPS under this directive.
-const usesLocalE2E =
-  process.env.VERCEL_ENV !== 'production' &&
-  (process.env.E2E_TEST_MODE === 'true' ||
-    process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true');
+const e2e = isE2E();
+// Next.js inlines this value into instrumentation-client.ts at build time.
+process.env.NEXT_PUBLIC_SENTRY_CLIENT_ENABLED = String(!e2e);
 
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
@@ -32,7 +31,7 @@ const cspHeader = `
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
-    ${usesLocalE2E ? '' : 'upgrade-insecure-requests;'}
+    ${e2e ? '' : 'upgrade-insecure-requests;'}
 `;
 
 /** @type {import('next').NextConfig} */

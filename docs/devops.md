@@ -235,13 +235,12 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
-- Set `NEXT_PUBLIC_E2E_TEST_MODE=true` in the E2E workflow's build step to
-  disable the browser Sentry client. Set `E2E_TEST_MODE=true` on the test
-  server to disable the server and edge clients. Keep both flags unset on Vercel.
-- Next.js omits the CSP `upgrade-insecure-requests` directive if either flag is
-  `true` when it loads `next.config.js`. This lets WebKit load assets over HTTP
-  from the test server. When `VERCEL_ENV=production`, Next.js always includes
-  the directive.
+- Set `E2E_TEST_MODE=true` before building and starting a Playwright test
+  server. The build disables browser Sentry and omits the CSP
+  `upgrade-insecure-requests` directive so WebKit can load assets over HTTP.
+  At runtime the flag enables test fixtures and disables server and edge
+  Sentry. Keep the flag unset on Vercel. `VERCEL_ENV=production` disables
+  E2E mode.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`

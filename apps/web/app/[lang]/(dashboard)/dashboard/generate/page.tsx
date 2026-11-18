@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
+import { isE2E } from '@/lib/e2e-mode';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
@@ -36,7 +37,7 @@ export default async function GeneratePage(props: {
     'dashboard/generate',
   );
   const isPlaywrightCreditsBypassEnabled =
-    process.env.E2E_TEST_MODE === 'true' &&
+    isE2E() &&
     !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
     claims.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const hasEnoughCredits =
