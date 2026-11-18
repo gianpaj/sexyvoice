@@ -5,7 +5,11 @@ import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
 
-export default async function VoiceSpike() {
+export default async function VoiceSpike({
+  searchParams,
+}: {
+  searchParams: Promise<{ voice?: string | string[] }>;
+}) {
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
   if (
@@ -20,5 +24,7 @@ export default async function VoiceSpike() {
     )
   )
     notFound();
-  return <LivekitSpike />;
+  const { voice } = await searchParams;
+  if (Array.isArray(voice)) notFound();
+  return <LivekitSpike audioReferenceId={voice} />;
 }

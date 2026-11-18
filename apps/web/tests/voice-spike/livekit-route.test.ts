@@ -1,11 +1,12 @@
-import { TokenVerifier } from 'livekit-server-sdk';
+import { Room } from '@livekit/protocol';
+import { RoomServiceClient, TokenVerifier } from 'livekit-server-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn().mockResolvedValue({}),
+  createClient: vi.fn(),
 }));
 vi.mock('@/lib/supabase/auth', () => ({
-  getVerifiedClaims: vi.fn().mockResolvedValue({ sub: 'test-user' }),
+  getVerifiedClaims: vi.fn(),
 }));
 
 import { POST } from '@/app/api/voice-spike/call-token/route';
@@ -14,14 +15,27 @@ import { createClient } from '@/lib/supabase/server';
 
 afterEach(() => {
   vi.unstubAllEnvs();
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  vi.restoreAllMocks();
 });
-const request = (origin = 'https://example.com') =>
+const voiceId = '63765019-12dc-46b6-85e3-dd8b5238c9a0';
+const request = (origin = 'https://example.com', body?: string) =>
   new Request('https://example.com/api/voice-spike/call-token', {
     method: 'POST',
     headers: { origin },
+    body,
   });
 function enable() {
+  vi.mocked(getVerifiedClaims).mockResolvedValue({
+    sub: 'test-user',
+    iss: 'https://example.com/auth/v1',
+    aud: 'authenticated',
+    exp: 9_999_999_999,
+    iat: 1,
+    role: 'authenticated',
+    aal: 'aal1',
+    session_id: 'test-session',
+  });
   vi.stubEnv('VOICE_SPIKE_USER_IDS', 'test-user');
   vi.stubEnv('VERCEL_ENV', 'preview');
   vi.stubEnv('LIVEKIT_URL', 'wss://example.livekit.cloud');
@@ -29,7 +43,102 @@ function enable() {
   vi.stubEnv('LIVEKIT_API_SECRET', 'a-long-test-secret-at-least-32-characters');
   vi.stubEnv('LIVEKIT_AGENT_NAME', 'sexycall');
 }
+function mockVoiceLookup(data: { voice_id: string } | null, error?: Error) {
+  const query = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data, error }),
+  };
+  const from = vi.fn().mockReturnValue(query);
+  vi.mocked(createClient).mockResolvedValue({ from } as unknown as Awaited<
+    ReturnType<typeof createClient>
+  >);
+  return { from, query };
+}
+const requestVoice = (id: string) =>
+  request(undefined, JSON.stringify({ audioReferenceId: id }));
+
 describe('JS spike call dispatch', () => {
+  it('dispatches only the authenticated owner’s Inworld voice outside the browser token', async () => {
+    enable();
+    const { from, query } = mockVoiceLookup({ voice_id: 'workspace__clone' });
+    const createRoom = vi
+      .spyOn(RoomServiceClient.prototype, 'createRoom')
+      .mockResolvedValue(new Room());
+    const response = await POST(requestVoice(voiceId));
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    const token = await new TokenVerifier(
+      'api-key',
+      process.env.LIVEKIT_API_SECRET!,
+    ).verify(payload.accessToken);
+    expect(from).toHaveBeenCalledOnce();
+    expect(from).toHaveBeenCalledWith('audio_references');
+    expect(query.eq.mock.calls).toEqual([
+      ['id', voiceId],
+      ['user_id', 'test-user'],
+      ['provider', 'inworld'],
+    ]);
+    expect(createRoom).toHaveBeenCalledOnce();
+    const room = createRoom.mock.calls[0][0];
+    expect(room).toMatchObject({
+      name: token.video?.room,
+      emptyTimeout: 30,
+      maxParticipants: 2,
+      agents: [{ agentName: 'sexyvoice-js-spike' }],
+    });
+    expect(JSON.parse(room.agents?.[0].metadata ?? '')).toMatchObject({
+      runtime: 'agents-js-spike',
+      userId: 'test-user',
+      inworldVoiceId: 'workspace__clone',
+    });
+    expect(JSON.stringify(payload)).not.toContain('workspace__clone');
+    expect(JSON.stringify(token)).not.toContain('workspace__clone');
+  });
+
+  it('fails when the saved voice is unavailable or the lookup fails', async () => {
+    enable();
+    const createRoom = vi.spyOn(RoomServiceClient.prototype, 'createRoom');
+    const { query } = mockVoiceLookup(null);
+    expect((await POST(requestVoice(voiceId))).status).toBe(404);
+    query.maybeSingle.mockResolvedValueOnce({ data: { voice_id: '' } });
+    expect((await POST(requestVoice(voiceId))).status).toBe(404);
+    query.maybeSingle.mockResolvedValueOnce({
+      error: new Error('database unavailable'),
+    });
+    expect((await POST(requestVoice(voiceId))).status).toBe(503);
+    expect(createRoom).not.toHaveBeenCalled();
+  });
+
+  it('does not mint a usable token when room creation fails', async () => {
+    enable();
+    mockVoiceLookup({ voice_id: 'workspace__clone' });
+    vi.spyOn(RoomServiceClient.prototype, 'createRoom').mockRejectedValue(
+      new Error('LiveKit unavailable'),
+    );
+    const response = await POST(requestVoice(voiceId));
+    expect(response.status).toBe(503);
+    expect(await response.json()).not.toHaveProperty('accessToken');
+  });
+
+  it('rejects invalid UUIDs, malformed JSON, and browser-supplied provider IDs', async () => {
+    enable();
+    const { from } = mockVoiceLookup(null);
+    expect((await POST(requestVoice('workspace__clone'))).status).toBe(400);
+    expect((await POST(request(undefined, '{'))).status).toBe(400);
+    expect(
+      (
+        await POST(
+          request(
+            undefined,
+            JSON.stringify({ inworldVoiceId: 'workspace__clone' }),
+          ),
+        )
+      ).status,
+    ).toBe(400);
+    expect(from).not.toHaveBeenCalled();
+  });
   it('is disabled before auth when the allowlist is empty', async () => {
     vi.stubEnv('VOICE_SPIKE_USER_IDS', '');
     expect((await POST(request())).status).toBe(404);

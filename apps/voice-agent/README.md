@@ -21,7 +21,7 @@ cp apps/voice-agent/.env.example apps/voice-agent/.env.local
 Fill the worker file with credentials for a test LiveKit project, xAI, and
 Inworld. `VOICE_SPIKE_USER_IDS` lists the Supabase UUIDs allowed to test;
 `VOICE_SPIKE_ENABLED=true` explicitly enables this worker. Keep it off in
-production. Inworld uses the workspace's Ashley voice, in English.
+production. Calls use Ashley by default and speak English.
 
 Configure `apps/web/.env.local` with the normal Supabase settings and the same
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and
@@ -41,6 +41,20 @@ can stay connected: explicit dispatch selects only the JS worker. Do not run
 two JS workers against the same project when comparing local changes.
 A preview deployment needs this persistent worker running separately;
 Vercel hosts the page and token request, not the agent's media connection.
+
+## Saved Inworld voice comparison
+
+Sign in as the owner of a consented test clone, then open
+`/{lang}/dashboard/voice-spike?voice=<audio_references.id>`. The route checks
+the row ID, authenticated owner, and Inworld provider before creating the
+room. The worker key must access the workspace that owns the clone.
+Missing or inaccessible clones fail the call request.
+
+The provider voice ID travels in LiveKit's server-side job metadata. The
+browser receives a join token without that metadata. To exercise this flow
+with the live browser suite below, set
+`PLAYWRIGHT_VOICE_SPIKE_AUDIO_REFERENCE_ID` to the row UUID and use the
+clone owner's browser auth fixture.
 
 ## Access from another device
 
@@ -82,7 +96,7 @@ Remove only these demo proxies with `tailscale serve --https=8447 off` and
 - Every call starts with fresh context. The UI holds at most 100 message items.
   This is an internal provider experiment with no customer wallet writes.
 
-This slice has no standalone text chat, saved characters/voice ownership,
+This slice has no standalone text chat, saved character selection,
 database history, cross-tab admission, memory extraction, usage settlement,
 or resumable text streams. Use one synthetic conversation at a time.
 It is not eligible for customer exposure or a Python cutover.

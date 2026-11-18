@@ -9,5 +9,6 @@ export const dispatchSchema = z.strictObject({
   runtime: z.literal(RUNTIME),
   userId: z.string().min(1).max(100),
   expiresAt: z.number().int().positive(),
+  inworldVoiceId: z.string().trim().min(1).optional(),
 });
 export const muteSchema = z.strictObject({ muted: z.boolean() });

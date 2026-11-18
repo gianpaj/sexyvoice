@@ -41,10 +41,14 @@ browser SDK upgrade.
 
 ## Next experiment
 
-Use a saved Inworld clone in a dedicated test LiveKit project. Resolve the
-caller's `audio_references` row by ID, owner, and provider before opening
-providers, then pass its Inworld `voice_id` to TTS. Compare JS and Python with
-the same voice, language, prompt, and turn policy. Measure first audio,
+The [internal saved voice flow](../apps/voice-agent/README.md#saved-inworld-voice-comparison)
+resolves the caller's `audio_references` row by ID, owner, and provider and
+passes the Inworld `voice_id` to TTS through LiveKit job metadata. A local
+LiveKit 1.13.7 instance registered the named dispatch with synthetic metadata.
+The isolated Supabase project has no usable Inworld clone rows.
+
+Use a consented test clone in a dedicated test LiveKit project. Compare JS
+and Python with the same voice, language, prompt, and turn policy. Measure first audio,
 interruption, delivery across successive replies, and provider usage. Python
 passes up to five previous replies within 1,500 characters to Inworld's
 `synthesisContext.previousRequests`; the JS worker currently sends no

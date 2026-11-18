@@ -6,7 +6,9 @@ test('connects, receives audio, exchanges text, mutes and hangs up', async ({
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/en/dashboard/voice-spike');
+  const voice = process.env.PLAYWRIGHT_VOICE_SPIKE_AUDIO_REFERENCE_ID;
+  const query = voice ? `?${new URLSearchParams({ voice })}` : '';
+  await page.goto(`/en/dashboard/voice-spike${query}`);
   await expect(
     page.getByRole('heading', { name: 'JS call demo' }),
   ).toBeVisible();

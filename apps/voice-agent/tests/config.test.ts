@@ -34,6 +34,21 @@ describe('JS spike admission', () => {
       parseJob(metadata, { ...env, VERCEL_ENV: 'production' }, 1000),
     ).toThrow();
   });
+  it('validates an optional resolved Inworld voice', () => {
+    const env = {
+      VOICE_SPIKE_USER_IDS: 'test-user',
+      VOICE_SPIKE_ENABLED: 'true',
+    };
+    const dispatch = (inworldVoiceId: unknown) =>
+      JSON.stringify({ ...JSON.parse(metadata), inworldVoiceId });
+    expect(parseJob(dispatch('workspace__clone'), env, 1000)).toMatchObject({
+      inworldVoiceId: 'workspace__clone',
+    });
+    for (const invalid of ['', ' ', null, 123]) {
+      expect(() => parseJob(dispatch(invalid), env, 1000)).toThrow();
+    }
+  });
+
   it('accepts only the server-issued bounded test dispatch', () => {
     expect(
       parseJob(

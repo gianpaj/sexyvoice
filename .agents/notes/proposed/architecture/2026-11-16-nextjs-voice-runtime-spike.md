@@ -54,11 +54,16 @@ session, including mute/unmute. The local result supports continuing this
 comparison. It does not establish database context, pgvector parity, shared
 admission, billing, iOS reliability, or deployed duration. Each call starts
 fresh, and the internal demo has a five-minute limit and no wallet writes.
-The next comparison uses the same saved Inworld clone in both runtimes.
-The demo proves the default cascade with Ashley. The
-[JS spike plan](../../../../plans/2026-11-16-livekit-agents-js-spike.md#next-experiment)
-covers voice ownership and whether Python's synthesis context affects
-delivery enough to carry over.
+The [saved voice comparison](../../../../apps/voice-agent/README.md#saved-inworld-voice-comparison)
+uses the same owned Inworld clone in both runtimes. The token route reuses
+the signed-in Supabase lookup and creates the clone's LiveKit room with a
+named agent dispatch. A signed join token is readable by the browser, so it
+carries only the room grant for this path. The default Ashley path keeps
+dispatch on first join. Pre-creating the clone's room adds one LiveKit API
+round trip and leaves a short-lived empty room if the browser leaves.
+A worker-side lookup would require separate Supabase credentials for this
+probe. The [JS spike plan](../../../../plans/2026-11-16-livekit-agents-js-spike.md#next-experiment)
+records the dispatch check and the remaining real-clone comparison.
 
 The 60-second startup deadline reports a connection failure until browser WebRTC connects.
 Only a connected browser waiting for the JS runtime reports a missing worker;

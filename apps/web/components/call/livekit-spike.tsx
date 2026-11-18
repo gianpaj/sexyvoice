@@ -38,7 +38,11 @@ function Transcripts({ onMessage }: { onMessage: (message: Message) => void }) {
   return <RoomAudioRenderer />;
 }
 
-export function LivekitSpike() {
+export function LivekitSpike({
+  audioReferenceId,
+}: {
+  audioReferenceId?: string;
+}) {
   const t = useTranslations('voiceSpike');
   const [room, setRoom] = useState<Room | null>(null);
   const active = useRef<Room | null>(null);
@@ -196,6 +200,10 @@ export function LivekitSpike() {
       audioReady.catch(() => undefined);
       const response = await fetch('/api/voice-spike/call-token', {
         method: 'POST',
+        ...(audioReferenceId !== undefined && {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audioReferenceId }),
+        }),
       });
       if (!response.ok) throw new Error('Token unavailable');
       const token = await response.json();

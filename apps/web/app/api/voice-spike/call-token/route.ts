@@ -1,13 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { AGENT_NAME, RUNTIME } from '@sexyvoice/voice-spike';
-import { AccessToken } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
 import { createClient } from '@/lib/supabase/server';
 import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
+
+const requestSchema = z.strictObject({ audioReferenceId: z.uuid().optional() });
 
 export async function POST(request: Request) {
   if (
@@ -45,6 +49,27 @@ export async function POST(request: Request) {
   } = process.env;
   if (!(apiKey && apiSecret && url))
     return APIErrorResponse('LiveKit is not configured', 503);
+  const selection = requestSchema.safeParse(
+    request.body ? await request.json().catch(() => null) : {},
+  );
+  if (!selection.success)
+    return APIErrorResponse('Invalid voice selection', 400);
+
+  let inworldVoiceId: string | undefined;
+  if (selection.data.audioReferenceId) {
+    try {
+      const reference = await getOwnedCallVoice(
+        selection.data.audioReferenceId,
+        claims.sub,
+        'inworld',
+      );
+      inworldVoiceId = reference?.voice_id?.trim();
+      if (!inworldVoiceId) return APIErrorResponse('Voice not found', 404);
+    } catch {
+      return APIErrorResponse('Voice lookup unavailable', 503);
+    }
+  }
+
   const roomName = `js-spike-${randomUUID()}`;
   const token = new AccessToken(apiKey, apiSecret, {
     identity: `spike-user-${claims.sub}`,
@@ -58,7 +83,7 @@ export async function POST(request: Request) {
     canPublishData: true,
     canUpdateOwnMetadata: false,
   });
-  token.roomConfig = new RoomConfiguration({
+  const roomConfig = {
     name: roomName,
     emptyTimeout: 30,
     maxParticipants: 2,
@@ -69,10 +94,24 @@ export async function POST(request: Request) {
           runtime: RUNTIME,
           userId: claims.sub,
           expiresAt: Date.now() + 120_000,
+          inworldVoiceId,
         }),
       }),
     ],
-  });
+  };
+  if (inworldVoiceId) {
+    // The join token is readable by the browser. Keep the provider ID in the server dispatch.
+    try {
+      await new RoomServiceClient(url, apiKey, apiSecret, {
+        requestTimeout: 5,
+      }).createRoom(roomConfig);
+    } catch {
+      return APIErrorResponse('LiveKit room unavailable', 503);
+    }
+  } else {
+    token.roomConfig = new RoomConfiguration(roomConfig);
+  }
+
   return NextResponse.json(
     { accessToken: await token.toJwt(), url, runtime: RUNTIME },
     { headers: { 'Cache-Control': 'no-store' } },

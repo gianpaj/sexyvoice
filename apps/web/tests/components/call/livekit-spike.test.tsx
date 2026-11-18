@@ -65,10 +65,10 @@ const jsAgent = {
     'lk.agent.state': 'listening',
   },
 };
-function view() {
+function view(audioReferenceId?: string) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <LivekitSpike />
+      <LivekitSpike audioReferenceId={audioReferenceId} />
     </NextIntlClientProvider>,
   );
 }
@@ -106,6 +106,16 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe('JS browser call', () => {
+  it('passes the saved voice UUID to the token route', async () => {
+    const audioReferenceId = '63765019-12dc-46b6-85e3-dd8b5238c9a0';
+    view(audioReferenceId);
+    await start();
+    expect(fetch).toHaveBeenCalledWith('/api/voice-spike/call-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audioReferenceId }),
+    });
+  });
   it.each([
     [
       'Mozilla/5.0 Firefox/159.0',

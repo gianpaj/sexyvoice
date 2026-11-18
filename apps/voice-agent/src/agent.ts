@@ -66,7 +66,7 @@ export default defineAgent({
       }),
       tts: new TTS({
         model: 'inworld-tts-2',
-        voice: 'Ashley',
+        voice: job.inworldVoiceId ?? 'Ashley',
         deliveryMode: 'BALANCED',
       }),
       turnHandling: { turnDetection: 'stt', interruption: { mode: 'vad' } },
