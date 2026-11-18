@@ -59,6 +59,13 @@ const requestVoice = (id: string) =>
   request(undefined, JSON.stringify({ audioReferenceId: id }));
 
 describe('JS spike call dispatch', () => {
+  it('accepts a bodyless POST represented by an empty request stream', async () => {
+    enable();
+    const emptyRequest = request(undefined, '');
+    expect(emptyRequest.body).not.toBeNull();
+    expect((await POST(emptyRequest)).status).toBe(200);
+  });
+
   it('dispatches only the authenticated owner’s Inworld voice outside the browser token', async () => {
     enable();
     const { from, query } = mockVoiceLookup({ voice_id: 'workspace__clone' });

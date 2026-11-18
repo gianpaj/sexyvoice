@@ -49,9 +49,11 @@ export async function POST(request: Request) {
   } = process.env;
   if (!(apiKey && apiSecret && url))
     return APIErrorResponse('LiveKit is not configured', 503);
-  const selection = requestSchema.safeParse(
-    request.body ? await request.json().catch(() => null) : {},
-  );
+  const body = await request
+    .text()
+    .then((text) => (text === '' ? {} : JSON.parse(text)))
+    .catch(() => null);
+  const selection = requestSchema.safeParse(body);
   if (!selection.success)
     return APIErrorResponse('Invalid voice selection', 400);
 
