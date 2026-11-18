@@ -14,6 +14,11 @@ Both cloning pickers list file extensions and MIME types explicitly.
 iPhone Safari treats the `audio/*` filter as a movie filter and disables
 audio files in Files. [WebKit bug 242110](https://bugs.webkit.org/show_bug.cgi?id=242110)
 
+Audio Converter, Audio Joiner, and Transcription share the audio extensions
+in `lib/audio-file-picker.ts`. Converter also offers MP4, and Transcription
+offers videos. Audio MIME types remain valid during file handling, and the
+decoder determines whether a file can be processed.
+
 ### Generating with a saved voice
 
 Picking a saved voice makes it the speaker for the form. It replaces the

@@ -5,23 +5,10 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { AUDIO_FILE_ACCEPT, isAudioFile } from '@/lib/audio-file-picker';
 import { cn } from '@/lib/utils';
 
 const SUPPORTED_FORMATS = ['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'];
-
-// Browsers report MP4 as video/mp4 and leave `type` empty for some FLAC and
-// M4A files, so a listed extension counts as audio too.
-const ACCEPT = [
-  'audio/*',
-  ...SUPPORTED_FORMATS.map((format) => `.${format.toLowerCase()}`),
-].join(',');
-
-function isSupportedFile(file: File) {
-  const extension = file.name.split('.').pop()?.toUpperCase() ?? '';
-  return (
-    file.type.startsWith('audio/') || SUPPORTED_FORMATS.includes(extension)
-  );
-}
 
 interface Props {
   disabled?: boolean;
@@ -37,7 +24,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
     if (!file) {
       return;
     }
-    if (isSupportedFile(file)) {
+    if (isAudioFile(file) || file.name.toLowerCase().endsWith('.mp4')) {
       onFileSelect(file);
     } else {
       toast.error(tErrors('unsupportedFormat'));
@@ -95,7 +82,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
       tabIndex={0}
     >
       <input
-        accept={ACCEPT}
+        accept={`${AUDIO_FILE_ACCEPT},.mp4`}
         className="hidden"
         id="file-input"
         onChange={handleFileInput}

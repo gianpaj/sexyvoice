@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { AUDIO_FILE_ACCEPT, isAudioFile } from '@/lib/audio-file-picker';
 import { cn } from '@/lib/utils';
 
 interface DropZoneProps {
@@ -31,9 +32,7 @@ export function DropZone({
       return;
     }
 
-    const audioFiles = Array.from(files).filter((file) =>
-      file.type.startsWith('audio/'),
-    );
+    const audioFiles = Array.from(files).filter(isAudioFile);
 
     if (audioFiles.length > 0) {
       onFilesSelected(audioFiles);
@@ -110,7 +109,7 @@ export function DropZone({
       )}
 
       <input
-        accept="audio/*"
+        accept={AUDIO_FILE_ACCEPT}
         className="hidden"
         disabled={disabled}
         multiple

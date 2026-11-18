@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { AUDIO_FILE_ACCEPT, isAudioFile } from '@/lib/audio-file-picker';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -61,7 +62,7 @@ export function AudioInput({
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
+    if (file && (isAudioFile(file) || file.type.startsWith('video/'))) {
       processFile(file).catch((error) => {
         console.error('Failed to process dropped audio file:', error);
       });
@@ -221,7 +222,7 @@ export function AudioInput({
         tabIndex={0}
       >
         <input
-          accept="audio/*,video/*"
+          accept={`${AUDIO_FILE_ACCEPT},video/*`}
           className="hidden"
           id="transcribe-file-input"
           onChange={handleFileInput}
