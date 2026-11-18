@@ -47,7 +47,7 @@ people make speech; the call creator has its own picker.
 Saved voice tiles on the Clone page and in the call creator offer Delete in
 the options menu. Both use the same confirmation dialog. The Clone page
 gets the names of characters that use the voice from the server. The call
-creator uses its live character list, which includes edits made on that page.
+creator reads saved voice assignments from its character list.
 `DELETE /api/audio-references/[id]` deletes the provider voice and its R2
 sample, then the row, through `deleteSavedVoice()`, which account deletion
 also uses. A failed provider deletion keeps the row so the user can retry.
