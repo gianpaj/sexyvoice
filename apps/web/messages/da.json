@@ -971,7 +971,6 @@
     "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
     "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
     "audioConversionFailed": "Lydkonvertering mislykkedes. Prøv at optage igen.",
-    "audioConversionFailedWithMessage": "Lydkonvertering mislykkedes: __ERROR__",
     "unexpectedError": "Der opstod en uventet fejl",
     "loadingAudioProcessor": "Indlæser lydprocessor...",
     "audioProcessorError": "Lydprocessorfejl",
@@ -1331,7 +1330,7 @@
     },
     "errors": {
       "loadingFailed": "Kunne ikke indlæse FFmpeg. Opdater venligst siden.",
-      "conversionFailed": "Konvertering mislykkedes. Prøv igen.",
+      "conversionFailed": "Filen kunne ikke konverteres. Tjek, at det er en gyldig lydfil.",
       "unsupportedFormat": "Ikke-understøttet filformat",
       "converterFailedToLoad": "Lydkonverteren kunne ikke indlæses. Opdater venligst siden.",
       "converterLoadFailed": "Kunne ikke indlæse lydkonverteren. Opdater venligst siden eller prøv en anden browser."
@@ -1432,6 +1431,7 @@
     "dropZone": {
       "title": "Tilføj lydfiler",
       "subtitle": "Upload en eller flere filer for at begynde redigering",
+      "subtitleMore": "Tilføj flere filer sidst på listen",
       "addFiles": "Tilføj filer"
     },
     "controls": {

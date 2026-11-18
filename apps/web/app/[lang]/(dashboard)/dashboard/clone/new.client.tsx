@@ -520,15 +520,7 @@ function NewVoiceClientInner({
             // TODO send logs to Sentry
             dispatch({
               patch: {
-                errorMessage:
-                  convertError instanceof Error
-                    ? formatCloneMessage(
-                        t('audioConversionFailedWithMessage'),
-                        {
-                          ERROR: convertError.message,
-                        },
-                      )
-                    : t('audioConversionFailed'),
+                errorMessage: t('audioConversionFailed'),
                 status: 'error',
               },
               type: 'patch',

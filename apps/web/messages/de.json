@@ -975,7 +975,6 @@
     "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
     "audioDurationInvalidFallback": "Das Audio muss mindestens __MIN__ Sekunden lang sein.",
     "audioConversionFailed": "Audiokonvertierung fehlgeschlagen. Bitte nehmen Sie erneut auf.",
-    "audioConversionFailedWithMessage": "Audiokonvertierung fehlgeschlagen: __ERROR__",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
     "loadingAudioProcessor": "Audioprozessor wird geladen...",
     "audioProcessorError": "Audioprozessor-Fehler",
@@ -1335,7 +1334,7 @@
     },
     "errors": {
       "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
-      "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "conversionFailed": "Diese Datei konnte nicht konvertiert werden. Bitte prüfen Sie, ob es eine gültige Audiodatei ist.",
       "unsupportedFormat": "Nicht unterstütztes Dateiformat",
       "converterFailedToLoad": "Der Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
       "converterLoadFailed": "Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu oder versuchen Sie einen anderen Browser."
@@ -1436,6 +1435,7 @@
     "dropZone": {
       "title": "Audiodateien hinzufügen",
       "subtitle": "Eine oder mehrere Dateien hochladen, um mit der Bearbeitung zu beginnen",
+      "subtitleMore": "Weitere Dateien am Ende der Liste hinzufügen",
       "addFiles": "Dateien hinzufügen"
     },
     "controls": {

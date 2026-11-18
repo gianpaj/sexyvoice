@@ -61,7 +61,10 @@ export function JoinControls({
 
       <div className="flex w-full items-center justify-end gap-3 md:w-auto">
         <div className="w-full md:w-48">
-          <Label className="mb-1 block text-muted-foreground text-sm">
+          <Label
+            className="mb-1 block text-muted-foreground text-sm"
+            htmlFor="joiner-format-select"
+          >
             {labels.format}
           </Label>
           <Select
@@ -71,7 +74,7 @@ export function JoinControls({
             }
             value={outputFormat}
           >
-            <SelectTrigger>
+            <SelectTrigger id="joiner-format-select">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -485,7 +485,11 @@ export default function AudioJoinerClient() {
             compact={tracks.length > 0}
             disabled={isProcessing}
             onFilesSelected={handleFilesSelected}
-            subtitle={t('dropZone.subtitle')}
+            subtitle={
+              tracks.length > 0
+                ? t('dropZone.subtitleMore')
+                : t('dropZone.subtitle')
+            }
             title={t('dropZone.title')}
           />
 

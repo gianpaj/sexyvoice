@@ -165,13 +165,14 @@ export default function DashboardUI({
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  aria-label="SexyVoice.ai"
                   className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
                   data-visual-test="transparent"
                   size="lg"
                 >
                   <div className="aspect-square group-data-[collapsible=icon]:size-9">
                     <Image
-                      alt="Logo"
+                      alt=""
                       height={292 / 8}
                       src={logoSmall}
                       width={221 / 8}

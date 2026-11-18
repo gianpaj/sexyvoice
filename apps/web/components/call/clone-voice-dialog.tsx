@@ -236,8 +236,13 @@ export function CloneVoiceDialog({
     try {
       let audio = file;
       if (source === 'record' && recording) {
-        await ensureLoaded();
-        audio = await createMicrophoneReferenceAudioFile(recording, convert);
+        try {
+          await ensureLoaded();
+          audio = await createMicrophoneReferenceAudioFile(recording, convert);
+        } catch (error) {
+          console.error('Microphone audio conversion failed:', error);
+          throw new Error(tClone('audioConversionFailed'), { cause: error });
+        }
       }
       if (!audio) throw new Error(t('needFile'));
       const form = new FormData();

@@ -162,7 +162,6 @@ const errorCodesDict = {
 const dict = {
   savedVoice: enMessages.clone.savedVoice,
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
-  audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
   audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
   audioDurationInvalidVoxtral:
     'Reference audio must be at least __MIN__ seconds for voice cloning.',

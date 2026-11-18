@@ -975,7 +975,6 @@
     "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins __MIN__ secondes pour le clonage vocal.",
     "audioDurationInvalidFallback": "L'audio doit durer au moins __MIN__ secondes.",
     "audioConversionFailed": "La conversion audio a échoué. Veuillez réessayer l'enregistrement.",
-    "audioConversionFailedWithMessage": "La conversion audio a échoué : __ERROR__",
     "unexpectedError": "Une erreur inattendue s'est produite",
     "loadingAudioProcessor": "Chargement du processeur audio...",
     "audioProcessorError": "Erreur du processeur audio",
@@ -1310,7 +1309,7 @@
   "audioConverter": {
     "title": "Convertisseur audio gratuit",
     "subtitle": "Convertissez des fichiers audio en MP3, WAV, MP4 et autres formats hors ligne dans votre navigateur",
-    "tagline": "– gratuit et facile",
+    "tagline": " – gratuit et facile",
     "dropZone": {
       "title": "Déposez votre fichier audio ici",
       "description": "ou cliquez pour parcourir"
@@ -1335,7 +1334,7 @@
     },
     "errors": {
       "loadingFailed": "Échec du chargement de FFmpeg. Veuillez rafraîchir la page.",
-      "conversionFailed": "Échec de la conversion. Veuillez réessayer.",
+      "conversionFailed": "Impossible de convertir ce fichier. Vérifiez qu'il s'agit d'un fichier audio valide.",
       "unsupportedFormat": "Format de fichier non supporté",
       "converterFailedToLoad": "Le convertisseur audio n'a pas pu se charger. Veuillez rafraîchir la page.",
       "converterLoadFailed": "Échec du chargement du convertisseur audio. Veuillez rafraîchir la page ou essayer un autre navigateur."
@@ -1436,6 +1435,7 @@
     "dropZone": {
       "title": "Ajouter des fichiers audio",
       "subtitle": "Téléversez un ou plusieurs fichiers pour commencer l'édition",
+      "subtitleMore": "Ajoutez d'autres fichiers à la fin de la liste",
       "addFiles": "Ajouter des fichiers"
     },
     "controls": {

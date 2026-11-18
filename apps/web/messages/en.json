@@ -973,7 +973,6 @@
     "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
     "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
     "audioConversionFailed": "Audio conversion failed. Please try recording again.",
-    "audioConversionFailedWithMessage": "Audio conversion failed: __ERROR__",
     "unexpectedError": "Unexpected error occurred",
     "loadingAudioProcessor": "Loading audio processor...",
     "audioProcessorError": "Audio Processor Error",
@@ -1308,7 +1307,7 @@
   "audioConverter": {
     "title": "Free Audio Converter",
     "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
-    "tagline": "– free & easy",
+    "tagline": " – free & easy",
     "dropZone": {
       "title": "Drop your audio file here",
       "description": "or click to browse"
@@ -1333,7 +1332,7 @@
     },
     "errors": {
       "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
-      "conversionFailed": "Conversion failed. Please try again.",
+      "conversionFailed": "Couldn't convert this file. Check that it's a valid audio file.",
       "unsupportedFormat": "Unsupported file format",
       "converterFailedToLoad": "Audio converter failed to load. Please refresh the page.",
       "converterLoadFailed": "Failed to load audio converter. Please refresh the page or try a different browser."
@@ -1434,6 +1433,7 @@
     "dropZone": {
       "title": "Add audio files",
       "subtitle": "Upload one or more files to start editing",
+      "subtitleMore": "Add more files to the end of the list",
       "addFiles": "Add files"
     },
     "controls": {
