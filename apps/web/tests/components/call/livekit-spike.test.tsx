@@ -16,14 +16,12 @@ import messages from '@/messages/en.json';
 
 const sdk = vi.hoisted(() => ({
   rooms: [] as any[],
-  transcripts: [] as any[],
 }));
 vi.mock('@livekit/components-react', async () => {
   const { createContext } = await import('react');
   return {
     RoomContext: createContext(null),
     RoomAudioRenderer: () => null,
-    useTranscriptions: () => sdk.transcripts,
   };
 });
 vi.mock('livekit-client', () => ({
@@ -43,6 +41,7 @@ vi.mock('livekit-client', () => ({
       setMicrophoneEnabled: vi.fn().mockResolvedValue(undefined),
       sendText: vi.fn().mockResolvedValue({ id: 'typed-1', timestamp: 1 }),
     };
+    registerTextStreamHandler = vi.fn();
     startAudio = vi.fn().mockResolvedValue(undefined);
     connect = vi.fn().mockResolvedValue(undefined);
     disconnect = vi.fn().mockResolvedValue(undefined);
@@ -85,7 +84,6 @@ async function connect() {
 }
 beforeEach(() => {
   sdk.rooms = [];
-  sdk.transcripts = [];
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
@@ -201,13 +199,23 @@ describe('JS browser call', () => {
       { topic: 'lk.chat' },
     );
     expect(screen.getByText('Thinking…')).toBeInTheDocument();
-    sdk.transcripts = [
-      {
-        text: 'A blue bicycle.',
-        participantInfo: { identity: 'agent-js' },
-        streamInfo: { id: 'reply', timestamp: 2 },
-      },
-    ];
+    const [topic, onTranscript] = room.registerTextStreamHandler.mock.calls[0];
+    expect(topic).toBe('lk.transcription');
+    await act(async () =>
+      onTranscript(
+        {
+          info: { id: 'reply', timestamp: 2 },
+          async *[Symbol.asyncIterator]() {
+            yield 'A blue ';
+            yield 'bicycle.';
+            throw new Error(
+              'Room disconnected in the middle of receiving data',
+            );
+          },
+        },
+        { identity: 'agent-js' },
+      ),
+    );
     await act(async () =>
       room.emit(
         'attributes',

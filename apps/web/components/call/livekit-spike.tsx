@@ -1,15 +1,11 @@
 'use client';
 
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  useTranscriptions,
-} from '@livekit/components-react';
+import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { MUTE_RPC, RUNTIME, RUNTIME_ATTRIBUTE } from '@sexyvoice/voice-spike';
 import { type RemoteParticipant, Room, RoomEvent } from 'livekit-client';
 import { Mic, MicOff, Phone, PhoneOff, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,22 +17,6 @@ interface Message {
   user: boolean;
 }
 type State = 'idle' | 'connecting' | 'connected' | 'reconnecting';
-
-function Transcripts({ onMessage }: { onMessage: (message: Message) => void }) {
-  const transcriptions = useTranscriptions();
-  const notify = useEffectEvent(onMessage);
-  useEffect(() => {
-    for (const item of transcriptions) {
-      notify({
-        id: `${item.participantInfo.identity}:${item.streamInfo.attributes?.['lk.segment_id'] ?? item.streamInfo.id}`,
-        text: item.text,
-        user: item.participantInfo.identity.startsWith('spike-user-'),
-        timestamp: item.streamInfo.timestamp,
-      });
-    }
-  }, [transcriptions]);
-  return <RoomAudioRenderer />;
-}
 
 export function LivekitSpike({
   audioReferenceId,
@@ -107,6 +87,27 @@ export function LivekitSpike({
       publishDefaults: { stopMicTrackOnMute: true },
     });
     active.current = current;
+    current.registerTextStreamHandler(
+      'lk.transcription',
+      async (reader, participant) => {
+        const { id, timestamp, attributes } = reader.info;
+        let text = '';
+        try {
+          for await (const chunk of reader) {
+            if (active.current !== current) return;
+            text += chunk;
+            appendMessage({
+              id: `${participant.identity}:${attributes?.['lk.segment_id'] ?? id}`,
+              text,
+              timestamp,
+              user: participant.identity === current.localParticipant.identity,
+            });
+          }
+        } catch {
+          // A stream can end mid-reply on hangup or connection loss.
+        }
+      },
+    );
     setRoom(current);
     const fail = (key: 'connectError' | 'providerError' | 'workerMissing') => {
       if (active.current !== current) return;
@@ -389,7 +390,7 @@ export function LivekitSpike({
       </form>
       {room && (
         <RoomContext.Provider value={room}>
-          <Transcripts onMessage={appendMessage} />
+          <RoomAudioRenderer />
         </RoomContext.Provider>
       )}
     </section>

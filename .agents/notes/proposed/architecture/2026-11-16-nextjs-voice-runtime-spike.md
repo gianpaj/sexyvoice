@@ -146,6 +146,11 @@ We considered writing conversation history in the browser or at hangup. The
 worker owns committed turn order and persists during the call, including when
 the browser drops. A hangup batch can lose the entire call on a worker crash.
 
+The isolated Supabase and Chromium smoke saved spoken STT, typed text, and
+Inworld replies, then resumed after a page reload and recalled the earlier
+typed turn without duplicating it. The demo handles a transcription stream
+ending during hangup by keeping the received text and closing the stream.
+
 ### Memory retrieval
 
 The worker reads the same scoped Supabase slots and hybrid RPC as Python.
