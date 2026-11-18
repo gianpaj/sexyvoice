@@ -197,7 +197,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
    - E2E builds only
-     - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
+     - `NEXT_PUBLIC_E2E_TEST_MODE` - See the [deployment guide](./docs/devops.md#monitoring-analytics-and-support) for E2E build and server flags.
 
    For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 

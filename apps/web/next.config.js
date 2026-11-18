@@ -11,8 +11,9 @@ const withNextIntl = createNextIntlPlugin({
 
 // WebKit upgrades localhost asset requests to HTTPS under this directive.
 const usesLocalE2E =
-  process.env.E2E_TEST_MODE === 'true' ||
-  process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+  process.env.VERCEL_ENV !== 'production' &&
+  (process.env.E2E_TEST_MODE === 'true' ||
+    process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true');
 
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
