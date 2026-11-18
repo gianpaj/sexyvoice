@@ -85,8 +85,8 @@ export default async function VoiceCloningPage(props: Props) {
   // dynamic rendering (`cache-control: private, no-store`), which both prevents
   // CDN caching and disqualifies the page from the back/forward cache (bfcache).
   // The <Banner> client component already re-reads the dismissal cookies on the
-  // client (it starts hidden and only reveals itself when no dismiss cookie is
-  // set), so server-side filtering here is redundant.
+  // client (it renders visible and hides itself after hydration when dismissed
+  // or expired), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
     lang,
