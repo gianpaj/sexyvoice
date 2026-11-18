@@ -284,8 +284,8 @@
               "answer": "Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real."
             },
             {
-              "question": "¿Puedo llamar a un personaje con mi propia voz?",
-              "answer": "Sí. Una recarga o un pago de suscripción desbloquea las voces guardadas. Crea un personaje y elige \"Clonar una voz\", o usa \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz y elígela como voz del personaje."
+              "question": "¿Cómo hago una llamada de voz con una voz clonada?",
+              "answer": "Ve a la página de llamadas, crea un personaje y selecciona tu voz clonada guardada. Guarda el personaje e inicia la llamada. Si aún no has guardado una voz, elige \"Clonar una voz\" al crear el personaje, o \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz. Una recarga o un pago de suscripción desbloquea los personajes personalizados y las voces guardadas."
             },
             {
               "question": "¿Cuánto cuesta?",

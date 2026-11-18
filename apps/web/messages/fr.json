@@ -284,8 +284,8 @@
               "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
             },
             {
-              "question": "Puis-je appeler un personnage avec ma propre voix ?",
-              "answer": "Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage."
+              "question": "Comment passer un appel vocal avec une voix clonée ?",
+              "answer": "Allez sur la page des appels, créez un personnage et sélectionnez votre voix clonée enregistrée. Enregistrez le personnage, puis lancez l'appel. Si vous n'avez pas encore enregistré de voix, choisissez « Cloner une voix » lors de la création du personnage, ou « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix. Une recharge ou un paiement d'abonnement débloque les personnages personnalisés et les voix enregistrées."
             },
             {
               "question": "Combien ça coûte ?",
