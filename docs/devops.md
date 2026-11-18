@@ -220,6 +220,8 @@ Next.js and its persistent `apps/voice-agent` worker. Set
 `sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. It rejects production.
 The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
 and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
+Optional `OPENAI_API_KEY` on the voice worker enables embeddings for hybrid
+memory recall. Without it, the worker uses full-text recall.
 For preview configuration, use `vercel env add VOICE_SPIKE_USER_IDS preview`
 and the existing LiveKit variable names; keep worker credentials server-only.
 

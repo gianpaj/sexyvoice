@@ -146,6 +146,17 @@ We considered writing conversation history in the browser or at hangup. The
 worker owns committed turn order and persists during the call, including when
 the browser drops. A hangup batch can lose the entire call on a worker crash.
 
+### Memory retrieval
+
+The worker reads the same scoped Supabase slots and hybrid RPC as Python.
+It requires an explicit saved opt-in for this internal demo. Memory preload
+and per-turn recall are private model context. The worker can use text search
+if embeddings are unavailable, and calls continue when memory fails.
+
+We considered importing saved slots as synthetic history turns. Per-request
+context keeps recall out of user-visible history and avoids appending the same
+facts on redial. Checked extraction and writes remain a separate parity slice.
+
 ## Risks
 
 A speech socket is only one part of a voice agent. Replacing LiveKit can require

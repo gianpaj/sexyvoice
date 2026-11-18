@@ -21,6 +21,7 @@ import {
 import { createClient } from '@supabase/supabase-js';
 
 import { parseJob } from './config.ts';
+import { CallMemoryAgent, loadCallMemory } from './memory.ts';
 import { CallThread } from './thread.ts';
 
 if (
@@ -50,6 +51,13 @@ if (!['localhost', '127.0.0.1', '[::1]'].includes(databaseUrl.hostname)) {
 }
 const db = createClient(databaseUrl.href, process.env.SUPABASE_SECRET_KEY!, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: {
+    fetch: (request, init) =>
+      fetch(request, {
+        ...init,
+        signal: init?.signal ?? AbortSignal.timeout(5000),
+      }),
+  },
 });
 
 export default defineAgent({
@@ -89,6 +97,27 @@ export default defineAgent({
       await thread.close();
       throw new Error('Voice spike history unavailable');
     });
+    const memory = await loadCallMemory(
+      db,
+      job.userId,
+      opened.thread.character_id,
+    );
+    const agentOptions = {
+      chatCtx: opened.chatCtx,
+      instructions: [
+        opened.thread.is_voice_spike
+          ? 'You are a friendly voice-call test assistant.'
+          : `You are ${opened.thread.character_name}. Call language: ${opened.thread.language}.`,
+        'Reply briefly. Treat typed and spoken messages as part of one conversation.',
+        opened.thread.scene_instructions,
+        memory?.instructions,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    };
+    const agent = memory?.recall
+      ? new CallMemoryAgent(agentOptions, memory.recall)
+      : new voice.Agent(agentOptions);
     const session = new voice.AgentSession({
       vad: ctx.proc.userData.vad as Awaited<ReturnType<typeof VAD.load>>,
       stt: new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' }),
@@ -150,18 +179,7 @@ export default defineAgent({
       finish().catch(() => ctx.shutdown('provider failure'));
     });
     await session.start({
-      agent: new voice.Agent({
-        chatCtx: opened.chatCtx,
-        instructions: [
-          opened.thread.is_voice_spike
-            ? 'You are a friendly voice-call test assistant.'
-            : `You are ${opened.thread.character_name}. Call language: ${opened.thread.language}.`,
-          'Reply briefly. Treat typed and spoken messages as part of one conversation.',
-          opened.thread.scene_instructions,
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      }),
+      agent,
       room: ctx.room,
       record: false,
       inputOptions: {

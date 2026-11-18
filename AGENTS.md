@@ -77,6 +77,10 @@ Contentlayer2, Inngest, and `next-intl`.
 Supabase access uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser clients
 and `SUPABASE_SECRET_KEY` for privileged server operations.
 
+The internal JS voice worker uses the isolated local Supabase project.
+See [its runbook](apps/voice-agent/README.md) for its server-only Supabase
+settings and optional `OPENAI_API_KEY` for memory embeddings.
+
 Runtime and tooling:
 
 - Node.js `24.x` (see `engines.node` in each `package.json`).

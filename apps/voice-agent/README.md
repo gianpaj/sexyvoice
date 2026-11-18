@@ -58,6 +58,22 @@ call. It saves committed typed and spoken turns to `conversation_messages`
 and allows one active JS demo call per user. Demo calls do not create
 `call_sessions` or charge credits.
 
+## Supabase memory
+
+The worker reads the caller's saved `call_memory_enabled` preference and loads
+memory only when it is explicitly enabled. It uses shared slots and, for a
+thread with a character, that character's slots from `agent_memories`.
+
+The preload keeps pinned slots and fills a 4,000-character budget with recent
+facts. If the full set does not fit, spoken and typed turns can query
+`match_agent_memories_hybrid`. Set `OPENAI_API_KEY` in the worker for pgvector
+plus full-text search. Without it, recall uses full text. Memory outages let
+the call continue with thread history alone.
+
+Memory context goes to the model separately from visible conversation turns.
+The worker reads existing long-term slots. Call-end extraction, verification,
+and updates remain in the Python path.
+
 ## Saved Inworld voice comparison
 
 Sign in as the owner of a consented test clone, then open
