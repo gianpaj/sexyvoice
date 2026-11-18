@@ -814,7 +814,7 @@
       "stop": "Arrêter l'extrait de {name}",
       "showAll": "Tout afficher ({count})",
       "showFewer": "Afficher moins",
-      "cloneLimit": "Vous avez {max} voix. Supprimez-en une sur la page Cloner pour en enregistrer une autre."
+      "cloneLimit": "Vous avez {max} voix. Supprimez-en une pour en enregistrer une autre."
     },
     "inCall": {
       "connecting": "Connexion…",

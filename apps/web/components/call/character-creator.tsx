@@ -58,6 +58,7 @@ interface CharacterCreatorProps {
   onCall: (presetId: string) => void;
   onCancel: () => void;
   onDelete: (preset: Preset) => void;
+  onDeleteVoice: (id: string) => void;
   onSaved: (preset: Preset, updated: boolean) => void;
   /** Adds a voice cloned from the creator to the saved list. */
   onVoiceCreated: (voice: SavedCallVoice) => void;
@@ -102,6 +103,7 @@ export function CharacterCreator({
   onCall,
   onCancel,
   onDelete,
+  onDeleteVoice,
   onSaved,
   onVoiceCreated,
   savedVoices,
@@ -503,6 +505,7 @@ export function CharacterCreator({
               <VoicePicker
                 callVoices={callVoices}
                 config={sessionConfig}
+                disabled={saving}
                 labelledBy="creator-voice"
                 newVoiceId={newVoiceId}
                 onChange={(config) => update({ sessionConfig: config })}
@@ -510,6 +513,7 @@ export function CharacterCreator({
                   player.stop();
                   setCloneOpen(true);
                 }}
+                onDeleteVoice={onDeleteVoice}
                 savedVoices={savedVoices}
               />
               {triedSave && !voiceValid && (

@@ -77,7 +77,18 @@ describe('audio converter DropZone', () => {
     const { onFileSelect, zone } = renderDropZone();
     const input = zone.querySelector('input[type="file"]') as HTMLInputElement;
 
-    expect(input.accept).toBe('audio/*,.mp3,.wav,.aac,.ogg,.flac,.m4a,.mp4');
+    expect(input.accept.split(',')).toEqual(
+      expect.arrayContaining([
+        '.mp3',
+        '.wav',
+        '.aac',
+        '.ogg',
+        '.flac',
+        '.m4a',
+        '.mp4',
+      ]),
+    );
+    expect(input.accept.split(',')).not.toContain('audio/*');
 
     fireEvent.change(input, {
       target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] },

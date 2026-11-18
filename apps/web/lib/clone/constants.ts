@@ -1,5 +1,9 @@
 export type CloneProvider = 'mistral' | 'replicate';
 
+// iOS WebKit maps audio/* to movies in the native picker.
+export const CLONE_AUDIO_FILE_ACCEPT =
+  '.mp3,.wav,.m4a,.ogg,.oga,.opus,.webm,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/wave,audio/vnd.wave,audio/mp4,audio/m4a,audio/x-m4a,audio/ogg,audio/opus,audio/x-opus,audio/webm,video/webm';
+
 /**
  * Shortest reference audio accepted per clone provider, in seconds. The
  * server rejects shorter clips. Each provider has its own entry so one can

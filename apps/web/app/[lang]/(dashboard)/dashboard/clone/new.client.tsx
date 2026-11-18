@@ -15,6 +15,7 @@ import {
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
+import { DeleteSavedVoiceDialog } from '@/components/call/delete-saved-voice-dialog';
 import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
 import { toast } from '@/components/services/toast';
@@ -45,6 +46,7 @@ import {
   toCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
+  CLONE_AUDIO_FILE_ACCEPT,
   CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
@@ -56,6 +58,7 @@ import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
+import { prepareReferenceUpload } from '@/lib/clone/prepare-reference-upload';
 import {
   getCloneTextMaxLength,
   getSavedVoiceTextMaxLength,
@@ -76,10 +79,6 @@ import {
 import { CloneLanguageSelect } from './clone-language-select';
 import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
-import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
-
-const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
@@ -393,7 +392,7 @@ function NewVoiceClientInner({
     : getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
-    accept: ALLOWED_TYPES,
+    accept: CLONE_AUDIO_FILE_ACCEPT,
     maxSize: CLONING_FILE_MAX_SIZE,
     multiple: false,
     onFilesAdded,
@@ -478,10 +477,10 @@ function NewVoiceClientInner({
       type: 'patch',
     });
 
+    const controller = new AbortController();
+    abortController.current = controller;
     let voiceRes: Response | undefined;
     try {
-      abortController.current = new AbortController();
-
       let formData: FormData;
       if (selectedVoice) {
         formData = new FormData();
@@ -495,7 +494,9 @@ function NewVoiceClientInner({
         formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
         formData.append(CLONE_FORM_FIELDS.voiceConsent, 'true');
       } else {
-        let audioToProcess = file;
+        let audioToProcess = file
+          ? await prepareReferenceUpload(file, ensureLoaded, convertWithFFmpeg)
+          : null;
         if (micBlob && !file) {
           const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
 
@@ -555,6 +556,11 @@ function NewVoiceClientInner({
           return;
         }
 
+        if (controller.signal.aborted) return;
+        if (audioToProcess.size > CLONING_FILE_MAX_SIZE) {
+          throw new Error(t('errors.fileTooLarge'));
+        }
+
         // First upload and process the voice
         formData = new FormData();
         formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
@@ -576,7 +582,7 @@ function NewVoiceClientInner({
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
-        signal: abortController.current.signal,
+        signal: controller.signal,
       });
 
       // The route settles its reservation and any refund before it responds, so
@@ -633,12 +639,7 @@ function NewVoiceClientInner({
         type: 'patch',
       });
     } catch (err) {
-      if (
-        err instanceof Error &&
-        err.message === 'signal is aborted without reason'
-      ) {
-        return;
-      }
+      if (controller.signal.aborted) return;
       let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;

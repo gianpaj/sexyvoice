@@ -38,6 +38,7 @@ import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
+import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
 // Krisp touches browser-only APIs when it loads.
 const InCallView = dynamic(
@@ -123,6 +124,9 @@ function CallExperienceScreens({
   } | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
+  const [voiceToDeleteId, setVoiceToDeleteId] = useState<string | null>(null);
+  const voiceToDelete =
+    savedVoices.find(({ id }) => id === voiceToDeleteId) ?? null;
 
   const allPresets = helpers.getAllPresets(pgState);
   const findPreset = (id: string | null) =>
@@ -296,6 +300,10 @@ function CallExperienceScreens({
         }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
+        onDeleteVoice={(id) => {
+          player.stop();
+          setVoiceToDeleteId(id);
+        }}
         onSaved={handleSaved}
         onVoiceCreated={(voice) =>
           setSavedVoices((voices) => [voice, ...voices])
@@ -342,6 +350,23 @@ function CallExperienceScreens({
       data-testid="call-experience"
     >
       {screen}
+      <DeleteSavedVoiceDialog
+        onClose={() => setVoiceToDeleteId(null)}
+        onDeleted={(voice) =>
+          setSavedVoices((voices) => voices.filter(({ id }) => id !== voice.id))
+        }
+        usedBy={
+          voiceToDelete
+            ? pgState.customCharacters
+                .filter(
+                  ({ sessionConfig }) =>
+                    sessionConfig.audioReferenceId === voiceToDelete.id,
+                )
+                .map(({ name }) => name)
+            : []
+        }
+        voice={voiceToDelete}
+      />
       <CallPanel
         callVoices={callVoices}
         connecting={connecting}
