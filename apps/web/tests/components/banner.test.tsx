@@ -129,8 +129,17 @@ describe('Banner', () => {
     },
   );
 
-  it('keeps public banners hidden until the client checks dismissal cookies', () => {
-    expect(renderToString(<Banner banner={banner} />)).toBe('');
+  it('includes public banners in the initial markup to avoid layout shift', () => {
+    expect(renderToString(<Banner banner={banner} />)).toContain(banner.text);
+  });
+
+  it('hides a public banner when its dismissal cookie is already set', async () => {
+    await setCookie(DISMISS_COOKIE, 'true', { path: '/' });
+    const { container } = render(<Banner banner={banner} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-promo-theme]')).toBeNull();
+    });
   });
 
   it('centers the dashboard message and CTA without a fixed overlay', async () => {

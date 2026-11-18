@@ -121,7 +121,11 @@ export function Banner({
   const countdownEndDate = banner.countdown?.enabled
     ? banner.countdown.endDate
     : undefined;
-  const [isVisible, setIsVisible] = useState(inDashboard === true);
+  // Render visible so first-time visitors on static pages get no layout shift.
+  // Static pages cannot read cookies on the server, and cached dashboard
+  // navigation can restore stale props, so the effect below hides dismissed or
+  // expired banners after hydration.
+  const [isVisible, setIsVisible] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
@@ -129,11 +133,7 @@ export function Banner({
   useEffect(() => {
     let isCancelled = false;
 
-    // Fresh dashboard renders are server-filtered, but cached navigation can
-    // restore stale banner props. Recheck cookies without hiding valid banners.
-    setIsVisible(
-      inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
-    );
+    setIsVisible(!isBannerCountdownExpired(countdownEndDate));
 
     const resolveVisibility = async () => {
       if (!banner.dismissible) {
@@ -148,7 +148,7 @@ export function Banner({
       .then((visible) => {
         const shouldShow =
           visible && !isBannerCountdownExpired(countdownEndDate);
-        if (!(isCancelled || (inDashboard && shouldShow))) {
+        if (!isCancelled) {
           setIsVisible(shouldShow);
         }
       })
@@ -157,12 +157,7 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [
-    banner.dismiss.cookieKey,
-    banner.dismissible,
-    countdownEndDate,
-    inDashboard,
-  ]);
+  }, [banner.dismiss.cookieKey, banner.dismissible, countdownEndDate]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
