@@ -7,7 +7,9 @@ import { TrackRow } from '@/app/[lang]/tools/audio-joiner/components/track-row';
 
 vi.mock('@wavesurfer/react', () => ({ default: () => null }));
 
-function renderTrackRow(props: { disabled?: boolean } = {}) {
+function renderTrackRow(
+  props: { disabled?: boolean; endSec?: number; startSec?: number } = {},
+) {
   const onTrimChange = vi.fn();
   render(
     <TrackRow
@@ -68,6 +70,20 @@ describe('audio joiner TrackRow trim handles', () => {
 
     fireEvent.keyDown(end, { key: 'Home' });
     expect(onTrimChange).toHaveBeenLastCalledWith(2, 2.05);
+  });
+
+  it('skips moves that leave the trim unchanged', () => {
+    const { start, end, onTrimChange } = renderTrackRow({
+      endSec: 10,
+      startSec: 0,
+    });
+
+    fireEvent.keyDown(start, { key: 'Home' });
+    fireEvent.keyDown(start, { key: 'ArrowLeft' });
+    fireEvent.keyDown(end, { key: 'End' });
+    fireEvent.keyDown(end, { key: 'ArrowRight' });
+
+    expect(onTrimChange).not.toHaveBeenCalled();
   });
 
   it('ignores unrelated keys', () => {

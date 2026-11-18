@@ -74,13 +74,24 @@ export function TrackRow({
   };
 
   const moveTrimHandle = (handle: TrimHandle, positionSec: number) => {
-    if (handle === 'start') {
-      const nextStartSec = Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC);
-      onTrimChange(Math.max(0, nextStartSec), endSec);
-    } else {
-      const nextEndSec = Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC);
-      onTrimChange(startSec, Math.min(durationSec, nextEndSec));
+    const nextStartSec =
+      handle === 'start'
+        ? Math.max(0, Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC))
+        : startSec;
+    const nextEndSec =
+      handle === 'end'
+        ? Math.min(
+            durationSec,
+            Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC),
+          )
+        : endSec;
+
+    // A trim change stops the preview, so skip moves that change nothing,
+    // such as Home on a handle already at 0.
+    if (nextStartSec === startSec && nextEndSec === endSec) {
+      return;
     }
+    onTrimChange(nextStartSec, nextEndSec);
   };
 
   const updateTrimFromPointer = (clientX: number) => {
