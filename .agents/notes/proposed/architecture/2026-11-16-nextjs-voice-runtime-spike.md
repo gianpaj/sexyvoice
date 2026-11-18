@@ -90,6 +90,10 @@ Safari typing and speaking work. Firefox 160 on macOS still needs a user retest;
 Safari device coverage, interruption, network recovery, and long calls remain
 acceptance work. Linux WebKit is not a substitute for Safari devices.
 
+The [browser verification log](../../../../apps/voice-agent/README.md#browser-transport-findings)
+also records successful phone playback over Tailscale with the default voice,
+after an empty call-token POST passed validation on the live demo.
+
 Forced reconnect diagnostics are absent from the application. Safari logs
 collected during a forced-reconnect experiment and Fast Refresh show SCTP
 channel closure; they do not isolate a stable-build failure.

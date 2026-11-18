@@ -134,6 +134,12 @@ synthetic microphone tracks; recognizable speech through Firefox STT still needs
 a device check. The user reports Safari typing and speaking work; Firefox 160
 on macOS needs confirmation of this fix.
 
+On 2026-11-18, the user confirmed a successful phone call with the default
+Ashley voice through the Tailscale demo and said it sounded the same.
+This followed verification that the running Next.js token route accepts an
+empty POST for the default voice. The phone test confirms call setup and
+audible playback. Browser version and call duration were unrecorded.
+
 Startup allows 60 seconds for SDK fallback attempts and runtime discovery.
 A longer deadline alone does not resolve the default-path Firefox failure.
 The fix uses a public connection option; it needs no SDK downgrade, fork,
