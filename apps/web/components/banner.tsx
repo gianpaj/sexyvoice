@@ -247,19 +247,21 @@ export function Banner({
             {banner.text}
           </p>
 
+          {/* Server HTML has no clock, so the digits start as placeholders
+              that hold the countdown's space until the first tick. */}
           {banner.countdown?.enabled &&
-            timeRemaining &&
-            !timeRemaining.expired && (
+            !Number.isNaN(Date.parse(banner.countdown.endDate)) &&
+            !timeRemaining?.expired && (
               <div className="flex items-center gap-4">
                 <p className="font-semibold text-sm text-white">
                   {banner.countdown.labels.prefix}
                 </p>
                 <div className="flex gap-0 font-mono text-xs sm:text-sm">
                   {[
-                    timeRemaining.days,
-                    timeRemaining.hours,
-                    timeRemaining.minutes,
-                    timeRemaining.seconds,
+                    timeRemaining?.days,
+                    timeRemaining?.hours,
+                    timeRemaining?.minutes,
+                    timeRemaining?.seconds,
                   ].map((num, index) => (
                     <Fragment key={`${banner.id}-${index}`}>
                       {index !== 0 && (
@@ -267,7 +269,9 @@ export function Banner({
                       )}
                       <div className="flex flex-col items-center">
                         <span className="font-bold text-lg sm:text-xl">
-                          {String(num).padStart(2, '0')}
+                          {num === undefined
+                            ? '--'
+                            : String(num).padStart(2, '0')}
                         </span>
                       </div>
                     </Fragment>

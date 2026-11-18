@@ -133,6 +133,20 @@ describe('Banner', () => {
     expect(renderToString(<Banner banner={banner} />)).toContain(banner.text);
   });
 
+  it('reserves the countdown row in the initial markup', () => {
+    const html = renderToString(
+      <Banner
+        banner={{
+          ...banner,
+          countdown: { ...expiredCountdown, endDate: '2999-01-01T00:00:00Z' },
+        }}
+      />,
+    );
+
+    expect(html).toContain(expiredCountdown.labels.prefix);
+    expect(html).toContain('--');
+  });
+
   it('hides a public banner when its dismissal cookie is already set', async () => {
     await setCookie(DISMISS_COOKIE, 'true', { path: '/' });
     const { container } = render(<Banner banner={banner} />);
