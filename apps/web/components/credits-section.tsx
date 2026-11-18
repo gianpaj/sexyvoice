@@ -68,7 +68,7 @@ function CreditsSection({
         </div>
         <Button
           asChild
-          className="bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
+          className="-mr-3 box-border border border-transparent bg-left bg-linear-to-r bg-size-[200%_auto] from-blue-400 via-purple-500 to-pink-500 bg-clip-text px-2 text-transparent transition-all duration-200 hover:scale-103 hover:border-purple-400/60 hover:bg-right hover:no-underline hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.7)] motion-reduce:transition-none motion-reduce:hover:scale-100"
           size="sm"
           variant="link"
         >
