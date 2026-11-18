@@ -1143,11 +1143,11 @@
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
     "titleAudioConverter": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",
-    "titleTranscribe": "Kostenlose Online Audio-Transkription – Sprache zu Text in 99+ Sprachen",
+    "titleTranscribe": "Kostenlose Online Audio-Transkription – Sprache zu Text in 30+ Sprachen",
     "descriptionAudioConverter": "Kostenloser Online-Audio-Konverter – Konvertieren Sie MP3, WAV, FLAC, OGG, AAC, MP4 und weitere Formate direkt in Ihrem Browser. Kein Upload erforderlich, 100% privat und offline. Powered by FFmpeg.",
-    "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
+    "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 30 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
-    "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
+    "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, mehrsprachige Transkription, private Transkription",
     "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese",
     "titleAudioJoiner": "Kostenloser Audio-Joiner – Audiodateien zusammenfügen und zuschneiden",
     "descriptionAudioJoiner": "Mehrere Audiodateien zusammenfügen und jeden Abschnitt direkt im Browser zuschneiden. Privat, kostenlos und ohne Upload.",
@@ -1445,6 +1445,16 @@
       "join": "Zusammenfügen",
       "joining": "Wird zusammengefügt...",
       "cancel": "Abbrechen"
+    },
+    "track": {
+      "trimStart": "Schnittanfang",
+      "trimEnd": "Schnittende",
+      "moveUp": "Segment nach oben",
+      "moveDown": "Segment nach unten",
+      "delete": "Segment löschen",
+      "start": "Start: {time}",
+      "end": "Ende: {time}",
+      "duration": "Dauer: {time}"
     },
     "progress": {
       "processing": "Wird verarbeitet"

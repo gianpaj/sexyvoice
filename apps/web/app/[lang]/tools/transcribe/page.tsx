@@ -103,7 +103,7 @@ export default async function TranscribePage({ params }: Props) {
           'Requires a modern browser with WebAssembly support',
         description,
         featureList:
-          'Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
+          'Audio transcription, Speech to text, 30+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
         inLanguage: lang,
         isAccessibleForFree: true,
         name: title,

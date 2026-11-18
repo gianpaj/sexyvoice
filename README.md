@@ -45,7 +45,7 @@ dashboard. See [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
 - **Live AI Voice Calls**: Talk to AI characters in real time; paid users can create characters and choose a cloned voice
 - **Voice Selection System**: Choose from 57 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
-- **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
+- **Audio Transcription**: Transcribe audio files to text offline in 30+ languages with optional translation to English using Whisper AI
 
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
