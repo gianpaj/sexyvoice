@@ -15,7 +15,7 @@ const ffmpegMocks = vi.hoisted(() => {
 
   class FFmpegMock {
     deleteFile = vi.fn();
-    exec = vi.fn();
+    exec = vi.fn(async () => 0);
     load = load;
     on = vi.fn();
     readFile = vi.fn();
@@ -100,6 +100,28 @@ describe('useFFmpeg', () => {
 
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('returns the converted audio and cleans up after a successful run', async () => {
+    ffmpegMocks.load.mockResolvedValueOnce();
+    const { result } = renderHook(() => useFFmpeg({ lazyLoad: true }));
+
+    await act(async () => {
+      await result.current.ensureLoaded();
+    });
+
+    const ffmpeg = ffmpegMocks.instances[0] as InstanceType<
+      typeof ffmpegMocks.FFmpegMock
+    >;
+    ffmpeg.readFile.mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
+
+    const blob = await result.current.convert(new Blob(['audio']), 'wav');
+
+    expect(blob.type).toBe('audio/wav');
+    expect(blob.size).toBe(3);
+    expect(ffmpeg.readFile).toHaveBeenCalledWith('output.wav');
+    expect(ffmpeg.deleteFile).toHaveBeenCalledWith('input');
+    expect(ffmpeg.deleteFile).toHaveBeenCalledWith('output.wav');
   });
 
   it('rejects and cleans up when FFmpeg cannot decode the input', async () => {
