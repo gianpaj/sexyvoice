@@ -6,7 +6,7 @@
 
 begin;
 
-select plan(9);
+select plan(10);
 
 select ok(
   (
@@ -63,6 +63,24 @@ select ok(
     'authenticated', 'public.call_sessions', 'UPDATE'
   ),
   'authenticated cannot update call sessions'
+);
+
+select ok(
+  not pg_catalog.has_table_privilege(
+    'authenticated', 'public.call_sessions', 'DELETE'
+  )
+  and not pg_catalog.has_table_privilege(
+    'authenticated', 'public.call_sessions', 'TRUNCATE'
+  )
+  and not exists (
+    select 1
+    from pg_catalog.pg_class relation,
+      pg_catalog.aclexplode(relation.relacl) privilege
+    where relation.oid = 'public.call_sessions'::pg_catalog.regclass
+      and privilege.grantee = 0
+      and privilege.privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+  ),
+  'authenticated cannot delete or truncate, and PUBLIC holds no write grants'
 );
 
 select ok(
