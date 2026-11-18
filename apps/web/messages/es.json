@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Comienza con 10,000 créditos gratis",
-      "title": "¿Listo para encontrar tu voz?",
-      "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
-      "action": "Crea tu primera voz"
+      "title": "Tus palabras, con emoción",
+      "subtitle": "Escribe una frase y escúchala reír, suspirar o susurrar. O llama a un personaje y habla con él.",
+      "action": "Pruébalo gratis"
     },
     "voiceCall": {
       "hero": {
@@ -1241,7 +1241,7 @@
     }
   },
   "footer": {
-    "tagline": "Generación de voz con IA. Crea audio natural y expresivo en segundos.",
+    "tagline": "Voces de IA expresivas que puedes generar, clonar y llamar.",
     "featuresHeading": "Funciones",
     "toolsHeading": "Herramientas",
     "companyHeading": "Empresa",

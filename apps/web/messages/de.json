@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
-      "title": "Bereit, Ihre Stimme zu finden?",
-      "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
-      "action": "Erstellen sie ihre erste stimme"
+      "title": "Ihre Worte, mit Gefühl",
+      "subtitle": "Schreiben Sie einen Satz und hören Sie ihn lachen, seufzen oder flüstern. Oder rufen Sie eine Figur an und sprechen Sie mit ihr.",
+      "action": "Kostenlos testen"
     },
     "voiceCall": {
       "hero": {
@@ -1241,7 +1241,7 @@
     }
   },
   "footer": {
-    "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "tagline": "Ausdrucksstarke KI-Stimmen, die Sie generieren, klonen und anrufen können.",
     "featuresHeading": "Funktionen",
     "toolsHeading": "Werkzeuge",
     "companyHeading": "Unternehmen",
