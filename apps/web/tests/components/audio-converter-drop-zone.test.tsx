@@ -58,4 +58,32 @@ describe('audio converter DropZone', () => {
     expect(toast.error).toHaveBeenCalledWith('Unsupported file format');
     expect(zone).not.toHaveClass('border-primary');
   });
+
+  it.each([
+    ['clip.mp4', 'video/mp4'],
+    ['clip.flac', ''],
+    ['CLIP.M4A', ''],
+  ])('accepts advertised format %s with type "%s"', (name, type) => {
+    const { onFileSelect, zone } = renderDropZone();
+    const file = new File(['x'], name, { type });
+
+    dragAndDrop(zone, file);
+
+    expect(onFileSelect).toHaveBeenCalledWith(file);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('applies the same check to files chosen in the file picker', () => {
+    const { onFileSelect, zone } = renderDropZone();
+    const input = zone.querySelector('input[type="file"]') as HTMLInputElement;
+
+    expect(input.accept).toBe('audio/*,.mp3,.wav,.aac,.ogg,.flac,.m4a,.mp4');
+
+    fireEvent.change(input, {
+      target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] },
+    });
+
+    expect(onFileSelect).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Unsupported file format');
+  });
 });

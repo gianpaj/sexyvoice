@@ -7,6 +7,22 @@ import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 
+const SUPPORTED_FORMATS = ['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'];
+
+// Browsers report MP4 as video/mp4 and leave `type` empty for some FLAC and
+// M4A files, so a listed extension counts as audio too.
+const ACCEPT = [
+  'audio/*',
+  ...SUPPORTED_FORMATS.map((format) => `.${format.toLowerCase()}`),
+].join(',');
+
+function isSupportedFile(file: File) {
+  const extension = file.name.split('.').pop()?.toUpperCase() ?? '';
+  return (
+    file.type.startsWith('audio/') || SUPPORTED_FORMATS.includes(extension)
+  );
+}
+
 interface Props {
   disabled?: boolean;
   onFileSelect: (file: File) => void;
@@ -17,25 +33,25 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
   const tErrors = useTranslations('audioConverter.errors');
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
+  const selectFile = (file: File | undefined) => {
     if (!file) {
       return;
     }
-    if (file.type.startsWith('audio/')) {
+    if (isSupportedFile(file)) {
       onFileSelect(file);
     } else {
       toast.error(tErrors('unsupportedFormat'));
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    selectFile(e.dataTransfer.files[0]);
+  };
+
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file);
-    }
+    selectFile(e.target.files?.[0]);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -79,7 +95,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
       tabIndex={0}
     >
       <input
-        accept="audio/*"
+        accept={ACCEPT}
         className="hidden"
         id="file-input"
         onChange={handleFileInput}
@@ -122,7 +138,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
         </div>
 
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'].map((format) => (
+          {SUPPORTED_FORMATS.map((format) => (
             <span
               className="rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs"
               key={format}
