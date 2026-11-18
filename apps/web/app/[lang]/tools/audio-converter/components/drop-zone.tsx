@@ -3,6 +3,7 @@
 import { FileAudio, Music, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 
@@ -13,13 +14,20 @@ interface Props {
 
 export function DropZone({ onFileSelect, disabled = false }: Props) {
   const t = useTranslations('audioConverter.dropZone');
+  const tErrors = useTranslations('audioConverter.errors');
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith('audio/')) {
+    if (!file) {
+      return;
+    }
+    if (file.type.startsWith('audio/')) {
       onFileSelect(file);
+    } else {
+      toast.error(tErrors('unsupportedFormat'));
     }
   };
 
