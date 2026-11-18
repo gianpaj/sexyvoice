@@ -33,6 +33,7 @@ const toastMock = vi.hoisted(() =>
   }),
 );
 const routerPush = vi.hoisted(() => vi.fn());
+const convertAudio = vi.hoisted(() => vi.fn());
 
 vi.mock('@livekit/components-react', () => ({
   useConnectionState: () => connection.state,
@@ -80,7 +81,7 @@ vi.mock('next/image', () => ({
 }));
 vi.mock('sonner', () => ({ toast: toastMock }));
 vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
-  useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
+  useFFmpeg: () => ({ convert: convertAudio, ensureLoaded: vi.fn() }),
 }));
 vi.mock('@/lib/i18n/navigation', () => ({
   Link: ({
@@ -648,7 +649,8 @@ describe('CallExperience creator', () => {
     ).toBeVisible();
   });
 
-  it('clones a voice from an upload and selects it', async () => {
+  it.each(['mp3', 'm4a'])('clones a %s upload', async (extension) => {
+    convertAudio.mockClear().mockResolvedValue(new Blob(['converted']));
     const user = userEvent.setup();
     renderExperience();
 
@@ -673,9 +675,11 @@ describe('CallExperience creator', () => {
     );
     expect(input.accept.split(',')).toContain('.mp3');
     expect(input.accept.split(',')).not.toContain('audio/*');
-    const sample = new File(['audio'], 'sample.mp3', { type: 'audio/mpeg' });
+    const sample = new File(['audio'], `sample.${extension}`, {
+      type: extension === 'm4a' ? 'audio/mp4' : 'audio/mpeg',
+    });
     await user.upload(input, sample);
-    expect(within(dialog).getByText('sample.mp3')).toBeInTheDocument();
+    expect(within(dialog).getByText(sample.name)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
 
     const name = within(dialog).getByLabelText('Name this voice');
@@ -705,7 +709,17 @@ describe('CallExperience creator', () => {
     expect(form.get('saveVoiceName')).toBe('Radio voice');
     expect(form.get('voiceConsent')).toBe('true');
     expect(form.get('locale')).toBe('en');
-    expect(form.get('file')).toBe(sample);
+    if (extension === 'm4a') {
+      expect(convertAudio).toHaveBeenCalledWith(sample, 'mp3');
+      expect(form.get('file')).toMatchObject({
+        name: 'sample.mp3',
+        size: 'converted'.length,
+        type: 'audio/mpeg',
+      });
+    } else {
+      expect(convertAudio).not.toHaveBeenCalled();
+      expect(form.get('file')).toBe(sample);
+    }
 
     await user.click(
       within(dialog).getByRole('button', { name: 'Use this voice' }),
@@ -733,9 +747,7 @@ describe('CallExperience creator', () => {
       },
     });
   });
-});
 
-describe('CallExperience clone without MediaRecorder', () => {
   it('offers only an upload', async () => {
     vi.stubGlobal('MediaRecorder', undefined);
     Reflect.deleteProperty(window, 'MediaRecorder');

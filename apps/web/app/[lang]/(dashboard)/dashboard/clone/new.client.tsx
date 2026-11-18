@@ -58,6 +58,7 @@ import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
+import { prepareReferenceUpload } from '@/lib/clone/prepare-reference-upload';
 import {
   getCloneTextMaxLength,
   getSavedVoiceTextMaxLength,
@@ -476,10 +477,10 @@ function NewVoiceClientInner({
       type: 'patch',
     });
 
+    const controller = new AbortController();
+    abortController.current = controller;
     let voiceRes: Response | undefined;
     try {
-      abortController.current = new AbortController();
-
       let formData: FormData;
       if (selectedVoice) {
         formData = new FormData();
@@ -493,7 +494,9 @@ function NewVoiceClientInner({
         formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
         formData.append(CLONE_FORM_FIELDS.voiceConsent, 'true');
       } else {
-        let audioToProcess = file;
+        let audioToProcess = file
+          ? await prepareReferenceUpload(file, ensureLoaded, convertWithFFmpeg)
+          : null;
         if (micBlob && !file) {
           const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
 
@@ -553,6 +556,11 @@ function NewVoiceClientInner({
           return;
         }
 
+        if (controller.signal.aborted) return;
+        if (audioToProcess.size > CLONING_FILE_MAX_SIZE) {
+          throw new Error(t('errors.fileTooLarge'));
+        }
+
         // First upload and process the voice
         formData = new FormData();
         formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
@@ -574,7 +582,7 @@ function NewVoiceClientInner({
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
-        signal: abortController.current.signal,
+        signal: controller.signal,
       });
 
       // The route settles its reservation and any refund before it responds, so
@@ -631,12 +639,7 @@ function NewVoiceClientInner({
         type: 'patch',
       });
     } catch (err) {
-      if (
-        err instanceof Error &&
-        err.message === 'signal is aborted without reason'
-      ) {
-        return;
-      }
+      if (controller.signal.aborted) return;
       let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;

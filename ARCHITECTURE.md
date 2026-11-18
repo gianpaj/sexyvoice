@@ -332,9 +332,9 @@ provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
 separately. Longer references are trimmed to 25 seconds for
 Voxtral or 10 seconds for Chatterbox when conversion permits.
 
-Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
-converted to WAV in the client; the route rejects unconverted WebM. The route
-normalizes other supported files to WAV. Only the Replicate path uploads a
+Accepted uploads include MP3, OGG/Opus, M4A, and WAV. The client converts M4A
+uploads to MP3 and browser-recorded WebM to WAV. The route rejects unconverted
+WebM and normalizes supported files to WAV. Only the Replicate path uploads a
 reference file to R2 because Chatterbox requires a fetchable URL; Mistral
 receives reference audio directly.
 
