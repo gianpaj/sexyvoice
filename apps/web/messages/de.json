@@ -814,7 +814,7 @@
       "stop": "Stimmprobe von {name} stoppen",
       "showAll": "Alle anzeigen ({count})",
       "showFewer": "Weniger anzeigen",
-      "cloneLimit": "Du hast {max} Stimmen. Lösche eine auf der Seite „Klonen“, um eine neue zu speichern."
+      "cloneLimit": "Du hast {max} Stimmen. Lösche eine, um eine neue zu speichern."
     },
     "inCall": {
       "connecting": "Verbinde…",

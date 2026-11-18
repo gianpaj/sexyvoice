@@ -309,6 +309,7 @@ interface VoicePickerProps {
   onChange: (config: SessionConfig) => void;
   /** Shows the Clone a voice tile when given. */
   onCloneVoice?: () => void;
+  onDeleteVoice?: (id: string) => void;
   savedVoices: SavedCallVoice[];
 }
 
@@ -320,6 +321,7 @@ export function VoicePicker({
   newVoiceId,
   onChange,
   onCloneVoice,
+  onDeleteVoice,
   savedVoices,
 }: VoicePickerProps) {
   const t = useTranslations('call.voices');
@@ -341,19 +343,23 @@ export function VoicePicker({
   }));
 
   const renderTile = (voice: VoiceOption) => {
-    const selected = voice.savedId
-      ? config.audioReferenceId === voice.savedId
+    const { savedId } = voice;
+    const selected = savedId
+      ? config.audioReferenceId === savedId
       : !config.audioReferenceId && config.voice === voice.name;
     return (
       <VoiceTile
         disabled={disabled}
-        isNew={Boolean(voice.savedId && voice.savedId === newVoiceId)}
+        isNew={Boolean(savedId && savedId === newVoiceId)}
         key={voice.id}
+        onDelete={
+          savedId && onDeleteVoice ? () => onDeleteVoice(savedId) : undefined
+        }
         onPick={() =>
           onChange(
             withCallVoice(config, {
               name: voice.name,
-              savedId: voice.savedId,
+              savedId,
               provider: voice.provider,
             }),
           )
@@ -380,16 +386,18 @@ export function VoicePicker({
           leading={
             onCloneVoice && (
               <button
-                className="flex min-h-[68px] items-center gap-3 rounded-xl border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 px-3.5 py-3 text-left transition-colors hover:bg-violet-950/40 disabled:pointer-events-none disabled:opacity-50"
+                className="flex min-h-[68px] items-center gap-3 rounded-xl border border-violet-800/80 border-dashed bg-slate-950/40 px-3.5 py-3 text-left transition-colors hover:bg-violet-950/40 disabled:pointer-events-none disabled:opacity-50"
                 disabled={disabled || atVoiceLimit}
                 onClick={onCloneVoice}
                 type="button"
               >
                 <span
                   aria-hidden="true"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-950 text-violet-300"
+                  className="grid w-[18px] shrink-0 place-content-center"
                 >
-                  <Mic className="size-[18px]" />
+                  <span className="flex size-9 items-center justify-center rounded-full bg-violet-950 text-violet-300">
+                    <Mic className="size-[18px]" />
+                  </span>
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="font-semibold text-[15px]">

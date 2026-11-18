@@ -205,8 +205,8 @@ beforeEach(() => {
         provider: 'inworld',
       });
     }
-    const body = JSON.parse(String(init.body));
     if (init.method === 'DELETE') return new Response(null, { status: 200 });
+    const body = JSON.parse(String(init.body));
     return Response.json(savedResponse(body, body.id ?? 'new-character-id'), {
       status: body.id ? 200 : 201,
     });
@@ -595,6 +595,59 @@ describe('CallExperience creator', () => {
     ).not.toBeChecked();
   });
 
+  it('confirms saved voice deletion and requires a replacement for its character', async () => {
+    const user = userEvent.setup();
+    renderExperience({
+      customCharacters: [
+        {
+          ...own,
+          sessionConfig: {
+            ...own.sessionConfig,
+            audioReferenceId: savedVoice.id,
+            model: ModelId.MISTRAL_TTS,
+            voice: savedVoice.name,
+          },
+        },
+      ],
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Marco' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+    const creator = within(await screen.findByTestId('character-creator'));
+    expect(creator.getByRole('radio', { name: /My voice/ })).toBeChecked();
+    expect(
+      creator.queryByRole('button', { name: 'More options for Ara' }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      creator.getByRole('button', { name: 'More options for My voice' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    const dialog = within(await screen.findByRole('alertdialog'));
+    expect(dialog.getByText(/^Used by Marco\./)).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await user.click(dialog.getByRole('button', { name: 'Delete voice' }));
+
+    await waitFor(() =>
+      expect(
+        creator.queryByRole('radio', { name: /My voice/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+      `/api/audio-references/${savedVoice.id}`,
+      { method: 'DELETE' },
+    );
+    expect(creator.getByText(messages.call.creator.missingVoice)).toBeVisible();
+    await user.click(creator.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Open Marco' }));
+    expect(
+      within(await screen.findByTestId('call-panel')).getByRole('button', {
+        name: 'Choose a voice',
+      }),
+    ).toBeVisible();
+  });
+
   it('clones a voice from an upload and selects it', async () => {
     const user = userEvent.setup();
     renderExperience();
@@ -615,12 +668,14 @@ describe('CallExperience creator', () => {
     await user.click(
       within(dialog).getByRole('button', { name: 'Upload a file' }),
     );
-    const sample = new File(['audio'], 'sample.wav', { type: 'audio/wav' });
-    await user.upload(
-      dialog.querySelector('input[type="file"]') as HTMLInputElement,
-      sample,
+    const input = within(dialog).getByLabelText<HTMLInputElement>(
+      /Drop an audio file here/,
     );
-    expect(within(dialog).getByText('sample.wav')).toBeInTheDocument();
+    expect(input.accept.split(',')).toContain('.mp3');
+    expect(input.accept.split(',')).not.toContain('audio/*');
+    const sample = new File(['audio'], 'sample.mp3', { type: 'audio/mpeg' });
+    await user.upload(input, sample);
+    expect(within(dialog).getByText('sample.mp3')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
 
     const name = within(dialog).getByLabelText('Name this voice');

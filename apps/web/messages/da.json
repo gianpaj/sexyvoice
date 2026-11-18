@@ -810,7 +810,7 @@
       "stop": "Stop stemmeprøve af {name}",
       "showAll": "Vis alle ({count})",
       "showFewer": "Vis færre",
-      "cloneLimit": "Du har {max} stemmer. Slet en på Klon-siden for at gemme en ny."
+      "cloneLimit": "Du har {max} stemmer. Slet en for at gemme en ny."
     },
     "inCall": {
       "connecting": "Forbinder…",

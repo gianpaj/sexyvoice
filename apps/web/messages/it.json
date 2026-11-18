@@ -814,7 +814,7 @@
       "stop": "Ferma l'anteprima di {name}",
       "showAll": "Mostra tutte ({count})",
       "showFewer": "Mostra meno",
-      "cloneLimit": "Hai {max} voci. Eliminane una nella pagina Clona per salvarne un'altra."
+      "cloneLimit": "Hai {max} voci. Eliminane una per salvarne un'altra."
     },
     "inCall": {
       "connecting": "Connessione…",

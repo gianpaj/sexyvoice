@@ -812,7 +812,7 @@
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
       "showFewer": "Show fewer",
-      "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
+      "cloneLimit": "You have {max} voices. Delete one to save another."
     },
     "inCall": {
       "connecting": "Connecting…",
