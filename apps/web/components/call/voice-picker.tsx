@@ -395,7 +395,7 @@ export function VoicePicker({
                   aria-hidden="true"
                   className="grid w-[18px] shrink-0 place-content-center"
                 >
-                  <span className="flex size-9 items-center justify-center rounded-full bg-violet-950 text-violet-300">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-violet-950 text-violet-300">
                     <Mic className="size-[18px]" />
                   </span>
                 </span>
