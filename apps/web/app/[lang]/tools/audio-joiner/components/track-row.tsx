@@ -73,17 +73,18 @@ export function TrackRow({
     }
   };
 
+  // Each handle stops MIN_TRIM_GAP_SEC short of the other one.
+  const startMaxSec = Math.max(0, endSec - MIN_TRIM_GAP_SEC);
+  const endMinSec = Math.min(durationSec, startSec + MIN_TRIM_GAP_SEC);
+
   const moveTrimHandle = (handle: TrimHandle, positionSec: number) => {
     const nextStartSec =
       handle === 'start'
-        ? Math.max(0, Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC))
+        ? Math.max(0, Math.min(positionSec, startMaxSec))
         : startSec;
     const nextEndSec =
       handle === 'end'
-        ? Math.min(
-            durationSec,
-            Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC),
-          )
+        ? Math.min(durationSec, Math.max(positionSec, endMinSec))
         : endSec;
 
     // A trim change stops the preview, so skip moves that change nothing,
@@ -261,10 +262,11 @@ export function TrackRow({
             className="absolute top-0 z-10 h-full border-cyan-300 border-l-2"
             style={{ left: `${startPct}%` }}
           />
-          <button
+          <div
             aria-disabled={disabled}
             aria-label="Trim start"
-            aria-valuemax={durationSec}
+            aria-orientation="horizontal"
+            aria-valuemax={startMaxSec}
             aria-valuemin={0}
             aria-valuenow={startSec}
             aria-valuetext={formatTime(startSec)}
@@ -277,20 +279,20 @@ export function TrackRow({
             role="slider"
             style={{ left: `${startPct}%` }}
             tabIndex={disabled ? -1 : 0}
-            type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
-          </button>
+          </div>
 
           <div
             className="absolute top-0 z-10 h-full border-cyan-300 border-l-2"
             style={{ left: `${endPct}%` }}
           />
-          <button
+          <div
             aria-disabled={disabled}
             aria-label="Trim end"
+            aria-orientation="horizontal"
             aria-valuemax={durationSec}
-            aria-valuemin={0}
+            aria-valuemin={endMinSec}
             aria-valuenow={endSec}
             aria-valuetext={formatTime(endSec)}
             className={cn(
@@ -302,10 +304,9 @@ export function TrackRow({
             role="slider"
             style={{ left: `${endPct}%` }}
             tabIndex={disabled ? -1 : 0}
-            type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
-          </button>
+          </div>
 
           <div
             className="pointer-events-none absolute inset-y-0 left-0 bg-slate-950/40"

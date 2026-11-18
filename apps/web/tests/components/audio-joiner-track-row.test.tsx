@@ -38,14 +38,18 @@ function renderTrackRow(
 afterEach(cleanup);
 
 describe('audio joiner TrackRow trim handles', () => {
-  it('exposes both handles as focusable sliders with their positions', () => {
+  it('exposes both handles as focusable sliders bounded by each other', () => {
     const { start, end } = renderTrackRow();
 
+    expect(start.tagName).toBe('DIV');
     expect(start).toHaveAttribute('tabindex', '0');
     expect(start).toHaveAttribute('aria-valuenow', '2');
     expect(start).toHaveAttribute('aria-valuetext', '0:02.0');
+    expect(start).toHaveAttribute('aria-valuemin', '0');
+    expect(start).toHaveAttribute('aria-valuemax', '7.95');
     expect(end).toHaveAttribute('tabindex', '0');
     expect(end).toHaveAttribute('aria-valuenow', '8');
+    expect(end).toHaveAttribute('aria-valuemin', '2.05');
     expect(end).toHaveAttribute('aria-valuemax', '10');
   });
 
