@@ -9,6 +9,11 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
+// WebKit upgrades localhost asset requests to HTTPS under this directive.
+const usesLocalE2E =
+  process.env.E2E_TEST_MODE === 'true' ||
+  process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
  * Content Security Policy Header - Without Nonce
@@ -26,7 +31,7 @@ const cspHeader = `
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
-    upgrade-insecure-requests;
+    ${usesLocalE2E ? '' : 'upgrade-insecure-requests;'}
 `;
 
 /** @type {import('next').NextConfig} */

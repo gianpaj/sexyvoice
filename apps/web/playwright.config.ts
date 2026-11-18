@@ -30,6 +30,10 @@ type PlaywrightBrowserChannel =
 
 const PLAYWRIGHT_BROWSER_CHANNEL = process.env
   .PLAYWRIGHT_BROWSER_CHANNEL as PlaywrightBrowserChannel;
+const chromiumChannel = PLAYWRIGHT_BROWSER_CHANNEL
+  ? { channel: PLAYWRIGHT_BROWSER_CHANNEL }
+  : {};
+const audioFilePickerSpec = /audio-file-picker\.spec\.ts$/;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -68,9 +72,6 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: PLAYWRIGHT_BASE_URL,
-    ...(PLAYWRIGHT_BROWSER_CHANNEL
-      ? { channel: PLAYWRIGHT_BROWSER_CHANNEL }
-      : {}),
 
     /* Pin timezone + locale so date/time formatting is identical across CI
        and local dev — required for Argos pixel comparisons on date columns. */
@@ -93,6 +94,7 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
+      use: chromiumChannel,
     },
 
     // Main tests that depend on authentication
@@ -100,68 +102,31 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        ...chromiumChannel,
         // Use prepared auth state
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
     },
 
-    // Uncomment to test on other browsers
-    // {
-    //   name: 'firefox',
-    //   use: {
-    //     ...devices['Desktop Firefox'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: {
-    //     ...devices['Desktop Safari'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: {
-    //     ...devices['Pixel 5'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: {
-    //     ...devices['iPhone 12'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: {
-    //     ...devices['Desktop Edge'],
-    //     channel: 'msedge',
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: {
-    //     ...devices['Desktop Chrome'],
-    //     channel: 'chrome',
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
+    {
+      name: 'firefox',
+      testMatch: audioFilePickerSpec,
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: '.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile-webkit',
+      testMatch: audioFilePickerSpec,
+      use: {
+        ...devices['iPhone 12'],
+        storageState: '.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
   ],
 
   /* Start the app server before running the tests */

@@ -275,6 +275,21 @@ the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
 users and are empty for free users; custom characters are empty. The spec sets
 the paid cookie, so its screenshot shows the fixture saved voices.
 
+### Audio file pickers
+
+`e2e/audio-file-picker.spec.ts` covers the Call and Clone dashboards and the
+Audio Converter, Audio Joiner, and Transcription tools. The tests require
+explicit audio extensions in the rendered file filter, open each chooser from
+the page, and confirm the app accepts an MP3 fixture.
+
+CI runs this spec in Chromium, Firefox, and WebKit with an iPhone profile.
+E2E mode omits CSP's HTTPS upgrade directive so WebKit can load the local
+HTTP test server.
+Playwright supplies the file directly. Verify whether an MP3 can be tapped
+in the native Files picker separately on iPhone Safari.
+
+Run just these cases with `pnpm --filter @sexyvoice/web test:e2e audio-file-picker`.
+
 ---
 
 ## 4. Credits Dashboard

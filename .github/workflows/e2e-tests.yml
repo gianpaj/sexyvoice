@@ -98,10 +98,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright system dependencies
+      - name: Install Playwright browsers and system dependencies
         working-directory: apps/web
         run: |
-          pnpm exec playwright install-deps chrome
+          pnpm exec playwright install-deps chrome firefox webkit
+          pnpm exec playwright install firefox webkit
           google-chrome --version
 
       - name: Build application
