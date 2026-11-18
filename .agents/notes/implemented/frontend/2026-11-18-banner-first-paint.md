@@ -17,6 +17,11 @@ about 250ms after load.
 its dismissal cookie is set or its countdown has expired. Dashboard and public
 pages share that path; `inDashboard` affects only layout.
 
+The cookie check only ever hides the banner, so a late result cannot undo a
+dismissal made while it was pending. A countdown renders `--` placeholders in
+the server HTML, because the server has no visitor clock, and fills in the
+digits on the first tick, so its row never appears late.
+
 ## Alternatives considered
 
 - **Hide before paint with an inline `<head>` script.** It would read the
