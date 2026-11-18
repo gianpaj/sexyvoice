@@ -1436,6 +1436,7 @@
     "dropZone": {
       "title": "Audiodateien hinzufügen",
       "subtitle": "Eine oder mehrere Dateien hochladen, um mit der Bearbeitung zu beginnen",
+      "subtitleMore": "Weitere Dateien am Ende der Liste hinzufügen",
       "addFiles": "Dateien hinzufügen"
     },
     "controls": {

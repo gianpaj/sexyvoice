@@ -1432,6 +1432,7 @@
     "dropZone": {
       "title": "Tilføj lydfiler",
       "subtitle": "Upload en eller flere filer for at begynde redigering",
+      "subtitleMore": "Tilføj flere filer sidst på listen",
       "addFiles": "Tilføj filer"
     },
     "controls": {
