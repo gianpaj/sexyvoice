@@ -405,7 +405,18 @@ export default async function LandingPage(props: {
           </div>
 
           {/* CTA Section */}
-          <div className="border-white/10 border-t bg-blue-950/40">
+          <div className="relative isolate overflow-hidden">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10"
+              style={{
+                background: [
+                  'radial-gradient(110% 100% at 65% 135%, color-mix(in oklab, hsl(var(--primary-active)) 55%, hsl(var(--background))) 0%, color-mix(in oklab, hsl(var(--primary)) 30%, hsl(var(--background))) 30%, transparent 65%)',
+                  'radial-gradient(75% 80% at 15% 125%, color-mix(in oklab, hsl(var(--gradient-start)) 45%, hsl(var(--background))) 0%, transparent 60%)',
+                  'linear-gradient(to bottom, hsl(var(--background) / 0.4), hsl(var(--background)))',
+                ].join(', '),
+              }}
+            />
             <div className="container mx-auto space-y-8 px-4 py-16 text-center">
               <FadeIn>
                 <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
