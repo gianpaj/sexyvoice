@@ -12,7 +12,8 @@ const NO_SCRIPT_STYLE =
 
 /**
  * Fades, unblurs, and lifts its children into place the first time they scroll
- * into view. Under reduced motion, `MotionConfig` drops the lift and keeps the fade.
+ * into view. Under reduced motion, `MotionConfig` drops the lift; the fade and
+ * unblur still run.
  */
 export function FadeIn({
   children,
