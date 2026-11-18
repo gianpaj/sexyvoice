@@ -973,7 +973,6 @@
     "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
     "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
     "audioConversionFailed": "Audio conversion failed. Please try recording again.",
-    "audioConversionFailedWithMessage": "Audio conversion failed: __ERROR__",
     "unexpectedError": "Unexpected error occurred",
     "loadingAudioProcessor": "Loading audio processor...",
     "audioProcessorError": "Audio Processor Error",

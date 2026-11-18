@@ -971,7 +971,6 @@
     "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
     "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
     "audioConversionFailed": "Lydkonvertering mislykkedes. Prøv at optage igen.",
-    "audioConversionFailedWithMessage": "Lydkonvertering mislykkedes: __ERROR__",
     "unexpectedError": "Der opstod en uventet fejl",
     "loadingAudioProcessor": "Indlæser lydprocessor...",
     "audioProcessorError": "Lydprocessorfejl",

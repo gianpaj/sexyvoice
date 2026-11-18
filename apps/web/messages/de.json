@@ -975,7 +975,6 @@
     "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
     "audioDurationInvalidFallback": "Das Audio muss mindestens __MIN__ Sekunden lang sein.",
     "audioConversionFailed": "Audiokonvertierung fehlgeschlagen. Bitte nehmen Sie erneut auf.",
-    "audioConversionFailedWithMessage": "Audiokonvertierung fehlgeschlagen: __ERROR__",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
     "loadingAudioProcessor": "Audioprozessor wird geladen...",
     "audioProcessorError": "Audioprozessor-Fehler",

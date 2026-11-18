@@ -975,7 +975,6 @@
     "audioDurationInvalidVoxtral": "L'audio di riferimento deve durare almeno __MIN__ secondi per la clonazione vocale.",
     "audioDurationInvalidFallback": "L'audio deve durare almeno __MIN__ secondi.",
     "audioConversionFailed": "Conversione audio non riuscita. Prova a registrare di nuovo.",
-    "audioConversionFailedWithMessage": "Conversione audio non riuscita: __ERROR__",
     "unexpectedError": "Si è verificato un errore imprevisto",
     "loadingAudioProcessor": "Caricamento processore audio...",
     "audioProcessorError": "Errore del processore audio",
