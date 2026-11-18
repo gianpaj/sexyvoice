@@ -5,6 +5,11 @@ import type { ReactNode } from 'react';
 
 const loadFeatures = () => import('./features').then((res) => res.domAnimation);
 
+// The server HTML carries the hidden start state, so without JavaScript the
+// content would never appear. This overrides those inline styles.
+const NO_SCRIPT_STYLE =
+  '[data-fade-in]{opacity:1!important;filter:none!important;transform:none!important}';
+
 /**
  * Fades, unblurs, and lifts its children into place the first time they scroll
  * into view. Under reduced motion, `MotionConfig` drops the lift and keeps the fade.
@@ -19,7 +24,11 @@ export function FadeIn({
   return (
     <LazyMotion features={loadFeatures}>
       <MotionConfig reducedMotion="user">
+        <noscript>
+          <style>{NO_SCRIPT_STYLE}</style>
+        </noscript>
         <m.div
+          data-fade-in
           initial={{ filter: 'blur(8px)', opacity: 0, y: 24 }}
           transition={{ delay, duration: 0.6, ease: 'easeOut' }}
           viewport={{ amount: 0.5, once: true }}
