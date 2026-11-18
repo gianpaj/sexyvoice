@@ -113,6 +113,16 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <a
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
+                  href="https://docs.sexyvoice.ai"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {dict.docs}
+                </a>
+              </li>
+              <li>
+                <a
+                  className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
                   href="https://status.sexyvoice.ai"
                   rel="noopener noreferrer"
                   target="_blank"
