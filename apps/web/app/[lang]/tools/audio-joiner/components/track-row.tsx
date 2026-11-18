@@ -33,6 +33,10 @@ interface TrackRowProps {
 }
 
 const MIN_TRIM_GAP_SEC = 0.05;
+const TRIM_STEP_SEC = 0.1;
+const LARGE_TRIM_STEP_SEC = 1;
+
+type TrimHandle = 'start' | 'end';
 
 function formatTime(valueSec: number): string {
   const minutes = Math.floor(valueSec / 60);
@@ -62,7 +66,7 @@ export function TrackRow({
   onSeek,
 }: TrackRowProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const dragTypeRef = useRef<'start' | 'end' | null>(null);
+  const dragTypeRef = useRef<TrimHandle | null>(null);
   // Track whether the pointer moved enough to be considered a drag vs a click.
   const didDragRef = useRef(false);
 
@@ -77,26 +81,54 @@ export function TrackRow({
     }
   };
 
+  const moveTrimHandle = (handle: TrimHandle, positionSec: number) => {
+    if (handle === 'start') {
+      const nextStartSec = Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC);
+      onTrimChange(Math.max(0, nextStartSec), endSec);
+    } else {
+      const nextEndSec = Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC);
+      onTrimChange(startSec, Math.min(durationSec, nextEndSec));
+    }
+  };
+
   const updateTrimFromPointer = (clientX: number) => {
     const root = containerRef.current;
-    if (!root || durationSec <= 0) {
+    if (!(root && dragTypeRef.current) || durationSec <= 0) {
       return;
     }
 
     const rect = root.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const positionSec = ratio * durationSec;
-
-    if (dragTypeRef.current === 'start') {
-      const nextStartSec = Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC);
-      onTrimChange(Math.max(0, nextStartSec), endSec);
-    }
-
-    if (dragTypeRef.current === 'end') {
-      const nextEndSec = Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC);
-      onTrimChange(startSec, Math.min(durationSec, nextEndSec));
-    }
+    moveTrimHandle(dragTypeRef.current, ratio * durationSec);
   };
+
+  const handleTrimKeyDown =
+    (handle: TrimHandle) => (event: React.KeyboardEvent) => {
+      if (disabled || durationSec <= 0) {
+        return;
+      }
+
+      const currentSec = handle === 'start' ? startSec : endSec;
+      const stepSec = event.shiftKey ? LARGE_TRIM_STEP_SEC : TRIM_STEP_SEC;
+      const nextSec = {
+        ArrowDown: currentSec - stepSec,
+        ArrowLeft: currentSec - stepSec,
+        ArrowRight: currentSec + stepSec,
+        ArrowUp: currentSec + stepSec,
+        End: durationSec,
+        Home: 0,
+        PageDown: currentSec - LARGE_TRIM_STEP_SEC,
+        PageUp: currentSec + LARGE_TRIM_STEP_SEC,
+      }[event.key];
+
+      if (nextSec === undefined) {
+        return;
+      }
+
+      event.preventDefault();
+      // Round to milliseconds so repeated 0.1 s steps don't drift.
+      moveTrimHandle(handle, Math.round(nextSec * 1000) / 1000);
+    };
 
   const onPointerMove = useEffectEvent((clientX: number) => {
     if (!dragTypeRef.current || disabled) return;
@@ -126,8 +158,8 @@ export function TrackRow({
       return;
     }
 
-    // Prevent the button from gaining focus so Space always triggers
-    // the global play/pause handler instead of the button's click event.
+    // Keep pointer drags from focusing the handle, so Space after a drag
+    // still reaches the global play/pause handler.
     event.preventDefault();
     // Stop propagation so the event doesn't bubble to the waveform container
     // and reset didDragRef to false via handleWaveformPointerDown.
@@ -142,8 +174,8 @@ export function TrackRow({
       return;
     }
 
-    // Prevent the button from gaining focus so Space always triggers
-    // the global play/pause handler instead of the button's click event.
+    // Keep pointer drags from focusing the handle, so Space after a drag
+    // still reaches the global play/pause handler.
     event.preventDefault();
     // Stop propagation so the event doesn't bubble to the waveform container
     // and reset didDragRef to false via handleWaveformPointerDown.
@@ -227,14 +259,21 @@ export function TrackRow({
             style={{ left: `${startPct}%` }}
           />
           <button
+            aria-disabled={disabled}
             aria-label="Trim start"
+            aria-valuemax={durationSec}
+            aria-valuemin={0}
+            aria-valuenow={startSec}
+            aria-valuetext={formatTime(startSec)}
             className={cn(
               'absolute top-0 z-10 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
               disabled && 'cursor-not-allowed opacity-50',
             )}
+            onKeyDown={handleTrimKeyDown('start')}
             onPointerDown={handleStartPointerDown}
+            role="slider"
             style={{ left: `${startPct}%` }}
-            tabIndex={-1}
+            tabIndex={disabled ? -1 : 0}
             type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
@@ -245,14 +284,21 @@ export function TrackRow({
             style={{ left: `${endPct}%` }}
           />
           <button
+            aria-disabled={disabled}
             aria-label="Trim end"
+            aria-valuemax={durationSec}
+            aria-valuemin={0}
+            aria-valuenow={endSec}
+            aria-valuetext={formatTime(endSec)}
             className={cn(
               'absolute top-0 z-10 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
               disabled && 'cursor-not-allowed opacity-50',
             )}
+            onKeyDown={handleTrimKeyDown('end')}
             onPointerDown={handleEndPointerDown}
+            role="slider"
             style={{ left: `${endPct}%` }}
-            tabIndex={-1}
+            tabIndex={disabled ? -1 : 0}
             type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
