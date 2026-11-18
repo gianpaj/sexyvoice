@@ -22,8 +22,10 @@ policies and revokes INSERT, UPDATE, DELETE and TRUNCATE from `PUBLIC`, `anon`
 and `authenticated`. The SELECT policy keeps users' read access to their own
 history.
 
-The SexyCall agent creates, meters and finalizes sessions with
-`SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS. Account deletion clears the
+The SexyCall agent creates, meters and finalizes sessions with the service
+role, which bypasses RLS. The agent repo names that key
+`SUPABASE_SERVICE_ROLE_KEY` (`src/agent.py`); this repo calls it
+`SUPABASE_SECRET_KEY`. Account deletion clears the
 verified user's transcripts with `createAdminClient()`, scoped by `user_id`.
 
 ## Alternatives considered
