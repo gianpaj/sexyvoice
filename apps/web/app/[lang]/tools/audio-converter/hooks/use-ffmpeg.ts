@@ -29,6 +29,14 @@ async function loadFFmpegCore(): Promise<FFmpeg> {
   return ffmpeg;
 }
 
+async function deleteIfExists(ffmpeg: FFmpeg, path: string) {
+  try {
+    await ffmpeg.deleteFile(path);
+  } catch {
+    // FFmpeg never wrote the file because the conversion failed.
+  }
+}
+
 export function useFFmpeg(options?: UseFFmpegOptions) {
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const loadPromiseRef = useRef<Promise<FFmpeg> | null>(null);
@@ -105,9 +113,18 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
       wav: ['-i', inputName, '-codec:a', 'pcm_s16le', outputName],
     };
 
-    await ffmpeg.exec(formatArgs[outputFormat]);
+    let data: Awaited<ReturnType<FFmpeg['readFile']>>;
+    try {
+      const exitCode = await ffmpeg.exec(formatArgs[outputFormat]);
+      if (exitCode !== 0) {
+        throw new Error(`FFmpeg exited with code ${exitCode}`);
+      }
+      data = await ffmpeg.readFile(outputName);
+    } finally {
+      await deleteIfExists(ffmpeg, inputName);
+      await deleteIfExists(ffmpeg, outputName);
+    }
 
-    const data = await ffmpeg.readFile(outputName);
     const mimeTypes: Record<AudioFormat, string> = {
       aac: 'audio/aac',
       flac: 'audio/flac',
@@ -117,9 +134,6 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
       ogg: 'audio/ogg',
       wav: 'audio/wav',
     };
-
-    await ffmpeg.deleteFile(inputName);
-    await ffmpeg.deleteFile(outputName);
 
     const arrayBuffer =
       typeof data === 'string'

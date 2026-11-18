@@ -1335,7 +1335,7 @@
     },
     "errors": {
       "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
-      "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "conversionFailed": "Diese Datei konnte nicht konvertiert werden. Bitte prüfen Sie, ob es eine gültige Audiodatei ist.",
       "unsupportedFormat": "Nicht unterstütztes Dateiformat",
       "converterFailedToLoad": "Der Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
       "converterLoadFailed": "Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu oder versuchen Sie einen anderen Browser."

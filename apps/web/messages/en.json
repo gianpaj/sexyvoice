@@ -1333,7 +1333,7 @@
     },
     "errors": {
       "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
-      "conversionFailed": "Conversion failed. Please try again.",
+      "conversionFailed": "Couldn't convert this file. Check that it's a valid audio file.",
       "unsupportedFormat": "Unsupported file format",
       "converterFailedToLoad": "Audio converter failed to load. Please refresh the page.",
       "converterLoadFailed": "Failed to load audio converter. Please refresh the page or try a different browser."

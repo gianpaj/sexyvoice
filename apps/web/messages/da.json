@@ -1331,7 +1331,7 @@
     },
     "errors": {
       "loadingFailed": "Kunne ikke indlæse FFmpeg. Opdater venligst siden.",
-      "conversionFailed": "Konvertering mislykkedes. Prøv igen.",
+      "conversionFailed": "Filen kunne ikke konverteres. Tjek, at det er en gyldig lydfil.",
       "unsupportedFormat": "Ikke-understøttet filformat",
       "converterFailedToLoad": "Lydkonverteren kunne ikke indlæses. Opdater venligst siden.",
       "converterLoadFailed": "Kunne ikke indlæse lydkonverteren. Opdater venligst siden eller prøv en anden browser."

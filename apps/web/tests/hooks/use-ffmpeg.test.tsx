@@ -101,6 +101,28 @@ describe('useFFmpeg', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
   });
+
+  it('rejects and cleans up when FFmpeg cannot decode the input', async () => {
+    ffmpegMocks.load.mockResolvedValueOnce();
+    const { result } = renderHook(() => useFFmpeg({ lazyLoad: true }));
+
+    await act(async () => {
+      await result.current.ensureLoaded();
+    });
+
+    const ffmpeg = ffmpegMocks.instances[0] as InstanceType<
+      typeof ffmpegMocks.FFmpegMock
+    >;
+    ffmpeg.exec.mockResolvedValueOnce(1);
+    ffmpeg.deleteFile.mockRejectedValueOnce(new Error('ENOENT'));
+
+    await expect(
+      result.current.convert(new Blob(['not audio']), 'mp3'),
+    ).rejects.toThrow('FFmpeg exited with code 1');
+    expect(ffmpeg.readFile).not.toHaveBeenCalled();
+    expect(ffmpeg.deleteFile).toHaveBeenCalledWith('input');
+    expect(ffmpeg.deleteFile).toHaveBeenCalledWith('output.mp3');
+  });
 });
 
 describe('cloneStateReducer', () => {
