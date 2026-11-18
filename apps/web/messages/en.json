@@ -1443,6 +1443,16 @@
       "joining": "Joining...",
       "cancel": "Cancel"
     },
+    "track": {
+      "trimStart": "Trim start",
+      "trimEnd": "Trim end",
+      "moveUp": "Move segment up",
+      "moveDown": "Move segment down",
+      "delete": "Delete segment",
+      "start": "Start: {time}",
+      "end": "End: {time}",
+      "duration": "Duration: {time}"
+    },
     "progress": {
       "processing": "Processing"
     },

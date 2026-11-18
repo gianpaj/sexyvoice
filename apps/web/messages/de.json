@@ -1445,6 +1445,16 @@
       "joining": "Wird zusammengefügt...",
       "cancel": "Abbrechen"
     },
+    "track": {
+      "trimStart": "Schnittanfang",
+      "trimEnd": "Schnittende",
+      "moveUp": "Segment nach oben",
+      "moveDown": "Segment nach unten",
+      "delete": "Segment löschen",
+      "start": "Start: {time}",
+      "end": "Ende: {time}",
+      "duration": "Dauer: {time}"
+    },
     "progress": {
       "processing": "Wird verarbeitet"
     },

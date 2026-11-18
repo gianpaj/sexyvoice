@@ -1445,6 +1445,16 @@
       "joining": "Uniendo...",
       "cancel": "Cancelar"
     },
+    "track": {
+      "trimStart": "Inicio del recorte",
+      "trimEnd": "Fin del recorte",
+      "moveUp": "Subir segmento",
+      "moveDown": "Bajar segmento",
+      "delete": "Eliminar segmento",
+      "start": "Inicio: {time}",
+      "end": "Fin: {time}",
+      "duration": "Duración: {time}"
+    },
     "progress": {
       "processing": "Procesando"
     },

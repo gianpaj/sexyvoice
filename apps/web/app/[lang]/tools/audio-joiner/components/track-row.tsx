@@ -2,6 +2,7 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { ArrowDown, ArrowUp, GripVertical, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
@@ -57,6 +58,7 @@ export function TrackRow({
   onReady,
   onSeek,
 }: TrackRowProps) {
+  const t = useTranslations('audioJoiner.track');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragTypeRef = useRef<TrimHandle | null>(null);
   // Track whether the pointer moved enough to be considered a drag vs a click.
@@ -264,7 +266,7 @@ export function TrackRow({
           />
           <div
             aria-disabled={disabled}
-            aria-label="Trim start"
+            aria-label={t('trimStart')}
             aria-orientation="horizontal"
             aria-valuemax={startMaxSec}
             aria-valuemin={0}
@@ -289,7 +291,7 @@ export function TrackRow({
           />
           <div
             aria-disabled={disabled}
-            aria-label="Trim end"
+            aria-label={t('trimEnd')}
             aria-orientation="horizontal"
             aria-valuemax={durationSec}
             aria-valuemin={endMinSec}
@@ -329,7 +331,7 @@ export function TrackRow({
 
         <div className="flex w-12 flex-col gap-2">
           <Button
-            aria-label="Move segment up"
+            aria-label={t('moveUp')}
             disabled={disabled || !canMoveUp}
             onClick={onMoveUp}
             size="icon"
@@ -339,7 +341,7 @@ export function TrackRow({
             <ArrowUp className="h-4 w-4" />
           </Button>
           <Button
-            aria-label="Move segment down"
+            aria-label={t('moveDown')}
             disabled={disabled || !canMoveDown}
             onClick={onMoveDown}
             size="icon"
@@ -349,7 +351,7 @@ export function TrackRow({
             <ArrowDown className="h-4 w-4" />
           </Button>
           <Button
-            aria-label="Delete segment"
+            aria-label={t('delete')}
             disabled={disabled}
             onClick={onDelete}
             size="icon"
@@ -362,9 +364,9 @@ export function TrackRow({
       </div>
 
       <div className="mt-2 flex justify-between text-muted-foreground text-xs">
-        <span>Start: {formatTime(startSec)}</span>
-        <span>End: {formatTime(endSec)}</span>
-        <span>Duration: {formatTime(endSec - startSec)}</span>
+        <span>{t('start', { time: formatTime(startSec) })}</span>
+        <span>{t('end', { time: formatTime(endSec) })}</span>
+        <span>{t('duration', { time: formatTime(endSec - startSec) })}</span>
       </div>
     </div>
   );

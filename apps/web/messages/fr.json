@@ -1445,6 +1445,16 @@
       "joining": "Assemblage en cours...",
       "cancel": "Annuler"
     },
+    "track": {
+      "trimStart": "Début du découpage",
+      "trimEnd": "Fin du découpage",
+      "moveUp": "Monter le segment",
+      "moveDown": "Descendre le segment",
+      "delete": "Supprimer le segment",
+      "start": "Début : {time}",
+      "end": "Fin : {time}",
+      "duration": "Durée : {time}"
+    },
     "progress": {
       "processing": "Traitement en cours"
     },

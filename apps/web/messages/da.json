@@ -1441,6 +1441,16 @@
       "joining": "Fletter...",
       "cancel": "Annuller"
     },
+    "track": {
+      "trimStart": "Start på beskæring",
+      "trimEnd": "Slut på beskæring",
+      "moveUp": "Flyt segment op",
+      "moveDown": "Flyt segment ned",
+      "delete": "Slet segment",
+      "start": "Start: {time}",
+      "end": "Slut: {time}",
+      "duration": "Varighed: {time}"
+    },
     "progress": {
       "processing": "Behandler"
     },

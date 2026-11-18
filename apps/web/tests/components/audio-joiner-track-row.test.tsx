@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TrackRow } from '@/app/[lang]/tools/audio-joiner/components/track-row';
+import messages from '@/messages/en.json';
 
 vi.mock('@wavesurfer/react', () => ({ default: () => null }));
 
@@ -12,21 +14,23 @@ function renderTrackRow(
 ) {
   const onTrimChange = vi.fn();
   render(
-    <TrackRow
-      canMoveDown={false}
-      canMoveUp={false}
-      durationSec={10}
-      endSec={8}
-      name="clip.mp3"
-      onDelete={vi.fn()}
-      onMoveDown={vi.fn()}
-      onMoveUp={vi.fn()}
-      onReady={vi.fn()}
-      onTrimChange={onTrimChange}
-      startSec={2}
-      url="blob:clip"
-      {...props}
-    />,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TrackRow
+        canMoveDown={false}
+        canMoveUp={false}
+        durationSec={10}
+        endSec={8}
+        name="clip.mp3"
+        onDelete={vi.fn()}
+        onMoveDown={vi.fn()}
+        onMoveUp={vi.fn()}
+        onReady={vi.fn()}
+        onTrimChange={onTrimChange}
+        startSec={2}
+        url="blob:clip"
+        {...props}
+      />
+    </NextIntlClientProvider>,
   );
   return {
     end: screen.getByRole('slider', { name: 'Trim end' }),

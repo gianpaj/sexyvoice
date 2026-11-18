@@ -1445,6 +1445,16 @@
       "joining": "Unione in corso...",
       "cancel": "Annulla"
     },
+    "track": {
+      "trimStart": "Inizio taglio",
+      "trimEnd": "Fine taglio",
+      "moveUp": "Sposta segmento su",
+      "moveDown": "Sposta segmento giù",
+      "delete": "Elimina segmento",
+      "start": "Inizio: {time}",
+      "end": "Fine: {time}",
+      "duration": "Durata: {time}"
+    },
     "progress": {
       "processing": "Elaborazione"
     },
