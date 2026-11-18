@@ -7,6 +7,8 @@ describe('JS spike admission', () => {
     runtime: 'agents-js-spike',
     userId: 'test-user',
     expiresAt: 2000,
+    conversationId: '60606060-6060-4060-8060-606060606061',
+    resume: false,
   });
   it('requires an explicit environment and allowed user', () => {
     expect(() =>

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 // Explicit config only: this test uses real providers and an allowlisted account.
-test('connects, receives audio, exchanges text, mutes and hangs up', async ({
+test('connects, exchanges text and audio, and resumes a conversation', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -20,7 +20,9 @@ test('connects, receives audio, exchanges text, mutes and hangs up', async ({
     await expect(page.getByText('In call', { exact: true })).toBeVisible();
     await page
       .getByRole('textbox', { name: 'Message', exact: true })
-      .fill('Reply exactly: Browser test passed.');
+      .fill(
+        'My test code is cobalt pelican. Reply exactly: Browser test passed.',
+      );
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(
       page.getByRole('log').getByText('Browser test passed.', { exact: true }),
@@ -61,4 +63,25 @@ test('connects, receives audio, exchanges text, mutes and hangs up', async ({
   await expect(
     page.getByRole('button', { name: 'Start call', exact: true }),
   ).toBeVisible();
+
+  const thread = new URL(page.url()).searchParams.get('conversation');
+  expect(thread).toMatch(/^[a-f0-9-]{36}$/);
+  await page.reload();
+  await page.getByRole('button', { name: 'Start call', exact: true }).click();
+  try {
+    await expect(page.getByText('In call', { exact: true })).toBeVisible({
+      timeout: 65_000,
+    });
+    await page
+      .getByRole('textbox', { name: 'Message', exact: true })
+      .fill('What test code did I tell you? Reply with just the code.');
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(
+      page.getByRole('log').getByText(/cobalt pelican/i),
+    ).toBeVisible({ timeout: 20_000 });
+    expect(new URL(page.url()).searchParams.get('conversation')).toBe(thread);
+  } finally {
+    const end = page.getByRole('button', { name: 'End call', exact: true });
+    if (await end.isVisible()) await end.click();
+  }
 });

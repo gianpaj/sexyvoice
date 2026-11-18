@@ -11,7 +11,10 @@ import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
 import { createClient } from '@/lib/supabase/server';
 import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
 
-const requestSchema = z.strictObject({ audioReferenceId: z.uuid().optional() });
+const requestSchema = z.strictObject({
+  audioReferenceId: z.uuid().optional(),
+  conversationId: z.uuid().optional(),
+});
 
 export async function POST(request: Request) {
   if (
@@ -55,7 +58,21 @@ export async function POST(request: Request) {
     .catch(() => null);
   const selection = requestSchema.safeParse(body);
   if (!selection.success)
-    return APIErrorResponse('Invalid voice selection', 400);
+    return APIErrorResponse('Invalid call selection', 400);
+
+  const resumeId = selection.data.conversationId;
+  if (resumeId) {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('id,character_id,is_voice_spike')
+      .eq('id', resumeId)
+      .eq('user_id', claims.sub)
+      .maybeSingle();
+    if (error) return APIErrorResponse('Conversation lookup unavailable', 503);
+    if (!(data && (data.is_voice_spike || data.character_id)))
+      return APIErrorResponse('Conversation not found', 404);
+  }
+  const conversationId = resumeId ?? randomUUID();
 
   let inworldVoiceId: string | undefined;
   if (selection.data.audioReferenceId) {
@@ -96,6 +113,8 @@ export async function POST(request: Request) {
           runtime: RUNTIME,
           userId: claims.sub,
           expiresAt: Date.now() + 120_000,
+          conversationId,
+          resume: resumeId !== undefined,
           inworldVoiceId,
         }),
       }),
@@ -115,7 +134,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { accessToken: await token.toJwt(), url, runtime: RUNTIME },
+    { accessToken: await token.toJwt(), url, runtime: RUNTIME, conversationId },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

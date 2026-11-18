@@ -18,6 +18,7 @@
     "@livekit/agents-plugin-xai": "1.10.0",
     "@livekit/rtc-node": "1.2.2",
     "@sexyvoice/voice-spike": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

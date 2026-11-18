@@ -132,6 +132,20 @@ A real mobile cascade and text chat share context. Deployed 30/60-minute calls,
 forced rotations, mute, interruption and bad-network recovery pass the plan's
 experiments. Memory and credit semantics retain their approved contracts.
 
+### Conversation history
+
+The internal JS call uses the shared `conversations` and
+`conversation_messages` tables. The worker appends committed visible turns
+and seeds LiveKit from bounded history on redial. An expiring local-only call
+lease prevents competing spike workers from writing the same user's history.
+Dedicated demo rows can resume without a character. Ordinary threads require
+a linked character. Demo messages retain the SDK item ID but have no billable
+`call_sessions` row.
+
+We considered writing conversation history in the browser or at hangup. The
+worker owns committed turn order and persists during the call, including when
+the browser drops. A hangup batch can lose the entire call on a worker crash.
+
 ## Risks
 
 A speech socket is only one part of a voice agent. Replacing LiveKit can require

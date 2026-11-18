@@ -636,6 +636,7 @@ declare type Database = {
           character_name: string;
           created_at: string;
           id: string;
+          is_voice_spike: boolean;
           language: string;
           revision: number;
           scene_id: string | null;
@@ -648,6 +649,7 @@ declare type Database = {
           character_name: string;
           created_at?: string;
           id?: string;
+          is_voice_spike?: boolean;
           language: string;
           revision?: number;
           scene_id?: string | null;
@@ -660,6 +662,7 @@ declare type Database = {
           character_name?: string;
           created_at?: string;
           id?: string;
+          is_voice_spike?: boolean;
           language?: string;
           revision?: number;
           scene_id?: string | null;
@@ -891,6 +894,35 @@ declare type Database = {
           },
         ];
       };
+      voice_spike_calls: {
+        Row: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          expires_at?: string;
+          room_name?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_spike_calls_conversation_id_user_id_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
+      };
       voices: {
         Row: {
           created_at: string | null;
@@ -988,6 +1020,18 @@ declare type Database = {
       };
     };
     Functions: {
+      append_voice_spike_message: {
+        Args: {
+          p_conversation_id: string;
+          p_interrupted: boolean;
+          p_item_id: string;
+          p_role: string;
+          p_room_name: string;
+          p_text: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
       conversation_text_parts_valid: {
         Args: { parts: Json };
         Returns: boolean;
@@ -1029,6 +1073,33 @@ declare type Database = {
           text_rank: number;
           vector_rank: number;
         }[];
+      };
+      open_voice_spike_call: {
+        Args: {
+          p_conversation_id: string;
+          p_resume: boolean;
+          p_room_name: string;
+          p_user_id: string;
+        };
+        Returns: {
+          character_id: string | null;
+          character_name: string;
+          created_at: string;
+          id: string;
+          is_voice_spike: boolean;
+          language: string;
+          revision: number;
+          scene_id: string | null;
+          scene_instructions: string;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'conversations';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       prune_agent_memories_over_cap: {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };

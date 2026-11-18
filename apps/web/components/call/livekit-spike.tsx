@@ -40,12 +40,15 @@ function Transcripts({ onMessage }: { onMessage: (message: Message) => void }) {
 
 export function LivekitSpike({
   audioReferenceId,
+  conversationId,
 }: {
   audioReferenceId?: string;
+  conversationId?: string;
 }) {
   const t = useTranslations('voiceSpike');
   const [room, setRoom] = useState<Room | null>(null);
   const active = useRef<Room | null>(null);
+  const thread = useRef(conversationId);
   const [state, setState] = useState<State>('idle');
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
@@ -111,6 +114,7 @@ export function LivekitSpike({
       stop().catch(() => undefined);
     };
     let accepting = false;
+    let assignedThread: string | undefined;
     let mediaConnected = false;
     const checkAgent = async (participant: RemoteParticipant) => {
       if (
@@ -119,8 +123,9 @@ export function LivekitSpike({
         participant.attributes[RUNTIME_ATTRIBUTE] !== RUNTIME
       )
         return;
-      if (participant.attributes['sv.spike.error']) {
-        fail('providerError');
+      const failure = participant.attributes['sv.spike.error'];
+      if (failure) {
+        fail(failure === 'provider' ? 'providerError' : 'connectError');
         return;
       }
       setThinking(participant.attributes['lk.agent.state'] === 'thinking');
@@ -142,6 +147,12 @@ export function LivekitSpike({
         if (deadline.current) clearTimeout(deadline.current);
         mutedRef.current = false;
         setMuted(false);
+        if (assignedThread) {
+          thread.current = assignedThread;
+          const here = new URL(window.location.href);
+          here.searchParams.set('conversation', assignedThread);
+          window.history.replaceState(null, '', here);
+        }
         setState('connected');
       } catch {
         fail('connectError');
@@ -200,9 +211,12 @@ export function LivekitSpike({
       audioReady.catch(() => undefined);
       const response = await fetch('/api/voice-spike/call-token', {
         method: 'POST',
-        ...(audioReferenceId !== undefined && {
+        ...((audioReferenceId || thread.current) && {
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audioReferenceId }),
+          body: JSON.stringify({
+            audioReferenceId,
+            conversationId: thread.current,
+          }),
         }),
       });
       if (!response.ok) throw new Error('Token unavailable');
@@ -210,6 +224,7 @@ export function LivekitSpike({
       if (token.runtime !== RUNTIME || !token.accessToken || !token.url)
         throw new Error('Invalid runtime');
       if (active.current !== current) return;
+      assignedThread = token.conversationId;
       await audioReady;
       // A shared ICE transport avoids Firefox startup failures with this SDK's media layout.
       await current.connect(

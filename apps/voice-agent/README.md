@@ -23,6 +23,11 @@ Inworld. `VOICE_SPIKE_USER_IDS` lists the Supabase UUIDs allowed to test;
 `VOICE_SPIKE_ENABLED=true` explicitly enables this worker. Keep it off in
 production. Calls use Ashley by default and speak English.
 
+Apply the thread migration to the isolated local Supabase project first. Set
+`NEXT_PUBLIC_SUPABASE_URL` in the worker file to its loopback API URL and
+`SUPABASE_SECRET_KEY` to that project's server key. The worker rejects non-local
+database URLs.
+
 Configure `apps/web/.env.local` with the normal Supabase settings and the same
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and
 `VOICE_SPIKE_USER_IDS`. Provider keys stay in the worker. The JS route ignores
@@ -41,6 +46,17 @@ can stay connected: explicit dispatch selects only the JS worker. Do not run
 two JS workers against the same project when comparing local changes.
 A preview deployment needs this persistent worker running separately;
 Vercel hosts the page and token request, not the agent's media connection.
+
+## Continue a conversation
+
+The call page adds `?conversation=<uuid>` after the first successful connection.
+Redial or reopen that URL while signed in as the same user to continue the thread.
+Open the page without the conversation parameter to start fresh.
+
+The worker reads up to 32 recent turns and 12,000 characters when starting a
+call. It saves committed typed and spoken turns to `conversation_messages`
+and allows one active JS demo call per user. Demo calls do not create
+`call_sessions` or charge credits.
 
 ## Saved Inworld voice comparison
 
@@ -93,13 +109,12 @@ Remove only these demo proxies with `tailscale serve --https=8447 off` and
   unrecoverable provider error. Hangup releases the microphone and audio UI.
 - SDK recording is disabled; scripts select warning-level logs explicitly.
   Debug logs can contain transcripts, so do not enable them for personal calls.
-- Every call starts with fresh context. The UI holds at most 100 message items.
+- The UI holds at most 100 message items from the current call.
   This is an internal provider experiment with no customer wallet writes.
 
-This slice has no standalone text chat, saved character selection,
-database history, cross-tab admission, memory extraction, usage settlement,
-or resumable text streams. Use one synthetic conversation at a time.
-It is not eligible for customer exposure or a Python cutover.
+Standalone text chat, character selection, memory extraction, usage settlement,
+and resumable text streams are pending. Use synthetic conversations on the
+isolated database for internal testing.
 
 ## Provider compatibility
 

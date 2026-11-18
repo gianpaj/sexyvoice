@@ -66,6 +66,49 @@ describe('JS spike call dispatch', () => {
     expect((await POST(emptyRequest)).status).toBe(200);
   });
 
+  it('dispatches a resume for an owned thread and rejects unavailable threads', async () => {
+    enable();
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { id: voiceId, is_voice_spike: true },
+        error: null,
+      }),
+    };
+    const from = vi.fn().mockReturnValue(query);
+    vi.mocked(createClient).mockResolvedValue({ from } as unknown as Awaited<
+      ReturnType<typeof createClient>
+    >);
+    const resume = () =>
+      request(undefined, JSON.stringify({ conversationId: voiceId }));
+    const response = await POST(resume());
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.conversationId).toBe(voiceId);
+    const token = await new TokenVerifier(
+      'api-key',
+      process.env.LIVEKIT_API_SECRET!,
+    ).verify(payload.accessToken);
+    expect(
+      JSON.parse(token.roomConfig?.agents?.[0]?.metadata ?? '{}'),
+    ).toMatchObject({
+      conversationId: voiceId,
+      resume: true,
+    });
+    expect(from).toHaveBeenCalledWith('conversations');
+    expect(query.eq.mock.calls).toEqual([
+      ['id', voiceId],
+      ['user_id', 'test-user'],
+    ]);
+    query.maybeSingle.mockResolvedValueOnce({ data: null });
+    expect((await POST(resume())).status).toBe(404);
+    query.maybeSingle.mockResolvedValueOnce({
+      data: { id: voiceId, is_voice_spike: false, character_id: null },
+    });
+    expect((await POST(resume())).status).toBe(404);
+  });
+
   it('dispatches only the authenticated owner’s Inworld voice outside the browser token', async () => {
     enable();
     const { from, query } = mockVoiceLookup({ voice_id: 'workspace__clone' });

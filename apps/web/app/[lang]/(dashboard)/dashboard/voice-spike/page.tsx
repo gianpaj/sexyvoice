@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { z } from 'zod';
 
 import { LivekitSpike } from '@/components/call/livekit-spike';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -8,7 +9,10 @@ import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
 export default async function VoiceSpike({
   searchParams,
 }: {
-  searchParams: Promise<{ voice?: string | string[] }>;
+  searchParams: Promise<{
+    voice?: string | string[];
+    conversation?: string | string[];
+  }>;
 }) {
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
@@ -24,7 +28,8 @@ export default async function VoiceSpike({
     )
   )
     notFound();
-  const { voice } = await searchParams;
-  if (Array.isArray(voice)) notFound();
-  return <LivekitSpike audioReferenceId={voice} />;
+  const { voice, conversation } = await searchParams;
+  const thread = z.uuid().optional().safeParse(conversation);
+  if (Array.isArray(voice) || !thread.success) notFound();
+  return <LivekitSpike audioReferenceId={voice} conversationId={thread.data} />;
 }

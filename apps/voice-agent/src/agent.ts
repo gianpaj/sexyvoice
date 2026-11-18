@@ -18,8 +18,10 @@ import {
   RUNTIME,
   RUNTIME_ATTRIBUTE,
 } from '@sexyvoice/voice-spike';
+import { createClient } from '@supabase/supabase-js';
 
 import { parseJob } from './config.ts';
+import { CallThread } from './thread.ts';
 
 if (
   process.env.VOICE_SPIKE_ENABLED !== 'true' ||
@@ -36,9 +38,19 @@ for (const key of [
   'XAI_API_KEY',
   'INWORLD_API_KEY',
   'VOICE_SPIKE_USER_IDS',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'SUPABASE_SECRET_KEY',
 ]) {
   if (!process.env[key]) throw new Error(`Missing ${key}`);
 }
+
+const databaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+if (!['localhost', '127.0.0.1', '[::1]'].includes(databaseUrl.hostname)) {
+  throw new Error('The JS spike worker requires a local Supabase database');
+}
+const db = createClient(databaseUrl.href, process.env.SUPABASE_SECRET_KEY!, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 export default defineAgent({
   prewarm: async (proc) => {
@@ -57,6 +69,26 @@ export default defineAgent({
         );
       }),
     ]).finally(() => clearTimeout(waiting));
+    const local = ctx.room.localParticipant!;
+    const roomName = ctx.room.name;
+    if (!roomName) throw new Error('Missing spike room name');
+    const thread = new CallThread(db, {
+      userId: job.userId,
+      conversationId: job.conversationId,
+      roomName,
+    });
+    const reportStorageError = () =>
+      local
+        .setAttributes({
+          [RUNTIME_ATTRIBUTE]: RUNTIME,
+          'sv.spike.error': 'history',
+        })
+        .catch(() => undefined);
+    const opened = await thread.open(job.resume).catch(async () => {
+      await reportStorageError();
+      await thread.close();
+      throw new Error('Voice spike history unavailable');
+    });
     const session = new voice.AgentSession({
       vad: ctx.proc.userData.vad as Awaited<ReturnType<typeof VAD.load>>,
       stt: new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' }),
@@ -73,22 +105,29 @@ export default defineAgent({
     });
     // Input remains disabled until the browser has verified this runtime.
     session.input.setAudioEnabled(false);
-    const local = ctx.room.localParticipant!;
-    let closed = false;
-    const finish = async () => {
-      if (closed) return;
-      closed = true;
+    let cleanup: Promise<void> | undefined;
+    const close = () => {
       clearTimeout(deadline);
-      await session.close();
-      await ctx.deleteRoom();
+      cleanup ??= session.close().finally(() => thread.close());
+      return cleanup;
+    };
+    const finish = async () => {
+      await close().finally(() => ctx.deleteRoom());
     };
     const deadline = setTimeout(() => {
       finish().catch(() => ctx.shutdown('spike deadline'));
     }, MAX_CALL_MS);
-    ctx.addShutdownCallback(async () => {
-      clearTimeout(deadline);
-      await session.close();
-    });
+    ctx.addShutdownCallback(close);
+    session.on(
+      voice.AgentSessionEventTypes.ConversationItemAdded,
+      ({ item }) => {
+        thread.append(item, () => {
+          reportStorageError().finally(() =>
+            finish().catch(() => ctx.shutdown('history failure')),
+          );
+        });
+      },
+    );
     local.registerRpcMethod(MUTE_RPC, (request) => {
       if (request.callerIdentity !== participant.identity)
         throw new Error('Unexpected caller');
@@ -101,7 +140,7 @@ export default defineAgent({
         finish().catch(() => ctx.shutdown('caller disconnected'));
     });
     session.on(voice.AgentSessionEventTypes.Close, () => {
-      if (!closed) finish().catch(() => ctx.shutdown('session closed'));
+      if (!cleanup) finish().catch(() => ctx.shutdown('session closed'));
     });
     session.on(voice.AgentSessionEventTypes.Error, (event) => {
       if (event.error.recoverable) return;
@@ -112,8 +151,16 @@ export default defineAgent({
     });
     await session.start({
       agent: new voice.Agent({
-        instructions:
-          'You are a friendly voice-call test assistant. Reply briefly in English. Typed messages and spoken messages are the same conversation. Never claim access to saved history or personal memories.',
+        chatCtx: opened.chatCtx,
+        instructions: [
+          opened.thread.is_voice_spike
+            ? 'You are a friendly voice-call test assistant.'
+            : `You are ${opened.thread.character_name}. Call language: ${opened.thread.language}.`,
+          'Reply briefly. Treat typed and spoken messages as part of one conversation.',
+          opened.thread.scene_instructions,
+        ]
+          .filter(Boolean)
+          .join('\n'),
       }),
       room: ctx.room,
       record: false,
@@ -132,8 +179,9 @@ export default defineAgent({
     });
     await local.setAttributes({ [RUNTIME_ATTRIBUTE]: RUNTIME });
     session.generateReply({
-      instructions:
-        'Greet the caller briefly and invite them to speak or type a message.',
+      instructions: opened.chatCtx.items.length
+        ? 'Briefly welcome the caller back and let them pick up this conversation.'
+        : 'Greet the caller briefly and invite them to speak or type a message.',
     });
   },
 });

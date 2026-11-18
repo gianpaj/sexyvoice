@@ -116,6 +116,34 @@ describe('JS browser call', () => {
       body: JSON.stringify({ audioReferenceId }),
     });
   });
+  it('reuses the thread when the caller hangs up and redials', async () => {
+    const conversationId = '60606060-6060-4060-8060-606060606061';
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        runtime: 'agents-js-spike',
+        url: 'wss://test',
+        accessToken: 'js-token',
+        conversationId,
+      }),
+    } as Response);
+    view();
+    await connect();
+    expect(new URL(window.location.href).searchParams.get('conversation')).toBe(
+      conversationId,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Start call' }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenLastCalledWith('/api/voice-spike/call-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      }),
+    );
+    window.history.replaceState(null, '', '/');
+  });
+
   it.each([
     [
       'Mozilla/5.0 Firefox/159.0',

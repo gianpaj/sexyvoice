@@ -218,6 +218,8 @@ Next.js and its persistent `apps/voice-agent` worker. Set
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`; the worker also needs
 `XAI_API_KEY` and `INWORLD_API_KEY`. The token route dispatches
 `sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. It rejects production.
+The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
+and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
 For preview configuration, use `vercel env add VOICE_SPIKE_USER_IDS preview`
 and the existing LiveKit variable names; keep worker credentials server-only.
 
