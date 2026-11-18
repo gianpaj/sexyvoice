@@ -11,6 +11,7 @@ import {
   supportsCallCloneLocale,
   toCloneLocale,
 } from '@/lib/clone/call-voice-config';
+import { CALL_VOICE_SAMPLE_TEXT } from '@/lib/clone/call-voice-sample';
 import {
   countInworldWorkspaceVoices,
   deleteInworldVoice,
@@ -155,7 +156,7 @@ describe('Inworld saved voices', () => {
     const [speechUrl, speechOptions] = fetchMock.mock.calls[1];
     expect(speechUrl).toBe('https://api.inworld.ai/tts/v1/voice');
     expect(JSON.parse(speechOptions.body)).toEqual({
-      text: "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?",
+      text: CALL_VOICE_SAMPLE_TEXT,
       voiceId: 'workspace__clone',
       modelId: 'inworld-tts-2',
       audioConfig: { audioEncoding: 'MP3' },
