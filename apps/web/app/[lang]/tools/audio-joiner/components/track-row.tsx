@@ -7,6 +7,7 @@ import type WaveSurfer from 'wavesurfer.js';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatTime } from '../format-time';
 
 interface TrackRowProps {
   canMoveDown: boolean;
@@ -37,15 +38,6 @@ const TRIM_STEP_SEC = 0.1;
 const LARGE_TRIM_STEP_SEC = 1;
 
 type TrimHandle = 'start' | 'end';
-
-function formatTime(valueSec: number): string {
-  const minutes = Math.floor(valueSec / 60);
-  const seconds = Math.floor(valueSec % 60);
-  const tenths = Math.floor((valueSec % 1) * 10);
-  const paddedSeconds = `${seconds}`.padStart(2, '0');
-
-  return `${minutes}:${paddedSeconds}.${tenths}`;
-}
 
 export function TrackRow({
   name,
