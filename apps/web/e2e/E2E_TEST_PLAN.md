@@ -289,6 +289,8 @@ Playwright supplies the file directly. Verify whether an MP3 can be tapped
 in the native Files picker separately on iPhone Safari.
 
 Run just these cases with `pnpm --filter @sexyvoice/web test:e2e audio-file-picker`.
+Let Playwright start Next.js, or set `E2E_TEST_MODE=true` before starting the
+server yourself.
 
 ---
 
