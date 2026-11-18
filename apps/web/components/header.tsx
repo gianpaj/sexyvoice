@@ -19,17 +19,13 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
+          aria-label="SexyVoice.ai"
           className="z-10 flex items-end gap-0"
           data-visual-test="transparent"
           href="/"
         >
           <div className="aspect-square">
-            <Image
-              alt="Logo"
-              height={292 / 8}
-              src={logoSmall}
-              width={221 / 8}
-            />
+            <Image alt="" height={292 / 8} src={logoSmall} width={221 / 8} />
           </div>
           {/* <div className="flex h-16 items-center px-6"> */}
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>

@@ -22,11 +22,12 @@ export function HeaderStatic({
     <header className="border-gray-800/20 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
+          aria-label="SexyVoice.ai"
           className="hit-area-2 flex items-end gap-0"
           data-visual-test="transparent"
           href={'/'}
         >
-          <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
+          <Image alt="" height={292 / 8} src={logoSmall} width={221 / 8} />
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
 
