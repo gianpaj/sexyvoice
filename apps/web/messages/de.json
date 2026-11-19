@@ -1038,12 +1038,12 @@
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
-        "button": "Inhalte löschen",
-        "confirmTitle": "Inhalte aus Ihrem Konto löschen?",
-        "confirmDescription": "Dadurch werden folgende Inhalte gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Wir behalten Ihre Anmeldedaten, Ihr Profil und Ihre verbleibenden Credits. Nutzungsdaten bleiben für die Abrechnung und die interne Kostenerfassung erhalten. Ihre API-Schlüssel funktionieren danach nicht mehr. Wenn Sie sich mit derselben E-Mail-Adresse erneut anmelden, erhalten Sie wieder Zugriff auf dasselbe Konto mit denselben Credits. Gelöschte Inhalte können nicht wiederhergestellt werden.",
+        "button": "Konto löschen",
+        "confirmTitle": "Inhalte löschen",
+        "confirmDescription": "Ihr Konto bleibt bestehen. Folgende Inhalte werden gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Sie können sich mit derselben E-Mail-Adresse wieder anmelden und behalten Ihr Profil und Ihre verbleibenden Credits. Ihre API-Schlüssel funktionieren danach nicht mehr. Wir speichern Nutzungsdaten für die Abrechnung und die interne Kostenerfassung. Gelöschte Inhalte können nicht wiederhergestellt werden.\n\nWenn Sie Ihr Konto vollständig löschen lassen möchten, schreiben Sie an info@sexyvoice.ai oder nutzen Sie den integrierten Chat.",
         "alertTitle": "Inhalte aus Ihrem Konto löschen",
         "cancel": "Abbrechen",
-        "continue": "Weiter",
+        "continue": "Inhalte löschen",
         "errors": {
           "manageBilling": "Abrechnung verwalten",
           "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihre Inhalte löschen.",

@@ -1038,12 +1038,12 @@
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
-        "button": "Supprimer le contenu",
-        "confirmTitle": "Supprimer le contenu de votre compte ?",
-        "confirmDescription": "Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Nous conservons vos identifiants de connexion, votre profil et vos crédits restants. Les données d'utilisation sont conservées pour la facturation et le suivi des coûts internes. Vos clés API cesseront de fonctionner. En vous reconnectant avec la même adresse e-mail, vous retrouverez le même compte avec les mêmes crédits. Le contenu supprimé ne peut pas être récupéré.",
+        "button": "Supprimer le compte",
+        "confirmTitle": "Supprimer le contenu",
+        "confirmDescription": "Votre compte reste actif. Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Vous pourrez vous reconnecter avec la même adresse e-mail et conserver votre profil et vos crédits restants. Vos clés API cesseront de fonctionner. Nous conservons les données d'utilisation pour la facturation et le suivi des coûts internes. Le contenu supprimé ne peut pas être récupéré.\n\nPour demander la suppression complète de votre compte, écrivez à info@sexyvoice.ai ou utilisez le chat intégré.",
         "alertTitle": "Supprimez le contenu de votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer",
+        "continue": "Supprimer le contenu",
         "errors": {
           "manageBilling": "Gérer la facturation",
           "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre contenu.",
