@@ -65,14 +65,18 @@ export class ProfilePage {
       .getByText('Delete content from your account', { exact: true })
       .first();
     this.deleteAccountButton = page.getByRole('button', {
-      name: /delete content/i,
+      name: 'Delete account or content',
+      exact: true,
     });
 
     // Confirmation dialog (appears when delete account is clicked)
     this.confirmationDialog = page.getByTestId('delete-account-dialog');
-    this.confirmationDialogTitle = this.confirmationDialog
-      .getByText(/delete content from your account\?/i)
-      .first();
+    this.confirmationDialogTitle = this.confirmationDialog.getByRole(
+      'heading',
+      {
+        name: 'Delete content',
+      },
+    );
     this.confirmationDialogDescription = this.confirmationDialog
       .getByText(/this deletes:/i)
       .first();
@@ -82,7 +86,7 @@ export class ProfilePage {
     );
     this.confirmationContinueButton = this.confirmationDialog.getByRole(
       'button',
-      { name: /continue|confirm|delete/i },
+      { name: 'Delete content' },
     );
   }
 

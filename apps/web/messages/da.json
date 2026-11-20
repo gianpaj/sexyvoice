@@ -1034,12 +1034,12 @@
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
-        "button": "Slet indhold",
-        "confirmTitle": "Vil du slette indhold fra din konto?",
-        "confirmDescription": "Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Vi beholder dit login, din profil og dine resterende credits. Forbrugsoplysninger gemmes til fakturering og intern omkostningsopfølgning. Dine API-nøgler holder op med at virke. Hvis du logger ind igen med den samme e-mailadresse, får du adgang til den samme konto og de samme credits. Slettet indhold kan ikke gendannes.",
+        "button": "Slet konto eller indhold",
+        "confirmTitle": "Slet indhold",
+        "confirmDescription": "Din konto forbliver aktiv. Dette sletter:\n• Genererede lydfiler fra lageret og din historik\n• Brugerdefinerede karakterer og deres prompts\n• Gemte minder fra opkald\n• Klonede stemmer\n\nDu bliver logget ud. Du kan logge ind igen med samme e-mailadresse og beholde din profil og dine resterende credits. Dine API-nøgler holder op med at virke. Vi gemmer forbrugsoplysninger til fakturering og intern omkostningsopfølgning. Slettet indhold kan ikke gendannes.\n\nHvis du vil have hele din konto slettet, kan du skrive til info@sexyvoice.ai eller bruge den indbyggede chat.",
         "alertTitle": "Slet indhold fra din konto",
         "cancel": "Annuller",
-        "continue": "Fortsæt",
+        "continue": "Slet indhold",
         "errors": {
           "manageBilling": "Administrer fakturering",
           "subscriptionExists": "Din konto har stadig et Stripe-abonnement. Opsig det i faktureringsportalen, og vent, til det udløber, før du sletter dit indhold.",
