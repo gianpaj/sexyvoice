@@ -65,7 +65,7 @@ export class ProfilePage {
       .getByText('Delete content from your account', { exact: true })
       .first();
     this.deleteAccountButton = page.getByRole('button', {
-      name: 'Delete Account',
+      name: 'Delete account or content',
       exact: true,
     });
 
@@ -74,7 +74,7 @@ export class ProfilePage {
     this.confirmationDialogTitle = this.confirmationDialog.getByRole(
       'heading',
       {
-        name: 'Delete Content',
+        name: 'Delete content',
       },
     );
     this.confirmationDialogDescription = this.confirmationDialog
@@ -86,7 +86,7 @@ export class ProfilePage {
     );
     this.confirmationContinueButton = this.confirmationDialog.getByRole(
       'button',
-      { name: 'Delete Content' },
+      { name: 'Delete content' },
     );
   }
 

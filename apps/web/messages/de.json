@@ -1038,7 +1038,7 @@
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
-        "button": "Konto löschen",
+        "button": "Konto oder Inhalte löschen",
         "confirmTitle": "Inhalte löschen",
         "confirmDescription": "Ihr Konto bleibt bestehen. Folgende Inhalte werden gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Sie können sich mit derselben E-Mail-Adresse wieder anmelden und behalten Ihr Profil und Ihre verbleibenden Credits. Ihre API-Schlüssel funktionieren danach nicht mehr. Wir speichern Nutzungsdaten für die Abrechnung und die interne Kostenerfassung. Gelöschte Inhalte können nicht wiederhergestellt werden.\n\nWenn Sie Ihr Konto vollständig löschen lassen möchten, schreiben Sie an info@sexyvoice.ai oder nutzen Sie den integrierten Chat.",
         "alertTitle": "Inhalte aus Ihrem Konto löschen",

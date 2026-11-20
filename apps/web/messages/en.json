@@ -1036,12 +1036,12 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete Account",
-        "confirmTitle": "Delete Content",
+        "button": "Delete account or content",
+        "confirmTitle": "Delete content",
         "confirmDescription": "Your account stays open. This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. You can sign back in with the same email and keep your profile and remaining credits. Your API keys will stop working. We keep usage records for billing and internal cost tracking. Deleted content cannot be restored.\n\nTo request full account deletion, email info@sexyvoice.ai or use the built-in chat.",
         "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
-        "continue": "Delete Content",
+        "continue": "Delete content",
         "errors": {
           "manageBilling": "Manage billing",
           "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your content.",

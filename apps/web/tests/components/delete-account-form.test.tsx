@@ -49,9 +49,11 @@ describe('DeleteAccountForm', () => {
         </NextIntlClientProvider>,
       );
 
-      await user.click(screen.getByRole('button', { name: 'Delete Account' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Delete account or content' }),
+      );
       const dialog = screen.getByRole('alertdialog', {
-        name: 'Delete Content',
+        name: 'Delete content',
       });
       expect(dialog).toHaveAccessibleDescription(/Your account stays open\./);
       expect(dialog).toHaveAccessibleDescription(
@@ -59,7 +61,7 @@ describe('DeleteAccountForm', () => {
       );
       expect(handleDeleteAccountAction).not.toHaveBeenCalled();
       await user.click(
-        within(dialog).getByRole('button', { name: 'Delete Content' }),
+        within(dialog).getByRole('button', { name: 'Delete content' }),
       );
 
       await waitFor(() => expect(toast.error).toHaveBeenCalled());
