@@ -569,9 +569,8 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 Completed calls of at least 120 seconds with a transcript are analysed by Grok
 and stored as one `call_session_analysis` row per session. Analysis is
-**asynchronous and best-effort**: nothing in the call UX waits on it, and
-results typically land minutes after the call, bounded by xAI batch processing
-time plus the cron interval.
+**asynchronous and best-effort**. Results typically land minutes after the call.
+Timing depends on xAI batch processing and the next scheduled run.
 
 Flow:
 
@@ -583,10 +582,10 @@ Flow:
    transcript, no existing analysis row) and inserts a `pending` row into
    `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
    deliveries are no-ops thanks to the primary key on `session_id`.
-3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
-   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
-   `call_session_analysis` rows for settled ones, then coalesces pending rows
-   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+3. The `call-analysis-batch` Vercel schedule calls
+   `GET /api/call-sessions/analyze/batch`. The handler reconciles in-flight
+   xAI batches, writes `call_session_analysis` rows for settled ones, and
+   coalesces up to 200 pending rows into one [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
    request and waits up to a few minutes for it before handing off to the next
    run. Rows are claimed (`submitted`, no batch id yet) with a
    compare-and-set on `status = 'pending'` _before_ the paid xAI call, so

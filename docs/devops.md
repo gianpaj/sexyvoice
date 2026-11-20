@@ -249,13 +249,23 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 ### Notifications and background jobs
 
 - `TELEGRAM_WEBHOOK_URL`
-- `CRON_SECRET`: authenticates the daily-stats and call-analysis batch crons.
+- `CRON_SECRET`: authenticates both Vercel schedule endpoints.
 - `INNGEST_EVENT_KEY`
 - `INNGEST_SIGNING_KEY`
 - `INNGEST_BASE_URL`
 
-`apps/web/vercel.json` schedules `/api/daily-stats` at `0 7 * * *` and
-`/api/call-sessions/analyze/batch` every 15 minutes.
+[`apps/web/vercel.json`](../apps/web/vercel.json) defines two Vercel Schedules
+that send `GET` requests with `Authorization: Bearer <CRON_SECRET>`.
+
+| Schedule              | Endpoint                           | UTC cadence      |
+| --------------------- | ---------------------------------- | ---------------- |
+| `daily-stats`         | `/api/daily-stats`                 | Daily at 07:00   |
+| `call-analysis-batch` | `/api/call-sessions/analyze/batch` | Every 15 minutes |
+
+After production deployment, open **Schedules** in the `sexyvoice` project.
+Confirm both schedules are active, the legacy Cron Jobs list is empty, and
+the next scheduled runs succeed in the execution history. Vercel starts each
+run within its [jitter window](https://vercel.com/docs/schedules/concepts#jitter).
 
 ### Promotions and banners
 
