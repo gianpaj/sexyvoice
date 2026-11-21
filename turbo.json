@@ -51,6 +51,10 @@
       "cache": false,
       "persistent": true
     },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
     "type-check": {
       "dependsOn": ["^type-check", "build:content"],
       "outputs": []

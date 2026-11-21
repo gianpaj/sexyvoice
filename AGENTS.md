@@ -30,6 +30,11 @@ Nested guidance:
   edits scoped.
 - When writing or changing a test, run the test file or the smallest relevant
   suite. Run broader tests when the change affects shared behavior.
+- Never run interactive watch commands (`pnpm test:watch`, `pnpm test:ui`,
+  `vitest --watch`) from agent shells. Wrap full test suites or potentially
+  long commands in `timeout -k 5s <seconds> ...` (never inside `$()` command
+  substitution, which blocks if an orphaned child keeps stdout open) so a hung
+  process cannot stall an agent indefinitely.
 - When asked to work "step by step," keep working. Only pause when blocked or
   looping.
 - Database writes are local only: every Supabase command that changes schema
@@ -114,12 +119,13 @@ Runtime and tooling:
 ```bash
 pnpm dev                 # Start the web app dev server (filtered to @sexyvoice/web)
 pnpm build               # Production build (all apps via Turborepo)
-pnpm test                # Run all Vitest tests
+pnpm test                # Run all Vitest tests once (non-watch)
 pnpm test:db             # Run Supabase pgTAP tests against the local database
-pnpm --filter @sexyvoice/web test -- <file>   # Run a focused test file
+pnpm --filter @sexyvoice/web test <file>      # Run a focused test file once (omit `--`; pnpm passes `--` through to Vitest, which ignores filters after it)
 pnpm --filter @sexyvoice/web test:e2e         # Run Playwright e2e tests
-pnpm test:coverage       # Vitest coverage for the web app
-pnpm test:ui             # Vitest UI for the web app
+pnpm test:coverage       # Vitest coverage for the web app (single run)
+pnpm test:ui             # Vitest UI for the web app (interactive watch)
+pnpm test:watch          # Vitest watch mode for local interactive development (do not run from non-interactive agents)
 pnpm type-check          # TypeScript checks (tsc)
 pnpm lint                # Biome lint check for web and docs
 pnpm format              # Biome format check for web and docs
