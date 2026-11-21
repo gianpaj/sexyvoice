@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { cleanup, render } from '@testing-library/react';
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextIntlClientProvider } from 'next-intl';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +11,11 @@ import { Header } from '@/components/header';
 import { HeaderStatic } from '@/components/header-static';
 import messages from '@/messages/en.json';
 import { config as proxyConfig } from '@/proxy';
+import { routing } from '@/src/i18n/routing';
+
+if (!('AsyncLocalStorage' in globalThis)) {
+  Object.assign(globalThis, { AsyncLocalStorage });
+}
 
 const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
@@ -62,34 +69,57 @@ afterEach(() => {
 });
 
 describe('auth route prefetch protection', () => {
-  it('runs proxy on localized login and signup even when prefetch headers are set', () => {
-    const matchers = proxyConfig.matcher as Array<
-      | string
-      | {
-          missing?: Array<{ key: string; type: string; value?: string }>;
-          source: string;
-        }
-    >;
+  it('runs proxy on every configured locale auth route even when prefetch headers are set', () => {
+    for (const locale of routing.locales) {
+      for (const path of [
+        `/${locale}/login`,
+        `/${locale}/login/`,
+        `/${locale}/signup`,
+        `/${locale}/signup/`,
+      ]) {
+        expect(
+          unstable_doesMiddlewareMatch({
+            config: proxyConfig,
+            headers: { 'next-router-prefetch': '1' },
+            url: `https://sexyvoice.ai${path}?_rsc=test`,
+          }),
+          `expected proxy to match next-router-prefetch for ${path}`,
+        ).toBe(true);
 
-    const authMatcher = matchers.find(
-      (entry) =>
-        typeof entry !== 'string' &&
-        entry.source.includes('login') &&
-        entry.source.includes('signup'),
-    );
+        expect(
+          unstable_doesMiddlewareMatch({
+            config: proxyConfig,
+            headers: { purpose: 'prefetch' },
+            url: `https://sexyvoice.ai${path}`,
+          }),
+          `expected proxy to match purpose=prefetch for ${path}`,
+        ).toBe(true);
+      }
+    }
 
-    expect(authMatcher).toBeDefined();
+    // Non-auth dashboard prefetches still skip the proxy.
     expect(
-      typeof authMatcher === 'string' ? undefined : authMatcher?.missing,
-    ).toBeUndefined();
+      unstable_doesMiddlewareMatch({
+        config: proxyConfig,
+        headers: { 'next-router-prefetch': '1' },
+        url: 'https://sexyvoice.ai/en/dashboard/history?_rsc=test',
+      }),
+    ).toBe(false);
+    expect(
+      unstable_doesMiddlewareMatch({
+        config: proxyConfig,
+        headers: { purpose: 'prefetch' },
+        url: 'https://sexyvoice.ai/en/dashboard/history',
+      }),
+    ).toBe(false);
 
-    const generalMatcher = matchers.find(
-      (entry) =>
-        typeof entry !== 'string' &&
-        entry.missing?.some((header) => header.key === 'next-router-prefetch'),
-    );
-
-    expect(generalMatcher).toBeDefined();
+    // Normal navigations to dashboard routes still run the proxy.
+    expect(
+      unstable_doesMiddlewareMatch({
+        config: proxyConfig,
+        url: 'https://sexyvoice.ai/en/dashboard/history',
+      }),
+    ).toBe(true);
   });
 
   it('disables prefetch on all login and signup links in HeaderStatic', () => {

@@ -142,11 +142,25 @@ describe('Supabase Proxy', () => {
       createRequest('/en/signup'),
       'en',
     );
+    const trailingSlashLoginResponse = await updateSession(
+      createRequest('/en/login/'),
+      'en',
+    );
+    const trailingSlashSignupResponse = await updateSession(
+      createRequest('/en/signup/'),
+      'en',
+    );
 
     expect(redirectLocation(loginResponse)).toBe(
       'https://example.com/en/dashboard/generate',
     );
     expect(redirectLocation(signupResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+    expect(redirectLocation(trailingSlashLoginResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+    expect(redirectLocation(trailingSlashSignupResponse)).toBe(
       'https://example.com/en/dashboard/generate',
     );
   });
