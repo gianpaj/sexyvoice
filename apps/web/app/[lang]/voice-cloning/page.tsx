@@ -240,7 +240,7 @@ export default async function VoiceCloningPage(props: Props) {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href="/signup">
+                <Link href="/signup" prefetch={false}>
                   {dictLanding.voiceCloning.cta.action}
                 </Link>
               </Button>

@@ -145,6 +145,12 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // Auth routes redirect authenticated users across route groups
+    // ((auth) -> (dashboard)). Prefetches must still run the proxy so the
+    // client router never caches a stale (auth) route tree for logged-in users.
+    {
+      source: '/:lang(en|es|de|da|it|fr)/(login|signup)',
+    },
     {
       // api/ is excluded so next-intl never locale-redirects fetch calls.
       source:

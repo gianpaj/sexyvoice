@@ -104,7 +104,7 @@ describe('SSR session response integration', () => {
     });
     const response = await updateSession(request, 'en');
     expect(response.headers.get('location')).toBe(
-      'https://sexyvoice.ai/en/dashboard',
+      'https://sexyvoice.ai/en/dashboard/generate',
     );
     expect(response.cookies.get(cookieName)).toBeDefined();
     expect(response.headers.get('cache-control')).toContain('no-store');

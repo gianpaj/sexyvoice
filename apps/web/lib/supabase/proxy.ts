@@ -169,8 +169,11 @@ export const updateSession = async (
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
     if (isAuthenticated && authRoutes.includes(pathname)) {
+      const demoRedirect = getCloneDemoRedirect(
+        request.nextUrl.searchParams.get('redirect_to'),
+      );
       return redirectWithSupabaseCookies(
-        new URL(`/${locale}/dashboard`, request.url),
+        new URL(demoRedirect ?? `/${locale}/dashboard/generate`, request.url),
         supabaseResponse,
       );
     }
