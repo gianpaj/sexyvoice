@@ -643,8 +643,8 @@ entry points that share a single engine (`analyze-call-sessions.mjs`). The
 prompt, analysis schema, transcript extraction and xAI Batch API client are
 imported from the web app (`apps/web/lib/ai/analyze-call.ts`,
 `apps/web/lib/ai/call-analysis-batch.ts`, `apps/web/lib/ai/xai-batch.ts`) via
-Node's native type stripping, so the scripts, the webhook and its batch drain
-cron all write identical rows.
+Node's native type stripping, so the scripts and the scheduled batch drain
+write identical rows.
 
 - **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
   last N hours.
@@ -653,13 +653,12 @@ cron all write identical rows.
 
 The live path (not a script) is asynchronous: the `POST /api/call-sessions/analyze`
 webhook fired when a call completes only enqueues the session, and the
-`/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
-Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
-`backfill-call-analysis --retry-failed` to catch up sessions the queue parked as
-`failed`.
+`call-analysis-batch` Vercel schedule drains the queue through the xAI
+Batch API. Run `backfill-call-analysis --retry-failed` to catch up sessions the
+queue parked as `failed`. See the [deployment guide](../docs/devops.md#call-transcript-analysis).
 
 Only successful analyses are persisted. Each failure increments the session's
-`call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
+`call_analysis_queue.attempts` (shared with the scheduled drain); after 3 failed
 attempts the session is parked and both scripts skip it unless
 `--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
 are skipped.
