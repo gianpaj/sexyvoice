@@ -283,6 +283,21 @@ uses a changed schema. Keep privileged keys server-only and preserve RLS.
 Application auth, retry, and cookie behavior is documented under
 [Supabase access boundaries](../ARCHITECTURE.md#supabase-access-boundaries).
 
+#### Profile privacy migration
+
+Deploy the service-role Stripe customer lookup and ID writer before an operator applies
+`20261118160059_restrict_profile_access.sql`. It removes public profile reads
+and replaces blanket profile grants with owner read and avatar-only update access plus
+privileged server access. Profile creation and email/Stripe identity updates
+are not granted to clients. It applies to existing databases and fresh installs;
+no email data is rewritten. Other tables' legacy bootstrap defaults are unchanged.
+
+After applying locally with `supabase migration up --local --workdir apps/web`,
+run `pnpm test:db`. Verify signed-out profile requests are denied, signed-in
+users see only their own profile, and signed Stripe webhooks still resolve the
+customer's profile without a user session. Production migration application
+remains a human-operated step.
+
 #### Local Supabase versions and data
 
 `apps/web/supabase/config.toml` selects Postgres 17 and the local project ID
