@@ -49,7 +49,7 @@
     "@huggingface/transformers": "^3.8.1",
     "@iconify-json/logos": "1.2.11",
     "@iconify/tailwind4": "^1.2.3",
-    "@livekit/components-react": "2.9.24",
+    "@livekit/components-react": "2.9.25",
     "@livekit/components-styles": "^1.2.0",
     "@livekit/krisp-noise-filter": "^0.4.5",
     "@livekit/protocol": "1.53.0",
