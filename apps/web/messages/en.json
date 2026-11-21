@@ -1487,5 +1487,27 @@
     "emotions": "Emotions",
     "pace": "Pace",
     "vocalSounds": "Vocal sounds"
+  },
+  "voiceSpike": {
+    "title": "JS call demo",
+    "idle": "Ready to call",
+    "connecting": "Connecting to the JS agent…",
+    "connected": "In call",
+    "reconnecting": "Reconnecting…",
+    "call": "Start call",
+    "hangup": "End call",
+    "mute": "Mute microphone",
+    "unmute": "Unmute microphone",
+    "messages": "Conversation",
+    "message": "Message",
+    "placeholder": "Type during the call",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "notice": "Internal test · Ashley · English · 5-minute limit. Each call starts fresh. No saved memory or credit charges.",
+    "workerMissing": "The JS agent did not connect. Check that the spike worker is running.",
+    "connectError": "Could not start or continue the call. Check your network connection and microphone permission, then try again.",
+    "providerError": "A voice provider failed. End the call and check the worker logs.",
+    "sendError": "Could not send. Your message is still here.",
+    "ended": "The call ended. You can start another call."
   }
 }

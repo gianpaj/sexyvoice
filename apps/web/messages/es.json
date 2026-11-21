@@ -1489,5 +1489,27 @@
     "emotions": "Emociones",
     "pace": "Ritmo",
     "vocalSounds": "Sonidos vocales"
+  },
+  "voiceSpike": {
+    "title": "Demo de llamada JS",
+    "idle": "Listo para llamar",
+    "connecting": "Conectando con el agente JS…",
+    "connected": "En llamada",
+    "reconnecting": "Reconectando…",
+    "call": "Iniciar llamada",
+    "hangup": "Finalizar llamada",
+    "mute": "Silenciar micrófono",
+    "unmute": "Activar micrófono",
+    "messages": "Conversación",
+    "message": "Mensaje",
+    "placeholder": "Escribe durante la llamada",
+    "send": "Enviar",
+    "thinking": "Pensando…",
+    "notice": "Prueba interna · Ashley · inglés · límite de 5 minutos. Cada llamada empieza de cero. Sin memoria guardada ni cargos de créditos.",
+    "workerMissing": "El agente JS no se conectó. Comprueba que el proceso de prueba esté en marcha.",
+    "connectError": "No se pudo iniciar o continuar la llamada. Comprueba tu conexión de red y el permiso del micrófono, e inténtalo de nuevo.",
+    "providerError": "Falló un proveedor de voz. Finaliza la llamada y consulta los registros del proceso.",
+    "sendError": "No se pudo enviar. Tu mensaje sigue aquí.",
+    "ended": "La llamada terminó. Puedes iniciar otra."
   }
 }

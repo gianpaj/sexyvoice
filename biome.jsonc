@@ -148,6 +148,14 @@
   },
   "overrides": [
     {
+      // Pinned MIT upstream spike sources retain their own style. They remain
+      // covered by TypeScript and our adapter/lifecycle tests.
+      "includes": ["apps/web/lib/voice-spike/upstream/**"],
+      "formatter": { "enabled": false },
+      "linter": { "enabled": false },
+      "assist": { "enabled": false }
+    },
+    {
       // Test helpers intentionally use async mocks, assertion helpers, and
       // documented skips that do not represent production defects.
       "includes": ["apps/web/tests/**", "apps/web/e2e/**"],

@@ -186,6 +186,51 @@ without the column, the call page fails to load.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
 
+### Internal Next.js voice probe
+
+`VOICE_SPIKE_USER_IDS` is an optional comma-separated list of Supabase test
+user UUIDs. Leave it empty in production; the handler also rejects production
+regardless of this value. The development/preview probe reuses `XAI_API_KEY` and
+`INWORLD_API_KEY`. It charges no customer credits and must remain internal.
+
+For a preview test, add the allowlist with
+`vercel env add VOICE_SPIKE_USER_IDS preview` from `apps/web`. Do not put provider
+keys in public variables. Local WebSocket tests require Vercel CLI 54.14.2+ and
+`vercel dev`; `next dev` cannot run the upgrade helper. The probe uses a
+300-second function limit and 10–240 second leases. It does not resume after a
+lease expires. See [the runbook](../apps/web/lib/voice-spike/README.md) and
+[the long-call experiments](../plans/2026-11-16-tanstack-nextjs-voice-spike.md).
+
+### Internal JS browser call
+
+For a browser on another device, bind Next.js to `0.0.0.0` and use a private
+HTTPS proxy. Set `NEXT_PUBLIC_SITE_URL` to its web origin and
+`NEXT_PUBLIC_SUPABASE_URL` to a reachable HTTPS proxy for the local API;
+keep the isolated project's keys. Next.js permits the configured hostname for
+dev assets. The JS token handler accepts the exact configured origin only in
+development, alongside the direct request origin, so a TLS-terminating proxy
+can pass the origin check without trusting arbitrary forwarded headers. See
+[remote access](../apps/voice-agent/README.md#access-from-another-device).
+
+`/{lang}/dashboard/voice-spike` uses the same `VOICE_SPIKE_USER_IDS` gate in
+Next.js and its persistent `apps/voice-agent` worker. Set
+`VOICE_SPIKE_ENABLED=true` only on that worker. Both services need matching
+`LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`; the worker also needs
+`XAI_API_KEY` and `INWORLD_API_KEY`. The token route dispatches
+`sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. It rejects production.
+The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
+and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
+Optional `OPENAI_API_KEY` on the voice worker enables embeddings for hybrid
+memory recall. Without it, the worker uses full-text recall.
+For preview configuration, use `vercel env add VOICE_SPIKE_USER_IDS preview`
+and the existing LiveKit variable names; keep worker credentials server-only.
+
+The browser uses LiveKit media directly, so the agent requires persistent Node
+hosting outside Vercel Functions. Local calls have a five-minute cap, a fixed
+English test voice, and no customer credit, history, or memory writes. Shared
+admission, billing parity, iOS testing, and deployed long-call tests remain
+required before customer use. See the [runbook](../apps/voice-agent/README.md).
+
 ### LiveKit and call analysis
 
 - `LIVEKIT_URL`: server URL returned by `/api/call-token`.
