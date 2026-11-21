@@ -115,6 +115,11 @@ estimate. This illustrates sensitivity, not observed input volume; the report
 cannot quantify the omitted total from duration alone. Stored call costs can
 reflect customer billing buckets rather than provider-billed time.
 
+Dashboard and external API Grok TTS costs use $15 per million input characters,
+verified against xAI management billing on 2026-11-06. Both routes use the shared
+rate in `apps/web/lib/api/pricing.ts`. Historical reports use stored dollar
+amounts, including estimates recorded at earlier rates.
+
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 

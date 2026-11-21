@@ -27,6 +27,7 @@ import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
+import { HomepageTTSDemo } from '@/components/homepage-tts-demo';
 import { JsonLd } from '@/components/json-ld';
 import { FadeIn } from '@/components/motion-primitives/fade-in';
 import PricingTable from '@/components/pricing-table';
@@ -34,6 +35,7 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { routing } from '@/src/i18n/routing';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
@@ -86,6 +88,17 @@ export default async function LandingPage(props: {
   const faqQuestions = dictLanding.faq.groups.flatMap(
     (group) => group.questions,
   );
+
+  const supabaseAdmin = createAdminClient();
+  const { data: demoVoices } = await supabaseAdmin
+    .from('voices')
+    .select('id, name')
+    .eq('feature', 'tts')
+    .eq('model', 'gpro')
+    .eq('is_public', true)
+    .order('sort_order');
+
+  const altchaChallengeUrl = '/api/altcha/challenge';
 
   const siteUrl = `https://sexyvoice.ai/${lang}`;
 
@@ -222,6 +235,14 @@ export default async function LandingPage(props: {
               trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
               trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
+
+            {/* Demo TTS Widget */}
+            {demoVoices && demoVoices.length > 0 && (
+              <HomepageTTSDemo
+                challengeUrl={altchaChallengeUrl}
+                voices={demoVoices}
+              />
+            )}
 
             {/* Voice Generator Section */}
             {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
