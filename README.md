@@ -255,7 +255,8 @@ Only one banner is shown at a time, and each banner has its own dismiss cookie.
 | `pnpm dev`                         | Start all workspace dev tasks                |
 | `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server            |
 | `pnpm build`                       | Build workspace apps with Turbo              |
-| `pnpm test`                        | Run test suites                              |
+| `pnpm test`                        | Run test suites once (non-watch)             |
+| `pnpm test:watch`                  | Run web Vitest tests in watch mode           |
 | `pnpm test:db`                     | Run Supabase pgTAP tests locally             |
 | `pnpm test:ui`                     | Run Vitest UI for the web app                |
 | `pnpm lint`                        | Lint web and docs code with Biome            |
