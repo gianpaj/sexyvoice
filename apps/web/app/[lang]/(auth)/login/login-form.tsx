@@ -139,6 +139,7 @@ export function LoginForm({ lang }: { lang: Locale }) {
               ? { redirect_to: getCloneDemoRedirect(nextPath) }
               : {},
           }}
+          prefetch={false}
         >
           {t('signUp')}
         </Link>

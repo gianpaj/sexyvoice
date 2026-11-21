@@ -182,6 +182,7 @@ export function SignUpForm({
             pathname: `/${lang}/login`,
             query: redirectTo ? { redirect_to: redirectTo } : {},
           }}
+          prefetch={false}
         >
           {t('signIn')}
         </Link>

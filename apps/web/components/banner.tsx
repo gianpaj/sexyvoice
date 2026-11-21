@@ -298,7 +298,16 @@ export function Banner({
             size="sm"
             variant="outline"
           >
-            <Link href={banner.ctaLink}>{banner.ctaText}</Link>
+            <Link
+              href={banner.ctaLink}
+              prefetch={
+                /^\/[a-z]{2}\/(login|signup)(?:\/|[?#]|$)/.test(banner.ctaLink)
+                  ? false
+                  : undefined
+              }
+            >
+              {banner.ctaText}
+            </Link>
           </Button>
 
           {banner.dismissible && (

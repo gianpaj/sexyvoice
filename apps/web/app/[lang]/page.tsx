@@ -206,7 +206,9 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
+                  <Link href="/signup" prefetch={false}>
+                    {dictLanding.hero.buttonCTA}
+                  </Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}
@@ -441,7 +443,9 @@ export default async function LandingPage(props: {
                   effect="ringHover"
                   size="lg"
                 >
-                  <Link href="/signup">{dictLanding.cta.action}</Link>
+                  <Link href="/signup" prefetch={false}>
+                    {dictLanding.cta.action}
+                  </Link>
                 </Button>
                 <p className="mt-2 text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}

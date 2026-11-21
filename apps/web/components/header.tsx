@@ -48,12 +48,12 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
           ) : (
             <div className="space-x-4">
               <Button asChild variant="secondary">
-                <Link href="/login" prefetch>
+                <Link href="/login" prefetch={false}>
                   {dict.header.login}
                 </Link>
               </Button>
               <Button asChild effect="ringHover" variant="default">
-                <Link href="/signup" prefetch>
+                <Link href="/signup" prefetch={false}>
                   {dict.header.signup}
                 </Link>
               </Button>
@@ -73,12 +73,12 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
           ) : (
             <>
               <Button asChild size="sm" variant="secondary">
-                <Link className="w-full" href="/login" prefetch>
+                <Link className="w-full" href="/login" prefetch={false}>
                   {dict.header.login}
                 </Link>
               </Button>
               <Button asChild size="sm">
-                <Link className="w-full" href="/signup" prefetch>
+                <Link className="w-full" href="/signup" prefetch={false}>
                   {dict.header.signup}
                 </Link>
               </Button>

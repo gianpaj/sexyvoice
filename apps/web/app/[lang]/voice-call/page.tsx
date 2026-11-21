@@ -248,7 +248,9 @@ export default async function LandingPage(props: Props) {
                     effect="ringHover"
                     size="lg"
                   >
-                    <Link href="/signup">{dictCustomCharacter.action}</Link>
+                    <Link href="/signup" prefetch={false}>
+                      {dictCustomCharacter.action}
+                    </Link>
                   </Button>
                   <p className="text-pretty text-gray-400 text-xs">
                     {dictCustomCharacter.note}
@@ -286,7 +288,9 @@ export default async function LandingPage(props: Props) {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href="/signup">{dictLanding.voiceCall.cta.action}</Link>
+                <Link href="/signup" prefetch={false}>
+                  {dictLanding.voiceCall.cta.action}
+                </Link>
               </Button>
             </div>
           </div>

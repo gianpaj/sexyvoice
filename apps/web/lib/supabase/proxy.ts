@@ -167,10 +167,17 @@ export const updateSession = async (
     }
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
+    const normalizedPathname =
+      pathname.length > 1 && pathname.endsWith('/')
+        ? pathname.slice(0, -1)
+        : pathname;
 
-    if (isAuthenticated && authRoutes.includes(pathname)) {
+    if (isAuthenticated && authRoutes.includes(normalizedPathname)) {
+      const demoRedirect = getCloneDemoRedirect(
+        request.nextUrl.searchParams.get('redirect_to'),
+      );
       return redirectWithSupabaseCookies(
-        new URL(`/${locale}/dashboard`, request.url),
+        new URL(demoRedirect ?? `/${locale}/dashboard/generate`, request.url),
         supabaseResponse,
       );
     }
