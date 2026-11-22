@@ -507,6 +507,11 @@
     "remainingCredits": "Verbleibend",
     "remainingTime": "Verbleibende Zeit"
   },
+  "audioVote": {
+    "upvote": "Gutes Audio",
+    "downvote": "Schlechtes Audio",
+    "error": "Ihre Bewertung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+  },
   "generate": {
     "abortedCloning": "Sprachgenerierung abgebrochen.",
     "cancel": "Generierung abbrechen",

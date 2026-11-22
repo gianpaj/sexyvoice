@@ -18,6 +18,7 @@ import {
 
 import { useFFmpegJoiner } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
 import { useAudio } from '@/components/audio-provider';
+import { AudioVoteButtons } from '@/components/audio-vote-buttons';
 import { toast } from '@/components/services/toast';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
@@ -1315,6 +1316,9 @@ export function AudioGenerator({
                     >
                       <Download className="size-6" />
                     </Button>
+                    {audioURL && (
+                      <AudioVoteButtons audioUrl={audioURL} key={audioURL} />
+                    )}
                   </>
                 )}
               </>
@@ -1350,6 +1354,7 @@ export function AudioGenerator({
                   >
                     <Download className="size-6" />
                   </Button>
+                  <AudioVoteButtons audioUrl={audioURL} key={audioURL} />
                 </>
               )}
           </div>

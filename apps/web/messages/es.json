@@ -507,6 +507,11 @@
     "remainingCredits": "Restantes",
     "remainingTime": "Tiempo restante"
   },
+  "audioVote": {
+    "upvote": "Buen audio",
+    "downvote": "Mal audio",
+    "error": "No se pudo guardar tu valoración. Inténtalo de nuevo."
+  },
   "generate": {
     "abortedCloning": "Clonación de voz cancelada",
     "cancel": "Cancelar",
