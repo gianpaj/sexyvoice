@@ -1,5 +1,4 @@
 diff --git a/dist/stt.cjs b/dist/stt.cjs
-index 0eb82c403042cc3fc14ddb9f18c34c71bf3f3132..6ca9988ebcd7eee0732b593b61b0692ba630362e 100644
 --- a/dist/stt.cjs
 +++ b/dist/stt.cjs
 @@ -131,6 +131,7 @@ class SpeechStream extends import_agents.stt.SpeechStream {
@@ -11,33 +10,30 @@ index 0eb82c403042cc3fc14ddb9f18c34c71bf3f3132..6ca9988ebcd7eee0732b593b61b0692b
        streamURL.searchParams.set("sample_rate", String(this.#opts.sampleRate));
        streamURL.searchParams.set(
 diff --git a/dist/stt.d.cts b/dist/stt.d.cts
-index fdb5f8d8397814b3d78063cbacb88512afe18768..d0bc48acf5bcec3a85cd761a1c8f7b520617ef8f 100644
 --- a/dist/stt.d.cts
 +++ b/dist/stt.d.cts
 @@ -1,6 +1,8 @@
  import { type APIConnectOptions, type AudioBuffer, stt } from '@livekit/agents';
  export type STTLanguages = 'ar' | 'cs' | 'da' | 'nl' | 'en' | 'fil' | 'fr' | 'de' | 'hi' | 'id' | 'it' | 'ja' | 'ko' | 'mk' | 'ms' | 'fa' | 'pl' | 'pt' | 'ro' | 'ru' | 'es' | 'sv' | 'th' | 'tr' | 'vi';
  export interface STTOptions {
-+  /** Explicit model pin; scoped Sexyvoice spike compatibility patch. */
++  /** Explicit transcription model sent to xAI. */
 +  model?: string;
      apiKey?: string;
      interimResults: boolean;
      sampleRate: number;
 diff --git a/dist/stt.d.ts b/dist/stt.d.ts
-index fdb5f8d8397814b3d78063cbacb88512afe18768..d0bc48acf5bcec3a85cd761a1c8f7b520617ef8f 100644
 --- a/dist/stt.d.ts
 +++ b/dist/stt.d.ts
 @@ -1,6 +1,8 @@
  import { type APIConnectOptions, type AudioBuffer, stt } from '@livekit/agents';
  export type STTLanguages = 'ar' | 'cs' | 'da' | 'nl' | 'en' | 'fil' | 'fr' | 'de' | 'hi' | 'id' | 'it' | 'ja' | 'ko' | 'mk' | 'ms' | 'fa' | 'pl' | 'pt' | 'ro' | 'ru' | 'es' | 'sv' | 'th' | 'tr' | 'vi';
  export interface STTOptions {
-+  /** Explicit model pin; scoped Sexyvoice spike compatibility patch. */
++  /** Explicit transcription model sent to xAI. */
 +  model?: string;
      apiKey?: string;
      interimResults: boolean;
      sampleRate: number;
 diff --git a/dist/stt.js b/dist/stt.js
-index 773e10df21cc3b30038be9b7f4344e476452a35b..6e477cc9850e9e0f864f4cd43b614d5be1484ba9 100644
 --- a/dist/stt.js
 +++ b/dist/stt.js
 @@ -120,6 +120,7 @@ class SpeechStream extends stt.SpeechStream {
@@ -49,20 +45,16 @@ index 773e10df21cc3b30038be9b7f4344e476452a35b..6e477cc9850e9e0f864f4cd43b614d5b
        streamURL.searchParams.set("sample_rate", String(this.#opts.sampleRate));
        streamURL.searchParams.set(
 diff --git a/src/stt.ts b/src/stt.ts
-index 8400ef4f7da48c1d9aa2cfdeb6def02e12549737..81761a253bc962d126af0c06c98c6b1a98681002 100644
 --- a/src/stt.ts
 +++ b/src/stt.ts
-@@ -55,6 +55,8 @@ export type STTLanguages =
-   | 'vi';
- 
+@@ -57,4 +57,6 @@ export type STTLanguages =
  export interface STTOptions {
-+  /** Explicit model pin; scoped Sexyvoice spike compatibility patch. */
++  /** Explicit transcription model sent to xAI. */
 +  model?: string;
    apiKey?: string;
    interimResults: boolean;
    sampleRate: number;
-@@ -208,6 +210,7 @@ export class SpeechStream extends stt.SpeechStream {
- 
+@@ -209,5 +211,6 @@ export class SpeechStream extends stt.SpeechStream {
      while (!this.input.closed && !this.closed) {
        const streamURL = new URL(XAI_WEBSOCKET_URL);
 +      streamURL.searchParams.set("model", this.#opts.model ?? "grok-voice-transcribe-2.0");

@@ -88,7 +88,7 @@ overrides:
 
 patchedDependencies:
   '@ffmpeg/ffmpeg@0.12.15': ff1be95d6ec3fddc57a9c94ba84d60fc00daffe67caffa796646ee0bba70db35
-  '@livekit/agents-plugin-xai@1.10.0': 0df4f7a92d86205f0564fc3d3d8c58633b2a5b186a3e83d1a37aec890acad3ba
+  '@livekit/agents-plugin-xai@1.10.0': bee45195bd100a95e2c2fe5d21fdc36fe419ca19d0d31dd8433194bfbc4aabd9
 
 importers:
 
@@ -244,7 +244,7 @@ importers:
         version: 1.10.0(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)
       '@livekit/agents-plugin-xai':
         specifier: 1.10.0
-        version: 1.10.0(patch_hash=0df4f7a92d86205f0564fc3d3d8c58633b2a5b186a3e83d1a37aec890acad3ba)(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents-plugin-openai@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6))(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6)
+        version: 1.10.0(patch_hash=bee45195bd100a95e2c2fe5d21fdc36fe419ca19d0d31dd8433194bfbc4aabd9)(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents-plugin-openai@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6))(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6)
       '@livekit/rtc-node':
         specifier: 1.2.2
         version: 1.2.2
@@ -11458,7 +11458,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@livekit/agents-plugin-xai@1.10.0(patch_hash=0df4f7a92d86205f0564fc3d3d8c58633b2a5b186a3e83d1a37aec890acad3ba)(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents-plugin-openai@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6))(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6)':
+  '@livekit/agents-plugin-xai@1.10.0(patch_hash=bee45195bd100a95e2c2fe5d21fdc36fe419ca19d0d31dd8433194bfbc4aabd9)(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents-plugin-openai@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6))(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6)':
     dependencies:
       '@livekit/agents': 1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6)
       '@livekit/agents-plugin-openai': 1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/agents@1.10.0(@aws-sdk/credential-provider-node@3.972.84)(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(@types/node@24.10.4)(supports-color@8.1.1)(typescript@7.0.2)(zod@4.6.6))(@livekit/rtc-node@1.2.2)(@smithy/signature-v4@5.7.4)(zod@4.6.6)
