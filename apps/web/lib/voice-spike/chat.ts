@@ -14,6 +14,8 @@ import { EventType, type StreamChunk } from '@tanstack/ai';
 import type { UIMessage } from '@tanstack/ai-react';
 import { z } from 'zod';
 
+import { CHAT_HISTORY_PAGE_SIZE } from './protocol';
+
 const READ_TIMEOUT_MS = 4000;
 const REPLY_MAX_CHARS = 8000;
 export const wireRunId = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
@@ -169,7 +171,7 @@ export async function getChatHistory(db: Db, userId: string, threadId: string) {
     .eq('conversation_id', threadId)
     .in('status', ['completed', 'interrupted'])
     .order('position', { ascending: false })
-    .limit(100);
+    .limit(CHAT_HISTORY_PAGE_SIZE);
   if (active.error || history.error) throw new Error('Could not load history');
   const messages: UIMessage[] = historySchema
     .parse(history.data)

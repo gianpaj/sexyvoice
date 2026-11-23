@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+export const CHAT_HISTORY_PAGE_SIZE = 100;
 export const CHAT_ROUTE = '/api/voice-spike/chat';
 export const OUTPUT_SAMPLE_RATE = 24_000;
 export const MAX_FRAME_BYTES = 32_768;

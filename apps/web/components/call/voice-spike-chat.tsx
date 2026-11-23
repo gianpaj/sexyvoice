@@ -13,7 +13,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CHAT_ROUTE } from '@/lib/voice-spike/protocol';
+import { CHAT_HISTORY_PAGE_SIZE, CHAT_ROUTE } from '@/lib/voice-spike/protocol';
 
 interface ChatProps {
   draft: string;
@@ -65,6 +65,7 @@ export function VoiceSpikeChat({
   const chat = useChat({
     connection,
     persistence: true,
+    history: { pageSize: CHAT_HISTORY_PAGE_SIZE },
     threadId,
     queue: 'drop',
     onChunk: (event) => {
