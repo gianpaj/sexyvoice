@@ -2,6 +2,7 @@ import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
   AudioLines,
+  Gift,
   Globe2,
   Mic2,
   PhoneCall,
@@ -359,6 +360,17 @@ export default async function LandingPage(props: {
               <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
                 {messages.credits.pricingPlan}
               </h2>
+              <Button
+                asChild
+                className="mb-4 min-w-48 self-center rounded-full border-fuchsia-400/40 bg-fuchsia-400/5 text-pink-100 shadow-none transition-colors hover:border-fuchsia-400/70 hover:bg-fuchsia-400/15 hover:text-white focus-visible:ring-fuchsia-400"
+                size="lg"
+                variant="outline"
+              >
+                <Link href="/signup" prefetch={false}>
+                  <Gift aria-hidden />
+                  {dictLanding.pricingStartFree}
+                </Link>
+              </Button>
               <PricingTable className="py-4 pb-16 xl:px-10" lang={lang} />
             </div>
 

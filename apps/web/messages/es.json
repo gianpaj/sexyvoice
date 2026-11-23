@@ -152,6 +152,7 @@
         "description": "Prueba la demo de clonación en directo: escucha una voz recreada a partir de 10 segundos de audio, hablando con naturalidad en varios idiomas."
       }
     },
+    "pricingStartFree": "Comenzar gratis",
     "cta": {
       "freeCredits": "Comienza con 10,000 créditos gratis",
       "title": "Tus palabras, con emoción",

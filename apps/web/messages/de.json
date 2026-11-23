@@ -152,6 +152,7 @@
         "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus 10 Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
       }
     },
+    "pricingStartFree": "Kostenlos starten",
     "cta": {
       "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
       "title": "Ihre Worte, mit Gefühl",
