@@ -9,10 +9,10 @@ profile, credit balance and internal cost history remain intact.
 - Erase owned threads under the per-user chat and call admission lock.
   Messages, resumable reply receipts, and call leases cascade. Linked
   call sessions keep their billing fields and lose the thread link.
-- Keep a server-only erasure record while the Auth row exists. Conversation
-  creation checks it under the same lock, so a retried chat or a delayed
-  call token cannot recreate erased history. In-flight writers require the
-  deleted lease and thread.
+- Block new conversations for ten minutes after each erasure. The server-only
+  deadline outlasts the current chat run, call lease and dispatch token.
+  In-flight writers still require their deleted lease and thread. A fresh
+  conversation can start after the deadline.
 
 - Clear only `call_sessions.transcript`. Keep duration, model, timestamps and
   credit fields because `resolveUsageCost` uses them to estimate provider spend.
@@ -46,4 +46,5 @@ Account-deletion tests cover user scoping, unchanged billing fields, revoked
 keys, cleanup failures and retained usage records. API-key route tests cover
 the shared revocation query's single-key caller.
 
-Database tests cover cascades, retained call charges, and stale chat and call writers.
+Database tests cover cascades, retained call charges, stale chat and call
+writers, and starting fresh once the erasure lock expires.

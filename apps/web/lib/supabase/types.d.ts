@@ -37,12 +37,15 @@ declare type Database = {
     Tables: {
       account_conversation_erasures: {
         Row: {
+          blocked_until: string;
           user_id: string;
         };
         Insert: {
+          blocked_until?: string;
           user_id: string;
         };
         Update: {
+          blocked_until?: string;
           user_id?: string;
         };
         Relationships: [];
