@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
   if (!isPaidUser) {
     return APIErrorResponse(
-      'A subscription or top-up is required to create API keys',
+      'A subscription or one-time purchase is required to create API keys',
       403,
     );
   }
