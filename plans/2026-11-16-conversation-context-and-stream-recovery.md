@@ -193,9 +193,10 @@ that limit and unblock chat without inventing missing speech.
 
 ## Resumable delivery with TanStack AI
 
-Use TanStack for the new chat runtime and server persistence. Keep LiveKit for
-voice and existing Vercel AI SDK consumers for their independent features.
-Relational history and durable delivery have different lifetimes and adapters.
+Use TanStack for the new chat runtime and share its Grok generation with the
+LiveKit JS cascade. LiveKit handles call media and turn detection. Existing
+Vercel AI SDK consumers serve their independent features. Relational history
+and durable delivery have different lifetimes and adapters.
 
 The persistence adapter must honor `MessageStore.saveThread` as a full,
 authoritative replacement. Within the admitted run, lock the thread, verify

@@ -101,9 +101,11 @@ disconnects still need testing. See [agent hosting](https://docs.livekit.io/depl
 
 Ordinary chat creates no LiveKit room or voice worker job. On a call, recent
 saved dialogue seeds the agent. On hangup, committed call messages return to
-the same thread before another text generation starts. Keep TanStack as the
-text runtime; do not add a TanStack-to-LiveKit LLM adapter during this spike.
-Both runtimes receive the same server-resolved character and scene context.
+the same thread before another text generation starts. Both paths use the same
+server-side TanStack AI Grok generator and share server-resolved character and
+scene context. The LiveKit LLM adapter streams text and usage into the call
+pipeline and cancels generation on interruption. LiveKit handles media and turn
+detection, xAI transcribes speech, and Inworld synthesizes the selected voice.
 
 ## Source baseline and compatibility checks
 
@@ -220,12 +222,14 @@ customer credit writes; shadow accounting records provider spend separately.
 6. On hangup, flush call history, finalize once, then release admission. Fetch
    the saved revision before enabling text sending. If flushing fails, show
    recovery state and keep the draft; do not reply from incomplete history.
-7. Keep TanStack text replay distinct from call reconnection. Test the shared
-   durable stream adapter with a dropped text connection: replay must attach
-   to the same operation, invoke no model, and add no charge. A dead producer
-   yields an interrupted snapshot and explicit Retry. If this adapter is not
-   implemented, report resumption as unverified rather than substituting a
-   process-local buffer. Never replay call audio after reconnect.
+7. Persist the latest text snapshot for each accepted run in Supabase. Next.js
+   owns generation independently of the browser connection and serves the
+   persisted text as TanStack events. Simulate a dropped connection and a
+   duplicate submit: both attach to the same run. Expire a lost producer and
+   keep its saved partial text. Reconnect call media through LiveKit.
+8. Keep Stage 3 behind the existing internal allowlist. Record provider usage
+   without writing customer credits. Verify the shared generator, the writer
+   fence, chat → call → chat, and replay on a fresh client.
 
 Deliverable: reloadable shared history demonstrating a detail introduced in
 chat, recalled in the call, and used by the next text reply, without duplicates.
