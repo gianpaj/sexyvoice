@@ -61,7 +61,7 @@ describe('formatMinutes', () => {
 
 describe('formatCallsSection', () => {
   it('compares yesterday with the prior 14 days and splits by user and character', () => {
-    // One free 2-minute public-character call on each of the 14 prior days.
+    // One free 2-minute predefined-character call on each of the 14 prior days.
     const priorCalls = Array.from({ length: 14 }, (_, index) =>
       call(new Date(Date.UTC(2026, 7, 28 + index, 9)).toISOString(), 120),
     );
@@ -98,7 +98,7 @@ describe('formatCallsSection', () => {
       '  - Completed (>10s): 4',
       '  - Free users: 2 · 5m ↑150% · avg 2m 30s ↑25%',
       '  - Paying users: 2 · 6m new · avg 3m 0s new',
-      '  - Public characters: 2 · 5m ↑150% · avg 2m 30s',
+      '  - Predefined characters: 2 · 5m ↑150% · avg 2m 30s',
       '  - Custom, Grok voice: 1 · 5m new · avg 5m 0s',
       '  - Custom, cloned voice: 1 · 1m new · avg 1m 0s',
       '  - New custom characters: 2',
@@ -124,7 +124,7 @@ describe('formatCallsSection', () => {
 
     expect(lines).toContain('  - Free users: 1 · 23m ↑1354% · avg 22m 30s →');
     expect(lines).toContain(
-      '  - Public characters: 1 · 23m ↑1354% · avg 22m 30s',
+      '  - Predefined characters: 1 · 23m ↑1354% · avg 22m 30s',
     );
   });
 

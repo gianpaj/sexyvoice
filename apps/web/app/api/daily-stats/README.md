@@ -27,7 +27,7 @@ Calls split two ways, and both splits include every session status:
 - By user: `Free users` are calls with `call_sessions.free_call = true`, set
   when the user had never paid at call start. Every other call is a paying
   user's.
-- By experience: `Public characters` are calls whose `metadata.character_id`
+- By experience: `Predefined characters` are calls whose `metadata.character_id`
   names a character with `is_public = true`, whatever the voice. Every other
   call is custom, including unsaved custom prompts with no character. Custom
   calls split by `callVoiceProvider(call_sessions.model)` into saved cloned
@@ -38,7 +38,8 @@ and `duration_seconds > 10`, regardless of end reason. Short calls alone do not
 establish a failure.
 
 `New custom characters` counts private characters by `characters.created_at`.
-Featured public characters are excluded; deleted characters are absent.
+Predefined characters (`is_public = true`) are excluded; deleted characters
+are absent.
 
 Call lines use `started_at` and exclude internal users. `AI usage (est.)` uses
 the cost windows in [Cost sources](#cost-sources), so its cost per minute is

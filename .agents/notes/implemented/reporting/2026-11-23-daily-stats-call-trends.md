@@ -9,7 +9,7 @@ The Calls section of the daily Telegram report put yesterday's counts next to
 14-day totals. Its only trend was a raw difference, such as `(-3.4)`, with no
 named baseline. Reading direction meant dividing by 14 by hand, and drops such
 as paying users' minutes falling by three quarters stayed hidden. The report
-could not tell public-character calls from custom ones, or custom calls on
+could not tell predefined-character calls from custom ones, or custom calls on
 cloned voices from those on Grok's built-in voices.
 
 ## Decision
@@ -29,13 +29,13 @@ change under 10%; the owner reads those as engagement signals.
 - Minutes drive AI cost and engagement, and counts mostly move with them, so
   counts carry no arrow. Below 25%, a day of a few dozen calls is ordinary
   noise.
-- Calls split by user (`free_call`) and by experience: public character
+- Calls split by user (`free_call`) and by experience: predefined character
   (`metadata.character_id` with `characters.is_public`), custom with a Grok
   voice, and custom with a cloned voice (`callVoiceProvider`). Calls with no
   character are unsaved custom prompts, so they count as custom.
 
 `getCallSessionsInRange` selects `metadata->>character_id`, and
-`getPublicCharacterIds` reads the featured character IDs, which the local
+`getPublicCharacterIds` reads the predefined character IDs, which the local
 activity cache stores with the rest of the report data.
 
 ## Alternatives considered

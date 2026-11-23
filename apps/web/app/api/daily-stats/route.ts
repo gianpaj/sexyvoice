@@ -458,7 +458,7 @@ export async function GET(request: NextRequest) {
   if (characters14dResult.error) throw characters14dResult.error;
   if (!publicCharacterIds) {
     throw new Error(
-      'Public character IDs were not loaded after cache validation/fetch',
+      'Predefined character IDs were not loaded after cache validation/fetch',
     );
   }
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;

@@ -202,7 +202,7 @@ export function getCharactersInRange(
   });
 }
 
-// Featured characters are a short curated list, so one unpaginated read covers it.
+// Predefined characters are a short curated list, so one unpaginated read covers it.
 export async function getPublicCharacterIds(
   supabase: DailyStatsSupabaseClient,
 ): Promise<string[]> {

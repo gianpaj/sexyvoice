@@ -333,7 +333,7 @@ describe('GET /api/daily-stats cache', () => {
       expect(response.status).toBe(200);
       const report = await response.text();
       expect(report).toContain('📞 Calls: 4 · 0m · avg 0s\n');
-      expect(report).toContain('  - Public characters: 1 · 0m · avg 0s\n');
+      expect(report).toContain('  - Predefined characters: 1 · 0m · avg 0s\n');
       expect(report).toContain('  - Custom, Grok voice: 1 · 0m · avg 0s\n');
       // The cloned call on the prior day stays out of yesterday's count.
       expect(report).toContain('  - Custom, cloned voice: 2 · 0m · avg 0s\n');

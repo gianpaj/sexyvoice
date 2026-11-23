@@ -139,7 +139,7 @@ export function formatCallsSection({
   ][] = [
     ['Free users', (call) => call.free_call === true, true],
     ['Paying users', (call) => call.free_call !== true, true],
-    ['Public characters', isPublic, false],
+    ['Predefined characters', isPublic, false],
     [
       'Custom, Grok voice',
       (call) => !(isPublic(call) || isCloned(call)),
