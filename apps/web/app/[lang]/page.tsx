@@ -368,7 +368,7 @@ export default async function LandingPage(props: {
               >
                 <Link href="/signup" prefetch={false}>
                   <Gift aria-hidden />
-                  {dictLanding.pricingStartFree}
+                  {messages.credits.plans.startFree}
                 </Link>
               </Button>
               <PricingTable className="py-4 pb-16 xl:px-10" lang={lang} />

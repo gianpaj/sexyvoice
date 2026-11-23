@@ -152,7 +152,6 @@
         "description": "Try the live cloning demo: hear a voice recreated from 10 seconds of audio, speaking naturally in multiple languages."
       }
     },
-    "pricingStartFree": "Start free",
     "cta": {
       "freeCredits": "Start with 10,000 free credits",
       "title": "Your words, with feeling",
@@ -396,7 +395,7 @@
       "pricePer1kCredits": "{price} per 1k credits",
       "savePer1kCredits": "(save {amount}/1k)",
       "popular": "Most Popular",
-      "startFree": "Start for Free",
+      "startFree": "Start free",
       "buyCredits": "Buy credits",
       "subscribe": "Subscribe",
       "x_credits": "{numCredits} credits",
