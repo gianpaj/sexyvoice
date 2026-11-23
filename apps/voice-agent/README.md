@@ -128,9 +128,15 @@ Remove only these demo proxies with `tailscale serve --https=8447 off` and
 - The UI holds at most 100 message items from the current call.
   This is an internal provider experiment with no customer wallet writes.
 
-Standalone text chat, character selection, memory extraction, usage settlement,
-and resumable text streams are pending. Use synthetic conversations on the
-isolated database for internal testing.
+At `/dashboard/voice-spike`, send text first or use the phone button to start
+a call. Set `XAI_API_KEY` in the web app for text replies, and set
+`VOICE_SPIKE_LOCAL_SUPABASE_URL=http://127.0.0.1:55321` when the browser uses a
+Tailnet Supabase URL. Keep the web and worker on the same isolated Supabase
+project. A reload reattaches to an active chat reply. The thread contains chat
+and call turns, and calls still use the five-minute demo limit.
+
+Character selection, checked memory extraction, and customer credit settlement
+are pending. Use synthetic conversations on the isolated database.
 
 ## Provider compatibility
 

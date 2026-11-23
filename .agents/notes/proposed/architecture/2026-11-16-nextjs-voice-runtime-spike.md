@@ -164,6 +164,19 @@ provider connection. The worker adapter keeps the existing voice selection and
 mute behavior. Contract tests exercise context, streamed text, normalized usage,
 and cancellation.
 
+### Resumable chat delivery
+
+The web app admits a chat reply under the same per-user lease as the LiveKit
+worker. It stores the caller turn and returns a receipt before the background
+producer starts. Supabase checkpoints the visible assistant text in its
+conversation message row. The separate receipt stores status and provider
+token usage, and streaming readers resume from the last text offset.
+
+We considered an in-memory stream buffer and a second transcript table.
+The saved message gives a fresh client the same prefix without duplicating the
+transcript. Losing the producer leaves an interrupted message and an expiring
+lease. The producer is never restarted by replay.
+
 ### Memory retrieval
 
 The worker reads the same scoped Supabase slots and hybrid RPC as Python.

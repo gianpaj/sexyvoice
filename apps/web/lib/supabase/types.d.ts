@@ -923,6 +923,44 @@ declare type Database = {
           },
         ];
       };
+      voice_spike_chat_runs: {
+        Row: {
+          assistant_position: number;
+          conversation_id: string;
+          expires_at: string;
+          id: string;
+          status: string;
+          usage: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          assistant_position: number;
+          conversation_id: string;
+          expires_at: string;
+          id: string;
+          status?: string;
+          usage?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          assistant_position?: number;
+          conversation_id?: string;
+          expires_at?: string;
+          id?: string;
+          status?: string;
+          usage?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_spike_chat_runs_conversation_id_user_id_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
+      };
       voices: {
         Row: {
           created_at: string | null;
@@ -1105,8 +1143,35 @@ declare type Database = {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
       };
+      read_voice_spike_chat: {
+        Args: { p_run_id: string; p_user_id: string };
+        Returns: {
+          reply: string;
+          status: string;
+          thread_id: string;
+        }[];
+      };
       restore_inactive_user: {
         Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
+        Returns: boolean;
+      };
+      save_voice_spike_chat: {
+        Args: {
+          p_run_id: string;
+          p_status: string;
+          p_text: string;
+          p_usage: Json;
+          p_user_id: string;
+        };
+        Returns: boolean;
+      };
+      start_voice_spike_chat: {
+        Args: {
+          p_conversation_id: string;
+          p_run_id: string;
+          p_text: string;
+          p_user_id: string;
+        };
         Returns: boolean;
       };
       update_api_key_last_used: {

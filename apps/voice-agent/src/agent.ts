@@ -12,10 +12,12 @@ import {
   RUNTIME,
   RUNTIME_ATTRIBUTE,
 } from '@sexyvoice/voice-spike';
+import { replyInstructions } from '@sexyvoice/voice-spike/history';
+import { loadMemory } from '@sexyvoice/voice-spike/memory';
 import { createClient } from '@supabase/supabase-js';
 
 import { parseJob } from './config.ts';
-import { CallMemoryAgent, loadCallMemory } from './memory.ts';
+import { CallMemoryAgent } from './memory.ts';
 import { TanStackLLM } from './tanstack-llm.ts';
 import { CallThread } from './thread.ts';
 
@@ -92,23 +94,12 @@ export default defineAgent({
       await thread.close();
       throw new Error('Voice spike history unavailable');
     });
-    const memory = await loadCallMemory(
-      db,
-      job.userId,
-      opened.thread.character_id,
-    );
+    const memory = await loadMemory(db, job.userId, opened.thread.character_id);
     const agentOptions = {
       chatCtx: opened.chatCtx,
-      instructions: [
-        opened.thread.is_voice_spike
-          ? 'You are a friendly voice-call test assistant.'
-          : `You are ${opened.thread.character_name}. Call language: ${opened.thread.language}.`,
-        'Reply briefly. Treat typed and spoken messages as part of one conversation.',
-        opened.thread.scene_instructions,
-        memory?.instructions,
-      ]
-        .filter(Boolean)
-        .join('\n'),
+      instructions: replyInstructions(opened.thread, memory?.instructions).join(
+        '\n',
+      ),
     };
     const agent = memory?.recall
       ? new CallMemoryAgent(agentOptions, memory.recall)

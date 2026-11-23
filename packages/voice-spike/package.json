@@ -4,9 +4,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./reply": "./src/reply.ts"
+    "./reply": "./src/reply.ts",
+    "./history": "./src/history.ts",
+    "./memory": "./src/memory.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "catalog:",
     "@tanstack/ai": "1.8.0",
     "@tanstack/ai-grok": "1.1.1",
     "zod": "catalog:"

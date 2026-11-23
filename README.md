@@ -138,73 +138,78 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    cp apps/web/.env.example apps/web/.env.local
    ```
 
-   Fill in the required environment variables as defined in
-   [`apps/web/.env.example`](apps/web/.env.example):
-   - Supabase
-     - `NEXT_PUBLIC_SUPABASE_URL`
-     - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database access remains controlled by RLS
-     - `SUPABASE_SECRET_KEY` - Server-only admin key that bypasses RLS; never expose it to clients or use a `NEXT_PUBLIC_` prefix
-   - Your Redis (Upstash)
-     - `KV_REST_API_URL`
-     - `KV_REST_API_TOKEN`
-   - Cloudflare R2 storage
-     - `R2_ACCESS_KEY_ID`
-     - `R2_SECRET_ACCESS_KEY`
-     - `R2_BUCKET_NAME`
-     - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
-     - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
-   - AI 3rd party services
-     - `REPLICATE_API_TOKEN` - Your Replicate API token for speech generation and one-off voice cloning
-     - `FAL_KEY` - Your fal.ai API key for reference audio enhancement
-     - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-     - `XAI_API_KEY` - Your xAI API key for Grok speech generation and call transcript analysis
-     - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
-     - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
-   - Internal voice spike
-     - Remote devices need HTTPS and a reachable Supabase API. Set `NEXT_PUBLIC_SITE_URL` to the trusted dev origin and `NEXT_PUBLIC_SUPABASE_URL` to the reachable local API; see [Tailscale setup](apps/voice-agent/README.md#access-from-another-device).
-     - `VOICE_SPIKE_USER_IDS` - Optional comma-separated Supabase test user IDs; empty disables the preview/development experiments. See the [JS browser call](apps/voice-agent/README.md) and [Next.js probe](apps/web/lib/voice-spike/README.md).
-     - `VOICE_SPIKE_ENABLED` - Worker only; set to `true` in `apps/voice-agent/.env.local` for the internal JS call. The worker also needs the LiveKit, xAI, and Inworld credentials from its `.env.example`; it runs separately from Next.js.
-     - Configure the worker with isolated local Supabase credentials and an optional OpenAI key for [hybrid memory recall](apps/voice-agent/README.md#supabase-memory).
-   - Real-time Calls (LiveKit)
-     - `LIVEKIT_URL`
-     - `LIVEKIT_API_KEY`
-     - `LIVEKIT_API_SECRET`
-     - `LIVEKIT_AGENT_NAME` - Optional; defaults to `sexycall`, and must match the deployed agent's registered name
-   - Stripe
-     - `STRIPE_SECRET_KEY`
-     - `STRIPE_WEBHOOK_SECRET`
-     - `STRIPE_TOPUP_STARTER_PRICE_ID`
-     - `STRIPE_TOPUP_STANDARD_PRICE_ID`
-     - `STRIPE_TOPUP_PRO_PRICE_ID`
-     - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
-     - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
-     - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
-     - `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon applied automatically for eligible first-time subscribers
-     - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month discount percentage used to display discounted subscription pricing when the coupon is configured
-   - Banner and promotion configuration
-     - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
-     - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
-     - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
-     - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
-     - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
-     - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
-     - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
-     - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
-     - `NEXT_PUBLIC_PROMO_BONUS_PRO`
-   - Telegram cronjob
-     - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
-     - `CRON_SECRET` - For securing the cron API routes (`/api/daily-stats`, `/api/call-sessions/analyze/batch`) - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
-   - Axiom logging (optional)
-     - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
-   - API key security
-     - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
-   - Vercel Edge Config (optional)
-     - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
-   - Additional optional variables for analytics and monitoring (Crisp, Posthog)
-   - E2E builds only
-     - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
+The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
+and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+to that API when the browser uses a Tailnet proxy.
 
-   For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
+Fill in the required environment variables as defined in
+[`apps/web/.env.example`](apps/web/.env.example):
+
+- Supabase
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database access remains controlled by RLS
+  - `SUPABASE_SECRET_KEY` - Server-only admin key that bypasses RLS; never expose it to clients or use a `NEXT_PUBLIC_` prefix
+- Your Redis (Upstash)
+  - `KV_REST_API_URL`
+  - `KV_REST_API_TOKEN`
+- Cloudflare R2 storage
+  - `R2_ACCESS_KEY_ID`
+  - `R2_SECRET_ACCESS_KEY`
+  - `R2_BUCKET_NAME`
+  - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
+  - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+- AI 3rd party services
+  - `REPLICATE_API_TOKEN` - Your Replicate API token for speech generation and one-off voice cloning
+  - `FAL_KEY` - Your fal.ai API key for reference audio enhancement
+  - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+  - `XAI_API_KEY` - Your xAI API key for Grok speech generation and call transcript analysis
+  - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
+  - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
+- Internal voice spike
+  - Remote devices need HTTPS and a reachable Supabase API. Set `NEXT_PUBLIC_SITE_URL` to the trusted dev origin and `NEXT_PUBLIC_SUPABASE_URL` to the reachable local API; see [Tailscale setup](apps/voice-agent/README.md#access-from-another-device).
+  - `VOICE_SPIKE_USER_IDS` - Optional comma-separated Supabase test user IDs; empty disables the preview/development experiments. See the [JS browser call](apps/voice-agent/README.md) and [Next.js probe](apps/web/lib/voice-spike/README.md).
+  - `VOICE_SPIKE_ENABLED` - Worker only; set to `true` in `apps/voice-agent/.env.local` for the internal JS call. The worker also needs the LiveKit, xAI, and Inworld credentials from its `.env.example`; it runs separately from Next.js.
+  - Configure the worker with isolated local Supabase credentials and an optional OpenAI key for [hybrid memory recall](apps/voice-agent/README.md#supabase-memory).
+- Real-time Calls (LiveKit)
+  - `LIVEKIT_URL`
+  - `LIVEKIT_API_KEY`
+  - `LIVEKIT_API_SECRET`
+  - `LIVEKIT_AGENT_NAME` - Optional; defaults to `sexycall`, and must match the deployed agent's registered name
+- Stripe
+  - `STRIPE_SECRET_KEY`
+  - `STRIPE_WEBHOOK_SECRET`
+  - `STRIPE_TOPUP_STARTER_PRICE_ID`
+  - `STRIPE_TOPUP_STANDARD_PRICE_ID`
+  - `STRIPE_TOPUP_PRO_PRICE_ID`
+  - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+  - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+  - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+  - `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon applied automatically for eligible first-time subscribers
+  - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month discount percentage used to display discounted subscription pricing when the coupon is configured
+- Banner and promotion configuration
+  - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+  - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+  - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+  - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+  - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+  - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+  - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+  - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+  - `NEXT_PUBLIC_PROMO_BONUS_PRO`
+- Telegram cronjob
+  - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+  - `CRON_SECRET` - For securing the cron API routes (`/api/daily-stats`, `/api/call-sessions/analyze/batch`) - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+- Axiom logging (optional)
+  - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+- API key security
+  - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+- Vercel Edge Config (optional)
+  - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
+- Additional optional variables for analytics and monitoring (Crisp, Posthog)
+- E2E builds only
+  - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
+
+For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 
 4. **Set up Supabase**
    - Create a new project at Supabase

@@ -188,6 +188,10 @@ without the column, the call page fails to load.
 
 ### Internal Next.js voice probe
 
+The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
+and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+to that API when the browser uses a Tailnet proxy.
+
 `VOICE_SPIKE_USER_IDS` is an optional comma-separated list of Supabase test
 user UUIDs. Leave it empty in production; the handler also rejects production
 regardless of this value. The development/preview probe reuses `XAI_API_KEY` and

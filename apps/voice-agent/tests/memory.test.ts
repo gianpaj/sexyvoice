@@ -1,12 +1,9 @@
 import { llm, voice } from '@livekit/agents';
+import { loadMemory, selectPreload } from '@sexyvoice/voice-spike/memory';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  CallMemoryAgent,
-  loadCallMemory,
-  selectPreload,
-} from '../src/memory.ts';
+import { CallMemoryAgent } from '../src/memory.ts';
 
 const shared = '__shared__';
 const slot = (memory_type: string, content: string, character_id = shared) => ({
@@ -81,16 +78,16 @@ describe('Python-compatible memory retrieval', () => {
 
   it('checks the saved opt-in before accessing memory and skips search for a complete preload', async () => {
     const optedOut = database([], false);
-    expect(await loadCallMemory(optedOut.db, 'user', null)).toBeNull();
+    expect(await loadMemory(optedOut.db, 'user', null)).toBeNull();
     expect(optedOut.from).not.toHaveBeenCalled();
     optedOut.getUserById.mockResolvedValueOnce({
       data: { user: { id: 'user', user_metadata: {} } },
     });
-    expect(await loadCallMemory(optedOut.db, 'user', null)).toBeNull();
+    expect(await loadMemory(optedOut.db, 'user', null)).toBeNull();
     expect(optedOut.from).not.toHaveBeenCalled();
 
     const optedIn = database([slot('profile:identity', 'Calls me Alex')]);
-    const memory = await loadCallMemory(optedIn.db, 'user', null);
+    const memory = await loadMemory(optedIn.db, 'user', null);
     expect(memory?.instructions).toContain('Calls me Alex');
     expect(memory?.recall).toBeNull();
     expect(optedIn.query.eq).toHaveBeenCalledWith('user_id', 'user');
@@ -102,12 +99,7 @@ describe('Python-compatible memory retrieval', () => {
     const harness = database([loaded, prior]);
     const vector = [1, ...new Array<number>(1535).fill(0)];
     const embed = vi.fn().mockResolvedValue(vector);
-    const memory = await loadCallMemory(
-      harness.db,
-      'user',
-      'character-a',
-      embed,
-    );
+    const memory = await loadMemory(harness.db, 'user', 'character-a', embed);
     expect(harness.query.in).toHaveBeenCalledWith('character_id', [
       shared,
       'character-a',
@@ -145,10 +137,10 @@ describe('Python-compatible memory retrieval', () => {
   it('continues on memory outages and falls back to text matches when embeddings fail', async () => {
     const harness = database([prior]);
     harness.query.abortSignal.mockRejectedValueOnce(new Error('timeout'));
-    await expect(loadCallMemory(harness.db, 'user', null)).resolves.toBeNull();
+    await expect(loadMemory(harness.db, 'user', null)).resolves.toBeNull();
 
     const embed = vi.fn().mockRejectedValue(new Error('timeout'));
-    const memory = await loadCallMemory(harness.db, 'user', null, embed);
+    const memory = await loadMemory(harness.db, 'user', null, embed);
     harness.search.mockResolvedValueOnce({
       data: [
         {

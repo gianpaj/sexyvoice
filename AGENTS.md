@@ -283,6 +283,10 @@ Remote browser tests also need a reachable `NEXT_PUBLIC_SUPABASE_URL`;
 localhost addresses refer to the browser's device. Setup belongs in the
 [JS call runbook](apps/voice-agent/README.md#access-from-another-device).
 
+The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
+and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+to that API when the browser uses a Tailnet proxy.
+
 `VOICE_SPIKE_USER_IDS` restricts the Next.js voice probe to explicit Supabase
 test users in development/preview. Empty disables it; production is blocked.
 The JS browser call at `/{lang}/dashboard/voice-spike` uses the same allowlist

@@ -1,27 +1,14 @@
 import { llm } from '@livekit/agents';
+import {
+  boundedHistory,
+  HISTORY_ROWS,
+  type History,
+  historySchema,
+  roleSchema,
+  threadSchema,
+} from '@sexyvoice/voice-spike/history';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { z } from 'zod';
 
-const HISTORY_ROWS = 32;
-const HISTORY_CHARS = 12_000;
-const roleSchema = z.enum(['user', 'assistant']);
-const historySchema = z.array(
-  z.object({
-    id: z.string(),
-    role: roleSchema,
-    parts: z.array(z.object({ type: z.literal('text'), content: z.string() })),
-    status: z.enum(['completed', 'interrupted']),
-  }),
-);
-const threadSchema = z.object({
-  character_id: z.uuid().nullable(),
-  character_name: z.string(),
-  is_voice_spike: z.boolean(),
-  language: z.string(),
-  scene_instructions: z.string(),
-});
-
-type History = z.infer<typeof historySchema>;
 interface CallKey {
   conversationId: string;
   roomName: string;
@@ -29,24 +16,9 @@ interface CallKey {
 }
 
 export function seedHistory(rowsNewestFirst: History): llm.ChatContext {
-  let remaining = HISTORY_CHARS;
-  const messages: llm.ChatMessage[] = [];
-  for (const row of rowsNewestFirst) {
-    const text = row.parts.map((part) => part.content).join('\n');
-    if (!text.trim()) continue;
-    if (text.length > remaining && messages.length) break;
-    messages.push(
-      llm.ChatMessage.create({
-        id: row.id,
-        role: row.role,
-        content: text.slice(-remaining),
-        interrupted: row.status === 'interrupted',
-      }),
-    );
-    remaining -= text.length;
-    if (remaining <= 0) break;
-  }
-  return new llm.ChatContext(messages.reverse());
+  return new llm.ChatContext(
+    boundedHistory(rowsNewestFirst).map((turn) => llm.ChatMessage.create(turn)),
+  );
 }
 
 export function committedTurn(item: llm.ChatItem) {
