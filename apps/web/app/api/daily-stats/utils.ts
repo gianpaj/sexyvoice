@@ -187,11 +187,12 @@ export function formatTrend(
   if (baseline === 0) {
     return current === 0 ? '' : 'new';
   }
-  const pct = Math.round(((current - baseline) / baseline) * 100);
+  // Compare before rounding, so 24.6% stays below a 25% threshold.
+  const pct = ((current - baseline) / baseline) * 100;
   if (Math.abs(pct) < minPct) {
     return '';
   }
-  return `${pct > 0 ? '↑' : '↓'}${Math.abs(pct)}%`;
+  return `${pct > 0 ? '↑' : '↓'}${Math.round(Math.abs(pct))}%`;
 }
 
 /** Total time rounded to minutes, e.g. `47m` or `8h 10m`. */
