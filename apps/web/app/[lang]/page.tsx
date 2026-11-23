@@ -28,6 +28,7 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
+import { FadeIn } from '@/components/motion-primitives/fade-in';
 import PricingTable from '@/components/pricing-table';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
@@ -70,8 +71,8 @@ export default async function LandingPage(props: {
   // dynamic rendering (`cache-control: private, no-store`), which both prevents
   // CDN caching and disqualifies the page from the back/forward cache (bfcache).
   // The <Banner> client component already re-reads the dismissal cookies on the
-  // client (it starts hidden and only reveals itself when no dismiss cookie is
-  // set), so server-side filtering here is redundant.
+  // client (it renders visible and hides itself after hydration when dismissed
+  // or expired), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
     lang,
@@ -205,7 +206,9 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
+                  <Link href="/signup" prefetch={false}>
+                    {dictLanding.hero.buttonCTA}
+                  </Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}
@@ -365,7 +368,7 @@ export default async function LandingPage(props: {
             </div>
 
             {/* Blog posts Section */}
-            <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
+            <div className="mx-auto grid grid-cols-1 gap-4 pb-16 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
               <h2 className="mb-4 text-balance font-bold text-2xl">
                 {dictLanding.latestPosts}
               </h2>
@@ -401,27 +404,53 @@ export default async function LandingPage(props: {
                 {dictLanding.more}
               </Link>
             </div>
+          </div>
 
-            {/* CTA Section */}
-            <div className="space-y-8 py-16 text-center">
-              <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
-                <Sparkles className="mr-2 size-4" />
-                <span>{dictLanding.cta.freeCredits}</span>
-              </div>
-              <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
-                {dictLanding.cta.title}
-              </h2>
-              <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
-                {dictLanding.cta.subtitle}
-              </p>
-              <Button
-                asChild
-                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
-                effect="ringHover"
-                size="lg"
-              >
-                <Link href="/signup">{dictLanding.cta.action}</Link>
-              </Button>
+          {/* CTA Section */}
+          <div className="relative isolate overflow-hidden">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10"
+              style={{
+                background: [
+                  'radial-gradient(110% 100% at 65% 135%, color-mix(in oklab, hsl(var(--primary-active)) 55%, hsl(var(--background))) 0%, color-mix(in oklab, hsl(var(--primary)) 30%, hsl(var(--background))) 30%, transparent 65%)',
+                  'radial-gradient(75% 80% at 15% 125%, color-mix(in oklab, hsl(var(--gradient-start)) 45%, hsl(var(--background))) 0%, transparent 60%)',
+                  'linear-gradient(to bottom, hsl(var(--background) / 0.4), hsl(var(--background)))',
+                ].join(', '),
+              }}
+            />
+            <div className="container mx-auto space-y-8 px-4 py-16 text-center">
+              <FadeIn>
+                <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+                  <Sparkles className="mr-2 size-4" />
+                  <span>{dictLanding.cta.freeCredits}</span>
+                </div>
+              </FadeIn>
+              <FadeIn delay={0.15}>
+                <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
+                  {dictLanding.cta.title}
+                </h2>
+              </FadeIn>
+              <FadeIn delay={0.3}>
+                <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
+                  {dictLanding.cta.subtitle}
+                </p>
+              </FadeIn>
+              <FadeIn delay={0.45}>
+                <Button
+                  asChild
+                  className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
+                  effect="ringHover"
+                  size="lg"
+                >
+                  <Link href="/signup" prefetch={false}>
+                    {dictLanding.cta.action}
+                  </Link>
+                </Button>
+                <p className="mt-2 text-gray-300 text-xs">
+                  {dictLanding.hero.noCreditCard}
+                </p>
+              </FadeIn>
             </div>
           </div>
         </div>

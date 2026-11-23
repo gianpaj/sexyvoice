@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Commencez avec 10 000 crédits gratuits",
-      "title": "Prêt à trouver votre voix ?",
-      "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
-      "action": "Créez votre première voix"
+      "title": "Vos mots, avec émotion",
+      "subtitle": "Écrivez une phrase et écoutez-la rire, soupirer ou chuchoter. Ou appelez un personnage et répondez-lui.",
+      "action": "Essayez gratuitement"
     },
     "voiceCall": {
       "hero": {
@@ -284,8 +284,8 @@
               "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
             },
             {
-              "question": "Puis-je appeler un personnage avec ma propre voix ?",
-              "answer": "Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage."
+              "question": "Comment passer un appel vocal avec une voix clonée ?",
+              "answer": "Allez sur la page des appels, créez un personnage et sélectionnez votre voix clonée enregistrée. Enregistrez le personnage, puis lancez l'appel. Si vous n'avez pas encore enregistré de voix, choisissez « Cloner une voix » lors de la création du personnage, ou « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix. Une recharge ou un paiement d'abonnement débloque les personnages personnalisés et les voix enregistrées."
             },
             {
               "question": "Combien ça coûte ?",
@@ -814,7 +814,7 @@
       "stop": "Arrêter l'extrait de {name}",
       "showAll": "Tout afficher ({count})",
       "showFewer": "Afficher moins",
-      "cloneLimit": "Vous avez {max} voix. Supprimez-en une sur la page Cloner pour en enregistrer une autre."
+      "cloneLimit": "Vous avez {max} voix. Supprimez-en une pour en enregistrer une autre."
     },
     "inCall": {
       "connecting": "Connexion…",
@@ -1038,12 +1038,12 @@
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
-        "button": "Supprimer le contenu",
-        "confirmTitle": "Supprimer le contenu de votre compte ?",
-        "confirmDescription": "Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Nous conservons vos identifiants de connexion, votre profil et vos crédits restants. Les données d'utilisation sont conservées pour la facturation et le suivi des coûts internes. Vos clés API cesseront de fonctionner. En vous reconnectant avec la même adresse e-mail, vous retrouverez le même compte avec les mêmes crédits. Le contenu supprimé ne peut pas être récupéré.",
+        "button": "Supprimer le compte ou le contenu",
+        "confirmTitle": "Supprimer le contenu",
+        "confirmDescription": "Votre compte reste actif. Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Vous pourrez vous reconnecter avec la même adresse e-mail et conserver votre profil et vos crédits restants. Vos clés API cesseront de fonctionner. Nous conservons les données d'utilisation pour la facturation et le suivi des coûts internes. Le contenu supprimé ne peut pas être récupéré.\n\nPour demander la suppression complète de votre compte, écrivez à info@sexyvoice.ai ou utilisez le chat intégré.",
         "alertTitle": "Supprimez le contenu de votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer",
+        "continue": "Supprimer le contenu",
         "errors": {
           "manageBilling": "Gérer la facturation",
           "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre contenu.",
@@ -1143,11 +1143,11 @@
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",
     "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",
-    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 99+ Langues avec Whisper AI",
+    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 30+ Langues avec Whisper AI",
     "descriptionAudioConverter": "Convertisseur audio en ligne gratuit – Convertissez MP3, WAV, FLAC, OGG, AAC, MP4 et d'autres formats directement dans votre navigateur. Aucun téléversement requis, 100% privé et hors ligne. Propulsé par FFmpeg.",
-    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 99 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
+    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 30 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
     "keywordsAudioConverter": "convertisseur audio gratuit, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, convertisseur audio en ligne, convertisseur audio navigateur, convertisseur audio hors ligne, mp3 en wav, wav en mp3, convertisseur format audio, ffmpeg en ligne, convertisseur audio sans téléversement, convertisseur audio privé",
-    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription 99 langues, transcription privée",
+    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription multilingue, transcription privée",
     "keywordsLanding": "synthèse vocale, générateur de voix IA, clonage vocal, synthèse vocale IA, génération de voix, TTS gratuit, voix IA expressives, clone vocal IA, synthèse de la parole",
     "titleAudioJoiner": "Assembleur Audio Gratuit – Fusionner et Découper de l'Audio",
     "descriptionAudioJoiner": "Assemblez plusieurs fichiers audio et découpez chaque segment directement dans votre navigateur. Privé, gratuit et sans téléversement requis.",
@@ -1241,12 +1241,13 @@
     }
   },
   "footer": {
-    "tagline": "Génération vocale par IA. Créez un audio naturel et expressif en quelques secondes.",
+    "tagline": "Des voix IA expressives à générer, cloner et appeler.",
     "featuresHeading": "Fonctionnalités",
     "toolsHeading": "Outils",
     "companyHeading": "Entreprise",
     "legalHeading": "Juridique",
     "statusPage": "Page de statut",
+    "docs": "Documentation",
     "privacyPolicy": "Politique de confidentialité",
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
@@ -1444,6 +1445,16 @@
       "join": "Assembler",
       "joining": "Assemblage en cours...",
       "cancel": "Annuler"
+    },
+    "track": {
+      "trimStart": "Début du découpage",
+      "trimEnd": "Fin du découpage",
+      "moveUp": "Monter le segment",
+      "moveDown": "Descendre le segment",
+      "delete": "Supprimer le segment",
+      "start": "Début : {time}",
+      "end": "Fin : {time}",
+      "duration": "Durée : {time}"
     },
     "progress": {
       "processing": "Traitement en cours"

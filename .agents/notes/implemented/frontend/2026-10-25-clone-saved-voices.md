@@ -10,6 +10,15 @@ endpoint. Generated previews use the saved R2 WAV when `sample_url` is
 populated; profiles without one retain the provider preview. See
 [stored samples](../integration/2026-10-25-saved-call-voice-samples.md).
 
+Both cloning pickers list file extensions and MIME types explicitly.
+iPhone Safari treats the `audio/*` filter as a movie filter and disables
+audio files in Files. [WebKit bug 242110](https://bugs.webkit.org/show_bug.cgi?id=242110)
+
+Audio Converter, Audio Joiner, and Transcription share the audio extensions
+in `lib/audio-file-picker.ts`. Converter also offers MP4, and Transcription
+offers videos. Audio MIME types remain valid during file handling, and the
+decoder determines whether a file can be processed.
+
 ### Generating with a saved voice
 
 Picking a saved voice makes it the speaker for the form. It replaces the
@@ -35,8 +44,10 @@ people make speech; the call creator has its own picker.
 
 ### Deleting a saved voice
 
-Each tile has a Delete button. The dialog names the characters that use the
-voice, computed on the server from `characters.session_config.audioReferenceId`.
+Saved voice tiles on the Clone page and in the call creator offer Delete in
+the options menu. Both use the same confirmation dialog. The Clone page
+gets the names of characters that use the voice from the server. The call
+creator reads saved voice assignments from its character list.
 `DELETE /api/audio-references/[id]` deletes the provider voice and its R2
 sample, then the row, through `deleteSavedVoice()`, which account deletion
 also uses. A failed provider deletion keeps the row so the user can retry.

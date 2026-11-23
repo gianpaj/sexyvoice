@@ -331,6 +331,10 @@ const renderedLocaleCodes = () => {
 
 describe('NewVoiceClient', () => {
   it('saves a reusable voice without requiring generated speech text', async () => {
+    const wav = new File(['audio'], 'reference.wav', {
+      type: 'audio/vnd.wave',
+    });
+    mockUpload.files = [{ file: wav, id: 'selected-file' }];
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({ audioReferenceId: 'reference', provider: 'inworld' }),
@@ -363,6 +367,11 @@ describe('NewVoiceClient', () => {
     await user.click(screen.getByTestId('clone-generate-button'));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('file')).toMatchObject({
+      name: wav.name,
+      size: wav.size,
+      type: 'audio/wav',
+    });
     expect(body.get('saveVoiceName')).toBe('My voice');
     expect(body.get('voiceConsent')).toBe('true');
     expect(body.get('enhanceReferenceAudio')).toBe('true');

@@ -33,6 +33,7 @@ const toastMock = vi.hoisted(() =>
   }),
 );
 const routerPush = vi.hoisted(() => vi.fn());
+const convertAudio = vi.hoisted(() => vi.fn());
 
 vi.mock('@livekit/components-react', () => ({
   useConnectionState: () => connection.state,
@@ -80,7 +81,7 @@ vi.mock('next/image', () => ({
 }));
 vi.mock('sonner', () => ({ toast: toastMock }));
 vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
-  useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
+  useFFmpeg: () => ({ convert: convertAudio, ensureLoaded: vi.fn() }),
 }));
 vi.mock('@/lib/i18n/navigation', () => ({
   Link: ({
@@ -205,8 +206,8 @@ beforeEach(() => {
         provider: 'inworld',
       });
     }
-    const body = JSON.parse(String(init.body));
     if (init.method === 'DELETE') return new Response(null, { status: 200 });
+    const body = JSON.parse(String(init.body));
     return Response.json(savedResponse(body, body.id ?? 'new-character-id'), {
       status: body.id ? 200 : 201,
     });
@@ -595,7 +596,61 @@ describe('CallExperience creator', () => {
     ).not.toBeChecked();
   });
 
-  it('clones a voice from an upload and selects it', async () => {
+  it('confirms saved voice deletion and requires a replacement for its character', async () => {
+    const user = userEvent.setup();
+    renderExperience({
+      customCharacters: [
+        {
+          ...own,
+          sessionConfig: {
+            ...own.sessionConfig,
+            audioReferenceId: savedVoice.id,
+            model: ModelId.MISTRAL_TTS,
+            voice: savedVoice.name,
+          },
+        },
+      ],
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Marco' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+    const creator = within(await screen.findByTestId('character-creator'));
+    expect(creator.getByRole('radio', { name: /My voice/ })).toBeChecked();
+    expect(
+      creator.queryByRole('button', { name: 'More options for Ara' }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      creator.getByRole('button', { name: 'More options for My voice' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    const dialog = within(await screen.findByRole('alertdialog'));
+    expect(dialog.getByText(/^Used by Marco\./)).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await user.click(dialog.getByRole('button', { name: 'Delete voice' }));
+
+    await waitFor(() =>
+      expect(
+        creator.queryByRole('radio', { name: /My voice/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+      `/api/audio-references/${savedVoice.id}`,
+      { method: 'DELETE' },
+    );
+    expect(creator.getByText(messages.call.creator.missingVoice)).toBeVisible();
+    await user.click(creator.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Open Marco' }));
+    expect(
+      within(await screen.findByTestId('call-panel')).getByRole('button', {
+        name: 'Choose a voice',
+      }),
+    ).toBeVisible();
+  });
+
+  it.each(['mp3', 'm4a'])('clones a %s upload', async (extension) => {
+    convertAudio.mockClear().mockResolvedValue(new Blob(['converted']));
     const user = userEvent.setup();
     renderExperience();
 
@@ -615,12 +670,16 @@ describe('CallExperience creator', () => {
     await user.click(
       within(dialog).getByRole('button', { name: 'Upload a file' }),
     );
-    const sample = new File(['audio'], 'sample.wav', { type: 'audio/wav' });
-    await user.upload(
-      dialog.querySelector('input[type="file"]') as HTMLInputElement,
-      sample,
+    const input = within(dialog).getByLabelText<HTMLInputElement>(
+      /Drop an audio file here/,
     );
-    expect(within(dialog).getByText('sample.wav')).toBeInTheDocument();
+    expect(input.accept.split(',')).toContain('.mp3');
+    expect(input.accept.split(',')).not.toContain('audio/*');
+    const sample = new File(['audio'], `sample.${extension}`, {
+      type: extension === 'm4a' ? 'audio/mp4' : 'audio/mpeg',
+    });
+    await user.upload(input, sample);
+    expect(within(dialog).getByText(sample.name)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
 
     const name = within(dialog).getByLabelText('Name this voice');
@@ -650,7 +709,17 @@ describe('CallExperience creator', () => {
     expect(form.get('saveVoiceName')).toBe('Radio voice');
     expect(form.get('voiceConsent')).toBe('true');
     expect(form.get('locale')).toBe('en');
-    expect(form.get('file')).toBe(sample);
+    if (extension === 'm4a') {
+      expect(convertAudio).toHaveBeenCalledWith(sample, 'mp3');
+      expect(form.get('file')).toMatchObject({
+        name: 'sample.mp3',
+        size: 'converted'.length,
+        type: 'audio/mpeg',
+      });
+    } else {
+      expect(convertAudio).not.toHaveBeenCalled();
+      expect(form.get('file')).toBe(sample);
+    }
 
     await user.click(
       within(dialog).getByRole('button', { name: 'Use this voice' }),
@@ -678,9 +747,7 @@ describe('CallExperience creator', () => {
       },
     });
   });
-});
 
-describe('CallExperience clone without MediaRecorder', () => {
   it('offers only an upload', async () => {
     vi.stubGlobal('MediaRecorder', undefined);
     Reflect.deleteProperty(window, 'MediaRecorder');

@@ -18,11 +18,12 @@
     "lint": "biome lint",
     "lint:write": "pnpm run lint --write",
     "start": "next start",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:db": "supabase test db",
     "test:e2e": "playwright test",
-    "test:ui": "vitest --ui",
+    "test:ui": "vitest --ui --watch",
+    "test:watch": "vitest --watch",
     "type-check": "tsc --noEmit"
   },
   "browserslist": [

@@ -45,7 +45,7 @@ dashboard. See [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
 - **Live AI Voice Calls**: Talk to AI characters in real time; paid users can create characters and choose a cloned voice
 - **Voice Selection System**: Choose from 57 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
-- **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
+- **Audio Transcription**: Transcribe audio files to text offline in 30+ languages with optional translation to English using Whisper AI
 
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
@@ -203,7 +203,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
    - E2E builds only
-     - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
+     - `E2E_TEST_MODE` - See the [deployment guide](./docs/devops.md#monitoring-analytics-and-support) for E2E build and server configuration.
 
    For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 
@@ -261,7 +261,8 @@ Only one banner is shown at a time, and each banner has its own dismiss cookie.
 | `pnpm dev`                         | Start all workspace dev tasks                |
 | `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server            |
 | `pnpm build`                       | Build workspace apps with Turbo              |
-| `pnpm test`                        | Run test suites                              |
+| `pnpm test`                        | Run test suites once (non-watch)             |
+| `pnpm test:watch`                  | Run web Vitest tests in watch mode           |
 | `pnpm test:db`                     | Run Supabase pgTAP tests locally             |
 | `pnpm test:ui`                     | Run Vitest UI for the web app                |
 | `pnpm lint`                        | Lint web and docs code with Biome            |

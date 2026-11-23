@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 export const CALL_VOICE_SAMPLE_TEXT =
-  "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?";
+  "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss. Just relax and let my voice wrap around you. What desire shall we explore first?";
 
 /** Inworld speaks MP3 and Mistral WAV; the key's extension names the format. */
 const SAMPLE_CONTENT_TYPES = {

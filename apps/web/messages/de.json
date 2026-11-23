@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
-      "title": "Bereit, Ihre Stimme zu finden?",
-      "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
-      "action": "Erstellen sie ihre erste stimme"
+      "title": "Ihre Worte, mit Gefühl",
+      "subtitle": "Schreiben Sie einen Satz und hören Sie ihn lachen, seufzen oder flüstern. Oder rufen Sie eine Figur an und sprechen Sie mit ihr.",
+      "action": "Kostenlos testen"
     },
     "voiceCall": {
       "hero": {
@@ -284,8 +284,8 @@
               "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
             },
             {
-              "question": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
-              "answer": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder nutzen Sie \"Stimme für Anrufe speichern\" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters."
+              "question": "Wie starte ich einen Sprachanruf mit einer geklonten Stimme?",
+              "answer": "Öffnen Sie die Anrufseite, erstellen Sie einen Charakter und wählen Sie Ihre gespeicherte geklonte Stimme aus. Speichern Sie den Charakter und starten Sie den Anruf. Wenn Sie noch keine Stimme gespeichert haben, wählen Sie beim Erstellen des Charakters \"Stimme klonen\" oder auf der Klonen-Seite \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet eigene Charaktere und gespeicherte Stimmen frei."
             },
             {
               "question": "Was kostet das?",
@@ -814,7 +814,7 @@
       "stop": "Stimmprobe von {name} stoppen",
       "showAll": "Alle anzeigen ({count})",
       "showFewer": "Weniger anzeigen",
-      "cloneLimit": "Du hast {max} Stimmen. Lösche eine auf der Seite „Klonen“, um eine neue zu speichern."
+      "cloneLimit": "Du hast {max} Stimmen. Lösche eine, um eine neue zu speichern."
     },
     "inCall": {
       "connecting": "Verbinde…",
@@ -1038,12 +1038,12 @@
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
-        "button": "Inhalte löschen",
-        "confirmTitle": "Inhalte aus Ihrem Konto löschen?",
-        "confirmDescription": "Dadurch werden folgende Inhalte gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Wir behalten Ihre Anmeldedaten, Ihr Profil und Ihre verbleibenden Credits. Nutzungsdaten bleiben für die Abrechnung und die interne Kostenerfassung erhalten. Ihre API-Schlüssel funktionieren danach nicht mehr. Wenn Sie sich mit derselben E-Mail-Adresse erneut anmelden, erhalten Sie wieder Zugriff auf dasselbe Konto mit denselben Credits. Gelöschte Inhalte können nicht wiederhergestellt werden.",
+        "button": "Konto oder Inhalte löschen",
+        "confirmTitle": "Inhalte löschen",
+        "confirmDescription": "Ihr Konto bleibt bestehen. Folgende Inhalte werden gelöscht:\n• Generierte Audiodateien aus dem Speicher und Ihrem Verlauf\n• Benutzerdefinierte Charaktere und deren Prompts\n• Gespeicherte Erinnerungen aus Anrufen\n• Geklonte Stimmen\n\nSie werden abgemeldet. Sie können sich mit derselben E-Mail-Adresse wieder anmelden und behalten Ihr Profil und Ihre verbleibenden Credits. Ihre API-Schlüssel funktionieren danach nicht mehr. Wir speichern Nutzungsdaten für die Abrechnung und die interne Kostenerfassung. Gelöschte Inhalte können nicht wiederhergestellt werden.\n\nWenn Sie Ihr Konto vollständig löschen lassen möchten, schreiben Sie an info@sexyvoice.ai oder nutzen Sie den integrierten Chat.",
         "alertTitle": "Inhalte aus Ihrem Konto löschen",
         "cancel": "Abbrechen",
-        "continue": "Weiter",
+        "continue": "Inhalte löschen",
         "errors": {
           "manageBilling": "Abrechnung verwalten",
           "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihre Inhalte löschen.",
@@ -1143,11 +1143,11 @@
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
     "titleAudioConverter": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",
-    "titleTranscribe": "Kostenlose Online Audio-Transkription – Sprache zu Text in 99+ Sprachen",
+    "titleTranscribe": "Kostenlose Online Audio-Transkription – Sprache zu Text in 30+ Sprachen",
     "descriptionAudioConverter": "Kostenloser Online-Audio-Konverter – Konvertieren Sie MP3, WAV, FLAC, OGG, AAC, MP4 und weitere Formate direkt in Ihrem Browser. Kein Upload erforderlich, 100% privat und offline. Powered by FFmpeg.",
-    "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
+    "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 30 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
-    "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
+    "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, mehrsprachige Transkription, private Transkription",
     "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese",
     "titleAudioJoiner": "Kostenloser Audio-Joiner – Audiodateien zusammenfügen und zuschneiden",
     "descriptionAudioJoiner": "Mehrere Audiodateien zusammenfügen und jeden Abschnitt direkt im Browser zuschneiden. Privat, kostenlos und ohne Upload.",
@@ -1241,12 +1241,13 @@
     }
   },
   "footer": {
-    "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "tagline": "Ausdrucksstarke KI-Stimmen, die Sie generieren, klonen und anrufen können.",
     "featuresHeading": "Funktionen",
     "toolsHeading": "Werkzeuge",
     "companyHeading": "Unternehmen",
     "legalHeading": "Rechtliches",
     "statusPage": "Statusseite",
+    "docs": "Dokumentation",
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
@@ -1444,6 +1445,16 @@
       "join": "Zusammenfügen",
       "joining": "Wird zusammengefügt...",
       "cancel": "Abbrechen"
+    },
+    "track": {
+      "trimStart": "Schnittanfang",
+      "trimEnd": "Schnittende",
+      "moveUp": "Segment nach oben",
+      "moveDown": "Segment nach unten",
+      "delete": "Segment löschen",
+      "start": "Start: {time}",
+      "end": "Ende: {time}",
+      "duration": "Dauer: {time}"
     },
     "progress": {
       "processing": "Wird verarbeitet"

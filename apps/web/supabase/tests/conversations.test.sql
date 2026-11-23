@@ -151,16 +151,16 @@ select throws_ok($$update public.conversation_messages set parts = '[]' where id
 select throws_ok($$update public.call_sessions set conversation_id = '60606060-6060-4060-8060-606060606061'
   where id = '70707070-7070-4070-8070-707070707073'$$,
   '42501', null, 'browser cannot attach a legacy call to a thread');
-select lives_ok($$update public.call_sessions set status = 'completed'
+select throws_ok($$update public.call_sessions set status = 'completed'
   where id = '70707070-7070-4070-8070-707070707073'$$,
-  'legacy call updates without a thread link remain compatible');
+  '42501', null, 'browser cannot change the status of an unlinked call');
 select throws_ok($$insert into public.call_sessions (user_id, model, voice_id, conversation_id)
   values ('10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606061')$$,
   '42501', null, 'browser cannot insert a linked call');
 
-select lives_ok($$insert into public.call_sessions (user_id, model, voice_id)
+select throws_ok($$insert into public.call_sessions (user_id, model, voice_id)
   values ('10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030')$$,
-  'legacy client call inserts without a thread link remain compatible');
+  '42501', null, 'browser cannot insert an unlinked call');
 
 set local "request.jwt.claim.sub" = '20202020-2020-4020-8020-202020202020';
 select is((select count(*)::int from public.conversations), 1, 'user B cannot read user A threads');

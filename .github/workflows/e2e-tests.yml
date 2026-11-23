@@ -74,6 +74,8 @@ jobs:
       github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      E2E_TEST_MODE: "true"
 
     strategy:
       matrix:
@@ -98,18 +100,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright system dependencies
+      - name: Install Playwright browsers and system dependencies
         working-directory: apps/web
         run: |
-          pnpm exec playwright install-deps chrome
+          pnpm exec playwright install-deps chrome firefox webkit
+          pnpm exec playwright install firefox webkit
           google-chrome --version
 
       - name: Build application
         working-directory: apps/web
         run: pnpm run build
         env:
-          # Disables the browser Sentry client in the E2E build
-          NEXT_PUBLIC_E2E_TEST_MODE: "true"
           # Supabase
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -136,7 +137,6 @@ jobs:
         run: pnpm run test:e2e
         env:
           CI: true
-          E2E_TEST_MODE: "true"
           PLAYWRIGHT_BROWSER_CHANNEL: chrome
           PLAYWRIGHT_TEST_USER_EMAIL: ${{ secrets.PLAYWRIGHT_TEST_USER_EMAIL }}
           PLAYWRIGHT_TEST_USER_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_USER_PASSWORD }}

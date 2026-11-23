@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { isValidElement } from 'react';
@@ -43,8 +49,20 @@ describe('DeleteAccountForm', () => {
         </NextIntlClientProvider>,
       );
 
-      await user.click(screen.getByRole('button', { name: 'Delete content' }));
-      await user.click(screen.getByRole('button', { name: 'Continue' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Delete account or content' }),
+      );
+      const dialog = screen.getByRole('alertdialog', {
+        name: 'Delete content',
+      });
+      expect(dialog).toHaveAccessibleDescription(/Your account stays open\./);
+      expect(dialog).toHaveAccessibleDescription(
+        /email info@sexyvoice\.ai or use the built-in chat\./,
+      );
+      expect(handleDeleteAccountAction).not.toHaveBeenCalled();
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Delete content' }),
+      );
 
       await waitFor(() => expect(toast.error).toHaveBeenCalled());
       expect(vi.mocked(toast.error).mock.calls[0][0]).toBe(

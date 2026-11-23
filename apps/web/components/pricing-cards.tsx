@@ -267,7 +267,9 @@ export function PricingCards({
                   className="hit-area-6 my-4 w-full"
                   variant={plan.buttonVariant as 'outline' | 'default'}
                 >
-                  <Link href="/signup">{plan.buttonText}</Link>
+                  <Link href="/signup" prefetch={false}>
+                    {plan.buttonText}
+                  </Link>
                 </Button>
               )}
               <div className="space-y-2">

@@ -1,7 +1,7 @@
 # Product Marketing Context
 
-**Document version:** v5
-**Last updated:** 2026-08-01
+**Document version:** v7
+**Last updated:** 2026-11-18
 
 > Shared positioning context, written to the canonical path the external
 > product-marketing skill toolchain looks for. No skill checked into this repo
@@ -183,13 +183,13 @@ audience without qualifying it.
 number — always scope the claim to the feature, and to the voice/model where it
 varies. Speech generation is the widest, and Gemini goes furthest.
 
-| Feature                                          | Languages        | Notes                                                                                                                                                 |
-| ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Speech generation — Gemini 3.1 (`gpro31`)        | 70+              | Our widest coverage; the number to use when leading on language breadth                                                                               |
-| Speech generation — Gemini 2.5 (`gpro`)          | 24               | Default model                                                                                                                                         |
-| Speech generation — other voices (Grok, Orpheus) | Varies, narrower | Several are single-language; check the voice before quoting                                                                                           |
-| Voice cloning                                    | 28               | Coverage depends on the cloning flow and saved voice provider                                                                                         |
-| Transcription (Whisper)                          | **[unverified]** | Page meta says "99+ languages"; the on-page FAQ says the multilingual Whisper models support 32. Pick one and fix the site copy before citing either. |
+| Feature                                          | Languages        | Notes                                                                   |
+| ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------- |
+| Speech generation — Gemini 3.1 (`gpro31`)        | 70+              | Our widest coverage; the number to use when leading on language breadth |
+| Speech generation — Gemini 2.5 (`gpro`)          | 24               | Default model                                                           |
+| Speech generation — other voices (Grok, Orpheus) | Varies, narrower | Several are single-language; check the voice before quoting             |
+| Voice cloning                                    | 28               | Coverage depends on the cloning flow and saved voice provider           |
+| Transcription (Whisper)                          | 32               | The transcribe tool's language dropdown; site titles and meta say "30+" |
 
 **Customers:** "Join thousands of creators who trust our platform" — **[unverified]** no supporting figure found in the repo; substantiate or stop using.
 **Testimonials:** None captured yet. Highest-value gap in this document — collect 3–5 with names and use cases.
@@ -214,6 +214,7 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 
 _Newest first. One line per revision: what changed and why._
 
+- v7 (2026-11-18) — Verified transcription coverage at 32 languages (the tool's language dropdown) and changed site titles, meta and the blog post from "99+" to "30+".
 - v6 (2026-08-11) — Reverted the live-call rate from 1,000 to 1,100 credits/minute ($0.05) alongside the downgrade to the grok-voice-think-fast-1.0 voice model.
 - v5 (2026-08-01) — Raised the live-call rate from 1,000 to 1,100 credits/minute ($0.55) alongside the upgrade to the grok-voice-think-fast-2.0 voice model. The "~1,000 credits ≈ 1 minute" rule of thumb is unchanged: it is about speech generation, not calls, and the two rates are no longer the same number.
 - v4 (2026-07-25) — Fixed four claims flagged in review. Corrected the free-tier call limit, which v3 got backwards: it is a cumulative 5-minute total across all calls that lifts on first purchase, not a per-call cap. Scoped API positioning to speech generation only, with a capability table — cloning and live calling are web-app features and `/voices` serves public voices only. Withdrew the "our terms prohibit deception and impersonation" claim, which the published terms do not support, and flagged that the live FAQ already makes it. Added a model-dependent credit burn-rate table, since a cloned voice costs ~10× a Gemini voice and the "~1,000 credits/minute" figure is an average no single voice charges. Also corrected the header's claim that skills in this repo read the file.

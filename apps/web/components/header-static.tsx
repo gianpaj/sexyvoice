@@ -38,7 +38,7 @@ export function HeaderStatic({
                   pathname: '/login',
                   query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
                 }}
-                prefetch
+                prefetch={false}
               >
                 {t('login')}
               </Link>
@@ -49,7 +49,7 @@ export function HeaderStatic({
                   pathname: '/signup',
                   query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
                 }}
-                prefetch
+                prefetch={false}
               >
                 {t('signup')}
               </Link>
@@ -70,7 +70,7 @@ export function HeaderStatic({
                 pathname: '/login',
                 query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
               }}
-              prefetch
+              prefetch={false}
             >
               {t('login')}
             </Link>
@@ -86,7 +86,7 @@ export function HeaderStatic({
                 pathname: '/signup',
                 query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
               }}
-              prefetch
+              prefetch={false}
             >
               {t('signup')}
             </Link>

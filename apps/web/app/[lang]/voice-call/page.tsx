@@ -98,8 +98,8 @@ export default async function LandingPage(props: Props) {
   // dynamic rendering (`cache-control: private, no-store`), which both prevents
   // CDN caching and disqualifies the page from the back/forward cache (bfcache).
   // The <Banner> client component already re-reads the dismissal cookies on the
-  // client (it starts hidden and only reveals itself when no dismiss cookie is
-  // set), so server-side filtering here is redundant.
+  // client (it renders visible and hides itself after hydration when dismissed
+  // or expired), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
     lang,
@@ -248,7 +248,9 @@ export default async function LandingPage(props: Props) {
                     effect="ringHover"
                     size="lg"
                   >
-                    <Link href="/signup">{dictCustomCharacter.action}</Link>
+                    <Link href="/signup" prefetch={false}>
+                      {dictCustomCharacter.action}
+                    </Link>
                   </Button>
                   <p className="text-pretty text-gray-400 text-xs">
                     {dictCustomCharacter.note}
@@ -286,7 +288,9 @@ export default async function LandingPage(props: Props) {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href="/signup">{dictLanding.voiceCall.cta.action}</Link>
+                <Link href="/signup" prefetch={false}>
+                  {dictLanding.voiceCall.cta.action}
+                </Link>
               </Button>
             </div>
           </div>

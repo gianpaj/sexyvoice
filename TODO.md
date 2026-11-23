@@ -131,7 +131,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## Emails
 
-- 'Welcome to SexyVoice!' - Glad to have you on board! – Gianfri
+- 'Welcome to SexyVoice!' - Glad to have you on board! (in different languages)
 
 ## Later
 

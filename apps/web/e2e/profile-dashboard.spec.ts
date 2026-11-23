@@ -74,11 +74,10 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     await expect(profilePage.deleteAccountButton).toBeVisible();
   });
 
-  test('should show delete account button with destructive styling', async () => {
+  test('should use destructive styling for the deletion button', async () => {
     const deleteButton = profilePage.deleteAccountButton;
     await expect(deleteButton).toBeVisible();
-    // The button should be a destructive variant (red)
-    await expect(deleteButton).toHaveText(/delete content/i);
+    await expect(deleteButton).toHaveAttribute('data-variant', 'destructive');
   });
 
   test('should open delete confirmation dialog', async ({ page }, testInfo) => {
@@ -88,9 +87,11 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     // Confirmation dialog should appear
     await profilePage.expectConfirmationDialogVisible();
 
-    // Dialog should have cancel and continue/delete buttons
     await expect(profilePage.confirmationCancelButton).toBeVisible();
     await expect(profilePage.confirmationContinueButton).toBeVisible();
+    await expect(profilePage.confirmationDialogDescription).toContainText(
+      'To request full account deletion, email info@sexyvoice.ai or use the built-in chat.',
+    );
 
     await argosScreenshot(
       page,

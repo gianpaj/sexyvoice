@@ -1,10 +1,22 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { setCookie } from '@/lib/cookies';
+import { getCookie, setCookie } from '@/lib/cookies';
 
 afterEach(() => {
   Reflect.deleteProperty(window, 'cookieStore');
+});
+
+describe('getCookie', () => {
+  it('reads a cookie when another cookie is malformed', async () => {
+    // biome-ignore lint/suspicious/noDocumentCookie: Exercises the document.cookie fallback.
+    document.cookie = 'broken=%E0%A4%A';
+    // biome-ignore lint/suspicious/noDocumentCookie: Exercises the document.cookie fallback.
+    document.cookie = 'banner-dismissed=true';
+
+    await expect(getCookie('banner-dismissed')).resolves.toBe('true');
+    await expect(getCookie('broken')).resolves.toBe('%E0%A4%A');
+  });
 });
 
 describe('setCookie', () => {

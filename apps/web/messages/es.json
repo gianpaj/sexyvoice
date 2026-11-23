@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Comienza con 10,000 créditos gratis",
-      "title": "¿Listo para encontrar tu voz?",
-      "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
-      "action": "Crea tu primera voz"
+      "title": "Tus palabras, con emoción",
+      "subtitle": "Escribe una frase y escúchala reír, suspirar o susurrar. O llama a un personaje y habla con él.",
+      "action": "Pruébalo gratis"
     },
     "voiceCall": {
       "hero": {
@@ -284,8 +284,8 @@
               "answer": "Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real."
             },
             {
-              "question": "¿Puedo llamar a un personaje con mi propia voz?",
-              "answer": "Sí. Una recarga o un pago de suscripción desbloquea las voces guardadas. Crea un personaje y elige \"Clonar una voz\", o usa \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz y elígela como voz del personaje."
+              "question": "¿Cómo hago una llamada de voz con una voz clonada?",
+              "answer": "Ve a la página de llamadas, crea un personaje y selecciona tu voz clonada guardada. Guarda el personaje e inicia la llamada. Si aún no has guardado una voz, elige \"Clonar una voz\" al crear el personaje, o \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz. Una recarga o un pago de suscripción desbloquea los personajes personalizados y las voces guardadas."
             },
             {
               "question": "¿Cuánto cuesta?",
@@ -814,7 +814,7 @@
       "stop": "Detener muestra de {name}",
       "showAll": "Ver todas ({count})",
       "showFewer": "Ver menos",
-      "cloneLimit": "Tienes {max} voces. Elimina una en la página Clonar para guardar otra."
+      "cloneLimit": "Tienes {max} voces. Elimina una para guardar otra."
     },
     "inCall": {
       "connecting": "Conectando…",
@@ -1038,12 +1038,12 @@
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
-        "button": "Eliminar contenido",
-        "confirmTitle": "¿Eliminar contenido de tu cuenta?",
-        "confirmDescription": "Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Conservamos tus datos de acceso, tu perfil y tus créditos restantes. Conservamos los registros de uso para la facturación y el seguimiento de costes internos. Tus claves API dejarán de funcionar. Si vuelves a iniciar sesión con el mismo correo electrónico, recuperarás el acceso a la misma cuenta con los mismos créditos. El contenido eliminado no se puede recuperar.",
+        "button": "Eliminar cuenta o contenido",
+        "confirmTitle": "Eliminar contenido",
+        "confirmDescription": "Tu cuenta seguirá activa. Se eliminarán:\n• Los archivos de audio generados del almacenamiento y de tu historial\n• Los personajes personalizados y sus instrucciones\n• Los recuerdos de las llamadas\n• Las voces clonadas\n\nSe cerrará tu sesión. Podrás volver a iniciarla con el mismo correo electrónico y conservarás tu perfil y tus créditos restantes. Tus claves API dejarán de funcionar. Conservamos los registros de uso para la facturación y el seguimiento de costes internos. El contenido eliminado no se puede recuperar.\n\nPara solicitar la eliminación completa de tu cuenta, escribe a info@sexyvoice.ai o usa el chat integrado.",
         "alertTitle": "Elimina contenido de tu cuenta",
         "cancel": "Cancelar",
-        "continue": "Continuar",
+        "continue": "Eliminar contenido",
         "errors": {
           "manageBilling": "Gestionar facturación",
           "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu contenido.",
@@ -1143,11 +1143,11 @@
     "/tools/audio-converter": "Conversor de Audio",
     "/tools/transcribe": "Transcripción de Audio",
     "titleAudioConverter": "Conversor de Audio Online Gratuito – MP3, WAV, FLAC y Más",
-    "titleTranscribe": "Transcripción de Audio Online Gratuita – Voz a Texto en 99+ Idiomas",
+    "titleTranscribe": "Transcripción de Audio Online Gratuita – Voz a Texto en 30+ Idiomas",
     "descriptionAudioConverter": "Conversor de audio online gratuito – Convierte MP3, WAV, FLAC, OGG, AAC, MP4 y más formatos directamente en tu navegador. Sin subir archivos, 100% privado y offline. Desarrollado con FFmpeg.",
-    "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 99 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
+    "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 30 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
     "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
-    "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
+    "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción multilingüe, transcripción privada",
     "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla",
     "titleAudioJoiner": "Unificador de Audio Gratuito – Une y Recorta Audio",
     "descriptionAudioJoiner": "Une varios archivos de audio y recorta cada segmento directamente en tu navegador. Privado, gratuito y sin subidas.",
@@ -1241,12 +1241,13 @@
     }
   },
   "footer": {
-    "tagline": "Generación de voz con IA. Crea audio natural y expresivo en segundos.",
+    "tagline": "Voces de IA expresivas que puedes generar, clonar y llamar.",
     "featuresHeading": "Funciones",
     "toolsHeading": "Herramientas",
     "companyHeading": "Empresa",
     "legalHeading": "Legal",
     "statusPage": "Página de estado",
+    "docs": "Documentación",
     "privacyPolicy": "Política de privacidad",
     "termsAndConditions": "Términos y condiciones",
     "copyright": "SexyVoice.ai. Todos los derechos reservados.",
@@ -1444,6 +1445,16 @@
       "join": "Unir",
       "joining": "Uniendo...",
       "cancel": "Cancelar"
+    },
+    "track": {
+      "trimStart": "Inicio del recorte",
+      "trimEnd": "Fin del recorte",
+      "moveUp": "Subir segmento",
+      "moveDown": "Bajar segmento",
+      "delete": "Eliminar segmento",
+      "start": "Inicio: {time}",
+      "end": "Fin: {time}",
+      "duration": "Duración: {time}"
     },
     "progress": {
       "processing": "Procesando"

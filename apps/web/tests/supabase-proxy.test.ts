@@ -136,10 +136,53 @@ describe('Supabase Proxy', () => {
     expect(redirectLocation(response)).toBeNull();
   });
 
-  it('redirects authenticated users away from login', async () => {
-    const response = await updateSession(createRequest('/en/login'), 'en');
+  it('redirects authenticated users away from login and signup directly to generate', async () => {
+    const loginResponse = await updateSession(createRequest('/en/login'), 'en');
+    const signupResponse = await updateSession(
+      createRequest('/en/signup'),
+      'en',
+    );
+    const trailingSlashLoginResponse = await updateSession(
+      createRequest('/en/login/'),
+      'en',
+    );
+    const trailingSlashSignupResponse = await updateSession(
+      createRequest('/en/signup/'),
+      'en',
+    );
 
-    expect(redirectLocation(response)).toBe('https://example.com/en/dashboard');
+    expect(redirectLocation(loginResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+    expect(redirectLocation(signupResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+    expect(redirectLocation(trailingSlashLoginResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+    expect(redirectLocation(trailingSlashSignupResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
+  });
+
+  it('honors a valid clone demo redirect_to for authenticated users on auth routes', async () => {
+    const validResponse = await updateSession(
+      createRequest(
+        '/de/login?redirect_to=%2Fde%2Fdashboard%2Fclone%3Fdemo%3Dheike%26take%3DcalmSlow',
+      ),
+      'de',
+    );
+    const unsafeResponse = await updateSession(
+      createRequest('/en/login?redirect_to=https%3A%2F%2Fevil.com'),
+      'en',
+    );
+
+    expect(redirectLocation(validResponse)).toBe(
+      'https://example.com/de/dashboard/clone?demo=heike&take=calmSlow',
+    );
+    expect(redirectLocation(unsafeResponse)).toBe(
+      'https://example.com/en/dashboard/generate',
+    );
   });
 
   it('propagates refreshed cookies and preserves next-intl response state', async () => {

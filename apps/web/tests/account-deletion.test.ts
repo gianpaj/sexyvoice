@@ -132,7 +132,6 @@ function setupAccountDeletion({
       if (table === 'usage_events') return usageRead;
       if (table === 'audio_references') return referenceRead;
       if (table === 'agent_memories') return memoryDelete;
-      if (table === 'call_sessions') return transcriptUpdate;
       throw new Error(`Unexpected table: ${table}`);
     }),
   };
@@ -148,7 +147,9 @@ function setupAccountDeletion({
   audioUpdate.eq.mockReturnValue(audioUpdate);
   audioUpdate.update.mockReturnValue(audioUpdate);
   const adminSupabase = {
-    from: vi.fn().mockReturnValue(audioUpdate),
+    from: vi.fn((table: string) =>
+      table === 'call_sessions' ? transcriptUpdate : audioUpdate,
+    ),
     rpc: vi.fn().mockResolvedValue(conversationResult),
   };
 
@@ -416,11 +417,13 @@ describe('account deletion', () => {
   });
 
   it("clears only the authenticated user's transcripts and preserves call billing fields", async () => {
-    const { transcriptUpdate, sessionSupabase } = setupAccountDeletion();
+    const { adminSupabase, transcriptUpdate, sessionSupabase } =
+      setupAccountDeletion();
 
     await handleDeleteAccountAction({ lang: 'en' });
 
-    expect(sessionSupabase.from).toHaveBeenCalledWith('call_sessions');
+    expect(adminSupabase.from).toHaveBeenCalledWith('call_sessions');
+    expect(sessionSupabase.from).not.toHaveBeenCalledWith('call_sessions');
     expect(transcriptUpdate.update.mock.calls).toEqual([[{ transcript: [] }]]);
     expect(transcriptUpdate.eq.mock.calls).toEqual([['user_id', 'user-1']]);
     expect(

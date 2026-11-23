@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Start with 10,000 free credits",
-      "title": "Ready to find your voice?",
-      "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
-      "action": "Create your first voice"
+      "title": "Your words, with feeling",
+      "subtitle": "Type a line and hear it laugh, sigh, or whisper. Or call a character and talk back.",
+      "action": "Try it free"
     },
     "voiceCall": {
       "hero": {
@@ -284,8 +284,8 @@
               "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
-              "question": "Can I call a character in my own voice?",
-              "answer": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose \"Clone a voice\", or use \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice."
+              "question": "How do I make a voice call with a cloned voice?",
+              "answer": "Go to the Call page, create a character, and select your saved cloned voice. Save the character, then start the call. If you haven't saved a voice yet, choose \"Clone a voice\" in the character creator, or \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice. A top-up or subscription payment unlocks custom characters and saved voices."
             },
             {
               "question": "How much does it cost?",
@@ -812,7 +812,7 @@
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
       "showFewer": "Show fewer",
-      "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
+      "cloneLimit": "You have {max} voices. Delete one to save another."
     },
     "inCall": {
       "connecting": "Connecting…",
@@ -1036,12 +1036,12 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete content",
-        "confirmTitle": "Delete content from your account?",
-        "confirmDescription": "This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. We keep your login, profile and remaining credits. Usage records are kept for billing and internal cost tracking. Your API keys will stop working. Signing in again with the same email restores the same account and credits. Deleted content cannot be restored.",
+        "button": "Delete account or content",
+        "confirmTitle": "Delete content",
+        "confirmDescription": "Your account stays open. This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. You can sign back in with the same email and keep your profile and remaining credits. Your API keys will stop working. We keep usage records for billing and internal cost tracking. Deleted content cannot be restored.\n\nTo request full account deletion, email info@sexyvoice.ai or use the built-in chat.",
         "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
-        "continue": "Continue",
+        "continue": "Delete content",
         "errors": {
           "manageBilling": "Manage billing",
           "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your content.",
@@ -1126,9 +1126,9 @@
     "titleVoiceCloning": "AI Voice Cloning",
     "descriptionVoiceCloning": "Clone a voice from 10 seconds of audio and hear it speak naturally in 28 languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
-    "titleTranscribe": "Free Audio Transcription – 99+ Languages",
+    "titleTranscribe": "Free Audio Transcription – 30+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
-    "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+    "descriptionTranscribe": "Transcribe audio and video to text in 30+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
     "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
@@ -1239,12 +1239,13 @@
     }
   },
   "footer": {
-    "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "tagline": "Expressive AI voices you can generate, clone, and call.",
     "featuresHeading": "Features",
     "toolsHeading": "Tools",
     "companyHeading": "Company",
     "legalHeading": "Legal",
     "statusPage": "Status page",
+    "docs": "Documentation",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved.",
@@ -1442,6 +1443,16 @@
       "join": "Join",
       "joining": "Joining...",
       "cancel": "Cancel"
+    },
+    "track": {
+      "trimStart": "Trim start",
+      "trimEnd": "Trim end",
+      "moveUp": "Move segment up",
+      "moveDown": "Move segment down",
+      "delete": "Delete segment",
+      "start": "Start: {time}",
+      "end": "End: {time}",
+      "duration": "Duration: {time}"
     },
     "progress": {
       "processing": "Processing"

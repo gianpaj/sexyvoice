@@ -201,7 +201,9 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .select('id, sample_url, provider, voice_id')
         .eq('user_id', user.id),
       deleteUserMemories(supabase, user.id),
-      supabase
+      // Users cannot write call_sessions, so the verified user's transcripts
+      // are cleared with the admin client.
+      admin
         .from('call_sessions')
         .update({ transcript: [] })
         .eq('user_id', user.id)
