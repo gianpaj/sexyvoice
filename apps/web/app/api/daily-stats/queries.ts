@@ -211,7 +211,9 @@ export async function getPublicCharacterIds(
     .select('id')
     .eq('is_public', true);
   if (error) throw error;
-  return ((data ?? []) as { id: string }[]).map((row) => row.id);
+  return ((data ?? []) as Pick<Tables<'characters'>, 'id'>[]).map(
+    (row) => row.id,
+  );
 }
 
 export function getCreditTransactionsInRange(
