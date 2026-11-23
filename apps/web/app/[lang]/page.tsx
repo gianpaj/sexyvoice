@@ -362,7 +362,7 @@ export default async function LandingPage(props: {
               </h2>
               <Button
                 asChild
-                className="mb-4 min-w-48 self-center rounded-full border-fuchsia-400/40 bg-fuchsia-400/5 text-pink-100 shadow-none transition-colors hover:border-fuchsia-400/70 hover:bg-fuchsia-400/15 hover:text-white focus-visible:ring-fuchsia-400"
+                className="mb-4 min-w-48 self-center rounded-full border-fuchsia-400/40 bg-fuchsia-400/5 text-pink-100 shadow-none hover:border-fuchsia-400/70 hover:bg-fuchsia-400/15 hover:text-white focus-visible:ring-fuchsia-400"
                 size="lg"
                 variant="outline"
               >
