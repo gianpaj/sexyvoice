@@ -2,7 +2,7 @@
 
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { toast } from '@/components/services/toast';
 import { Button } from '@/components/ui/button';
@@ -72,13 +72,34 @@ function VoteButton({
 /**
  * Thumbs up/down on a generated audio file. Works for both voice generation
  * and voice cloning results: both APIs return the uploaded file's public
- * `url`, which is all `POST /api/audio-vote` needs to find its
- * `audio_files` row.
+ * `url`, which is all `/api/audio-vote` needs to find its `audio_files` row.
+ * Mounting loads any stored vote via GET so a revisited result keeps its
+ * selection.
  */
 export function AudioVoteButtons({ audioUrl }: { audioUrl: string }) {
   const t = useTranslations('audioVote');
   const [vote, setVote] = useState<Vote | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/audio-vote?audioUrl=${encodeURIComponent(audioUrl)}`)
+      .then(async (response) => {
+        if (!response.ok || cancelled) return;
+        const body = (await response.json()) as { vote?: unknown };
+        if (body.vote === 'up' || body.vote === 'down') {
+          setVote(body.vote);
+        }
+      })
+      .catch(() => {
+        // A missing stored vote just leaves both buttons unselected.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [audioUrl]);
 
   const handleVote = async (target: Vote) => {
     if (isSubmitting) return;

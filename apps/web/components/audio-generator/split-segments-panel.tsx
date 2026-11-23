@@ -4,6 +4,7 @@ import { CheckCircle2, Download, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
+import { AudioVoteButtons } from '@/components/audio-vote-buttons';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { AudioPlayerWithContext } from '../audio-player-with-context';
@@ -138,6 +139,7 @@ export function SplitSegmentsPanel({
                 >
                   <Download className="size-5" />
                 </Button>
+                <AudioVoteButtons audioUrl={segment.audioUrl} />
               </div>
             )}
           </div>

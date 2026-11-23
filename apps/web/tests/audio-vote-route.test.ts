@@ -1,24 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST } from '@/app/api/audio-vote/route';
+import { GET, POST } from '@/app/api/audio-vote/route';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const mocks = vi.hoisted(() => ({
-  redisDel: vi.fn(),
-  redisGet: vi.fn(),
-  redisSet: vi.fn(),
+  adminRpc: vi.fn(),
+  ratelimitLimit: vi.fn(),
 }));
 
 vi.mock('@upstash/redis', () => ({
   Redis: {
-    fromEnv: vi.fn(() => ({
-      del: mocks.redisDel,
-      get: mocks.redisGet,
-      set: mocks.redisSet,
-    })),
+    fromEnv: vi.fn(() => ({})),
   },
 }));
+
+vi.mock('@upstash/ratelimit', () => {
+  class Ratelimit {
+    static slidingWindow = vi.fn(() => ({}));
+    limit = mocks.ratelimitLimit;
+  }
+  return { Ratelimit };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
@@ -29,13 +32,19 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 const AUDIO_URL = 'https://files.sexyvoice.ai/generated-audio/test-abc123.wav';
-const VOTE_KEY = `audio-vote:test-user-id:${AUDIO_URL}`;
 
-function request(body: unknown) {
+function postRequest(body: unknown) {
   return new Request('http://localhost/api/audio-vote', {
     body: typeof body === 'string' ? body : JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
+  });
+}
+
+function getRequest(audioUrl?: string) {
+  const query = audioUrl ? `?audioUrl=${encodeURIComponent(audioUrl)}` : '';
+  return new Request(`http://localhost/api/audio-vote${query}`, {
+    method: 'GET',
   });
 }
 
@@ -53,37 +62,17 @@ function mockSession(user: { id: string } | null = { id: 'test-user-id' }) {
   return sessionSupabase;
 }
 
-/**
- * One builder covers both the lookup chain
- * (`.select().eq().eq().maybeSingle()` → `lookup`) and the update chain
- * (`.update().eq()` awaited directly → `update` via `then`).
- */
-function mockAdmin({
-  lookup,
-  update = { data: null, error: null },
-}: {
-  lookup: { data: unknown; error: unknown };
-  update?: { data: unknown; error: unknown };
-}) {
-  const query = {
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue(lookup),
-    select: vi.fn().mockReturnThis(),
-    then: (resolve: (value: unknown) => unknown) => resolve(update),
-    update: vi.fn().mockReturnThis(),
-  };
-  const adminSupabase = { from: vi.fn().mockReturnValue(query) };
+function mockAdmin() {
+  const adminSupabase = { rpc: mocks.adminRpc };
   vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
-  return { adminSupabase, query };
+  return adminSupabase;
 }
 
 describe('POST /api/audio-vote', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // mockReset also drops implementations a previous test installed.
-    mocks.redisGet.mockReset().mockResolvedValue(null);
-    mocks.redisSet.mockReset().mockResolvedValue('OK');
-    mocks.redisDel.mockReset().mockResolvedValue(1);
+    mocks.adminRpc.mockReset().mockResolvedValue({ data: 1, error: null });
+    mocks.ratelimitLimit.mockReset().mockResolvedValue({ success: true });
     vi.mocked(createClient).mockReset();
     vi.mocked(createAdminClient).mockReset();
   });
@@ -95,11 +84,12 @@ describe('POST /api/audio-vote', () => {
   it('rejects unauthenticated requests before data access', async () => {
     mockSession(null);
 
-    const response = await POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
+    const response = await POST(
+      postRequest({ audioUrl: AUDIO_URL, vote: 'up' }),
+    );
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(mocks.redisGet).not.toHaveBeenCalled();
     expect(createAdminClient).not.toHaveBeenCalled();
   });
 
@@ -113,109 +103,180 @@ describe('POST /api/audio-vote', () => {
   ])('rejects %s with 400', async (_name, body) => {
     mockSession();
 
-    const response = await POST(request(body));
+    const response = await POST(postRequest(body));
 
     expect(response.status).toBe(400);
     expect(createAdminClient).not.toHaveBeenCalled();
   });
 
-  it('adds an upvote to total_votes and stores it in Redis', async () => {
+  it('rejects requests once the rate limit is spent', async () => {
     mockSession();
-    const { adminSupabase, query } = mockAdmin({
-      lookup: { data: { id: 'audio-1', total_votes: 5 }, error: null },
-    });
+    mocks.ratelimitLimit.mockResolvedValue({ success: false });
 
-    const response = await POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
+    const response = await POST(
+      postRequest({ audioUrl: AUDIO_URL, vote: 'up' }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(mocks.ratelimitLimit).toHaveBeenCalledWith('test-user-id');
+    expect(createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it('records an upvote through the atomic vote RPC', async () => {
+    mockSession();
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({ data: 6, error: null });
+
+    const response = await POST(
+      postRequest({ audioUrl: AUDIO_URL, vote: 'up' }),
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true, totalVotes: 6 });
-    expect(adminSupabase.from).toHaveBeenCalledWith('audio_files');
-    expect(query.select).toHaveBeenCalledWith('id, total_votes');
-    expect(query.eq).toHaveBeenCalledWith('url', AUDIO_URL);
-    expect(query.eq).toHaveBeenCalledWith('status', 'active');
-    expect(query.update).toHaveBeenCalledWith({ total_votes: 6 });
-    expect(query.eq).toHaveBeenCalledWith('id', 'audio-1');
-    expect(mocks.redisSet).toHaveBeenCalledWith(VOTE_KEY, 'up');
+    expect(mocks.adminRpc).toHaveBeenCalledTimes(1);
+    expect(mocks.adminRpc).toHaveBeenCalledWith('record_audio_vote', {
+      p_audio_url: AUDIO_URL,
+      p_user_id: 'test-user-id',
+      p_vote: 'up',
+    });
   });
 
-  it('applies a downvote as -1', async () => {
+  it('clears a vote by omitting p_vote so the RPC default applies', async () => {
     mockSession();
-    const { query } = mockAdmin({
-      lookup: { data: { id: 'audio-1', total_votes: 5 }, error: null },
-    });
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({ data: 4, error: null });
 
     const response = await POST(
-      request({ audioUrl: AUDIO_URL, vote: 'down' }),
+      postRequest({ audioUrl: AUDIO_URL, vote: null }),
     );
 
     expect(response.status).toBe(200);
-    expect(query.update).toHaveBeenCalledWith({ total_votes: 4 });
-    expect(mocks.redisSet).toHaveBeenCalledWith(VOTE_KEY, 'down');
-  });
-
-  it('removes the previous delta when a vote is toggled off', async () => {
-    mockSession();
-    mocks.redisGet.mockResolvedValue('up');
-    const { query } = mockAdmin({
-      lookup: { data: { id: 'audio-1', total_votes: 5 }, error: null },
+    expect(mocks.adminRpc).toHaveBeenCalledWith('record_audio_vote', {
+      p_audio_url: AUDIO_URL,
+      p_user_id: 'test-user-id',
+      p_vote: undefined,
     });
-
-    const response = await POST(
-      request({ audioUrl: AUDIO_URL, vote: null }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(query.update).toHaveBeenCalledWith({ total_votes: 4 });
-    expect(mocks.redisDel).toHaveBeenCalledWith(VOTE_KEY);
   });
 
-  it('applies a two-point swing when switching from down to up', async () => {
-    mockSession();
-    mocks.redisGet.mockResolvedValue('down');
-    const { query } = mockAdmin({
-      lookup: { data: { id: 'audio-1', total_votes: 5 }, error: null },
-    });
-
-    const response = await POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
-
-    expect(response.status).toBe(200);
-    expect(query.update).toHaveBeenCalledWith({ total_votes: 7 });
-    expect(mocks.redisSet).toHaveBeenCalledWith(VOTE_KEY, 'up');
-  });
-
-  it('is a no-op when the stored vote already matches', async () => {
-    mockSession();
-    mocks.redisGet.mockResolvedValue('up');
-
-    const response = await POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
-
-    expect(response.status).toBe(200);
-    expect(createAdminClient).not.toHaveBeenCalled();
-    expect(mocks.redisSet).not.toHaveBeenCalled();
-  });
-
-  it('returns 404 when no active audio file owns the URL', async () => {
+  it('retries while the background insert lags, then returns 404', async () => {
     vi.useFakeTimers();
     mockSession();
-    mockAdmin({ lookup: { data: null, error: null } });
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({ data: null, error: null });
 
-    const pending = POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
+    const pending = POST(postRequest({ audioUrl: AUDIO_URL, vote: 'up' }));
     // Generation writes its row in after(); the route retries past the delays.
-    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     const response = await pending;
 
     expect(response.status).toBe(404);
-    expect(mocks.redisSet).not.toHaveBeenCalled();
+    expect(mocks.adminRpc.mock.calls.length).toBeGreaterThan(1);
   });
 
-  it('returns 500 when the vote update fails', async () => {
+  it('applies the vote once the delayed insert lands', async () => {
+    vi.useFakeTimers();
     mockSession();
-    mockAdmin({
-      lookup: { data: { id: 'audio-1', total_votes: 5 }, error: null },
-      update: { data: null, error: { message: 'update failed' } },
+    mockAdmin();
+    mocks.adminRpc
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValue({ data: 3, error: null });
+
+    const pending = POST(postRequest({ audioUrl: AUDIO_URL, vote: 'up' }));
+    await vi.advanceTimersByTimeAsync(1000);
+    const response = await pending;
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, totalVotes: 3 });
+    expect(mocks.adminRpc).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns 500 when the vote RPC fails', async () => {
+    mockSession();
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'rpc failed' },
     });
 
-    const response = await POST(request({ audioUrl: AUDIO_URL, vote: 'up' }));
+    const response = await POST(
+      postRequest({ audioUrl: AUDIO_URL, vote: 'up' }),
+    );
+
+    expect(response.status).toBe(500);
+  });
+});
+
+describe('GET /api/audio-vote', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.adminRpc.mockReset().mockResolvedValue({ data: null, error: null });
+    mocks.ratelimitLimit.mockReset().mockResolvedValue({ success: true });
+    vi.mocked(createClient).mockReset();
+    vi.mocked(createAdminClient).mockReset();
+  });
+
+  it('rejects unauthenticated requests', async () => {
+    mockSession(null);
+
+    const response = await GET(getRequest(AUDIO_URL));
+
+    expect(response.status).toBe(401);
+    expect(createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it('rejects a missing audioUrl with 400', async () => {
+    mockSession();
+
+    const response = await GET(getRequest());
+
+    expect(response.status).toBe(400);
+    expect(createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("returns the caller's stored vote", async () => {
+    mockSession();
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({ data: 'down', error: null });
+
+    const response = await GET(getRequest(AUDIO_URL));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ vote: 'down' });
+    expect(mocks.adminRpc).toHaveBeenCalledWith('get_audio_vote', {
+      p_audio_url: AUDIO_URL,
+      p_user_id: 'test-user-id',
+    });
+  });
+
+  it('returns a null vote for unrated or unknown audio', async () => {
+    mockSession();
+    mockAdmin();
+
+    const response = await GET(getRequest(AUDIO_URL));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ vote: null });
+  });
+
+  it('rejects requests once the rate limit is spent', async () => {
+    mockSession();
+    mocks.ratelimitLimit.mockResolvedValue({ success: false });
+
+    const response = await GET(getRequest(AUDIO_URL));
+
+    expect(response.status).toBe(429);
+    expect(createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when the lookup RPC fails', async () => {
+    mockSession();
+    mockAdmin();
+    mocks.adminRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'rpc failed' },
+    });
+
+    const response = await GET(getRequest(AUDIO_URL));
 
     expect(response.status).toBe(500);
   });

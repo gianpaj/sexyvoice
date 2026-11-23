@@ -417,6 +417,38 @@ login, signup, OAuth, and email confirmation. Other signup redirects use the
 default callback. The public cloning page ends with a section that links to
 `/[lang]/voice-call`, and the voice call page links back to it.
 
+## Audio Rating
+
+Endpoints: `POST /api/audio-vote`, `GET /api/audio-vote`
+
+Session-authenticated dashboard endpoints backing the thumbs up/down controls
+on the Generate, split-segment, and Clone result views. Both
+`/api/generate-voice` and `/api/clone-voice` return only the uploaded result's
+public URL, so the URL identifies the caller's `audio_files` row.
+
+`POST /api/audio-vote` takes `{ audioUrl: string, vote: "up" | "down" | null }`
+— `null` clears the vote — and answers `{ success: true, totalVotes: number }`.
+A per-user Upstash sliding-window limit of 60 requests/minute applies.
+`audio_files` rows are written in `after()` after the generation response, so
+the endpoint retries the lookup briefly before returning 404. Errors use the
+standard `{ error }` shape: 401 unauthenticated, 400 invalid body, 429 rate
+limited, 404 unknown or unowned URL, 500 server failure.
+
+The `record_audio_vote` RPC does the write atomically: it locks the caller's
+newest active row for the URL (`SELECT ... FOR UPDATE`), reads the stored vote
+from `audio_votes` (one row per `audio_file_id` + `user_id`), applies the delta
+to `audio_files.total_votes`, and saves the vote in a single transaction. The
+lock serializes overlapping votes on the same audio, and keying votes to the
+row id — not the URL — means a deleted-and-regenerated URL starts unrated and
+deleting a row cascades its votes. Only the row owner may vote, since
+`total_votes` ranks `/api/popular-audios`. A partial index on
+`audio_files(url) WHERE status = 'active'` backs the lookup.
+
+`GET /api/audio-vote?audioUrl=<url>` returns `{ vote: "up" | "down" | null }`
+through `get_audio_vote`, letting remounted controls restore the saved
+selection. `audio_votes` is RLS-enabled with no policies; both RPCs are
+`SECURITY INVOKER`, execute-granted to `service_role` only.
+
 ## Real-time AI Voice Calls
 
 Endpoint: `POST /api/call-token`
