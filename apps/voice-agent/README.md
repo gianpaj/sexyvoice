@@ -1,7 +1,7 @@
 # Internal JS browser call
 
 A short LiveKit Agents JS call runs in this monorepo with xAI streaming STT,
-Grok 4.20 through LiveKit inference, and streaming Inworld TTS. Next.js issues
+Grok 4.20 through TanStack AI and the xAI API, and streaming Inworld TTS. Next.js issues
 a token; media goes through LiveKit to a persistent Node worker.
 
 Open `/{lang}/dashboard/voice-spike`, then press the phone button. Speak, or
@@ -74,6 +74,34 @@ the call continue with thread history alone.
 Memory context goes to the model separately from visible conversation turns.
 The worker reads existing long-term slots. Call-end extraction, verification,
 and updates remain in the Python path.
+
+## Shadow call accounting
+
+Run the local worker at info level to collect one structured
+`Voice spike shadow accounting` event per finalized call:
+
+```sh
+cd apps/voice-agent
+node --env-file-if-exists=.env.local src/agent.ts start --log-level info
+```
+
+The call clock starts just before the LiveKit session starts and stops when
+the worker begins ending the call. Provider usage can still arrive during
+teardown. The projection follows SexyCall's first-speech and minimum-duration
+rules. A call that never speaks or ends before ten whole seconds projects zero
+credits. A qualifying call projects 500 credits per started 30-second bucket
+of elapsed whole seconds. The five-minute demo cap applies regardless of the
+projection. The demo reads and writes no wallet data.
+
+The report includes xAI STT audio milliseconds, Grok uncached/cached/output
+tokens, and Inworld TTS characters reported by the adapters. It estimates each
+component using global [xAI rates](https://docs.x.ai/developers/pricing) and
+[Inworld On-Demand rates](https://inworld.ai/pricing). A cancelled or failed
+Grok request without final usage counts as unreported. Missing audio or character
+readings remain null. Provider retries and cancelled synthesis may be
+underreported by the SDK. The report has no total or invoice-equivalent cost.
+It excludes LiveKit media, worker compute, and workspace discounts. The event
+contains the room name, duration, and counters.
 
 ## Saved Inworld voice comparison
 
@@ -233,7 +261,7 @@ turn and acknowledged server mute.
 
 These results establish the local browser/provider path. Physical microphone
 quality, iOS audio permission/unlock, constrained networks, deployed worker
-images, provider cost measurements, and 30/60-minute calls remain unverified.
+images, provider invoice reconciliation, and 30/60-minute calls remain unverified.
 The [spike plan](../../plans/2026-11-16-livekit-agents-js-spike.md) owns those
 experiments and the production decision gates. Python baseline inspected:
 `23cac3548c49c7aeeeb1f59ac57da761908bdf34`.

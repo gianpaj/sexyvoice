@@ -2,15 +2,27 @@ import { randomUUID } from 'node:crypto';
 import { llm } from '@livekit/agents';
 import { REPLY_MODEL, streamReply } from '@sexyvoice/voice-spike/reply';
 
-export class TanStackLLM extends llm.LLM {
-  constructor(privateThreadId: string, generate = streamReply) {
-    super();
-    this.threadId = privateThreadId;
-    this.generate = generate;
-  }
+import type { TrackReply } from './call-accounting.ts';
 
+interface TanStackLLMOptions {
+  generate?: typeof streamReply;
+  trackReply?: TrackReply;
+}
+
+export class TanStackLLM extends llm.LLM {
   private readonly threadId: string;
   private readonly generate: typeof streamReply;
+  private readonly trackReply?: TrackReply;
+
+  constructor(
+    threadId: string,
+    { generate = streamReply, trackReply }: TanStackLLMOptions = {},
+  ) {
+    super();
+    this.threadId = threadId;
+    this.generate = generate;
+    this.trackReply = trackReply;
+  }
 
   override get model() {
     return REPLY_MODEL;
@@ -25,19 +37,27 @@ export class TanStackLLM extends llm.LLM {
   }
 
   chat({ chatCtx }: Parameters<llm.LLM['chat']>[0]): llm.LLMStream {
-    return new TanStackLLMStream(this, chatCtx, this.threadId, this.generate);
+    return new TanStackLLMStream(
+      this,
+      chatCtx,
+      this.threadId,
+      this.generate,
+      this.trackReply,
+    );
   }
 }
 
 class TanStackLLMStream extends llm.LLMStream {
   private readonly threadId: string;
   private readonly generate: typeof streamReply;
+  private readonly trackReply?: TrackReply;
 
   constructor(
     model: TanStackLLM,
     chatCtx: llm.ChatContext,
     threadId: string,
     generate: typeof streamReply,
+    trackReply?: TrackReply,
   ) {
     super(model, {
       chatCtx,
@@ -45,6 +65,7 @@ class TanStackLLMStream extends llm.LLMStream {
     });
     this.threadId = threadId;
     this.generate = generate;
+    this.trackReply = trackReply;
   }
 
   protected async run() {
@@ -59,6 +80,8 @@ class TanStackLLMStream extends llm.LLMStream {
       }
     }
     const runId = randomUUID();
+    if (this.abortController.signal.aborted) return;
+    const reportUsage = this.trackReply?.();
     try {
       for await (const event of this.generate({
         threadId: this.threadId,
@@ -73,8 +96,10 @@ class TanStackLLMStream extends llm.LLMStream {
             delta: { role: 'assistant', content: event.text },
           });
         }
-        if (event.type === 'finished' && event.usage)
+        if (event.type === 'finished' && event.usage) {
+          reportUsage?.(event.usage);
           this.queue.put({ id: runId, usage: event.usage });
+        }
       }
     } catch (error) {
       if (!this.abortController.signal.aborted) throw error;

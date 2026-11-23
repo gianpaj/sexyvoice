@@ -16,6 +16,7 @@ import { replyInstructions } from '@sexyvoice/voice-spike/history';
 import { loadMemory } from '@sexyvoice/voice-spike/memory';
 import { createClient } from '@supabase/supabase-js';
 
+import { CallAccounting } from './call-accounting.ts';
 import { closeCall } from './call-cleanup.ts';
 import { parseJob } from './config.ts';
 import { CallMemoryAgent } from './memory.ts';
@@ -105,51 +106,74 @@ export default defineAgent({
     const agent = memory?.recall
       ? new CallMemoryAgent(agentOptions, memory.recall)
       : new voice.Agent(agentOptions);
+    const accounting = new CallAccounting();
+    const stt = new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' });
+    stt.on('metrics_collected', (metric) => {
+      accounting.recordTranscription(metric.audioDurationMs);
+    });
+    const tts = new TTS({
+      model: 'inworld-tts-2',
+      voice: job.inworldVoiceId ?? 'Ashley',
+      deliveryMode: 'BALANCED',
+    });
+    tts.on('metrics_collected', (metric) => {
+      accounting.recordSynthesis(metric.charactersCount);
+    });
     const session = new voice.AgentSession({
       vad: ctx.proc.userData.vad as Awaited<ReturnType<typeof VAD.load>>,
-      stt: new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' }),
-      llm: new TanStackLLM(job.conversationId),
-      tts: new TTS({
-        model: 'inworld-tts-2',
-        voice: job.inworldVoiceId ?? 'Ashley',
-        deliveryMode: 'BALANCED',
+      stt,
+      llm: new TanStackLLM(job.conversationId, {
+        trackReply: () => accounting.startReply(),
       }),
+      tts,
       turnHandling: { turnDetection: 'stt', interruption: { mode: 'vad' } },
     });
+    session.on(
+      voice.AgentSessionEventTypes.AgentStateChanged,
+      ({ newState }) => {
+        if (newState === 'speaking') accounting.markSpeaking();
+      },
+    );
     // Input remains disabled until the browser has verified this runtime.
     session.input.setAudioEnabled(false);
     let cleanup: Promise<void> | undefined;
-    const close = () => {
+    const finalize = () => {
+      const report = accounting.finalize();
+      if (report)
+        log().info({ roomName, ...report }, 'Voice spike shadow accounting');
+      return thread.close();
+    };
+    const finish = (reason: Parameters<CallAccounting['stop']>[0]) => {
+      accounting.stop(reason);
       clearTimeout(deadline);
       cleanup ??= closeCall({
         closeSession: () => session.close(),
         disconnect: () => ctx.room.disconnect(),
-        flush: () => thread.close(),
+        flush: finalize,
         onCloseFailure: () =>
           log().warn(
             { roomName },
             'Voice spike session teardown did not finish',
           ),
-      });
+      }).finally(() => ctx.deleteRoom(roomName));
       return cleanup;
     };
-    const finish = async () => {
-      await close().finally(() => ctx.deleteRoom(roomName));
-    };
     const deadline = setTimeout(() => {
-      finish().catch(() => ctx.shutdown('spike deadline'));
+      finish('duration_limit').catch(() => ctx.shutdown('spike deadline'));
     }, MAX_CALL_MS);
     ctx.addShutdownCallback(() => {
       clearTimeout(deadline);
       // The SDK calls this after disconnecting, even when its own close times out.
-      return thread.close();
+      return finalize();
     });
     session.on(
       voice.AgentSessionEventTypes.ConversationItemAdded,
       ({ item }) => {
         thread.append(item, () => {
           reportStorageError().finally(() =>
-            finish().catch(() => ctx.shutdown('history failure')),
+            finish('history_failure').catch(() =>
+              ctx.shutdown('history failure'),
+            ),
           );
         });
       },
@@ -163,18 +187,26 @@ export default defineAgent({
     });
     ctx.room.on(RoomEvent.ParticipantDisconnected, (departed) => {
       if (departed.identity === participant.identity)
-        finish().catch(() => ctx.shutdown('caller disconnected'));
+        finish('user_disconnect').catch(() =>
+          ctx.shutdown('caller disconnected'),
+        );
     });
-    session.on(voice.AgentSessionEventTypes.Close, () => {
-      if (!cleanup) finish().catch(() => ctx.shutdown('session closed'));
+    session.on(voice.AgentSessionEventTypes.Close, ({ reason }) => {
+      if (cleanup !== undefined) return;
+      finish(
+        reason === 'participant_disconnected'
+          ? 'user_disconnect'
+          : 'session_closed',
+      ).catch(() => ctx.shutdown('session closed'));
     });
     session.on(voice.AgentSessionEventTypes.Error, (event) => {
       if (event.error.recoverable) return;
       local
         .setAttributes({ 'sv.spike.error': 'provider' })
         .catch(() => undefined);
-      finish().catch(() => ctx.shutdown('provider failure'));
+      finish('provider_failure').catch(() => ctx.shutdown('provider failure'));
     });
+    accounting.start();
     await session.start({
       agent,
       room: ctx.room,
@@ -183,7 +215,7 @@ export default defineAgent({
         participantIdentity: participant.identity,
         textInputCallback: (current, event) => {
           if (
-            cleanup ||
+            cleanup !== undefined ||
             event.participantIdentity !== participant.identity ||
             event.text.length > 2000
           )
@@ -193,9 +225,9 @@ export default defineAgent({
         },
       },
     });
-    if (cleanup) return;
+    if (cleanup !== undefined) return;
     await local.setAttributes({ [RUNTIME_ATTRIBUTE]: RUNTIME });
-    if (cleanup) return;
+    if (cleanup !== undefined) return;
     session.generateReply({
       instructions: opened.chatCtx.items.length
         ? 'Briefly welcome the caller back and let them pick up this conversation.'

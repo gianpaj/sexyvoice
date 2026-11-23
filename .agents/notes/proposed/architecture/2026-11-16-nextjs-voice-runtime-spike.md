@@ -212,6 +212,28 @@ We considered importing saved slots as synthetic history turns. Per-request
 context keeps recall out of user-visible history and avoids appending the same
 facts on redial. Checked extraction and writes remain a separate parity slice.
 
+### Shadow call accounting
+
+The JS worker projects the Python minute charge from the same clock boundary,
+first-speech eligibility, ten-second waiver, and 30-second buckets. The caller
+departure, duration limit, or failure freezes the clock before teardown. One
+final report combines that projection with the provider usage received by
+teardown, without touching wallets.
+
+We considered a shadow wallet and metering heartbeat. A final projection
+exercises the call timing and bucket math without inventing balance responses
+or affecting the call. Wallet exhaustion and heartbeat reconciliation need
+their own tests before cutover. SDK usage can omit interrupted provider work,
+so the report keeps estimates per component and counts Grok requests with no
+reported usage.
+
+A 12.8-second LiveKit call via Tailnet Chromium projected 500 credits and
+reported 9.75 seconds of STT audio, 93 uncached and 128 cached input tokens,
+15 output tokens, and 56 Inworld characters. The shorter Chromium and Firefox
+chat-to-call tests projected zero credits and had no STT reading. The isolated
+wallet totals and counts of credit transactions, call sessions, and usage
+events were identical before and after the tests.
+
 ## Risks
 
 A speech socket is only one part of a voice agent. Replacing LiveKit can require

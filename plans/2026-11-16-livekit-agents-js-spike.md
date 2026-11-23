@@ -259,14 +259,17 @@ Multiple saved threads remain possible; a thread menu is outside this spike.
   Preserve hard boundaries and fail-closed checking. A memory outage must not
   terminate the call. Any unported extraction behavior blocks a full JS cutover;
   a temporary Python dependency must be explicit in the recommendation.
-- Run the existing call-metering rules in shadow mode: clock start, first-speech
-  eligibility, 30-second intervals, exhaustion, and finalization. Simulate wallet
-  responses; do not debit real wallets. Compare Python and JS outcomes for the
-  same fixtures. Text retains `grok420-chat-v1` rates from the product plan.
-  A reconnect must not create another reservation, greeting, or charge.
-- Capture uncached/cached/output LLM usage, STT duration, and submitted TTS
-  characters, including cancelled attempts. Incomplete usage stays unpriced;
-  never turn missing usage into zero spend. Include worker hosting and LiveKit
+- The [local accounting report](../apps/voice-agent/README.md#shadow-call-accounting)
+  projects the final charge using the Python clock start, first-speech
+  eligibility, duration waiver, and 30-second buckets. Next, compare Python and
+  JS on the same simulated-wallet fixtures for periodic metering, low balances,
+  exhaustion, and final reconciliation. Use simulated wallets throughout
+  shadow mode. A reconnect must not create another reservation, greeting, or
+  charge. Text retains the product plan's `grok420-chat-v1` rates.
+- The report records observed uncached/cached/output LLM tokens, forwarded STT
+  duration, and TTS characters, with separate cost estimates for each provider.
+  Missing usage stays unpriced. Reconcile cancelled and retried attempts
+  against provider totals, then include worker hosting and LiveKit
   media/inference charges in the cost comparison without double-counting them.
 
 Deliverable: parity results with explicit failures and unimplemented behavior.

@@ -33,7 +33,11 @@ describe('TanStack LiveKit generation', () => {
       };
     });
 
-    const stream = new TanStackLLM('thread', generate).chat({ chatCtx });
+    const reportUsage = vi.fn();
+    const trackReply = vi.fn(() => reportUsage);
+    const stream = new TanStackLLM('thread', { generate, trackReply }).chat({
+      chatCtx,
+    });
     const first = await stream.next();
     const second = await stream.next();
     expect(first.value).toMatchObject({
@@ -48,6 +52,10 @@ describe('TanStack LiveKit generation', () => {
       },
     });
     expect((await stream.next()).done).toBe(true);
+    expect(trackReply).toHaveBeenCalledOnce();
+    expect(reportUsage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ promptTokens: 10, promptCachedTokens: 3 }),
+    );
     expect(generate).toHaveBeenCalledWith(
       expect.objectContaining({
         threadId: 'thread',
@@ -78,10 +86,16 @@ describe('TanStack LiveKit generation', () => {
       await ended;
       abortController.signal.throwIfAborted();
     };
-    const stream = new TanStackLLM('thread', generate).chat({ chatCtx });
+    const reportUsage = vi.fn();
+    const trackReply = vi.fn(() => reportUsage);
+    const stream = new TanStackLLM('thread', { generate, trackReply }).chat({
+      chatCtx,
+    });
     await stream.next();
     stream.close();
     expect((await stream.next()).done).toBe(true);
     expect(cancelled).toHaveBeenCalledOnce();
+    expect(trackReply).toHaveBeenCalledOnce();
+    expect(reportUsage).not.toHaveBeenCalled();
   });
 });
