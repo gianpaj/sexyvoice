@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     if (!request.headers.has('Last-Event-ID')) {
       if (!process.env.XAI_API_KEY)
         return APIErrorResponse('Chat is unavailable', 503);
-      const { data: admitted, error } = await db.rpc('start_voice_spike_chat', {
+      const { data: admitted, error } = await db.rpc('start_voice_chat', {
         p_user_id: userId,
         p_conversation_id: threadId,
         p_run_id: storedId,

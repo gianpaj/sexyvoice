@@ -15,7 +15,7 @@ export const historySchema = z.array(
 export const threadSchema = z.object({
   character_id: z.uuid().nullable(),
   character_name: z.string(),
-  is_voice_spike: z.boolean(),
+  uses_default_character: z.boolean(),
   language: z.string(),
   scene_instructions: z.string(),
 });
@@ -102,7 +102,7 @@ export function replyInstructions(
   } = {},
 ) {
   return [
-    thread.is_voice_spike
+    thread.uses_default_character
       ? 'You are a friendly conversational test assistant.'
       : `You are ${thread.character_name}. Conversation language: ${thread.language}.`,
     character,

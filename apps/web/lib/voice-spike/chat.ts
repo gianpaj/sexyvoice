@@ -71,7 +71,7 @@ export async function generateChatReply(
   let status: 'completed' | 'interrupted' = 'interrupted';
   let usage: Json = null;
   const save = async (state: 'streaming' | typeof status) => {
-    const { data, error } = await db.rpc('save_voice_spike_chat', {
+    const { data, error } = await db.rpc('save_voice_chat_reply', {
       p_user_id: userId,
       p_run_id: runId,
       p_status: state,
@@ -86,7 +86,7 @@ export async function generateChatReply(
       db
         .from('conversations')
         .select(
-          'character_id,character_name,is_voice_spike,language,scene_instructions',
+          'character_id,character_name,uses_default_character,language,scene_instructions',
         )
         .eq('user_id', userId)
         .eq('id', conversationId)
@@ -156,12 +156,17 @@ export async function generateChatReply(
 export async function getChatHistory(db: Db, userId: string, threadId: string) {
   const owner = await db
     .from('conversations')
-    .select('id,character_id,is_voice_spike')
+    .select('id,character_id,uses_default_character')
     .eq('user_id', userId)
     .eq('id', threadId)
     .maybeSingle();
   if (owner.error) throw new Error('Could not load conversation');
-  if (!(owner.data && (owner.data.is_voice_spike || owner.data.character_id)))
+  if (
+    !(
+      owner.data &&
+      (owner.data.uses_default_character || owner.data.character_id)
+    )
+  )
     return owner.data
       ? null
       : {
@@ -173,7 +178,7 @@ export async function getChatHistory(db: Db, userId: string, threadId: string) {
   // Check the lease before loading messages so an observed release also observes the call's commits.
   const callActive = await isCallActive(db, userId);
   const active = await db
-    .from('voice_spike_chat_runs')
+    .from('voice_chat_runs')
     .select('id')
     .eq('user_id', userId)
     .eq('conversation_id', threadId)
@@ -202,7 +207,7 @@ export async function getChatHistory(db: Db, userId: string, threadId: string) {
 
 async function isCallActive(db: Db, userId: string) {
   const lease = await db
-    .from('voice_spike_calls')
+    .from('voice_conversation_leases')
     .select('room_name')
     .eq('user_id', userId)
     .gt('expires_at', new Date().toISOString())
@@ -213,7 +218,7 @@ async function isCallActive(db: Db, userId: string) {
 
 export function readChat(db: Db, userId: string, runId: string) {
   return db
-    .rpc('read_voice_spike_chat', {
+    .rpc('read_voice_chat', {
       p_user_id: userId,
       p_run_id: runId,
     })

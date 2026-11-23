@@ -38,7 +38,7 @@ describe('JS call conversation context', () => {
         {
           character_id: 'character',
           character_name: 'Mira',
-          is_voice_spike: false,
+          uses_default_character: false,
           language: 'es',
           scene_instructions: 'En la biblioteca.',
         },
@@ -161,7 +161,7 @@ describe('JS call conversation context', () => {
       'three',
     ]);
     expect(fail).not.toHaveBeenCalled();
-    expect(from).toHaveBeenCalledWith('voice_spike_calls');
+    expect(from).toHaveBeenCalledWith('voice_conversation_leases');
     expect(query.eq.mock.calls).toEqual([
       ['user_id', 'caller'],
       ['conversation_id', 'thread'],

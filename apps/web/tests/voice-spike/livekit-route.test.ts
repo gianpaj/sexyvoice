@@ -81,7 +81,7 @@ describe('JS spike call dispatch', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({
-        data: { id: voiceId, is_voice_spike: true },
+        data: { id: voiceId, uses_default_character: true },
         error: null,
       }),
     };
@@ -113,7 +113,7 @@ describe('JS spike call dispatch', () => {
     query.maybeSingle.mockResolvedValueOnce({ data: null });
     expect((await POST(resume())).status).toBe(404);
     query.maybeSingle.mockResolvedValueOnce({
-      data: { id: voiceId, is_voice_spike: false, character_id: null },
+      data: { id: voiceId, uses_default_character: false, character_id: null },
     });
     expect((await POST(resume())).status).toBe(404);
   });
@@ -130,7 +130,7 @@ describe('JS spike call dispatch', () => {
           data: {
             id: voiceId,
             character_id: characterId,
-            is_voice_spike: false,
+            uses_default_character: false,
             language: 'es',
           },
         })
@@ -189,7 +189,7 @@ describe('JS spike call dispatch', () => {
         data: {
           id: voiceId,
           character_id: voiceId,
-          is_voice_spike: false,
+          uses_default_character: false,
           language: 'en',
         },
       }),

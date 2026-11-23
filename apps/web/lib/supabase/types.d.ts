@@ -651,39 +651,39 @@ declare type Database = {
           character_name: string;
           created_at: string;
           id: string;
-          is_voice_spike: boolean;
           language: string;
           revision: number;
           scene_id: string | null;
           scene_instructions: string;
           updated_at: string;
           user_id: string;
+          uses_default_character: boolean;
         };
         Insert: {
           character_id?: string | null;
           character_name: string;
           created_at?: string;
           id?: string;
-          is_voice_spike?: boolean;
           language: string;
           revision?: number;
           scene_id?: string | null;
           scene_instructions?: string;
           updated_at?: string;
           user_id: string;
+          uses_default_character?: boolean;
         };
         Update: {
           character_id?: string | null;
           character_name?: string;
           created_at?: string;
           id?: string;
-          is_voice_spike?: boolean;
           language?: string;
           revision?: number;
           scene_id?: string | null;
           scene_instructions?: string;
           updated_at?: string;
           user_id?: string;
+          uses_default_character?: boolean;
         };
         Relationships: [
           {
@@ -909,36 +909,7 @@ declare type Database = {
           },
         ];
       };
-      voice_spike_calls: {
-        Row: {
-          conversation_id: string;
-          expires_at: string;
-          room_name: string;
-          user_id: string;
-        };
-        Insert: {
-          conversation_id: string;
-          expires_at: string;
-          room_name: string;
-          user_id: string;
-        };
-        Update: {
-          conversation_id?: string;
-          expires_at?: string;
-          room_name?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'voice_spike_calls_conversation_id_user_id_fkey';
-            columns: ['conversation_id', 'user_id'];
-            isOneToOne: false;
-            referencedRelation: 'conversations';
-            referencedColumns: ['id', 'user_id'];
-          },
-        ];
-      };
-      voice_spike_chat_runs: {
+      voice_chat_runs: {
         Row: {
           assistant_position: number;
           conversation_id: string;
@@ -968,7 +939,36 @@ declare type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'voice_spike_chat_runs_conversation_id_user_id_fkey';
+            foreignKeyName: 'voice_chat_runs_conversation_id_user_id_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
+      };
+      voice_conversation_leases: {
+        Row: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          expires_at?: string;
+          room_name?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_conversation_leases_conversation_id_user_id_fkey';
             columns: ['conversation_id', 'user_id'];
             isOneToOne: false;
             referencedRelation: 'conversations';
@@ -1073,7 +1073,7 @@ declare type Database = {
       };
     };
     Functions: {
-      append_voice_spike_message: {
+      append_voice_call_message: {
         Args: {
           p_conversation_id: string;
           p_interrupted: boolean;
@@ -1131,7 +1131,7 @@ declare type Database = {
           vector_rank: number;
         }[];
       };
-      open_voice_spike_call: {
+      open_voice_call: {
         Args: {
           p_conversation_id: string;
           p_resume: boolean;
@@ -1143,13 +1143,13 @@ declare type Database = {
           character_name: string;
           created_at: string;
           id: string;
-          is_voice_spike: boolean;
           language: string;
           revision: number;
           scene_id: string | null;
           scene_instructions: string;
           updated_at: string;
           user_id: string;
+          uses_default_character: boolean;
         };
         SetofOptions: {
           from: '*';
@@ -1162,7 +1162,7 @@ declare type Database = {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
       };
-      read_voice_spike_chat: {
+      read_voice_chat: {
         Args: { p_run_id: string; p_user_id: string };
         Returns: {
           reply: string;
@@ -1174,7 +1174,7 @@ declare type Database = {
         Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
         Returns: boolean;
       };
-      save_voice_spike_chat: {
+      save_voice_chat_reply: {
         Args: {
           p_run_id: string;
           p_status: string;
@@ -1184,7 +1184,7 @@ declare type Database = {
         };
         Returns: boolean;
       };
-      start_voice_spike_chat: {
+      start_voice_chat: {
         Args: {
           p_conversation_id: string;
           p_run_id: string;

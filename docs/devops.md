@@ -51,13 +51,15 @@ production database operator must verify that
 then apply these migrations in timestamp order:
 
 1. `20261118130000_create_conversations.sql`
-2. `20261118170000_voice_spike_threads.sql`
-3. `20261123140000_voice_spike_chat.sql`
+2. `20261118170000_create_voice_conversation_leases.sql`
+3. `20261123140000_create_voice_chat_runs.sql`
 4. `20261123150000_erase_account_conversations.sql`
 5. `20261123160000_bound_conversation_erasure.sql`
+6. `20261123170000_rename_voice_chat_storage.sql`
 
-Ship the spike schema with erasure so the thread-linked messages, chat runs,
-and call leases exist with their cascade rules. The spike stays development-only.
+Apply the voice chat schema with erasure so messages, chat runs, and
+conversation leases retain their cascade rules. The LiveKit JS worker and
+voice chat page require a local database.
 The account-deletion action runs in production and fails when the erasure RPC
 is missing. Apply the migrations before the web deployment that calls it.
 

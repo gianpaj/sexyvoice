@@ -68,12 +68,12 @@ export async function POST(request: Request) {
   if (resumeId) {
     const { data, error } = await supabase
       .from('conversations')
-      .select('id,character_id,is_voice_spike,language')
+      .select('id,character_id,uses_default_character,language')
       .eq('id', resumeId)
       .eq('user_id', claims.sub)
       .maybeSingle();
     if (error) return APIErrorResponse('Conversation lookup unavailable', 503);
-    if (!(data && (data.is_voice_spike || data.character_id)))
+    if (!(data && (data.uses_default_character || data.character_id)))
       return APIErrorResponse('Conversation not found', 404);
     if (data.character_id) {
       try {

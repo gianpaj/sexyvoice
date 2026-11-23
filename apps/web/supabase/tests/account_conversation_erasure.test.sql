@@ -19,19 +19,19 @@ select ok(not has_table_privilege('authenticated', 'public.account_conversation_
   'browser cannot inspect or change erasure records');
 
 set local role service_role;
-select public.start_voice_spike_chat(
+select public.start_voice_chat(
   '10101010-1010-4010-8010-101010101010', '60606060-6060-4060-8060-606060606061',
   '70707070-7070-4070-8070-707070707071', 'Erase my chat.'
 ) as chat_started \gset
-select public.open_voice_spike_call(
+select public.open_voice_call(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606062',
   false, 'erase-room'
 ) is not null as call_started \gset
-select public.append_voice_spike_message(
+select public.append_voice_call_message(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606062',
   'erase-room', 'first', 'user', 'Erase my call.', false
 );
-select public.start_voice_spike_chat(
+select public.start_voice_chat(
   '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606063',
   '70707070-7070-4070-8070-707070707073', 'Keep my chat.'
 ) as other_chat_started \gset
@@ -45,25 +45,25 @@ select is(public.erase_account_conversations('20202020-2020-4020-8020-2020202020
 
 select is((select count(*)::int from public.conversations where id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'keep the other account thread');
 select is((select count(*)::int from public.conversation_messages where conversation_id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'only the other account turn remains');
-select is((select count(*)::int from public.voice_spike_chat_runs where conversation_id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'remove the erased chat stream receipt');
-select is((select count(*)::int from public.voice_spike_calls where conversation_id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'release the erased chat and call leases');
+select is((select count(*)::int from public.voice_chat_runs where conversation_id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'remove the erased chat stream receipt');
+select is((select count(*)::int from public.voice_conversation_leases where conversation_id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'release the erased chat and call leases');
 select is((select conversation_id from public.call_sessions where id = '80808080-8080-4080-8080-808080808080'),
   null::uuid, 'unlink retained call billing');
 select is((select credits_used from public.call_sessions where id = '80808080-8080-4080-8080-808080808080'),
   500, 'preserve call credit accounting');
 
-select is(public.save_voice_spike_chat(
+select is(public.save_voice_chat_reply(
   '10101010-1010-4010-8010-101010101010', '70707070-7070-4070-8070-707070707071', 'Late.', 'completed', null
 ), false, 'an in-flight chat cannot restore its reply');
-select throws_ok($$select public.append_voice_spike_message(
+select throws_ok($$select public.append_voice_call_message(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606062',
   'erase-room', 'late', 'assistant', 'Late.', false
 )$$, 'P0002', null, 'an in-flight worker cannot restore its transcript');
-select throws_ok($$select public.start_voice_spike_chat(
+select throws_ok($$select public.start_voice_chat(
   '10101010-1010-4010-8010-101010101010', '60606060-6060-4060-8060-606060606061',
   '70707070-7070-4070-8070-707070707071', 'Erase my chat.'
 )$$, 'P0002', null, 'a retried chat request cannot recreate the thread');
-select throws_ok($$select public.open_voice_spike_call(
+select throws_ok($$select public.open_voice_call(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606064', false, 'stale-room'
 )$$, 'P0002', null, 'a delayed call token cannot create a thread');
 select is((select count(*)::int from public.conversations where id in ('60606060-6060-4060-8060-606060606061', '60606060-6060-4060-8060-606060606062', '60606060-6060-4060-8060-606060606063')), 1, 'late writers left the database unchanged');
@@ -71,16 +71,16 @@ select is((select count(*)::int from public.conversations where id in ('60606060
 update public.account_conversation_erasures
   set blocked_until = pg_catalog.clock_timestamp() - interval '1 second'
   where user_id in ('10101010-1010-4010-8010-101010101010', '20202020-2020-4020-8020-202020202020');
-select is(public.start_voice_spike_chat(
+select is(public.start_voice_chat(
   '10101010-1010-4010-8010-101010101010', '60606060-6060-4060-8060-606060606065',
   '70707070-7070-4070-8070-707070707075', 'Fresh chat.'
 ), true, 'a retained account can start fresh after the erasure lock expires');
-select throws_ok($$select public.open_voice_spike_call(
+select throws_ok($$select public.open_voice_call(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606062', true, 'resume-erased-room'
 )$$, 'P0002', null, 'expiry does not restore the erased thread');
 select is(public.erase_account_conversations('20202020-2020-4020-8020-202020202020'), 0,
   'erasing again renews an expired lock even when the account has no threads');
-select throws_ok($$select public.open_voice_spike_call(
+select throws_ok($$select public.open_voice_call(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606066', false, 'blocked-room'
 )$$, 'P0002', null, 'the renewed lock blocks new writes');
 

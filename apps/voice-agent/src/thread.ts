@@ -55,7 +55,7 @@ export class CallThread {
 
   async open(resume: boolean) {
     const { data, error } = await this.db
-      .rpc('open_voice_spike_call', { ...this.params, p_resume: resume })
+      .rpc('open_voice_call', { ...this.params, p_resume: resume })
       .abortSignal(AbortSignal.timeout(5000));
     if (error) throw new Error('Conversation could not be opened');
 
@@ -82,7 +82,7 @@ export class CallThread {
         // Stable SDK item IDs make a second write safe if the first response was lost.
         for (let attempt = 0; attempt < 2; attempt += 1) {
           const { error } = await this.db
-            .rpc('append_voice_spike_message', { ...this.params, ...turn })
+            .rpc('append_voice_call_message', { ...this.params, ...turn })
             .abortSignal(AbortSignal.timeout(5000));
           if (!error) return;
         }
@@ -104,7 +104,7 @@ export class CallThread {
     if (this.failed)
       throw new Error('Conversation history could not be flushed');
     const { error } = await this.db
-      .from('voice_spike_calls')
+      .from('voice_conversation_leases')
       .delete()
       .eq('user_id', this.key.userId)
       .eq('conversation_id', this.key.conversationId)
