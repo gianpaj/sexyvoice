@@ -1,6 +1,6 @@
 # Agent Note: Chat-first conversations
 
-Status: proposed — relational history verified locally; TanStack runtime integration pending
+Status: proposed — pilot runtime selected and shared contracts implemented
 
 ## Problem
 
@@ -41,6 +41,23 @@ The proposed Python backend interface keeps preload, retrieval, extraction,
 and verification in one implementation. Persist incremental extraction work,
 serialize writes per user, and prevent queued work from recreating deleted
 memories. Starting a thread does not reset shared or character memories.
+
+### Pilot runtime
+
+The first Inworld TTS pilot uses SexyCall's Python LiveKit worker for calls,
+including typed turns during a call. Next.js retains standalone TanStack AI chat.
+Both modes share Supabase conversation history and admission. Reusing Python
+keeps the existing voice metering, limits, memory writes, and incident tooling.
+
+The [runtime comparison](../../../../plans/2026-11-23-sexycall-inworld-chat-assessment.md#side-by-side-decision)
+records the alternatives and the first-pilot acceptance check. The JS worker
+provides browser and thread-integration evidence for that check.
+
+SexyVoice owns the [shared contracts](../../../../packages/voice-chat/contracts/README.md).
+SexyCall tests a pinned dispatch schema and generates its RPC types from the
+migrated database. The Postgres tests cover shared history and admission. The
+browser and named Python worker still need their pilot handoff and LiveKit
+smoke test.
 
 ## Alternatives considered
 
