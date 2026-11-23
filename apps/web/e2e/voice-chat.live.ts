@@ -155,3 +155,43 @@ test('continues one thread from chat through an audio call and back', async ({
   expect(new URL(page.url()).searchParams.get('conversation')).toBe(thread);
   expect(errors).toEqual([]);
 });
+
+test('keeps the reader’s position until they jump to the latest turn', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const threadId = '9832d10b-0b51-4fbb-8abe-cad0b5bab4bf';
+  const messages = Array.from({ length: 35 }, (_, index) => ({
+    id: `fixture-${index}`,
+    role: index % 2 ? 'assistant' : 'user',
+    parts: [{ type: 'text', content: `Saved turn ${index}` }],
+  }));
+  await page.route(
+    (url) =>
+      url.pathname === '/api/voice-chat/chat' &&
+      url.searchParams.get('threadId') === threadId,
+    (route) =>
+      route.fulfill({ json: { messages, activeRun: null, callActive: false } }),
+  );
+  await page.goto(`/en/dashboard/voice-spike?conversation=${threadId}`);
+  const log = page.getByRole('log');
+  const latest = log.getByText('Saved turn 34', { exact: true });
+  await expect(latest).toBeInViewport();
+
+  await log.evaluate((element) => {
+    element.scrollTop = 90;
+  });
+  const jump = page.getByRole('button', { name: 'Jump to latest' });
+  await expect(jump).toBeVisible();
+  await page
+    .getByRole('textbox', { name: 'Message', exact: true })
+    .fill('First line\nSecond line\nThird line');
+  await expect
+    .poll(() => log.evaluate((element) => element.scrollTop))
+    .toBe(90);
+
+  await jump.click();
+  await expect(latest).toBeInViewport();
+  await expect(jump).toHaveCount(0);
+  await expect(log).toBeFocused();
+});

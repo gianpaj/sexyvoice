@@ -1,26 +1,18 @@
 'use client';
 
 import { fetchServerSentEvents, useChat } from '@tanstack/ai-react';
-import { ArrowDown, Phone, Send } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import {
-  type FormEvent,
-  useActionState,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { CHAT_HISTORY_PAGE_SIZE, CHAT_ROUTE } from '@/lib/voice-chat/protocol';
-
-export interface VoiceChatMessage {
-  id: string;
-  text: string;
-  user: boolean;
-}
+import { VoiceChatComposer } from './voice-chat-composer';
+import {
+  type VoiceChatMessage,
+  VoiceChatTranscript,
+  type VoiceChatTranscriptHandle,
+} from './voice-chat-transcript';
 
 export interface VoiceChatCharacterPicker {
   characterName?: string;
@@ -69,11 +61,9 @@ export function VoiceChatThread({
       },
     }),
   );
-  const [hasNewerMessages, setHasNewerMessages] = useState(false);
   const [awaitingText, setAwaitingText] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const viewport = useRef<HTMLDivElement>(null);
-  const followsLatest = useRef(true);
+  const transcript = useRef<VoiceChatTranscriptHandle>(null);
   const pending = useRef<string | null>(null);
   const currentDraft = useRef(draft);
   currentDraft.current = draft;
@@ -149,20 +139,6 @@ export function VoiceChatThread({
     );
   const thinking =
     awaitingText || ((chat.isLoading || chat.sessionGenerating) && !hasReply);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: streaming changes the scroll height.
-  useLayoutEffect(() => {
-    const element = viewport.current;
-    if (element && followsLatest.current)
-      element.scrollTop = element.scrollHeight;
-  }, [chat.messages, thinking]);
-
-  const jumpToLatest = () => {
-    const element = viewport.current;
-    if (element) element.scrollTop = element.scrollHeight;
-    followsLatest.current = true;
-    setHasNewerMessages(false);
-  };
-
   const unavailable = Boolean(chat.error);
   const busy =
     callActive ||
@@ -174,14 +150,13 @@ export function VoiceChatThread({
   if (thinking) status = 'thinking';
   else if (chat.isHydrating) status = 'loadingChat';
   else if (callActive) status = 'endingCall';
-  const send = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const send = async () => {
     const text = draft.trim();
     if (!text || busy || unavailable || pending.current) return;
     pending.current = text;
     setSubmitting(true);
     setAwaitingText(true);
-    jumpToLatest();
+    transcript.current?.scrollToLatest();
     // A reload can recover an accepted POST even if its response never arrives.
     const here = new URL(window.location.href);
     here.searchParams.set('conversation', threadId);
@@ -220,49 +195,11 @@ export function VoiceChatThread({
           {error}
         </p>
       )}
-      <div className="relative min-h-0 flex-1">
-        <div
-          aria-label={t('messages')}
-          className="flex h-full flex-col gap-3 overflow-y-auto rounded-md border p-3"
-          onScroll={(event) => {
-            const element = event.currentTarget;
-            const atEnd =
-              element.scrollHeight - element.scrollTop - element.clientHeight <=
-              32;
-            followsLatest.current = atEnd;
-            setHasNewerMessages(!atEnd);
-          }}
-          ref={viewport}
-          role="log"
-        >
-          <div className="mt-auto flex flex-col gap-3">
-            {visibleMessages.map((message) => (
-              <p
-                className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${message.user ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
-                key={message.id}
-              >
-                {message.text}
-              </p>
-            ))}
-            {status && (
-              <p className="text-muted-foreground text-sm" role="status">
-                {t(status)}
-              </p>
-            )}
-          </div>
-        </div>
-        {hasNewerMessages && (
-          <Button
-            aria-label={t('latest')}
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full shadow"
-            onClick={jumpToLatest}
-            size="icon"
-            variant="outline"
-          >
-            <ArrowDown />
-          </Button>
-        )}
-      </div>
+      <VoiceChatTranscript
+        messages={visibleMessages}
+        ref={transcript}
+        status={status ? t(status) : undefined}
+      />
       {unavailable && (
         <div className="flex items-center justify-between gap-2" role="alert">
           <p className="text-destructive text-sm">{t('chatError')}</p>
@@ -271,27 +208,13 @@ export function VoiceChatThread({
           </Button>
         </div>
       )}
-      <form
-        className="flex items-end gap-2"
-        onSubmit={(event) => send(event).catch(() => undefined)}
-      >
-        <Textarea
-          aria-label={t('message')}
-          maxLength={2000}
-          onChange={(event) => onDraft(event.target.value)}
-          placeholder={t('chatPlaceholder')}
-          rows={2}
-          value={draft}
-        />
-        <Button
-          aria-label={t('send')}
-          disabled={busy || unavailable || !draft.trim()}
-          size="icon"
-          type="submit"
-        >
-          <Send />
-        </Button>
-      </form>
+      <VoiceChatComposer
+        draft={draft}
+        onDraft={onDraft}
+        onSend={() => send().catch(() => undefined)}
+        placeholder={t('chatPlaceholder')}
+        sendDisabled={busy || unavailable}
+      />
     </section>
   );
 }

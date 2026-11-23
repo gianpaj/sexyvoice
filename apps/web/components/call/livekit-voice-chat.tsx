@@ -14,17 +14,21 @@ import {
   Room,
   RoomEvent,
 } from 'livekit-client';
-import { Mic, MicOff, Phone, PhoneOff, Send } from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { VoiceChatComposer } from './voice-chat-composer';
 import {
   type VoiceChatCharacterPicker,
-  type VoiceChatMessage,
   VoiceChatThread,
 } from './voice-chat-thread';
+import {
+  type VoiceChatMessage,
+  VoiceChatTranscript,
+  type VoiceChatTranscriptHandle,
+} from './voice-chat-transcript';
 
 interface LiveMessage extends VoiceChatMessage {
   timestamp: number;
@@ -70,7 +74,7 @@ export function LiveKitVoiceChat({
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const agent = useRef<string | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const transcript = useRef<VoiceChatTranscriptHandle>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -83,10 +87,6 @@ export function LiveKitVoiceChat({
       current?.disconnect().catch(() => undefined);
     };
   }, [releasePendingMicrophone]);
-  useEffect(() => {
-    if (priorMessages.length || messages.length || thinking)
-      end.current?.scrollIntoView({ block: 'end' });
-  }, [priorMessages, messages, thinking]);
   const appendMessage = (message: LiveMessage) =>
     setMessages((previous) => {
       const found = previous.find((item) => item.id === message.id);
@@ -335,6 +335,7 @@ export function LiveKitVoiceChat({
     if (!(text && current) || state !== 'connected' || sending) return;
     setSending(true);
     setThinking(true);
+    transcript.current?.scrollToLatest();
     try {
       const sent = await current.localParticipant.sendText(text, {
         topic: 'lk.chat',
@@ -416,49 +417,18 @@ export function LiveKitVoiceChat({
           {error}
         </p>
       )}
-      <div
-        aria-label={t('messages')}
-        aria-live="polite"
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-md border p-3"
-        role="log"
-      >
-        {[...priorMessages, ...messages].map((message) => (
-          <p
-            className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${message.user ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
-            key={message.id}
-          >
-            {message.text}
-          </p>
-        ))}
-        {thinking && (
-          <p className="text-muted-foreground text-sm">{t('thinking')}</p>
-        )}
-        <div ref={end} />
-      </div>
-      <form
-        className="flex items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          send().catch(() => undefined);
-        }}
-      >
-        <Textarea
-          aria-label={t('message')}
-          maxLength={2000}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={t('placeholder')}
-          rows={2}
-          value={draft}
-        />
-        <Button
-          aria-label={t('send')}
-          disabled={state !== 'connected' || !draft.trim() || sending}
-          size="icon"
-          type="submit"
-        >
-          <Send />
-        </Button>
-      </form>
+      <VoiceChatTranscript
+        messages={[...priorMessages, ...messages]}
+        ref={transcript}
+        status={thinking ? t('thinking') : undefined}
+      />
+      <VoiceChatComposer
+        draft={draft}
+        onDraft={setDraft}
+        onSend={() => send().catch(() => undefined)}
+        placeholder={t('placeholder')}
+        sendDisabled={state !== 'connected' || sending}
+      />
       {room && (
         <RoomContext.Provider value={room}>
           <RoomAudioRenderer />
