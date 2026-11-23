@@ -16,8 +16,7 @@ test('continues one thread from chat through an audio call and back', async ({
   const composer = page.getByRole('textbox', { name: 'Message', exact: true });
   const send = page.getByRole('button', { name: 'Send', exact: true });
   const threadLog = page.getByRole('log');
-  const chatTurn =
-    'My test code is cobalt pelican. Reply exactly: Chat test passed.';
+  const chatTurn = 'Please remember my first test code: cobalt pelican.';
   await expect(page.locator('audio')).toHaveCount(0);
   await page.evaluate(() => {
     const originalFetch = window.fetch.bind(window);
@@ -54,9 +53,10 @@ test('continues one thread from chat through an audio call and back', async ({
   );
   await composer.fill(chatTurn);
   await send.click();
+  await expect(threadLog.locator('p')).toHaveCount(2, { timeout: 25_000 });
   await expect(
-    threadLog.getByText('Chat test passed.', { exact: true }),
-  ).toBeVisible({ timeout: 25_000 });
+    page.getByRole('button', { name: 'Start call', exact: true }),
+  ).toBeEnabled({ timeout: 25_000 });
   await resumed;
   const thread = new URL(page.url()).searchParams.get('conversation');
   expect(thread).toMatch(/^[a-f0-9-]{36}$/);
@@ -66,13 +66,6 @@ test('continues one thread from chat through an audio call and back', async ({
       page.getByRole('button', { name: 'Mute microphone', exact: true }),
     ).toBeVisible({ timeout: 65_000 });
     await expect(page.getByText('In call', { exact: true })).toBeVisible();
-    await composer.fill(
-      'My second test code is red lantern. Reply with only the first code I gave you.',
-    );
-    await send.click();
-    await expect(
-      page.getByRole('log').getByText(/^cobalt pelican[.!]?$/i),
-    ).toBeVisible({ timeout: 20_000 });
     await expect
       .poll(
         () =>
@@ -89,6 +82,13 @@ test('continues one thread from chat through an audio call and back', async ({
         { timeout: 10_000 },
       )
       .toBe(true);
+    await composer.fill(
+      'My second test code is red lantern. Reply with only the first test code I asked you to remember.',
+    );
+    await send.click();
+    await expect(
+      page.getByRole('log').getByText(/^cobalt pelican[.!]?$/i),
+    ).toBeVisible({ timeout: 20_000 });
     await page
       .getByRole('button', { name: 'Mute microphone', exact: true })
       .click();

@@ -1495,6 +1495,7 @@
     "send": "Senden",
     "thinking": "Denkt nach…",
     "chatPlaceholder": "Nachricht schreiben",
+    "endingCall": "Warte auf das Ende des Anrufs…",
     "loadingChat": "Unterhaltung wird geladen…",
     "latest": "Zur neuesten Nachricht",
     "chatError": "Die Antwort konnte nicht geladen oder fortgesetzt werden.",

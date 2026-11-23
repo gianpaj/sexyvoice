@@ -1493,6 +1493,7 @@
     "send": "Send",
     "thinking": "Thinking…",
     "chatPlaceholder": "Type a message",
+    "endingCall": "Waiting for the call to end…",
     "loadingChat": "Loading conversation…",
     "latest": "Jump to latest",
     "chatError": "Could not load or continue the reply.",

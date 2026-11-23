@@ -1495,6 +1495,7 @@
     "send": "Enviar",
     "thinking": "Pensando…",
     "chatPlaceholder": "Escribe un mensaje",
+    "endingCall": "Esperando a que termine la llamada…",
     "loadingChat": "Cargando conversación…",
     "latest": "Ir al último mensaje",
     "chatError": "No se pudo cargar o continuar la respuesta.",

@@ -1491,6 +1491,7 @@
     "send": "Send",
     "thinking": "Tænker…",
     "chatPlaceholder": "Skriv en besked",
+    "endingCall": "Venter på, at opkaldet afsluttes…",
     "loadingChat": "Indlæser samtalen…",
     "latest": "Gå til nyeste besked",
     "chatError": "Svaret kunne ikke indlæses eller fortsættes.",

@@ -3,7 +3,13 @@
 import { fetchServerSentEvents, useChat } from '@tanstack/ai-react';
 import { ArrowDown, Phone, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,29 +25,6 @@ interface ChatProps {
   threadId: string;
 }
 
-function chatConnection(rememberThread: () => void) {
-  return fetchServerSentEvents(CHAT_ROUTE, {
-    fetchClient: async (input, init) => {
-      if (init?.method !== 'GET' || !String(input).includes('threadId='))
-        return fetch(input, init);
-
-      // Call teardown flushes committed history before it releases the lease.
-      for (let attempt = 0; attempt < 30; attempt += 1) {
-        const response = await fetch(input, init);
-        if (!response.ok) return response;
-        const history = await response.clone().json();
-        if (!history.callActive) {
-          if (history.messages?.length) rememberThread();
-          return response;
-        }
-        await response.body?.cancel();
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      }
-      return new Response(null, { status: 409 });
-    },
-  });
-}
-
 export function VoiceSpikeChat({
   threadId,
   draft,
@@ -52,8 +35,23 @@ export function VoiceSpikeChat({
   onRefresh,
 }: ChatProps) {
   const t = useTranslations('voiceSpike');
+  const [callActive, setCallActive] = useState(false);
   const [connection] = useState(() =>
-    chatConnection(() => onRememberThread(threadId)),
+    fetchServerSentEvents(CHAT_ROUTE, {
+      fetchClient: async (input, init) => {
+        const response = await fetch(input, init);
+        if (
+          response.ok &&
+          init?.method === 'GET' &&
+          String(input).includes('threadId=')
+        ) {
+          const history = await response.clone().json();
+          setCallActive(history.callActive === true);
+          if (history.messages?.length) onRememberThread(threadId);
+        }
+        return response;
+      },
+    }),
   );
   const [hasNewerMessages, setHasNewerMessages] = useState(false);
   const [awaitingText, setAwaitingText] = useState(false);
@@ -84,6 +82,39 @@ export function VoiceSpikeChat({
     },
   });
 
+  useEffect(() => {
+    if (!callActive) return;
+    const controller = new AbortController();
+    let retry: ReturnType<typeof setTimeout>;
+    let attempts = 0;
+    const poll = async () => {
+      try {
+        const response = await fetch(`${CHAT_ROUTE}?threadId=${threadId}`, {
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const history = await response.json();
+          // Rehydrate once to load the final call turns before enabling sends.
+          if (!controller.signal.aborted && history.callActive === false) {
+            onRefresh();
+            return;
+          }
+        }
+      } catch {
+        // Keep saved messages on screen during a temporary network failure.
+      }
+      if (!controller.signal.aborted) {
+        attempts += 1;
+        retry = setTimeout(poll, attempts < 5 ? 1000 : 5000);
+      }
+    };
+    retry = setTimeout(poll, 1000);
+    return () => {
+      controller.abort();
+      clearTimeout(retry);
+    };
+  }, [callActive, onRefresh, threadId]);
+
   const lastMessage = chat.messages.at(-1);
   const hasReply =
     lastMessage?.role === 'assistant' &&
@@ -108,7 +139,15 @@ export function VoiceSpikeChat({
 
   const unavailable = Boolean(chat.error);
   const busy =
-    chat.isHydrating || chat.isLoading || chat.sessionGenerating || submitting;
+    callActive ||
+    chat.isHydrating ||
+    chat.isLoading ||
+    chat.sessionGenerating ||
+    submitting;
+  let status: 'thinking' | 'loadingChat' | 'endingCall' | undefined;
+  if (thinking) status = 'thinking';
+  else if (chat.isHydrating) status = 'loadingChat';
+  else if (callActive) status = 'endingCall';
   const send = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const text = draft.trim();
@@ -179,9 +218,9 @@ export function VoiceSpikeChat({
                 </p>
               );
             })}
-            {(thinking || chat.isHydrating) && (
+            {status && (
               <p className="text-muted-foreground text-sm" role="status">
-                {t(thinking ? 'thinking' : 'loadingChat')}
+                {t(status)}
               </p>
             )}
           </div>

@@ -5,7 +5,7 @@ import { MUTE_RPC, RUNTIME, RUNTIME_ATTRIBUTE } from '@sexyvoice/voice-spike';
 import { type RemoteParticipant, Room, RoomEvent } from 'livekit-client';
 import { Mic, MicOff, Phone, PhoneOff, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +40,10 @@ export function LivekitSpike({
   const [draft, setDraft] = useState('');
   const [chatDraft, setChatDraft] = useState('');
   const [chatRevision, setChatRevision] = useState(0);
+  const refreshChat = useCallback(
+    () => setChatRevision((revision) => revision + 1),
+    [],
+  );
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -318,7 +322,7 @@ export function LivekitSpike({
         error={error}
         key={chatRevision}
         onDraft={setChatDraft}
-        onRefresh={() => setChatRevision((revision) => revision + 1)}
+        onRefresh={refreshChat}
         onRememberThread={(id) => {
           thread.current = id;
         }}

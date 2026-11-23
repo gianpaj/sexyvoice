@@ -191,6 +191,21 @@ chat receipts contained xAI input, cached-input, and output token counts.
 A fresh Chromium tab attached to an active reply from Supabase. Streaming
 preserved its scroll position until the caller pressed Jump to latest.
 
+### Call teardown and chat availability
+
+Chat renders saved turns while a call still holds the lease. It delays new
+sends and calls, polls with backoff, and reloads the thread once the lease
+clears. An active call is shown as a wait state.
+
+After five seconds of SDK teardown the worker disconnects the agent, then
+flushes queued turns before releasing the lease. The shutdown callback is an
+independent fallback after the SDK leaves the room. Failed writes still keep
+the lease until expiry. Waiting indefinitely on the SDK can leave a dead room
+holding a lease; releasing before pending writes settle can lose thread order.
+
+Chromium and Firefox over the Tailnet both streamed chat, played the Inworld
+greeting, and used thread context across the call in both directions.
+
 ### Memory retrieval
 
 The worker reads the same scoped Supabase slots and hybrid RPC as Python.
