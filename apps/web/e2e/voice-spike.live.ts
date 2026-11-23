@@ -16,6 +16,7 @@ test('continues one thread from chat through an audio call and back', async ({
   const composer = page.getByRole('textbox', { name: 'Message', exact: true });
   const send = page.getByRole('button', { name: 'Send', exact: true });
   const threadLog = page.getByRole('log');
+  const chatTurns = threadLog.locator('p:not([role="status"])');
   const chatTurn = 'Please remember my first test code: cobalt pelican.';
   await expect(page.locator('audio')).toHaveCount(0);
   await page.evaluate(() => {
@@ -53,11 +54,12 @@ test('continues one thread from chat through an audio call and back', async ({
   );
   await composer.fill(chatTurn);
   await send.click();
-  await expect(threadLog.locator('p')).toHaveCount(2, { timeout: 25_000 });
+  await expect(chatTurns).toHaveText([chatTurn, /\S/], { timeout: 25_000 });
   await expect(
     page.getByRole('button', { name: 'Start call', exact: true }),
   ).toBeEnabled({ timeout: 25_000 });
   await resumed;
+  const priorTurns = await chatTurns.allTextContents();
   const thread = new URL(page.url()).searchParams.get('conversation');
   expect(thread).toMatch(/^[a-f0-9-]{36}$/);
   await page.getByRole('button', { name: 'Start call', exact: true }).click();
@@ -66,6 +68,11 @@ test('continues one thread from chat through an audio call and back', async ({
       page.getByRole('button', { name: 'Mute microphone', exact: true }),
     ).toBeVisible({ timeout: 65_000 });
     await expect(page.getByText('In call', { exact: true })).toBeVisible();
+    await expect
+      .poll(async () =>
+        (await chatTurns.allTextContents()).slice(0, priorTurns.length),
+      )
+      .toEqual(priorTurns);
     await expect
       .poll(
         () =>
@@ -86,9 +93,10 @@ test('continues one thread from chat through an audio call and back', async ({
       'My second test code is red lantern. Reply with only the first test code I asked you to remember.',
     );
     await send.click();
-    await expect(
-      page.getByRole('log').getByText(/^cobalt pelican[.!]?$/i),
-    ).toBeVisible({ timeout: 20_000 });
+    await expect(threadLog.locator('p').last()).toHaveText(
+      /^cobalt pelican[.!]?$/i,
+      { timeout: 20_000 },
+    );
     await page
       .getByRole('button', { name: 'Mute microphone', exact: true })
       .click();
@@ -112,7 +120,9 @@ test('continues one thread from chat through an audio call and back', async ({
 
   await page.reload();
   await expect(threadLog.getByText(chatTurn, { exact: true })).toHaveCount(1);
-  await expect(threadLog.getByText(/^cobalt pelican[.!]?$/i)).toBeVisible();
+  await expect(
+    threadLog.getByText(/^cobalt pelican[.!]?$/i).last(),
+  ).toBeVisible();
   await composer.fill(
     'What was my second test code? Reply with only that code.',
   );

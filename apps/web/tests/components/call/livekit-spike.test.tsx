@@ -64,10 +64,13 @@ const jsAgent = {
     'lk.agent.state': 'listening',
   },
 };
-function view(audioReferenceId?: string) {
+function view(audioReferenceId?: string, chatThreadId?: string) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <LivekitSpike audioReferenceId={audioReferenceId} />
+      <LivekitSpike
+        audioReferenceId={audioReferenceId}
+        chatThreadId={chatThreadId}
+      />
     </NextIntlClientProvider>,
   );
 }
@@ -186,6 +189,57 @@ describe('JS browser call', () => {
       true,
     );
   });
+  it('keeps saved chat visible while connecting and appends live turns below it', async () => {
+    const threadId = '60606060-6060-4060-8060-606060606061';
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({
+        messages: [
+          {
+            id: 'saved-user',
+            role: 'user',
+            parts: [{ type: 'text', content: 'Earlier question' }],
+          },
+          {
+            id: 'saved-assistant',
+            role: 'assistant',
+            parts: [{ type: 'text', content: 'Earlier answer' }],
+          },
+        ],
+        activeRun: null,
+        callActive: false,
+      }),
+    );
+    view(undefined, threadId);
+    await screen.findByText('Earlier answer');
+    const room = await start();
+    const turns = () =>
+      Array.from(
+        screen.getByRole('log').querySelectorAll('p'),
+        (paragraph) => paragraph.textContent,
+      );
+    expect(turns()).toEqual(['Earlier question', 'Earlier answer']);
+    await act(async () => room.emit('participant', jsAgent));
+    await screen.findByText('In call');
+    const [, onTranscript] = room.registerTextStreamHandler.mock.calls[0];
+    await act(async () =>
+      onTranscript(
+        {
+          info: { id: 'reply', timestamp: 1 },
+          async *[Symbol.asyncIterator]() {
+            yield 'Spoken reply';
+          },
+        },
+        { identity: 'agent-js' },
+      ),
+    );
+    expect(turns()).toEqual([
+      'Earlier question',
+      'Earlier answer',
+      'Spoken reply',
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('sends typed turns into the call and displays streamed text with a thinking state', async () => {
     view();
     const room = await connect();

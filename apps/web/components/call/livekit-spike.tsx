@@ -9,13 +9,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { VoiceSpikeChat } from './voice-spike-chat';
+import { VoiceSpikeChat, type VoiceSpikeMessage } from './voice-spike-chat';
 
-interface Message {
-  id: string;
-  text: string;
+interface LiveMessage extends VoiceSpikeMessage {
   timestamp: number;
-  user: boolean;
 }
 type State = 'idle' | 'connecting' | 'connected' | 'reconnecting';
 
@@ -46,7 +43,8 @@ export function LivekitSpike({
   );
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [priorMessages, setPriorMessages] = useState<VoiceSpikeMessage[]>([]);
+  const [messages, setMessages] = useState<LiveMessage[]>([]);
   const agent = useRef<string | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -62,10 +60,10 @@ export function LivekitSpike({
     };
   }, []);
   useEffect(() => {
-    if (messages.length || thinking)
+    if (priorMessages.length || messages.length || thinking)
       end.current?.scrollIntoView({ block: 'end' });
-  }, [messages, thinking]);
-  const appendMessage = (message: Message) =>
+  }, [priorMessages, messages, thinking]);
+  const appendMessage = (message: LiveMessage) =>
     setMessages((previous) => {
       const found = previous.find((item) => item.id === message.id);
       if (found?.text === message.text) return previous;
@@ -86,9 +84,10 @@ export function LivekitSpike({
     setRoom(null);
     await current?.disconnect();
   };
-  const start = async () => {
+  const start = async (history: VoiceSpikeMessage[] = []) => {
     if (active.current) return;
     setError(null);
+    setPriorMessages(history);
     setMessages([]);
     setState('connecting');
     const current = new Room({
@@ -373,12 +372,12 @@ export function LivekitSpike({
       <div
         aria-label={t('messages')}
         aria-live="polite"
-        className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-md border p-3"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-md border p-3"
         role="log"
       >
-        {messages.map((message) => (
+        {[...priorMessages, ...messages].map((message) => (
           <p
-            className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${message.user ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
+            className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${message.user ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
             key={message.id}
           >
             {message.text}

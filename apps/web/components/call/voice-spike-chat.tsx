@@ -15,13 +15,19 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CHAT_HISTORY_PAGE_SIZE, CHAT_ROUTE } from '@/lib/voice-spike/protocol';
 
+export interface VoiceSpikeMessage {
+  id: string;
+  text: string;
+  user: boolean;
+}
+
 interface ChatProps {
   draft: string;
   error: string | null;
   onDraft: (text: string) => void;
   onRefresh: () => void;
   onRememberThread: (id: string) => void;
-  onStartCall: () => Promise<void>;
+  onStartCall: (history: VoiceSpikeMessage[]) => Promise<void>;
   threadId: string;
 }
 
@@ -116,6 +122,15 @@ export function VoiceSpikeChat({
     };
   }, [callActive, onRefresh, threadId]);
 
+  const visibleMessages = chat.messages.flatMap((message) => {
+    const text = message.parts
+      .filter((part) => part.type === 'text')
+      .map((part) => part.content)
+      .join('\n');
+    return text
+      ? [{ id: message.id, text, user: message.role === 'user' }]
+      : [];
+  });
   const lastMessage = chat.messages.at(-1);
   const hasReply =
     lastMessage?.role === 'assistant' &&
@@ -177,7 +192,7 @@ export function VoiceSpikeChat({
         <Button
           aria-label={t('call')}
           disabled={busy || unavailable}
-          onClick={() => onStartCall().catch(() => undefined)}
+          onClick={() => onStartCall(visibleMessages).catch(() => undefined)}
           size="icon"
         >
           <Phone />
@@ -204,21 +219,14 @@ export function VoiceSpikeChat({
           role="log"
         >
           <div className="mt-auto flex flex-col gap-3">
-            {chat.messages.map((message) => {
-              const text = message.parts
-                .filter((part) => part.type === 'text')
-                .map((part) => part.content)
-                .join('\n');
-              if (!text) return null;
-              return (
-                <p
-                  className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${message.role === 'user' ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
-                  key={message.id}
-                >
-                  {text}
-                </p>
-              );
-            })}
+            {visibleMessages.map((message) => (
+              <p
+                className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${message.user ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted'}`}
+                key={message.id}
+              >
+                {message.text}
+              </p>
+            ))}
             {status && (
               <p className="text-muted-foreground text-sm" role="status">
                 {t(status)}
