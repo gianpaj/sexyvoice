@@ -72,7 +72,7 @@ describe('JS call conversation context', () => {
     ).toBeNull();
   });
 
-  it('serializes turns, reports write failure and drains before releasing', async () => {
+  it('serializes turns and retries an ambiguous write before releasing', async () => {
     let complete!: (result: { error: null }) => void;
     const firstWrite = new Promise<{ error: null }>((resolve) => {
       complete = resolve;
@@ -80,7 +80,8 @@ describe('JS call conversation context', () => {
     const write = vi
       .fn()
       .mockReturnValueOnce(firstWrite)
-      .mockResolvedValueOnce({ error: 'db unavailable' });
+      .mockResolvedValueOnce({ error: 'db unavailable' })
+      .mockResolvedValue({ error: null });
     const query = {
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -104,17 +105,38 @@ describe('JS call conversation context', () => {
 
     complete({ error: null });
     await closed;
-    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenCalledTimes(4);
     expect(rpc.mock.calls.map((call) => call[1].p_item_id)).toEqual([
       'one',
       'two',
+      'two',
+      'three',
     ]);
-    expect(fail).toHaveBeenCalledOnce();
+    expect(fail).not.toHaveBeenCalled();
     expect(from).toHaveBeenCalledWith('voice_spike_calls');
     expect(query.eq.mock.calls).toEqual([
       ['user_id', 'caller'],
       ['conversation_id', 'thread'],
       ['room_name', 'room'],
     ]);
+  });
+  it('does not release the lease when turn history cannot be flushed', async () => {
+    const write = vi.fn().mockResolvedValue({ error: 'db unavailable' });
+    const rpc = vi.fn().mockReturnValue({ abortSignal: write });
+    const from = vi.fn();
+    const thread = new CallThread({ rpc, from } as unknown as SupabaseClient, {
+      userId: 'caller',
+      conversationId: 'thread',
+      roomName: 'room',
+    });
+    const fail = vi.fn();
+    thread.append(turn('one', 'user', 'First'), fail);
+
+    await expect(thread.close()).rejects.toThrow(
+      'history could not be flushed',
+    );
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(fail).toHaveBeenCalledOnce();
+    expect(from).not.toHaveBeenCalled();
   });
 });

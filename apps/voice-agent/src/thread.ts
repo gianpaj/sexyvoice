@@ -78,10 +78,14 @@ export class CallThread {
     this.pending = this.pending
       .then(async () => {
         if (this.failed) return;
-        const { error } = await this.db
-          .rpc('append_voice_spike_message', { ...this.params, ...turn })
-          .abortSignal(AbortSignal.timeout(5000));
-        if (error) throw new Error('Conversation turn could not be saved');
+        // Stable SDK item IDs make a second write safe if the first response was lost.
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const { error } = await this.db
+            .rpc('append_voice_spike_message', { ...this.params, ...turn })
+            .abortSignal(AbortSignal.timeout(5000));
+          if (!error) return;
+        }
+        throw new Error('Conversation turn could not be saved');
       })
       .catch(() => {
         this.failed = true;
@@ -91,6 +95,8 @@ export class CallThread {
 
   async close() {
     await this.pending;
+    if (this.failed)
+      throw new Error('Conversation history could not be flushed');
     const { error } = await this.db
       .from('voice_spike_calls')
       .delete()

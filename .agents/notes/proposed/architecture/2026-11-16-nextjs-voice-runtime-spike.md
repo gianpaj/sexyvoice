@@ -145,6 +145,8 @@ a linked character. Demo messages retain the SDK item ID but have no billable
 We considered writing conversation history in the browser or at hangup. The
 worker owns committed turn order and persists during the call, including when
 the browser drops. A hangup batch can lose the entire call on a worker crash.
+The worker retries a failed turn write with the same SDK item ID. If that fails,
+it keeps the lease until expiry so the chat cannot reply from a partial flush.
 
 The isolated Supabase and Chromium smoke saved spoken STT, typed text, and
 Inworld replies, then resumed after a page reload and recalled the earlier
@@ -177,11 +179,13 @@ The saved message gives a fresh client the same prefix without duplicating the
 transcript. Losing the producer leaves an interrupted message and an expiring
 lease. Replay does not start a second provider request.
 
-A mobile-size Chromium run dropped the SSE connection after its first event
-and reattached from the saved cursor. A real Inworld call recalled the first
+Mobile-size Chromium and Linux Firefox dropped the SSE connection after its
+first event and reattached from the saved cursor. A real Inworld call recalled the first
 chat detail, and the next text reply recalled a second detail introduced during
 the call. Reload returned the same six chronological turns. Both completed
 chat receipts contained xAI input, cached-input, and output token counts.
+A fresh Chromium tab attached to an active reply from Supabase. Streaming
+preserved its scroll position until the caller pressed Jump to latest.
 
 ### Memory retrieval
 
