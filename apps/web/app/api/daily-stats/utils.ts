@@ -171,6 +171,38 @@ export function formatCurrencyChange(
   return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(pct).toFixed(0)}%)`;
 }
 
+// Smaller changes are normal day-to-day noise at a few dozen calls a day.
+const ALERT_TREND_PCT = 25;
+
+/**
+ * A large change from a baseline as `↑61%` or `↓74%`, or `new` from zero.
+ * Empty below `minPct` (25% by default), so an arrow marks something worth
+ * reading.
+ */
+export function formatTrend(
+  current: number,
+  baseline: number,
+  minPct = ALERT_TREND_PCT,
+): string {
+  if (baseline === 0) {
+    return current === 0 ? '' : 'new';
+  }
+  const pct = Math.round(((current - baseline) / baseline) * 100);
+  if (Math.abs(pct) < minPct) {
+    return '';
+  }
+  return `${pct > 0 ? '↑' : '↓'}${Math.abs(pct)}%`;
+}
+
+/** Total time rounded to minutes, e.g. `47m` or `8h 10m`. */
+export function formatMinutes(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
 // Format duration in minutes
 export const formatDuration = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
