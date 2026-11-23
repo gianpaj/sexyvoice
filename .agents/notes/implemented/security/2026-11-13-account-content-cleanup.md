@@ -1,9 +1,18 @@
 # Account content cleanup
 
-Account deletion clears stored call transcripts and revokes API keys. The login,
+Account deletion erases conversation history, clears stored call transcripts,
+and revokes API keys. The login,
 profile, credit balance and internal cost history remain intact.
 
 ## Decisions
+
+- Erase owned threads under the per-user chat and call admission lock.
+  Messages, resumable reply receipts, and call leases cascade. Linked
+  call sessions keep their billing fields and lose the thread link.
+- Keep a server-only erasure record while the Auth row exists. Conversation
+  creation checks it under the same lock, so a retried chat or a delayed
+  call token cannot recreate erased history. In-flight writers require the
+  deleted lease and thread.
 
 - Clear only `call_sessions.transcript`. Keep duration, model, timestamps and
   credit fields because `resolveUsageCost` uses them to estimate provider spend.
@@ -18,10 +27,14 @@ profile, credit balance and internal cost history remain intact.
   fails. Keep the existing billing reservation cleanup in `finally`.
 - Retain transcript-derived analysis and aggregate reports as internal analytics,
   including topics, requests and summaries.
-- Leave active-call behavior unchanged. Cleanup clears the stored transcript
-  snapshot. A running call can save its transcript again and trigger analysis.
+- Legacy Python calls still clear only the stored transcript snapshot. A
+  running Python call can save its transcript again and trigger analysis.
 
 ## Rejected options
+
+Relying on the Auth foreign key would leave history because account deletion
+retains the login. Deleting rows without recording the erasure would let
+a delayed call or chat recreate a thread.
 
 Deleting usage events or call sessions loses recorded or estimated provider
 costs. Physically deleting referenced API-key rows requires changing the audit
@@ -32,3 +45,5 @@ schema; revocation disables credentials through the existing access mechanism.
 Account-deletion tests cover user scoping, unchanged billing fields, revoked
 keys, cleanup failures and retained usage records. API-key route tests cover
 the shared revocation query's single-key caller.
+
+Database tests cover cascades, retained call charges, and stale chat and call writers.

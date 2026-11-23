@@ -158,6 +158,18 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       return { error: 'subscriptionCheckFailed' as const };
     }
 
+    const admin = createAdminClient();
+    const { data: deletedConversations, error: conversationError } =
+      await admin.rpc('erase_account_conversations', { p_user_id: user.id });
+
+    if (conversationError) {
+      captureException(conversationError, {
+        extra: { context: 'conversation_account_cleanup' },
+        user: { id: user.id },
+      });
+      throw new Error('User deletion failed');
+    }
+
     const deletedAt = new Date();
     const deletedAtIso = deletedAt.toISOString();
 
@@ -276,7 +288,6 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       }
     });
 
-    const admin = createAdminClient();
     const { error: deleteError, data: deleteData } = await admin
       .from('audio_files')
       .update({
@@ -329,6 +340,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysRevoked: apiKeys?.length ?? 0,
       clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
+      deletedConversations,
       deletedCustomCharacters: customCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
       // usage_events is an immutable audit log protected from deletion by the
@@ -341,6 +353,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysRevoked: apiKeys?.length ?? 0,
       clearedCallTranscripts: clearedCallTranscripts?.length ?? 0,
       deleted: deleteData?.length,
+      deletedConversations,
       deletedCustomCharacters: customCharacters?.length ?? 0,
       deletedMemories: deletedMemories?.length ?? 0,
       usageEventsRetained: retainedUsageEventsCount,

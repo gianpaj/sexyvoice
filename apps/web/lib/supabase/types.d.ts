@@ -35,6 +35,18 @@ declare type Database = {
   };
   public: {
     Tables: {
+      account_conversation_erasures: {
+        Row: {
+          user_id: string;
+        };
+        Insert: {
+          user_id: string;
+        };
+        Update: {
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       agent_memories: {
         Row: {
           character_id: string;
@@ -1080,6 +1092,10 @@ declare type Database = {
       };
       decrement_user_credits_up_to: {
         Args: { credit_amount_var: number; user_id_var: string };
+        Returns: number;
+      };
+      erase_account_conversations: {
+        Args: { p_user_id: string };
         Returns: number;
       };
       get_usage_summary: {
