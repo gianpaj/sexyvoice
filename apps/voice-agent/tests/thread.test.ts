@@ -6,7 +6,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CallThread, committedTurn, seedHistory } from '../src/thread.ts';
+import { CallThread, committedTurn } from '../src/thread.ts';
 
 const turn = (id: string, role: 'user' | 'assistant', content: string) =>
   llm.ChatMessage.create({ id, role, content });
@@ -54,37 +54,43 @@ describe('JS call conversation context', () => {
     expect(query.eq).toHaveBeenCalledWith('id', 'character');
   });
 
-  it('seeds visible messages chronologically and preserves interruptions', () => {
-    const text = (content: string) => [{ type: 'text' as const, content }];
-    const history = seedHistory([
-      {
-        id: 'two',
-        role: 'assistant',
-        parts: text('Dos'),
-        status: 'interrupted',
-      },
-      { id: 'one', role: 'user', parts: text('One'), status: 'completed' },
-    ]);
+  it('seeds the ordered turns returned by Postgres and preserves interruptions', async () => {
+    const rpc = vi.fn((name: string) => ({
+      abortSignal: async () => ({
+        data:
+          name === 'open_voice_call'
+            ? {
+                character_id: null,
+                character_name: 'Voice chat',
+                uses_default_character: true,
+                language: 'en',
+                scene_instructions: '',
+              }
+            : [
+                { id: 'one', role: 'user', content: 'One', interrupted: false },
+                {
+                  id: 'two',
+                  role: 'assistant',
+                  content: 'Dos',
+                  interrupted: true,
+                },
+              ],
+      }),
+    }));
+    const thread = new CallThread({ rpc } as unknown as SupabaseClient, {
+      userId: 'caller',
+      conversationId: 'thread',
+      roomName: 'room',
+    });
 
-    expect(history.items).toMatchObject([
+    const { chatCtx } = await thread.open(true);
+    expect(rpc).toHaveBeenLastCalledWith('read_conversation_context', {
+      p_user_id: 'caller',
+      p_conversation_id: 'thread',
+    });
+    expect(chatCtx.items).toMatchObject([
       { id: 'one', role: 'user', content: ['One'], interrupted: false },
       { id: 'two', role: 'assistant', content: ['Dos'], interrupted: true },
-    ]);
-  });
-
-  it('bounds prompt size and favors the latest turn', () => {
-    const latest = {
-      id: 'new',
-      role: 'user',
-      parts: [{ type: 'text', content: 'x'.repeat(14_000) }],
-      status: 'completed',
-    } as const;
-    const history = seedHistory([
-      { ...latest, parts: [...latest.parts] },
-      { ...latest, id: 'old', parts: [{ type: 'text', content: 'Old' }] },
-    ]);
-    expect(history.items).toMatchObject([
-      { id: 'new', content: ['x'.repeat(12_000)] },
     ]);
   });
 

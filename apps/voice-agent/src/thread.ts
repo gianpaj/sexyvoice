@@ -1,9 +1,6 @@
 import { llm } from '@livekit/agents';
 import {
-  boundedHistory,
-  HISTORY_ROWS,
-  type History,
-  historySchema,
+  conversationContextSchema,
   roleSchema,
   threadSchema,
 } from '@sexyvoice/voice-chat/history';
@@ -13,12 +10,6 @@ interface CallKey {
   conversationId: string;
   roomName: string;
   userId: string;
-}
-
-export function seedHistory(rowsNewestFirst: History): llm.ChatContext {
-  return new llm.ChatContext(
-    boundedHistory(rowsNewestFirst).map((turn) => llm.ChatMessage.create(turn)),
-  );
 }
 
 export function committedTurn(item: llm.ChatItem) {
@@ -61,16 +52,20 @@ export class CallThread {
 
     const thread = threadSchema.parse(data);
     const history = await this.db
-      .from('conversation_messages')
-      .select('id,role,parts,status')
-      .eq('conversation_id', this.key.conversationId)
-      .in('status', ['completed', 'interrupted'])
-      .order('position', { ascending: false })
-      .limit(HISTORY_ROWS)
+      .rpc('read_conversation_context', {
+        p_user_id: this.key.userId,
+        p_conversation_id: this.key.conversationId,
+      })
       .abortSignal(AbortSignal.timeout(5000));
     if (history.error) throw new Error('Conversation history unavailable');
 
-    return { thread, chatCtx: seedHistory(historySchema.parse(history.data)) };
+    const turns = conversationContextSchema.parse(history.data);
+    return {
+      thread,
+      chatCtx: new llm.ChatContext(
+        turns.map((turn) => llm.ChatMessage.create(turn)),
+      ),
+    };
   }
 
   append(item: llm.ChatItem, onFailure: () => void) {

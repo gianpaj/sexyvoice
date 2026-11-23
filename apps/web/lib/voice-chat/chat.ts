@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
-  boundedHistory,
-  HISTORY_ROWS,
+  conversationContextSchema,
   historySchema,
   loadThreadCharacter,
   replyInstructions,
@@ -92,13 +91,10 @@ export async function generateChatReply(
         .eq('user_id', userId)
         .eq('id', conversationId)
         .single(),
-      db
-        .from('conversation_messages')
-        .select('id,role,parts,status')
-        .eq('conversation_id', conversationId)
-        .in('status', ['completed', 'interrupted'])
-        .order('position', { ascending: false })
-        .limit(HISTORY_ROWS),
+      db.rpc('read_conversation_context', {
+        p_user_id: userId,
+        p_conversation_id: conversationId,
+      }),
     ]);
     if (thread.error || history.error)
       throw new Error('Could not load chat context');
@@ -118,7 +114,7 @@ export async function generateChatReply(
       throw new Error('Character unavailable');
     const memory = await loadMemory(db, userId, config.character_id);
     const recalled = await memory?.recall?.(text);
-    const turns = boundedHistory(historySchema.parse(history.data));
+    const turns = conversationContextSchema.parse(history.data);
     const systemPrompts = [
       ...replyInstructions(config, {
         character: character?.instructions,

@@ -1162,6 +1162,15 @@ declare type Database = {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
       };
+      read_conversation_context: {
+        Args: { p_conversation_id: string; p_user_id: string };
+        Returns: {
+          content: string;
+          id: string;
+          interrupted: boolean;
+          role: string;
+        }[];
+      };
       read_voice_chat: {
         Args: { p_run_id: string; p_user_id: string };
         Returns: {

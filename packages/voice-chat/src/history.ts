@@ -1,8 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-export const HISTORY_ROWS = 32;
-const HISTORY_CHARS = 12_000;
 export const roleSchema = z.enum(['user', 'assistant']);
 export const historySchema = z.array(
   z.object({
@@ -20,31 +18,14 @@ export const threadSchema = z.object({
   scene_instructions: z.string(),
 });
 
-export type History = z.infer<typeof historySchema>;
-
-export function boundedHistory(rowsNewestFirst: History) {
-  let remaining = HISTORY_CHARS;
-  const turns: {
-    id: string;
-    role: History[number]['role'];
-    content: string;
-    interrupted: boolean;
-  }[] = [];
-  for (const row of rowsNewestFirst) {
-    const text = row.parts.map((part) => part.content).join('\n');
-    if (!text.trim()) continue;
-    if (text.length > remaining && turns.length) break;
-    turns.push({
-      id: row.id,
-      role: row.role,
-      content: text.slice(-remaining),
-      interrupted: row.status === 'interrupted',
-    });
-    remaining -= text.length;
-    if (remaining <= 0) break;
-  }
-  return turns.reverse();
-}
+export const conversationContextSchema = z.array(
+  z.object({
+    id: z.string(),
+    role: roleSchema,
+    content: z.string(),
+    interrupted: z.boolean(),
+  }),
+);
 
 const characterSchema = z.object({
   name: z.string(),
