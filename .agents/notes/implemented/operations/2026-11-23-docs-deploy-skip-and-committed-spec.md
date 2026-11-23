@@ -16,9 +16,11 @@ therefore reached the docs only on a later docs deploy.
 ## Decision
 
 - `apps/docs/vercel.json` keeps the commit-message markers as a manual override.
-  Otherwise it runs `npx -y turbo-ignore @sexyvoice/docs --fallback=HEAD^1`,
+  Otherwise it runs `npx -y turbo-ignore@2.10.12 @sexyvoice/docs --fallback=HEAD^1`,
   which diffs against `VERCEL_GIT_PREVIOUS_SHA` (the last successful deployment).
   It uses `npx` because the ignore step runs before dependencies are installed.
+  The version matches the root `turbo` version, so bump the two together; an
+  unpinned `npx` install would bypass the lockfile and `minimumReleaseAge`.
 - The docs read the spec from
   `apps/docs/content/docs/api-reference/openapi.json`.
   `apps/web/tests/api-v1-openapi-docs-spec.test.ts` compares it with
