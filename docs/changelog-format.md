@@ -86,9 +86,12 @@ releases only.
 ## Checklist for future updates
 
 - Confirm the release version in `apps/web/package.json`.
-- Mirror the new release in `apps/web/data/changelog.ts`, which feeds the
-  dashboard sidebar's changelog panel.
-  `apps/web/tests/changelog.test.ts` checks that both stay in sync.
+- Mirror the new release in `apps/web/data/changelog.ts` (version, date,
+  change types, and PR links) and add the localized `area`/`text` copy to
+  `sidebar.changelogReleases` in every `apps/web/messages/*.json` file, in
+  the same release and entry order. These feed the dashboard sidebar's
+  changelog panel.
+  `apps/web/tests/changelog.test.ts` checks that everything stays in sync.
 - If the public API changed, also update the API version in
   `lib/api/openapi.ts`.
 - Confirm every item is supported by merged PRs or direct commits.

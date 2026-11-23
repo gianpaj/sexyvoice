@@ -1162,6 +1162,132 @@
     "changelogAdded": "Added",
     "changelogChanged": "Changed",
     "changelogFixed": "Fixed",
+    "changelogReleases": [
+      {
+        "entries": [
+          {
+            "area": "Voice generation",
+            "text": "Added Gemini 3.8 Flash TTS voices to the Generate page: the eleven existing Gemini voices (achernar, aoede, autonoe, callirrhoe, despina, erinome, gacrux, kore, puck, sulafat, and zephyr) on the new model, plus 17 Spanish voices with Castilian (es-ES) and Mexican (es-MX) accents shown under names such as Clara, Hugo, Mariana, and Diego."
+          },
+          {
+            "area": "Voice generation",
+            "text": "Gemini 3.8 voices send your style instructions as delivery direction separate from the spoken text, and accept inline vocal tags such as <sigh>, <laughter>, and <short pause> in any transcript language."
+          },
+          {
+            "area": "Voice generation",
+            "text": "Gemini 3.8 voices are listed first in the voice picker. Free accounts pay the base Gemini credit rate for them, with no free-tier surcharge."
+          },
+          {
+            "area": "External API",
+            "text": "POST /api/v1/speech accepts model: \"gpro38\" for Gemini 3.8 Flash TTS voices. Send spoken words in input and delivery instructions in style; temperature is supported. Responses are WAV and report gemini-3.8-flash-tts in usage.model."
+          },
+          {
+            "area": "External API",
+            "text": "GET /api/v1/voices and GET /api/v1/models include gpro38 entries, and gpro38 voices report supports_style: true."
+          },
+          {
+            "area": "External API",
+            "text": "Voice and model mismatches on POST /api/v1/speech return HTTP 404 with voice_not_found instead of HTTP 400 with model_not_found. Clients that handled model_not_found should also handle voice_not_found."
+          },
+          {
+            "area": "Voice generation",
+            "text": "Voice preview buttons animate while a sample plays."
+          },
+          {
+            "area": "Voice generation",
+            "text": "Credit balances refresh after generation and insufficient-credit errors. Cancelled generations report any retained charge."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "External API",
+            "text": "GET /api/v1/voices now returns a supports_style flag so you can detect whether a voice accepts the freeform style parameter."
+          },
+          {
+            "area": "External API",
+            "text": "POST /api/v1/speech now ignores style for non-Gemini voices when validating input length and charging credits, so Grok and Orpheus requests use the raw input text instead of a prefixed style prompt."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Internal",
+            "text": "Added a localized blog index with a promo banner and latest posts grid."
+          },
+          {
+            "area": "Internal",
+            "text": "Added the voice cloning pricing FAQ to all supported locale files."
+          },
+          {
+            "area": "Cloning",
+            "text": "Migrated voice cloning from fal.ai to Voxtral and expanded multilingual cloning support."
+          },
+          {
+            "area": "Internal",
+            "text": "Improved blog index SEO metadata and increased gpro voice generation pricing by 10%."
+          },
+          {
+            "area": "Cloning",
+            "text": "Corrected OGG voice uploads so valid files keep their detected duration during voice cloning."
+          },
+          {
+            "area": "Cloning",
+            "text": "Restored hosted clone images from images.sexyvoice.ai so sample artwork loads correctly again."
+          },
+          {
+            "area": "Internal",
+            "text": "Fixed the reset-password flow and refreshed the success state in the reset-password form."
+          },
+          {
+            "area": "Internal",
+            "text": "Account deletion now also removes custom call characters, linked prompts, API keys, and usage events."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Internal",
+            "text": "Switched daily stats reporting to burn rate and aligned Telegram bot stats output with the dashboard's daily stats data."
+          },
+          {
+            "area": "Internal",
+            "text": "Migrated the app to next-intl, replacing the legacy dictionary flow with locale-aware routing and typed translations."
+          },
+          {
+            "area": "Internal",
+            "text": "Expanded key tap targets and redesigned the footer with a mobile-first multi-column layout."
+          },
+          {
+            "area": "Internal",
+            "text": "Increased subscription plan bonus credits by 15%."
+          },
+          {
+            "area": "Internal",
+            "text": "Resolved the daily-stats cron query timeout."
+          },
+          {
+            "area": "Internal",
+            "text": "Stopped locale-prefix redirects from affecting /api/ routes."
+          },
+          {
+            "area": "Internal",
+            "text": "Restored /api/health and build stability after the i18n migration."
+          },
+          {
+            "area": "Internal",
+            "text": "Corrected daily stats revenue and planned audio file count reporting."
+          },
+          {
+            "area": "Internal",
+            "text": "Set PostHog capture_pageview back to the expected default behavior."
+          }
+        ]
+      }
+    ],
     "subscriptionDiscount": "Get {extraCredits}% extra credits & {discount}% off the first month!"
   },
   "header": {

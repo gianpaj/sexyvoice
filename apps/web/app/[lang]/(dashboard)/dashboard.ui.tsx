@@ -22,7 +22,7 @@ import { type MouseEvent, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
-import { ChangelogMenu } from '@/components/changelog-menu';
+import { ChangelogMenu, ChangelogSheet } from '@/components/changelog-menu';
 import CreditsSection from '@/components/credits-section';
 import { DashboardAnalytics } from '@/components/dashboard-analytics';
 import { NavigationPending } from '@/components/navigation-pending';
@@ -158,118 +158,125 @@ export default function DashboardUI({
 
   return (
     <div className="min-h-screen bg-background">
-      <SidebarProvider defaultOpen>
-        <DashboardAnalytics lang={lang} userId={userId} />
-        <NavigationPending pending={isNavigating} />
-        <Sidebar collapsible="icon">
-          <SidebarHeader>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
-                  data-visual-test="transparent"
-                  size="lg"
+      {/* The changelog sheet lives outside `Sidebar` so the panel stays
+          mounted when the mobile sidebar closes after the button click. */}
+      <ChangelogSheet>
+        <SidebarProvider defaultOpen>
+          <DashboardAnalytics lang={lang} userId={userId} />
+          <NavigationPending pending={isNavigating} />
+          <Sidebar collapsible="icon">
+            <SidebarHeader>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                    data-visual-test="transparent"
+                    size="lg"
+                  >
+                    <div className="aspect-square group-data-[collapsible=icon]:size-9">
+                      <Image
+                        alt="Logo"
+                        height={292 / 8}
+                        src={logoSmall}
+                        width={221 / 8}
+                      />
+                    </div>
+                    <span className="font-semibold text-xl">exyVoice.ai</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarHeader>
+
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navigation.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild isActive={item.current}>
+                          <Link
+                            href={item.href}
+                            onClick={(event) =>
+                              handleNavigationClick(event, item.href)
+                            }
+                          >
+                            <item.icon className="mr-3 size-5" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+              <SidebarGroup>
+                <SidebarGroupLabel>{tSidebar('freeTools')}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {freeTools.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild>
+                          <Link href={item.href} target="_blank">
+                            <item.icon className="mr-3 size-5" />
+                            <span>{item.name}</span>
+                            <ExternalLink className="max-h-3 max-w-3" />
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter>
+              <CreditsSection
+                creditTransactions={creditTransactions}
+                showMinutes={pathname === `/${lang}/dashboard/call`}
+                userId={userId}
+              />
+              <SidebarFooterMenu lang={lang} />
+              <ChangelogMenu />
+            </SidebarFooter>
+          </Sidebar>
+
+          <div className="group/dashboard relative flex min-w-0 flex-1 flex-col">
+            <div className="sticky top-0 z-30 flex h-12 items-center border-b bg-background px-4 shadow-sm group-has-data-dashboard-banner/dashboard:absolute group-has-[[data-dashboard-banner]]/dashboard:left-0 group-has-[[data-dashboard-banner]]/dashboard:size-11 group-has-[[data-dashboard-banner]]/dashboard:border-0 group-has-[[data-dashboard-banner]]/dashboard:bg-transparent group-has-[[data-dashboard-banner]]/dashboard:px-0 group-has-[[data-dashboard-banner]]/dashboard:shadow-none sm:px-6 lg:hidden">
+              <SidebarTrigger className="size-11 lg:hidden" />
+            </div>
+
+            {activeBanner && <Banner banner={activeBanner} inDashboard />}
+
+            <main
+              className="flex-1 px-4 py-8 sm:px-6 lg:px-8"
+              id="main-content"
+            >
+              {children}
+            </main>
+            <footer className="border-t p-4 text-center">
+              <p className="text-gray-500 text-xs">
+                <a
+                  className="hover:underline"
+                  href="https://status.sexyvoice.ai"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
-                  <div className="aspect-square group-data-[collapsible=icon]:size-9">
-                    <Image
-                      alt="Logo"
-                      height={292 / 8}
-                      src={logoSmall}
-                      width={221 / 8}
-                    />
-                  </div>
-                  <span className="font-semibold text-xl">exyVoice.ai</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarHeader>
-
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigation.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild isActive={item.current}>
-                        <Link
-                          href={item.href}
-                          onClick={(event) =>
-                            handleNavigationClick(event, item.href)
-                          }
-                        >
-                          <item.icon className="mr-3 size-5" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{tSidebar('freeTools')}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {freeTools.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild>
-                        <Link href={item.href} target="_blank">
-                          <item.icon className="mr-3 size-5" />
-                          <span>{item.name}</span>
-                          <ExternalLink className="max-h-3 max-w-3" />
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-
-          <SidebarFooter>
-            <CreditsSection
-              creditTransactions={creditTransactions}
-              showMinutes={pathname === `/${lang}/dashboard/call`}
-              userId={userId}
-            />
-            <SidebarFooterMenu lang={lang} />
-            <ChangelogMenu />
-          </SidebarFooter>
-        </Sidebar>
-
-        <div className="group/dashboard relative flex min-w-0 flex-1 flex-col">
-          <div className="sticky top-0 z-30 flex h-12 items-center border-b bg-background px-4 shadow-sm group-has-data-dashboard-banner/dashboard:absolute group-has-[[data-dashboard-banner]]/dashboard:left-0 group-has-[[data-dashboard-banner]]/dashboard:size-11 group-has-[[data-dashboard-banner]]/dashboard:border-0 group-has-[[data-dashboard-banner]]/dashboard:bg-transparent group-has-[[data-dashboard-banner]]/dashboard:px-0 group-has-[[data-dashboard-banner]]/dashboard:shadow-none sm:px-6 lg:hidden">
-            <SidebarTrigger className="size-11 lg:hidden" />
+                  Status Page
+                </a>
+                <span> - </span>
+                <a
+                  className="hover:underline"
+                  href="https://sexyvoice.featurebase.app/"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Roadmap
+                </a>
+              </p>
+            </footer>
           </div>
-
-          {activeBanner && <Banner banner={activeBanner} inDashboard />}
-
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8" id="main-content">
-            {children}
-          </main>
-          <footer className="border-t p-4 text-center">
-            <p className="text-gray-500 text-xs">
-              <a
-                className="hover:underline"
-                href="https://status.sexyvoice.ai"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Status Page
-              </a>
-              <span> - </span>
-              <a
-                className="hover:underline"
-                href="https://sexyvoice.featurebase.app/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Roadmap
-              </a>
-            </p>
-          </footer>
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </ChangelogSheet>
     </div>
   );
 }

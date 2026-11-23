@@ -1160,6 +1160,132 @@
     "changelogAdded": "Tilføjet",
     "changelogChanged": "Ændret",
     "changelogFixed": "Rettet",
+    "changelogReleases": [
+      {
+        "entries": [
+          {
+            "area": "Stemmegenerering",
+            "text": "Tilføjede Gemini 3.8 Flash TTS-stemmer til Generer-siden: de elleve eksisterende Gemini-stemmer (achernar, aoede, autonoe, callirrhoe, despina, erinome, gacrux, kore, puck, sulafat og zephyr) på den nye model plus 17 spanske stemmer med castiliansk (es-ES) og mexicansk (es-MX) accent, der vises under navne som Clara, Hugo, Mariana og Diego."
+          },
+          {
+            "area": "Stemmegenerering",
+            "text": "Gemini 3.8-stemmer sender dine stilinstruktioner som leveringsanvisning adskilt fra den talte tekst og accepterer indlejrede vokale tags som <sigh>, <laughter> og <short pause> på ethvert transskriptsprog."
+          },
+          {
+            "area": "Stemmegenerering",
+            "text": "Gemini 3.8-stemmer vises først i stemmevælgeren. Gratis konti betaler Gemini-basiskredittaksten for dem uden tillæg for gratisniveauet."
+          },
+          {
+            "area": "Ekstern API",
+            "text": "POST /api/v1/speech accepterer model: \"gpro38\" til Gemini 3.8 Flash TTS-stemmer. Send talte ord i input og leveringsinstruktioner i style; temperature understøttes. Svar er WAV og rapporterer gemini-3.8-flash-tts i usage.model."
+          },
+          {
+            "area": "Ekstern API",
+            "text": "GET /api/v1/voices og GET /api/v1/models inkluderer gpro38-poster, og gpro38-stemmer rapporterer supports_style: true."
+          },
+          {
+            "area": "Ekstern API",
+            "text": "Stemme- og model-mismatch på POST /api/v1/speech returnerer HTTP 404 med voice_not_found i stedet for HTTP 400 med model_not_found. Klienter, der håndterede model_not_found, bør også håndtere voice_not_found."
+          },
+          {
+            "area": "Stemmegenerering",
+            "text": "Forhåndsvisningsknapper for stemmer animerer, mens en prøve afspilles."
+          },
+          {
+            "area": "Stemmegenerering",
+            "text": "Kreditbalancer opdateres efter generering og fejl om utilstrækkelige kreditter. Annullerede genereringer rapporterer eventuelt tilbageholdt gebyr."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Ekstern API",
+            "text": "GET /api/v1/voices returnerer nu et supports_style-flag, så du kan se, om en stemme accepterer den frie style-parameter."
+          },
+          {
+            "area": "Ekstern API",
+            "text": "POST /api/v1/speech ignorerer nu style for ikke-Gemini-stemmer ved validering af inputlængde og opkrævning af kreditter, så Grok- og Orpheus-forespørgsler bruger den rå inputtekst i stedet for en foranstillet style-prompt."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Internt",
+            "text": "Tilføjede et lokaliseret blogindeks med et promobanner og et gitter med seneste indlæg."
+          },
+          {
+            "area": "Internt",
+            "text": "Tilføjede FAQ om priser for stemmekloning til alle understøttede sprogfiler."
+          },
+          {
+            "area": "Kloning",
+            "text": "Migrerede stemmekloning fra fal.ai til Voxtral og udvidede den flersprogede kloningsunderstøttelse."
+          },
+          {
+            "area": "Internt",
+            "text": "Forbedrede blogindeksets SEO-metadata og øgede prisen på gpro-stemmegenerering med 10 %."
+          },
+          {
+            "area": "Kloning",
+            "text": "Rettede OGG-stemmeuploads, så gyldige filer bevarer deres registrerede varighed under stemmekloning."
+          },
+          {
+            "area": "Kloning",
+            "text": "Gendannede hostede kloningsbilleder fra images.sexyvoice.ai, så eksempelbilleder indlæses korrekt igen."
+          },
+          {
+            "area": "Internt",
+            "text": "Rettede flowet til nulstilling af adgangskode og opdaterede succesvisningen i formularen."
+          },
+          {
+            "area": "Internt",
+            "text": "Kontosletning fjerner nu også brugerdefinerede opkaldsfigurer, linkede prompts, API-nøgler og forbrugshændelser."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Internt",
+            "text": "Skiftede daglig statistikrapportering til forbrændingsrate og tilpassede Telegram-bottens statistikoutput til dashboardets daglige statistikdata."
+          },
+          {
+            "area": "Internt",
+            "text": "Migrerede appen til next-intl og erstattede det gamle ordbogsflow med sprogbevidst routing og typede oversættelser."
+          },
+          {
+            "area": "Internt",
+            "text": "Udvidede centrale trykområder og redesignede footeren med et mobilførst-layout i flere kolonner."
+          },
+          {
+            "area": "Internt",
+            "text": "Øgede bonuskreditter for abonnementsplaner med 15 %."
+          },
+          {
+            "area": "Internt",
+            "text": "Løste timeout i cron-forespørgslen for daglige statistikker."
+          },
+          {
+            "area": "Internt",
+            "text": "Forhindrede sprogpræfiks-omdirigeringer i at påvirke /api/-ruter."
+          },
+          {
+            "area": "Internt",
+            "text": "Gendannede /api/health og build-stabilitet efter i18n-migreringen."
+          },
+          {
+            "area": "Internt",
+            "text": "Rettede rapporteringen af daglig statistikomsætning og antallet af planlagte lydfiler."
+          },
+          {
+            "area": "Internt",
+            "text": "Satte PostHog capture_pageview tilbage til den forventede standardadfærd."
+          }
+        ]
+      }
+    ],
     "subscriptionDiscount": "Få {extraCredits}% ekstra kreditter og {discount}% rabat den første måned!"
   },
   "header": {

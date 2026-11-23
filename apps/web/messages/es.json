@@ -1164,6 +1164,132 @@
     "changelogAdded": "Nuevo",
     "changelogChanged": "Cambiado",
     "changelogFixed": "Corregido",
+    "changelogReleases": [
+      {
+        "entries": [
+          {
+            "area": "Generación de voz",
+            "text": "Se añadieron voces Gemini 3.8 Flash TTS a la página Generar: las once voces Gemini existentes (achernar, aoede, autonoe, callirrhoe, despina, erinome, gacrux, kore, puck, sulafat y zephyr) en el nuevo modelo, más 17 voces en español con acentos castellano (es-ES) y mexicano (es-MX) que aparecen bajo nombres como Clara, Hugo, Mariana y Diego."
+          },
+          {
+            "area": "Generación de voz",
+            "text": "Las voces Gemini 3.8 envían tus instrucciones de estilo como indicaciones de interpretación separadas del texto hablado y aceptan etiquetas vocales en línea como <sigh>, <laughter> y <short pause> en cualquier idioma de transcripción."
+          },
+          {
+            "area": "Generación de voz",
+            "text": "Las voces Gemini 3.8 aparecen primero en el selector de voces. Las cuentas gratuitas pagan por ellas la tarifa base de créditos de Gemini, sin recargo del nivel gratuito."
+          },
+          {
+            "area": "API externa",
+            "text": "POST /api/v1/speech acepta model: \"gpro38\" para voces Gemini 3.8 Flash TTS. Envía las palabras habladas en input y las indicaciones de interpretación en style; temperature es compatible. Las respuestas son WAV e informan gemini-3.8-flash-tts en usage.model."
+          },
+          {
+            "area": "API externa",
+            "text": "GET /api/v1/voices y GET /api/v1/models incluyen entradas de gpro38, y las voces gpro38 informan supports_style: true."
+          },
+          {
+            "area": "API externa",
+            "text": "Las discrepancias de voz y modelo en POST /api/v1/speech devuelven HTTP 404 con voice_not_found en lugar de HTTP 400 con model_not_found. Los clientes que gestionaban model_not_found también deberían gestionar voice_not_found."
+          },
+          {
+            "area": "Generación de voz",
+            "text": "Los botones de vista previa de voz se animan mientras se reproduce una muestra."
+          },
+          {
+            "area": "Generación de voz",
+            "text": "Los saldos de créditos se actualizan tras la generación y los errores de créditos insuficientes. Las generaciones canceladas informan de cualquier cargo retenido."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "API externa",
+            "text": "GET /api/v1/voices ahora devuelve un indicador supports_style para detectar si una voz acepta el parámetro libre style."
+          },
+          {
+            "area": "API externa",
+            "text": "POST /api/v1/speech ahora ignora style en voces que no son de Gemini al validar la longitud de entrada y cobrar créditos, por lo que las solicitudes de Grok y Orpheus usan el texto de entrada sin procesar en lugar de un prompt de estilo prefijado."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Interno",
+            "text": "Se añadió un índice de blog localizado con un banner promocional y una cuadrícula de publicaciones recientes."
+          },
+          {
+            "area": "Interno",
+            "text": "Se añadió el FAQ de precios de clonación de voz a todos los archivos de idioma compatibles."
+          },
+          {
+            "area": "Clonación",
+            "text": "Se migró la clonación de voz de fal.ai a Voxtral y se amplió la compatibilidad multilingüe de clonación."
+          },
+          {
+            "area": "Interno",
+            "text": "Se mejoraron los metadatos SEO del índice del blog y se aumentaron los precios de generación de voz gpro un 10 %."
+          },
+          {
+            "area": "Clonación",
+            "text": "Se corrigieron las subidas de voz OGG para que los archivos válidos conserven su duración detectada durante la clonación de voz."
+          },
+          {
+            "area": "Clonación",
+            "text": "Se restauraron las imágenes de clonación alojadas en images.sexyvoice.ai para que las ilustraciones de muestra vuelvan a cargarse correctamente."
+          },
+          {
+            "area": "Interno",
+            "text": "Se corrigió el flujo de restablecimiento de contraseña y se actualizó el estado de éxito en el formulario."
+          },
+          {
+            "area": "Interno",
+            "text": "La eliminación de la cuenta ahora también elimina los personajes de llamada personalizados, los prompts vinculados, las claves API y los eventos de uso."
+          }
+        ]
+      },
+      {
+        "entries": [
+          {
+            "area": "Interno",
+            "text": "Se cambió el informe de estadísticas diarias a tasa de consumo y se alineó la salida de estadísticas del bot de Telegram con los datos de estadísticas diarias del panel."
+          },
+          {
+            "area": "Interno",
+            "text": "Se migró la app a next-intl, sustituyendo el antiguo flujo de diccionarios por enrutamiento consciente del idioma y traducciones tipadas."
+          },
+          {
+            "area": "Interno",
+            "text": "Se ampliaron las zonas táctiles clave y se rediseñó el pie de página con un diseño de varias columnas centrado en móvil."
+          },
+          {
+            "area": "Interno",
+            "text": "Se aumentaron los créditos de bonificación de los planes de suscripción un 15 %."
+          },
+          {
+            "area": "Interno",
+            "text": "Se resolvió el timeout de la consulta cron de estadísticas diarias."
+          },
+          {
+            "area": "Interno",
+            "text": "Se evitó que las redirecciones de prefijo de idioma afecten a las rutas /api/."
+          },
+          {
+            "area": "Interno",
+            "text": "Se restauraron /api/health y la estabilidad de compilación tras la migración a i18n."
+          },
+          {
+            "area": "Interno",
+            "text": "Se corrigió el informe de ingresos de estadísticas diarias y del recuento de archivos de audio planificados."
+          },
+          {
+            "area": "Interno",
+            "text": "Se devolvió PostHog capture_pageview al comportamiento predeterminado esperado."
+          }
+        ]
+      }
+    ],
     "subscriptionDiscount": "¡Obtén {extraCredits}% de créditos extra y {discount}% de descuento el primer mes!"
   },
   "header": {
