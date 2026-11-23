@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { VoiceSpikeChat } from './voice-spike-chat';
 
 interface Message {
   id: string;
@@ -21,9 +22,11 @@ type State = 'idle' | 'connecting' | 'connected' | 'reconnecting';
 export function LivekitSpike({
   audioReferenceId,
   conversationId,
+  chatThreadId,
 }: {
   audioReferenceId?: string;
   conversationId?: string;
+  chatThreadId?: string;
 }) {
   const t = useTranslations('voiceSpike');
   const [room, setRoom] = useState<Room | null>(null);
@@ -35,6 +38,8 @@ export function LivekitSpike({
   const [changingMute, setChangingMute] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [draft, setDraft] = useState('');
+  const [chatDraft, setChatDraft] = useState('');
+  const [chatRevision, setChatRevision] = useState(0);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -306,6 +311,22 @@ export function LivekitSpike({
       setSending(false);
     }
   };
+  if (chatThreadId && state === 'idle') {
+    return (
+      <VoiceSpikeChat
+        draft={chatDraft}
+        error={error}
+        key={chatRevision}
+        onDraft={setChatDraft}
+        onRefresh={() => setChatRevision((revision) => revision + 1)}
+        onRememberThread={(id) => {
+          thread.current = id;
+        }}
+        onStartCall={start}
+        threadId={thread.current ?? chatThreadId}
+      />
+    );
+  }
   return (
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-96 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">

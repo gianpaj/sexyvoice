@@ -293,9 +293,9 @@ The JS browser call at `/{lang}/dashboard/voice-spike` uses the same allowlist
 and a separate token route. Its worker in `apps/voice-agent` also requires
 `VOICE_SPIKE_ENABLED=true`, matching LiveKit credentials, `XAI_API_KEY`, and
 `INWORLD_API_KEY`. It always dispatches `sexyvoice-js-spike`; never route the
-spike through the Python token endpoint. It has no wallet, history, or memory
-writes. See the [JS call runbook](apps/voice-agent/README.md) and
-[Next.js probe runbook](apps/web/lib/voice-spike/README.md).
+spike through the Python token endpoint. It stores conversation history and
+reuses opted-in Supabase memory. The demo does not debit customer credits.
+See the [JS call runbook](apps/voice-agent/README.md) and [Next.js probe runbook](apps/web/lib/voice-spike/README.md).
 
 ## Banners
 

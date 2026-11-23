@@ -175,7 +175,13 @@ token usage, and streaming readers resume from the last text offset.
 We considered an in-memory stream buffer and a second transcript table.
 The saved message gives a fresh client the same prefix without duplicating the
 transcript. Losing the producer leaves an interrupted message and an expiring
-lease. The producer is never restarted by replay.
+lease. Replay does not start a second provider request.
+
+A mobile-size Chromium run dropped the SSE connection after its first event
+and reattached from the saved cursor. A real Inworld call recalled the first
+chat detail, and the next text reply recalled a second detail introduced during
+the call. Reload returned the same six chronological turns. Both completed
+chat receipts contained xAI input, cached-input, and output token counts.
 
 ### Memory retrieval
 

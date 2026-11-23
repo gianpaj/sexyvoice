@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
@@ -31,5 +32,11 @@ export default async function VoiceSpike({
   const { voice, conversation } = await searchParams;
   const thread = z.uuid().optional().safeParse(conversation);
   if (Array.isArray(voice) || !thread.success) notFound();
-  return <LivekitSpike audioReferenceId={voice} conversationId={thread.data} />;
+  return (
+    <LivekitSpike
+      audioReferenceId={voice}
+      chatThreadId={thread.data ?? randomUUID()}
+      conversationId={thread.data}
+    />
+  );
 }
