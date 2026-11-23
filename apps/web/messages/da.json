@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Ring til en karakter med din egen stemme",
         "subtitle": "Giv den en personlighed, og vælg en af vores stemmer, eller klon en ud fra 10 sekunders lyd: din egen eller en, du har rettighederne til. Ring til den, når du vil – den er i rollen hver eneste gang.",
-        "note": "Lås op for egne karakterer med et kreditkøb eller abonnement.",
+        "note": "Lås op for egne karakterer med et engangskøb eller abonnement.",
         "action": "Skab din karakter",
         "cloningLink": "Se, hvordan stemmekloning virker"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Ring så til den",
         "subtitle": "Giv din klonede stemme til en karakter, og tal med den live i realtid.",
-        "note": "Lås op for opkald med klonede stemmer med et kreditkøb eller abonnement.",
+        "note": "Lås op for opkald med klonede stemmer med et engangskøb eller abonnement.",
         "action": "Prøv et stemmeopkald"
       },
       "cta": {
@@ -446,7 +446,7 @@
     },
     "topup": {
       "title": "Køb kreditter",
-      "description": "Fyld op på dine kreditter med det samme, eller abonner og få flere kreditter",
+      "description": "Tilføj kreditter med det samme, eller abonner og få flere kreditter",
       "buyCredits": "Køb kreditter",
       "onetimePurchase": "Engangskøb",
       "processing": "Behandler...",
@@ -498,7 +498,7 @@
     "balanceError": "Vi kunne ikke indlæse din kreditsaldo. Prøv igen.",
     "retryBalance": "Prøv igen",
     "title": "Kreditter",
-    "topupButton": "Fyld op",
+    "topupButton": "Tilføj kreditter",
     "totalCredits": "Total",
     "remainingCredits": "Resterende",
     "remainingTime": "Resterende tid"
@@ -1069,7 +1069,7 @@
         "action": "Handling"
       },
       "empty": "Ingen API-nøgler oprettet endnu.",
-      "unpaidEmpty": "Abonner eller fyld saldo på din konto for at oprette API-nøgler.",
+      "unpaidEmpty": "Abonner eller tilføj kreditter for at oprette API-nøgler.",
       "never": "Aldrig",
       "statusActive": "Aktiv",
       "statusRevoked": "Tilbagekaldt",

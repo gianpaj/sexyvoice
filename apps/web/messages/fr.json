@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Appelez un personnage avec votre propre voix",
         "subtitle": "Donnez-lui une personnalité, puis choisissez l'une de nos voix ou clonez-en une à partir de 10 secondes d'audio : la vôtre, ou une dont vous avez les droits. Appelez-le quand vous voulez : il reste dans son rôle à chaque fois.",
-        "note": "Débloquez vos propres personnages avec une recharge ou un abonnement.",
+        "note": "Débloquez vos propres personnages avec un achat unique ou un abonnement.",
         "action": "Créer votre personnage",
         "cloningLink": "Découvrir le clonage vocal"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Puis appelez-la",
         "subtitle": "Donnez votre voix clonée à un personnage et parlez-lui en direct, en temps réel.",
-        "note": "Débloquez les appels avec une voix clonée avec une recharge ou un abonnement.",
+        "note": "Débloquez les appels avec une voix clonée avec un achat unique ou un abonnement.",
         "action": "Essayer un appel vocal"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "Comment est tarifé le clonage vocal ?",
-              "answer": "Enregistrer une voix est gratuit après une recharge ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
+              "answer": "Enregistrer une voix est gratuit après un achat unique ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
             },
             {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
@@ -285,7 +285,7 @@
             },
             {
               "question": "Comment passer un appel vocal avec une voix clonée ?",
-              "answer": "Allez sur la page des appels, créez un personnage et sélectionnez votre voix clonée enregistrée. Enregistrez le personnage, puis lancez l'appel. Si vous n'avez pas encore enregistré de voix, choisissez « Cloner une voix » lors de la création du personnage, ou « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix. Une recharge ou un paiement d'abonnement débloque les personnages personnalisés et les voix enregistrées."
+              "answer": "Allez sur la page des appels, créez un personnage et sélectionnez votre voix clonée enregistrée. Enregistrez le personnage, puis lancez l'appel. Si vous n'avez pas encore enregistré de voix, choisissez « Cloner une voix » lors de la création du personnage, ou « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix. Un achat unique ou un paiement d'abonnement débloque les personnages personnalisés et les voix enregistrées."
             },
             {
               "question": "Combien ça coûte ?",
@@ -450,7 +450,7 @@
     },
     "topup": {
       "title": "Acheter des crédits",
-      "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
+      "description": "Ajoutez des crédits instantanément ou abonnez-vous et obtenez plus de crédits",
       "buyCredits": "Acheter des crédits",
       "onetimePurchase": "Achat unique",
       "processing": "Traitement...",
@@ -502,7 +502,7 @@
     "balanceError": "Impossible de charger votre solde de crédits. Veuillez réessayer.",
     "retryBalance": "Réessayer",
     "title": "Crédits",
-    "topupButton": "Recharger",
+    "topupButton": "Ajouter des crédits",
     "totalCredits": "Total",
     "remainingCredits": "Restants",
     "remainingTime": "Temps restant"
@@ -1073,7 +1073,7 @@
         "action": "Action"
       },
       "empty": "Aucune clé API créée pour l'instant.",
-      "unpaidEmpty": "Abonnez-vous ou rechargez votre compte pour créer des clés API.",
+      "unpaidEmpty": "Abonnez-vous ou ajoutez des crédits pour créer des clés API.",
       "never": "Jamais",
       "statusActive": "Active",
       "statusRevoked": "Révoquée",

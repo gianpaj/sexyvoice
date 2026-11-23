@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Rufen Sie einen Charakter mit Ihrer eigenen Stimme an",
         "subtitle": "Geben Sie ihm eine Persönlichkeit und wählen Sie eine unserer Stimmen oder klonen Sie eine aus 10 Sekunden Audio: Ihre eigene oder eine, an der Sie die Rechte haben. Rufen Sie ihn an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
-        "note": "Eigene Charaktere mit einer Credit-Aufladung oder einem Abo freischalten.",
+        "note": "Eigene Charaktere mit einem einmaligen Kauf oder einem Abo freischalten.",
         "action": "Charakter erstellen",
         "cloningLink": "So funktioniert das Klonen von Stimmen"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Dann ruf sie an",
         "subtitle": "Gib deine geklonte Stimme einem Charakter und sprich live mit ihm, in Echtzeit.",
-        "note": "Anrufe mit geklonter Stimme mit einer Credit-Aufladung oder einem Abo freischalten.",
+        "note": "Anrufe mit geklonter Stimme mit einem einmaligen Kauf oder einem Abo freischalten.",
         "action": "Sprachanruf ausprobieren"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "Wie wird das Klonen von Stimmen berechnet?",
-              "answer": "Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Sprache mit einer geklonten Stimme verbraucht mehr Credits als mit unseren Standardstimmen. Längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben."
+              "answer": "Das Speichern einer Stimme ist nach einem einmaligen Kauf oder einer Abonnementzahlung kostenlos. Sprache mit einer geklonten Stimme verbraucht mehr Credits als mit unseren Standardstimmen. Längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben."
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
@@ -285,7 +285,7 @@
             },
             {
               "question": "Wie starte ich einen Sprachanruf mit einer geklonten Stimme?",
-              "answer": "Öffnen Sie die Anrufseite, erstellen Sie einen Charakter und wählen Sie Ihre gespeicherte geklonte Stimme aus. Speichern Sie den Charakter und starten Sie den Anruf. Wenn Sie noch keine Stimme gespeichert haben, wählen Sie beim Erstellen des Charakters \"Stimme klonen\" oder auf der Klonen-Seite \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet eigene Charaktere und gespeicherte Stimmen frei."
+              "answer": "Öffnen Sie die Anrufseite, erstellen Sie einen Charakter und wählen Sie Ihre gespeicherte geklonte Stimme aus. Speichern Sie den Charakter und starten Sie den Anruf. Wenn Sie noch keine Stimme gespeichert haben, wählen Sie beim Erstellen des Charakters \"Stimme klonen\" oder auf der Klonen-Seite \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch. Ein einmaliger Kauf oder eine Abonnementzahlung schaltet eigene Charaktere und gespeicherte Stimmen frei."
             },
             {
               "question": "Was kostet das?",
@@ -450,7 +450,7 @@
     },
     "topup": {
       "title": "Credits kaufen",
-      "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",
+      "description": "Fügen Sie sofort Credits hinzu oder abonnieren Sie und erhalten Sie mehr Credits",
       "buyCredits": "Credits kaufen",
       "onetimePurchase": "Einmaliger Kauf",
       "processing": "Wird verarbeitet...",
@@ -502,7 +502,7 @@
     "balanceError": "Dein Guthaben konnte nicht geladen werden. Bitte versuche es erneut.",
     "retryBalance": "Erneut versuchen",
     "title": "Guthaben",
-    "topupButton": "Aufladen",
+    "topupButton": "Credits hinzufügen",
     "totalCredits": "Gesamt",
     "remainingCredits": "Verbleibend",
     "remainingTime": "Verbleibende Zeit"
@@ -1073,7 +1073,7 @@
         "action": "Aktion"
       },
       "empty": "Noch keine API-Schlüssel erstellt.",
-      "unpaidEmpty": "Abonnieren Sie oder laden Sie Ihr Konto auf, um API-Schlüssel zu erstellen.",
+      "unpaidEmpty": "Abonnieren Sie oder fügen Sie Credits hinzu, um API-Schlüssel zu erstellen.",
       "never": "Nie",
       "statusActive": "Aktiv",
       "statusRevoked": "Widerrufen",
