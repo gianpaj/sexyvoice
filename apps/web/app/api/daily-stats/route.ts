@@ -559,12 +559,6 @@ export async function GET(request: NextRequest) {
       started_at: string | null;
     })[]
   ).filter((item): item is DailyStatsCallSession => item.started_at !== null);
-  const callSessions14dData = filterByDateRange(
-    callSessionsData,
-    fourteenDaysAgo,
-    today,
-    'started_at',
-  );
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
   const callSessionsAllTimeDurationData =
     (callSessionsAllTimeDurationResult.data ?? []) as {
@@ -584,7 +578,7 @@ export async function GET(request: NextRequest) {
 
   // Filter call sessions by date ranges (using started_at as the date field)
   const callSessionsYesterdayData = filterByDateRange(
-    callSessions14dData,
+    callSessionsData,
     previousDay,
     today,
     'started_at',
@@ -599,7 +593,14 @@ export async function GET(request: NextRequest) {
     today,
   );
   const callsYesterdayCount = callSessionsYesterdayData.length;
-  const calls14dCount = callSessions14dData.length;
+  // Same baseline as the Calls section: the 14 days before yesterday.
+  const callsBaselineDailyCount =
+    countByDateRange(
+      callSessionsData,
+      callsBaselineStart,
+      previousDay,
+      'started_at',
+    ) / ROLLING_WINDOW_DAYS;
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
     (sum, call) => sum + call.duration_seconds,
     0,
@@ -1202,10 +1203,8 @@ export async function GET(request: NextRequest) {
           audio14dCount / ROLLING_WINDOW_DAYS
         ).toFixed(1)} avg`
       : null,
-    callsYesterdayCount > calls14dCount / ROLLING_WINDOW_DAYS
-      ? `Calls above trend: ${callsYesterdayCount} vs ${(
-          calls14dCount / ROLLING_WINDOW_DAYS
-        ).toFixed(1)} avg`
+    callsYesterdayCount > callsBaselineDailyCount
+      ? `Calls above trend: ${callsYesterdayCount} vs ${callsBaselineDailyCount.toFixed(1)} avg`
       : null,
     clonePrevCount > clone14dCount / ROLLING_WINDOW_DAYS
       ? `Cloning above trend: ${clonePrevCount} vs ${(
@@ -1290,7 +1289,7 @@ export async function GET(request: NextRequest) {
       label: 'Calls',
       status: getFeatureHealthStatus(
         callsYesterdayCount,
-        calls14dCount / ROLLING_WINDOW_DAYS,
+        callsBaselineDailyCount,
       ),
     },
     {

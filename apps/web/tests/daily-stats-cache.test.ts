@@ -436,6 +436,40 @@ describe('GET /api/daily-stats cache', () => {
     expect(mocks.writeFileSync).toHaveBeenCalledOnce();
   });
 
+  it('flags call health against the 14 days before yesterday', async () => {
+    const at = (day: string) => ({
+      character_id: null,
+      credits_used: 0,
+      duration_seconds: 60,
+      free_call: false,
+      id: `call-${day}-${Math.random()}`,
+      model: 'grok-voice-think-fast-2.0',
+      started_at: `${day}T12:00:00Z`,
+      status: 'completed',
+    });
+    // One call yesterday, one a day for the 13 days before it, and two on the
+    // 14th day back: a 15/14 baseline puts yesterday below trend. Averaging
+    // the 14 days up to and including yesterday would give 14/14 instead.
+    const priorDays = Array.from({ length: 13 }, (_, index) =>
+      at(new Date(Date.UTC(2026, 7, 29 + index)).toISOString().slice(0, 10)),
+    );
+    mocks.queries.getAudioFilesInRange.mockResolvedValueOnce([
+      { model: 'xai' },
+    ]);
+    mocks.queries.getCallSessionsInRange.mockResolvedValueOnce([
+      at('2026-08-28'),
+      at('2026-08-28'),
+      ...priorDays,
+      at('2026-09-11'),
+    ]);
+
+    const response = await GET(request('?cache=off'));
+    assert(response);
+    expect(await response.text()).toContain(
+      '- Calls: 🟡 below trend (1 calls, 1m 0s)',
+    );
+  });
+
   it('writes fresh results when the default cache is missing', async () => {
     mocks.getContributionData.mockResolvedValueOnce(callUsageContribution());
 
