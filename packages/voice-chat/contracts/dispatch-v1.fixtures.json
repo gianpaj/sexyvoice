@@ -1,0 +1,75 @@
+{
+  "base": {
+    "version": 1,
+    "runtime": "voice-chat-python",
+    "roomName": "voice-chat-482a7e5c-0d14-4c87-b640-6147ae7d9c50",
+    "userId": "48691368-7fb6-4c34-87eb-47a73a0b8bf2",
+    "conversationId": "56d661f9-13e3-45ea-8c88-9d15c82c4622",
+    "resume": false,
+    "expiresAt": 1900000120000
+  },
+  "cases": [
+    { "name": "default voice", "overrides": {}, "valid": true },
+    {
+      "name": "resume with a saved voice",
+      "overrides": {
+        "resume": true,
+        "audioReferenceId": "63765019-12dc-46b6-85e3-dd8b5238c9a0"
+      },
+      "valid": true
+    },
+    { "name": "missing version", "omit": "version", "valid": false },
+    {
+      "name": "unknown version",
+      "overrides": { "version": 2 },
+      "valid": false
+    },
+    {
+      "name": "other runtime",
+      "overrides": { "runtime": "voice-chat-js" },
+      "valid": false
+    },
+    {
+      "name": "wrong room namespace",
+      "overrides": { "roomName": "ro-482a7e5c-0d14-4c87-b640-6147ae7d9c50" },
+      "valid": false
+    },
+    {
+      "name": "invalid room ID",
+      "overrides": {
+        "roomName": "voice-chat-------------------------------------"
+      },
+      "valid": false
+    },
+    {
+      "name": "invalid owner",
+      "overrides": { "userId": "other-user" },
+      "valid": false
+    },
+    {
+      "name": "invalid thread",
+      "overrides": { "conversationId": "not-a-uuid" },
+      "valid": false
+    },
+    {
+      "name": "string boolean",
+      "overrides": { "resume": "true" },
+      "valid": false
+    },
+    {
+      "name": "invalid lifetime",
+      "overrides": { "expiresAt": 0.5 },
+      "valid": false
+    },
+    {
+      "name": "provider voice instead of reference",
+      "overrides": { "audioReferenceId": "workspace__clone" },
+      "valid": false
+    },
+    {
+      "name": "unexpected configuration",
+      "overrides": { "model": "grok-voice-think-fast-2.0" },
+      "valid": false
+    }
+  ]
+}

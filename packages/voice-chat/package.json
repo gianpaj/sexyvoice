@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./dispatch": "./src/dispatch.ts",
     "./reply": "./src/reply.ts",
     "./history": "./src/history.ts",
     "./memory": "./src/memory.ts"
