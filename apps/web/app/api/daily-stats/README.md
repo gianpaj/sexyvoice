@@ -143,9 +143,12 @@ in two short lines, with unpriced counts when present. Invoice
 provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
-The local cache stores contribution usage with the credit transactions read
-alongside it, so a cached report uses one snapshot of both. `?cache=off` reads
-both fresh. See [Query load](#query-load) for transaction read windows.
+The local cache stores contribution usage with the credit transactions read in
+the same run, so a cached report never pairs fresh usage with cached
+collections. The two reads run concurrently, not in one database transaction:
+a purchase committed between them can appear in one and not the other, fresh or
+cached. `?cache=off` reads both fresh. See [Query load](#query-load) for
+transaction read windows.
 
 ## Query load
 
