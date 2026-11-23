@@ -11,7 +11,7 @@ retain several conversations with one character for a future thread menu.
 
 ## Proposal
 
-The [migration](../../../../apps/web/supabase/migrations/20261116140000_create_conversations.sql)
+The [migration](../../../../apps/web/supabase/migrations/20261118130000_create_conversations.sql)
 adds `conversations`, `conversation_messages`, and a nullable
 `call_sessions.conversation_id`. It does not backfill historical calls.
 Existing transcript JSON and minute billing keep their current roles.
@@ -33,9 +33,10 @@ revisions. Source-call references are checked at transaction end so thread
 removal can both delete messages and unlink calls.
 
 Only verified backend code writes these tables. Authenticated owners can read
-them through RLS; anonymous users have no access. A call's owner must match its
-conversation, and call messages must reference that same conversation. A
-trigger protects the link from existing browser call INSERT/UPDATE privileges.
+them through RLS. A call's owner must match its conversation, and call messages
+must reference that same conversation. Only the service role can write call
+sessions. The conversation-link trigger protects the link if a future migration
+restores client write grants.
 No arbitrary metadata, system prompts, reasoning, memory injections, or raw
 audio belong in the visible text parts.
 
@@ -73,7 +74,7 @@ log are separate; message rows alone cannot replay a stream.
 The [pgTAP suite](../../../../apps/web/supabase/tests/conversations.test.sql)
 passes against migrated local Supabase. It covers ownership, grants, stable
 identity, positions, revisions, visible text validation, duplicate source items,
-call ownership, legacy browser call writes, and history retention on deletion.
+call ownership, rejection of browser call writes, and history retention on deletion.
 The [generated types](../../../../apps/web/lib/supabase/types.d.ts) match the
 migrated local database. Add queries through those schema-derived types.
 
@@ -96,3 +97,7 @@ unit suite passes 2,199 tests in 143 files; 18 tests are skipped. SQL and
 procedural syntax also parse offline; Biome does not check SQL. Production is
 unchanged. Runtime admission, billing, replay, and Python integration need their
 own later verification.
+
+The upgrade from `main` applies all five conversation migrations with plain
+`supabase migration up --local`. The full pgTAP suite passes 193 assertions
+after the upgrade.

@@ -473,7 +473,7 @@ promise zero idle STT provider spend from mute alone.
 
 The repository includes the conversation-history foundation:
 
-- `apps/web/supabase/migrations/20261116140000_create_conversations.sql`
+- `apps/web/supabase/migrations/20261118130000_create_conversations.sql`
 - `apps/web/supabase/tests/conversations.test.sql`
 - `apps/web/lib/supabase/types.d.ts`, generated from the applied local schema
 - `.agents/notes/proposed/database/2026-11-16-conversation-history.md`

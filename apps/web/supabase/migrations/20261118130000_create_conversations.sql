@@ -142,8 +142,8 @@ begin
 end;
 $$;
 
--- Existing call_sessions clients can INSERT/UPDATE their legacy rows. Those
--- grants must not let a browser claim, detach, or replace a server-owned link.
+-- Call-session writes belong to service_role. Keep this guard to protect the
+-- conversation link if a future migration restores client write grants.
 create function public.guard_call_conversation_link()
 returns trigger
 language plpgsql

@@ -123,11 +123,11 @@ backfill is required to start the new flow.
 
 ### First migration boundary
 
-Sexyvoice's `20261116140000_create_conversations.sql` adds the two history tables
+Sexyvoice's `20261118130000_create_conversations.sql` adds the two history tables
 and the protected call link. The pgTAP suite is `conversations.test.sql`.
 Authenticated owners can SELECT; all mutations go through verified backend code.
 Composite foreign keys prevent cross-owner calls and cross-thread call messages.
-Existing browser call writes cannot set or replace a conversation link.
+Only the service role can write call sessions or set a conversation link.
 
 Message updates retain identity, advance revisions, and allow explicit position
 corrections. Thread revisions advance with message mutations. Writers must lock

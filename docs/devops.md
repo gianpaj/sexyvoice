@@ -46,10 +46,11 @@ execution; test review changes after they reach the default branch.
 ### Account-deletion migration order
 
 Before merging a release that calls `erase_account_conversations`, the
-production database operator must verify this full migration sequence is
-applied in timestamp order:
+production database operator must verify that
+`20261118090000_restrict_call_session_writes.sql` from `main` is applied,
+then apply these migrations in timestamp order:
 
-1. `20261116140000_create_conversations.sql`
+1. `20261118130000_create_conversations.sql`
 2. `20261118170000_voice_spike_threads.sql`
 3. `20261123140000_voice_spike_chat.sql`
 4. `20261123150000_erase_account_conversations.sql`

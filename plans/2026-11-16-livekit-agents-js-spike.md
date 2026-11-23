@@ -201,7 +201,7 @@ customer credit writes; shadow accounting records provider spend separately.
    the messages and the phone button at the top right. Reuse an available
    chat implementation; a temporary test endpoint is not the public feature.
 2. Use `conversations` and `conversation_messages` from
-   `20261116140000_create_conversations.sql`. The migration supplies history,
+   `20261118130000_create_conversations.sql`. The migration supplies history,
    not operations, writer fencing, wallet reservations, or durable stream logs.
    Extend stage 2's shared admission with the transactional message-writing
    slice needed here, following the context plan. Use local migrations and
