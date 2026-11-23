@@ -325,9 +325,9 @@ The docs site at `docs.sexyvoice.ai` is a Fumadocs (Next.js) app in
 `apps/docs`. Content lives in `apps/docs/content/`.
 
 - Run it locally with `pnpm --filter @sexyvoice/docs dev`.
-- Regenerate the external API reference with
-  `pnpm --filter @sexyvoice/docs generate-openapi-docs` after changing the
-  `/api/v1/*` request/response schemas.
+- The external API reference reads the committed spec in
+  `apps/docs/content/docs/api-reference/openapi.json`. See
+  [External API v1](./AGENTS.md#external-api-v1) for how to refresh it.
 
 ### Video Generation
 

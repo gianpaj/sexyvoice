@@ -53,13 +53,16 @@ execution; test review changes after they reach the default branch.
 | LiveKit agent | External Python service on Fly.io, Paris CDG                                    |
 
 Use Node.js `24.x` and the pnpm version pinned in `package.json`. Root build
-commands use Turborepo. The docs app's build regenerates its OpenAPI reference;
-keep its custom domain and Vercel GitHub App connected to the deployment branch.
+commands use Turborepo. The docs app's build regenerates its OpenAPI reference
+from the committed spec; keep its custom domain and Vercel GitHub App connected to the deployment branch.
 
 The `ignoreCommand` in each app's `vercel.json` controls deployment skips:
 
 - Web: `skip deploy` or `skip ci` in the latest commit message.
-- Docs: `skip deploy`, `skip ci`, or `skip docs`.
+- Docs: `skip deploy`, `skip ci`, or `skip docs`. Otherwise `turbo-ignore`
+  skips the build when nothing in `apps/docs` or its dependencies changed
+  since the last successful deployment. Spec changes reach the docs through
+  the committed `openapi.json`, so they trigger a build.
 
 The [documentation commit rule](../AGENTS.md#documentation-rules) defines when to
 use `[skip deploy]`.

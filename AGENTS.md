@@ -230,9 +230,14 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   generation.
 - When changing external API behavior, request/response schemas, auth, rate
   limits, errors, models, pricing, or OpenAPI output, update the Fumadocs
-  content in `apps/docs/content/` (and re-run
-  `pnpm --filter @sexyvoice/docs generate-openapi-docs` if the OpenAPI schema
-  changes).
+  content in `apps/docs/content/`.
+- The docs build reads the committed spec in
+  `apps/docs/content/docs/api-reference/openapi.json`, not the live
+  `/api/v1/openapi`. When the OpenAPI output changes, refresh it with
+  `pnpm --filter @sexyvoice/web test api-v1-openapi-docs-spec -u`; the test
+  fails while the file is stale. Re-run
+  `pnpm --filter @sexyvoice/docs generate-openapi-docs` when endpoints are
+  added or removed.
 - External speech generation always generates fresh audio and uploads to the
   external API R2 bucket.
 

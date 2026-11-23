@@ -1,303 +1,11 @@
 {
-  "openapi": "3.1.0",
   "info": {
+    "description": "API for text-to-speech generation.",
     "title": "SexyVoice API",
-    "version": "1.0.0",
-    "description": "API for text-to-speech generation."
+    "version": "1.1.0"
   },
+  "openapi": "3.1.0",
   "paths": {
-    "/api/v1/speech": {
-      "post": {
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "summary": "Generate speech audio",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VoiceGenerationRequest"
-              },
-              "examples": {
-                "basic": {
-                  "summary": "Basic voice generation",
-                  "value": {
-                    "model": "gpro",
-                    "input": "Hello, world!",
-                    "voice": "achernar"
-                  }
-                },
-                "with_style": {
-                  "summary": "Voice generation with emotion",
-                  "value": {
-                    "model": "gpro",
-                    "input": "This is amazing news!",
-                    "voice": "zephyr",
-                    "style": "happy"
-                  }
-                },
-                "orpheus_voice": {
-                  "summary": "Orpheus model with English voice",
-                  "value": {
-                    "model": "orpheus",
-                    "input": "Hello, my name is Tara!",
-                    "voice": "tara"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Speech generated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VoiceGenerationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "402": {
-            "description": "Insufficient credits",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Voice not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Content policy violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/voices": {
-      "get": {
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "summary": "List available voices",
-        "responses": {
-          "200": {
-            "description": "Voices list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VoicesResponse"
-                },
-                "examples": {
-                  "available_voices": {
-                    "summary": "Currently available gpro voices",
-                    "value": {
-                      "data": [
-                        {
-                          "id": "390f5864-111b-4795-81ea-7026a1e64cfc",
-                          "name": "achernar",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "03925a20-4e15-4745-b86c-2c2e9d7de870",
-                          "name": "zephyr",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "5797178d-c047-44ea-aef4-94e97fb48663",
-                          "name": "aoede",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "cd71a399-9c9a-4384-b76e-14e96a45fc8a",
-                          "name": "autonoe",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "c38d0c52-e8c1-404b-9cb1-56d4cf252b9f",
-                          "name": "callirrhoe",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "3da76670-6fca-435b-b097-eed8cc6f37a5",
-                          "name": "gacrux",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "f586bd2c-909f-4bf3-a859-4e45e45a22d6",
-                          "name": "despina",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "530c8354-bb32-4231-a9c9-3c05fcdd220b",
-                          "name": "erinome",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "0111e4dd-a38a-48e0-a8bb-a0a057f4cceb",
-                          "name": "puck",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "a68482ea-c14e-43cf-bf8c-16074bff9f8d",
-                          "name": "sulafat",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        },
-                        {
-                          "id": "5a2bffef-5e60-4fe6-b989-9ed3e68b6c48",
-                          "name": "kore",
-                          "language": "multiple",
-                          "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
-                          "supports_style": true
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/models": {
-      "get": {
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "summary": "List available models",
-        "responses": {
-          "200": {
-            "description": "Models list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ModelsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/billing": {
       "get": {
         "security": [
@@ -349,6 +57,428 @@
           }
         }
       }
+    },
+    "/api/v1/models": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List available models",
+        "responses": {
+          "200": {
+            "description": "Models list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/speech": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Generate speech audio",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceGenerationRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic voice generation",
+                  "value": {
+                    "input": "Hello, world!",
+                    "model": "gpro",
+                    "voice": "achernar"
+                  }
+                },
+                "by_voice_id": {
+                  "summary": "Generate with a voice ID from /api/v1/voices",
+                  "value": {
+                    "input": "Hello, world!",
+                    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc"
+                  }
+                },
+                "gemini_with_temperature": {
+                  "summary": "Gemini voice with sampling temperature",
+                  "value": {
+                    "input": "Hello from SexyVoice API",
+                    "model": "gpro",
+                    "temperature": 1.2,
+                    "voice": "achernar"
+                  }
+                },
+                "grok_with_speed": {
+                  "summary": "Grok voice with speech speed",
+                  "value": {
+                    "input": "Hello from Grok!",
+                    "model": "xai",
+                    "speed": 1.2,
+                    "voice": "eve"
+                  }
+                },
+                "orpheus_voice": {
+                  "summary": "Orpheus model with English voice",
+                  "value": {
+                    "input": "Hello, my name is Tara!",
+                    "model": "orpheus",
+                    "voice": "tara"
+                  }
+                },
+                "with_style": {
+                  "summary": "Voice generation with emotion",
+                  "value": {
+                    "input": "This is amazing news!",
+                    "model": "gpro",
+                    "style": "happy",
+                    "voice": "zephyr"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Speech generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceGenerationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voice ID not found, or voice name not found for the requested model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Content policy violation or audio output limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Upstream service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voices": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List available voices",
+        "responses": {
+          "200": {
+            "description": "Voices list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoicesResponse"
+                },
+                "examples": {
+                  "available_voices": {
+                    "summary": "Currently available voices",
+                    "value": {
+                      "data": [
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "390f5864-111b-4795-81ea-7026a1e64cfc",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "achernar",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "5797178d-c047-44ea-aef4-94e97fb48663",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "aoede",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "cd71a399-9c9a-4384-b76e-14e96a45fc8a",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "autonoe",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "c38d0c52-e8c1-404b-9cb1-56d4cf252b9f",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "callirrhoe",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "f586bd2c-909f-4bf3-a859-4e45e45a22d6",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "despina",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "530c8354-bb32-4231-a9c9-3c05fcdd220b",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "erinome",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "3da76670-6fca-435b-b097-eed8cc6f37a5",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "gacrux",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "5a2bffef-5e60-4fe6-b989-9ed3e68b6c48",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "kore",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "0111e4dd-a38a-48e0-a8bb-a0a057f4cceb",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "puck",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "a68482ea-c14e-43cf-bf8c-16074bff9f8d",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "sulafat",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "wav"
+                          ],
+                          "id": "03925a20-4e15-4745-b86c-2c2e9d7de870",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "name": "zephyr",
+                          "supports_style": true
+                        },
+                        {
+                          "formats": [
+                            "mp3",
+                            "wav"
+                          ],
+                          "id": "9d028af7-3c3e-466a-b53f-9a08dc66bf30",
+                          "language": "multiple",
+                          "model": "xai",
+                          "name": "ara",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3",
+                            "wav"
+                          ],
+                          "id": "9aff7755-72c9-4d90-bcf1-c06e18e769b6",
+                          "language": "multiple",
+                          "model": "xai",
+                          "name": "eve",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3",
+                            "wav"
+                          ],
+                          "id": "fd965707-5367-4b89-a05a-c8cd086ba5ab",
+                          "language": "multiple",
+                          "model": "xai",
+                          "name": "leo",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3",
+                            "wav"
+                          ],
+                          "id": "1391aaf8-d3b5-41a5-8554-2c0c9b6d099d",
+                          "language": "multiple",
+                          "model": "xai",
+                          "name": "rex",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3",
+                            "wav"
+                          ],
+                          "id": "57085a6a-2396-445c-a6c1-fd0ce8368d72",
+                          "language": "multiple",
+                          "model": "xai",
+                          "name": "sal",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3"
+                          ],
+                          "id": "218f9750-e7bc-4ae5-9e1d-c6f9d4ffaa74",
+                          "language": "en-GB 🇬🇧",
+                          "model": "orpheus",
+                          "name": "dan",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3"
+                          ],
+                          "id": "698e2e46-7c37-4ff4-ad15-558b30514dea",
+                          "language": "en-US 🇺🇸",
+                          "model": "orpheus",
+                          "name": "emma",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3"
+                          ],
+                          "id": "a5bd6e81-0d1e-490d-b669-bc383ee4ec7c",
+                          "language": "en-US 🇺🇸",
+                          "model": "orpheus",
+                          "name": "josh",
+                          "supports_style": false
+                        },
+                        {
+                          "formats": [
+                            "mp3"
+                          ],
+                          "id": "e55e4fc7-c140-46eb-82da-4d8c97f03d95",
+                          "language": "en-US 🇺🇸",
+                          "model": "orpheus",
+                          "name": "tara",
+                          "supports_style": false
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -356,25 +486,22 @@
       "VoiceGenerationRequest": {
         "type": "object",
         "properties": {
-          "model": {
-            "type": "string",
-            "enum": [
-              "gpro",
-              "orpheus",
-              "xai"
-            ],
-            "description": "The voice model to use"
-          },
           "input": {
             "type": "string",
             "minLength": 1,
             "maxLength": 1000,
-            "description": "The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)"
+            "description": "The text to synthesize (max 1000 chars for gpro/gpro31/gpro38/xai, 500 for orpheus)"
           },
-          "voice": {
+          "model": {
+            "description": "The voice model to use when selecting a voice by name. Omit when using voiceId.",
             "type": "string",
-            "minLength": 1,
-            "description": "Voice name (see GET /api/v1/voices for available voices)"
+            "enum": [
+              "gpro",
+              "gpro31",
+              "gpro38",
+              "orpheus",
+              "xai"
+            ]
           },
           "response_format": {
             "description": "Audio format. Default depends on model",
@@ -384,31 +511,238 @@
               "mp3"
             ]
           },
-          "style": {
-            "description": "Emotion/style variant (e.g., \"happy\", \"sad\", \"whisper\")",
-            "type": "string"
-          },
           "seed": {
             "description": "Optional deterministic seed for providers that support it (e.g. Gemini)",
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "speed": {
+            "description": "Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.",
+            "type": "number",
+            "minimum": 0.7,
+            "maximum": 1.5
+          },
+          "style": {
+            "description": "Emotion/style variant (e.g., \"happy\", \"sad\", \"whisper\")",
+            "type": "string"
+          },
+          "temperature": {
+            "description": "Sampling temperature for Gemini voices (gpro/gpro31/gpro38). Range 0-2; higher is more expressive. Ignored by other models.",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "voice": {
+            "description": "Voice name. Use with model, or pass voiceId instead. See GET /api/v1/voices for available voices.",
+            "type": "string",
+            "minLength": 1
+          },
+          "voiceId": {
+            "description": "Voice ID from GET /api/v1/voices. Use instead of voice + model.",
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
-          "model",
-          "input",
-          "voice"
+          "input"
+        ],
+        "additionalProperties": false
+      },
+      "BillingResponse": {
+        "type": "object",
+        "properties": {
+          "creditsLeft": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "lastBillingTransaction": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "anyOf": [
+                      {},
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "reference_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "subscription_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "purchase",
+                      "topup"
+                    ]
+                  }
+                },
+                "required": [
+                  "amount",
+                  "created_at",
+                  "description",
+                  "id",
+                  "reference_id",
+                  "subscription_id",
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastUpdated": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "creditsLeft",
+          "lastBillingTransaction",
+          "lastUpdated",
+          "userId"
+        ],
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error description"
+              },
+              "param": {
+                "description": "The parameter that caused the error, if applicable",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "invalid_request_error",
+                  "authentication_error",
+                  "permission_error",
+                  "not_found_error",
+                  "rate_limit_error",
+                  "server_error"
+                ],
+                "description": "Error category"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "ModelsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "gpro",
+                    "gpro31",
+                    "gpro38",
+                    "orpheus",
+                    "xai"
+                  ]
+                },
+                "max_input_length": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "supported_formats": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wav",
+                      "mp3"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "max_input_length",
+                "name",
+                "supported_formats"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "data"
         ],
         "additionalProperties": false
       },
       "VoiceGenerationResponse": {
         "type": "object",
         "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "URL to generated audio"
+          "credits_remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Remaining credits"
           },
           "credits_used": {
             "type": "integer",
@@ -416,11 +750,10 @@
             "maximum": 9007199254740991,
             "description": "Credits consumed for this generation"
           },
-          "credits_remaining": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Remaining credits"
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to generated audio"
           },
           "usage": {
             "type": "object",
@@ -444,61 +777,10 @@
           }
         },
         "required": [
-          "url",
-          "credits_used",
           "credits_remaining",
+          "credits_used",
+          "url",
           "usage"
-        ],
-        "additionalProperties": false
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "message": {
-                "type": "string",
-                "description": "Human-readable error description"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "invalid_request_error",
-                  "authentication_error",
-                  "permission_error",
-                  "not_found_error",
-                  "rate_limit_error",
-                  "server_error"
-                ],
-                "description": "Error category"
-              },
-              "param": {
-                "description": "The parameter that caused the error, if applicable",
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "code": {
-                "type": "string",
-                "description": "Machine-readable error code"
-              }
-            },
-            "required": [
-              "message",
-              "type",
-              "code"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "error"
         ],
         "additionalProperties": false
       },
@@ -510,23 +792,6 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "language": {
-                  "type": "string"
-                },
-                "model": {
-                  "type": "string",
-                  "enum": [
-                    "gpro",
-                    "orpheus",
-                    "grok"
-                  ]
-                },
                 "formats": {
                   "type": "array",
                   "items": {
@@ -537,17 +802,36 @@
                     ]
                   }
                 },
+                "id": {
+                  "type": "string"
+                },
+                "language": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string",
+                  "enum": [
+                    "gpro",
+                    "gpro31",
+                    "gpro38",
+                    "orpheus",
+                    "xai"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
                 "supports_style": {
                   "type": "boolean",
                   "description": "Whether this voice accepts the freeform `style` parameter"
                 }
               },
               "required": [
+                "formats",
                 "id",
-                "name",
                 "language",
                 "model",
-                "formats",
+                "name",
                 "supports_style"
               ],
               "additionalProperties": false
@@ -558,169 +842,13 @@
           "data"
         ],
         "additionalProperties": false
-      },
-      "ModelsResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "enum": [
-                    "gpro",
-                    "orpheus",
-                    "grok"
-                  ]
-                },
-                "name": {
-                  "type": "string"
-                },
-                "max_input_length": {
-                  "type": "integer",
-                  "exclusiveMinimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "supported_formats": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "wav",
-                      "mp3"
-                    ]
-                  }
-                },
-                "supported_styles": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "required": [
-                "id",
-                "name",
-                "max_input_length",
-                "supported_formats",
-                "supported_styles"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "additionalProperties": false
-      },
-      "BillingResponse": {
-        "type": "object",
-        "properties": {
-          "creditsLeft": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "lastUpdated": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "userId": {
-            "type": "string"
-          },
-          "lastBillingTransaction": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "purchase",
-                      "topup"
-                    ]
-                  },
-                  "amount": {
-                    "type": "number"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "created_at": {
-                    "type": "string"
-                  },
-                  "reference_id": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "subscription_id": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "metadata": {
-                    "anyOf": [
-                      {},
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "id",
-                  "type",
-                  "amount",
-                  "description",
-                  "created_at",
-                  "reference_id",
-                  "subscription_id"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "creditsLeft",
-          "lastUpdated",
-          "userId",
-          "lastBillingTransaction"
-        ],
-        "additionalProperties": false
       }
     },
     "securitySchemes": {
       "BearerAuth": {
-        "type": "http",
+        "bearerFormat": "API Key",
         "scheme": "bearer",
-        "bearerFormat": "API Key"
+        "type": "http"
       }
     }
   }
