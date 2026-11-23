@@ -27,9 +27,8 @@ before merging to `main` and after deploying.
   storage when the change touches those integrations. For call dashboard
   screenshots, follow the [fixture and local-server requirements](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
 - Review pending migrations, generated database types, environment changes, and
-  secret-rotation dependencies. Migrations require a human operator; agents must
-  not apply them. Run `pnpm test:db` against a local database with pending
-  migrations already applied when migrations or pgTAP tests change.
+  secret-rotation dependencies. Apply and test pending migrations locally. A
+  human operator applies production migrations.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
@@ -43,6 +42,23 @@ not a merge gate.
 Claude GitHub App authentication requires the workflow content to match the
 default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
 execution; test review changes after they reach the default branch.
+
+### Account-deletion migration order
+
+Before merging a release that calls `erase_account_conversations`, the
+production database operator must verify this full migration sequence is
+applied in timestamp order:
+
+1. `20261116140000_create_conversations.sql`
+2. `20261118170000_voice_spike_threads.sql`
+3. `20261123140000_voice_spike_chat.sql`
+4. `20261123150000_erase_account_conversations.sql`
+5. `20261123160000_bound_conversation_erasure.sql`
+
+Ship the spike schema with erasure so the thread-linked messages, chat runs,
+and call leases exist with their cascade rules. The spike stays development-only.
+The account-deletion action runs in production and fails when the erasure RPC
+is missing. Apply the migrations before the web deployment that calls it.
 
 ## Deployment targets
 
