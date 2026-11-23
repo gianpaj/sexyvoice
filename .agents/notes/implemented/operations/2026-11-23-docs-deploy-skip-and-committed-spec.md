@@ -22,8 +22,9 @@ therefore reached the docs only on a later docs deploy.
 - The docs read the spec from
   `apps/docs/content/docs/api-reference/openapi.json`.
   `apps/web/tests/api-v1-openapi-docs-spec.test.ts` compares it with
-  `createExternalApiOpenApiDocument()` through `toMatchFileSnapshot`, and
-  `-u` rewrites it. A spec change becomes a docs change in git, so
+  `createExternalApiOpenApiDocument()` through `toMatchFileSnapshot`.
+  `pnpm --filter @sexyvoice/web openapi:docs` runs it with `-u` to rewrite
+  the file. A spec change becomes a docs change in git, so
   `turbo-ignore` builds the docs without a special case for web paths.
 
 ## Alternatives considered

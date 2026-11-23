@@ -234,7 +234,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - The docs build reads the committed spec in
   `apps/docs/content/docs/api-reference/openapi.json`, not the live
   `/api/v1/openapi`. When the OpenAPI output changes, refresh it with
-  `pnpm --filter @sexyvoice/web test api-v1-openapi-docs-spec -u`; the test
+  `pnpm --filter @sexyvoice/web openapi:docs`; the `api-v1-openapi-docs-spec` test
   fails while the file is stale. Re-run
   `pnpm --filter @sexyvoice/docs generate-openapi-docs` when endpoints are
   added or removed.
