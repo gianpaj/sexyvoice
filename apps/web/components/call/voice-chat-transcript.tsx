@@ -98,13 +98,14 @@ export function VoiceChatTranscript({
                 className={cn('flex min-w-0', user && 'justify-end')}
                 key={id}
               >
-                <p
+                <div
                   className={cn(
-                    'wrap-anywhere max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
+                    'wrap-anywhere max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                     user
-                      ? 'rounded-ee-md bg-primary text-primary-foreground'
-                      : 'rounded-es-md bg-muted text-foreground',
+                      ? 'whitespace-pre-wrap rounded-ee-md bg-primary text-primary-foreground'
+                      : 'rounded-es-md bg-muted text-foreground [&_p+p]:mt-2 [&_p]:whitespace-pre-wrap',
                   )}
+                  data-slot="voice-chat-bubble"
                 >
                   {user ? (
                     text
@@ -115,7 +116,7 @@ export function VoiceChatTranscript({
                       text={text}
                     />
                   )}
-                </p>
+                </div>
               </div>
             ))}
             {status && (

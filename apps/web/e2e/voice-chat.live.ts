@@ -24,10 +24,10 @@ test('continues one thread from chat through an audio call and back', async ({
   const composer = page.getByRole('textbox', { name: 'Message', exact: true });
   const send = page.getByRole('button', { name: 'Send', exact: true });
   const threadLog = page.getByRole('log');
-  const chatTurns = threadLog.locator('p:not([role="status"])');
+  const chatTurns = threadLog.locator('[data-slot="voice-chat-bubble"]');
   const chatTurn = character
     ? 'Please remember my first test code: cobalt pelican. Then reply with just your public studio marker.'
-    : 'Please remember my first test code: cobalt pelican.';
+    : 'Please remember my first test code: cobalt pelican. Then reply with just gray pebble.';
   await expect(page.locator('audio')).toHaveCount(0);
   await page.evaluate(() => {
     const originalFetch = window.fetch.bind(window);
@@ -64,7 +64,7 @@ test('continues one thread from chat through an audio call and back', async ({
   );
   await composer.fill(chatTurn);
   await send.click();
-  const firstReply = character ? /^jade compass[.!]?$/i : /\S/;
+  const firstReply = character ? /^jade compass[.!]?$/i : /^gray pebble[.!]?$/i;
   await expect(chatTurns).toHaveText([chatTurn, firstReply], {
     timeout: 25_000,
   });
@@ -72,7 +72,7 @@ test('continues one thread from chat through an audio call and back', async ({
     page.getByRole('button', { name: 'Start call', exact: true }),
   ).toBeEnabled({ timeout: 25_000 });
   await resumed;
-  const priorTurns = await chatTurns.allTextContents();
+  const priorTurns = await chatTurns.allInnerTexts();
   const thread = new URL(page.url()).searchParams.get('conversation');
   expect(thread).toMatch(/^[a-f0-9-]{36}$/);
   await page.getByRole('button', { name: 'Start call', exact: true }).click();
@@ -83,7 +83,7 @@ test('continues one thread from chat through an audio call and back', async ({
     await expect(page.getByText('In call', { exact: true })).toBeVisible();
     await expect
       .poll(async () =>
-        (await chatTurns.allTextContents()).slice(0, priorTurns.length),
+        (await chatTurns.allInnerTexts()).slice(0, priorTurns.length),
       )
       .toEqual(priorTurns);
     await expect
@@ -115,10 +115,9 @@ test('continues one thread from chat through an audio call and back', async ({
       'My second test code is red lantern. Reply with only the first test code I asked you to remember.',
     );
     await send.click();
-    await expect(threadLog.locator('p').last()).toHaveText(
-      /^cobalt pelican[.!]?$/i,
-      { timeout: 20_000 },
-    );
+    await expect(chatTurns.last()).toHaveText(/^cobalt pelican[.!]?$/i, {
+      timeout: 20_000,
+    });
     await page
       .getByRole('button', { name: 'Mute microphone', exact: true })
       .click();
@@ -209,7 +208,6 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     const shortReply = 'Hey, how are you?';
     let sends = 0;
     await page.emulateMedia({ reducedMotion });
-    await page.clock.install();
     await page.route('**/api/voice-chat/chat**', async (route) => {
       if (route.request().method() === 'GET') {
         return route.fulfill({
@@ -253,7 +251,9 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       });
     });
     await page.goto(`/en/dashboard/voice-spike?conversation=${threadId}`);
-    const messages = page.getByRole('log').locator('p:not([role="status"])');
+    const messages = page
+      .getByRole('log')
+      .locator('[data-slot="voice-chat-bubble"]');
     await expect(messages).toHaveText([saved]);
     await expect(messages.first().locator('em')).toHaveText('saved reply');
 
@@ -267,36 +267,30 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       exact: true,
     });
     await expect(startCall).toBeEnabled();
-    await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
     await composer.fill('Tell me **more**.');
-    await send.click({ force: true });
+    await send.click();
     await expect(messages).toHaveText([
       saved,
       'Tell me **more**.',
-      reducedMotion === 'reduce' ? reply : 'Here are the first six words.',
+      reducedMotion === 'reduce' ? reply : /^Here are the first six words\./,
     ]);
     await expect(startCall).toBeEnabled();
-    await expect(messages.last().locator('strong')).toHaveText(
-      reducedMotion === 'reduce' ? 'first six words. Here' : 'first six words.',
-    );
-
+    const assistant = messages.last();
     if (reducedMotion === 'no-preference') {
-      await page.clock.runFor(80);
-      await expect(messages.last()).toHaveText(
-        /^Here are the first six words\. Here/,
-      );
-      await expect(messages.last()).not.toHaveText(reply);
-      await page.clock.runFor(920);
-      await expect(messages.last()).toHaveText(reply);
+      await expect(assistant.locator('.streamdown-animated')).toBeVisible();
+      await expect(assistant).toHaveText(/^Here are the first six words\. \S/);
+      await expect(assistant.getByText(rest, { exact: true })).toHaveCount(0);
     }
-
-    await expect(messages.last().locator('strong')).toHaveText(
+    await expect(assistant.locator('p')).toHaveText(
+      ['Here are the first six words. Here is another line.', rest],
+      { timeout: 10_000 },
+    );
+    await expect(assistant.locator('strong')).toHaveText(
       'first six words. Here',
     );
-    expect(await messages.last().textContent()).toBe(reply);
 
     await composer.fill('Hi');
-    await send.click({ force: true });
+    await send.click();
     await expect(messages.last()).toHaveText(shortReply);
   });
 }

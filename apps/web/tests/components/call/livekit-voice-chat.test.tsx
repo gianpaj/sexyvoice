@@ -276,8 +276,10 @@ describe('JS browser call', () => {
     const room = await start();
     const turns = () =>
       Array.from(
-        screen.getByRole('log').querySelectorAll('p'),
-        (paragraph) => paragraph.textContent,
+        screen
+          .getByRole('log')
+          .querySelectorAll('[data-slot="voice-chat-bubble"]'),
+        (bubble) => bubble.textContent,
       );
     expect(turns()).toEqual(['Earlier question', 'Earlier answer']);
     await act(async () => room.emit('participant', jsAgent));
