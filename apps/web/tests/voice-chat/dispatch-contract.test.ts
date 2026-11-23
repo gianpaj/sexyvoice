@@ -1,4 +1,8 @@
-import { pythonCallDispatchSchema } from '@sexyvoice/voice-chat/dispatch';
+import {
+  createPythonCallDispatch,
+  DISPATCH_LIFETIME_MS,
+  pythonCallDispatchSchema,
+} from '@sexyvoice/voice-chat/dispatch';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -8,6 +12,34 @@ import schema from '../../../../packages/voice-chat/contracts/dispatch-v1.schema
 describe('LiveKit Python dispatch v1', () => {
   it('exports the checked-in JSON Schema from the Zod definition', () => {
     expect(z.toJSONSchema(pythonCallDispatchSchema)).toEqual(schema);
+  });
+
+  it('builds versioned metadata for the dedicated Python agent', () => {
+    const { userId, roomName, conversationId } = fixture.base;
+    const first = Date.now();
+    const dispatch = createPythonCallDispatch({
+      userId,
+      roomName,
+      conversationId,
+      resume: true,
+    });
+    expect(dispatch.agentName).toBe('sexycall-inworld-chat');
+    const parsed = pythonCallDispatchSchema.parse(
+      JSON.parse(dispatch.metadata),
+    );
+    expect(parsed).toMatchObject({
+      version: 1,
+      userId,
+      roomName,
+      conversationId,
+      resume: true,
+    });
+    expect(parsed.expiresAt).toBeGreaterThanOrEqual(
+      first + DISPATCH_LIFETIME_MS,
+    );
+    expect(parsed.expiresAt).toBeLessThanOrEqual(
+      Date.now() + DISPATCH_LIFETIME_MS,
+    );
   });
 
   it.each(fixture.cases)('$name', ({ overrides, omit, valid }) => {

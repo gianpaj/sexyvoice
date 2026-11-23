@@ -16,3 +16,18 @@ export const pythonCallDispatchSchema = z.strictObject({
   expiresAt: z.number().int().positive(),
   audioReferenceId: z.uuid().optional(),
 });
+
+type PythonCallSelection = Omit<
+  z.input<typeof pythonCallDispatchSchema>,
+  'version' | 'runtime' | 'expiresAt'
+>;
+
+export function createPythonCallDispatch(selection: PythonCallSelection) {
+  const payload = pythonCallDispatchSchema.parse({
+    ...selection,
+    version: 1,
+    runtime: PYTHON_CALL_RUNTIME,
+    expiresAt: Date.now() + DISPATCH_LIFETIME_MS,
+  });
+  return { agentName: PYTHON_CALL_AGENT, metadata: JSON.stringify(payload) };
+}
