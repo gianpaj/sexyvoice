@@ -19,7 +19,7 @@
 
 **Product category:** AI voice platform — text-to-speech, voice cloning, and real-time conversational voice
 **Product type:** SaaS (web app + external REST API), freemium, credit-based consumption
-**Business model:** Free tier (10,000 credits, no card required) → one-time top-ups (Starter $5/10k, Standard $10/25k, Pro $75/300k) → subscriptions at the same price points with a 15% credit bonus. Pro is 37.5% cheaper per credit than Standard. No contracts.
+**Business model:** Free tier (10,000 credits, no card required) → one-time purchases (Starter $5/10k, Standard $10/25k, Pro $75/300k) → subscriptions at the same price points with a 15% credit bonus. Pro is 37.5% cheaper per credit than Standard. No contracts.
 
 **What the API actually covers.** Never imply the full product is available
 programmatically. The public v1 surface is `/speech`, `/voices`, `/models`,
@@ -158,7 +158,7 @@ Explain saving and reuse where a customer needs to choose between the flows.
 
 - 10,000 free credits ≈ 10 minutes of speech at the published ~1,000 credits/minute rule of thumb, no card required. Actual burn rate varies a lot by voice and model — see the table below before quoting a duration.
 - Live calls cost 1,000 credits/minute
-- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`).
+- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first one-time purchase or subscription payment (`isFreeUserOverCallLimit` → `hasUserPaid`).
 - Pro is 37.5% cheaper per credit than Standard; subscriptions add 15% more credits
 - Voice cloning from as little as 10 seconds of audio
 - Site available in 6 languages: EN, ES, DE, DA, IT, FR
@@ -207,7 +207,7 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 ## Goals
 
 **Business goal:** Convert free users to paid, and grow the developer/API segment as a second revenue engine alongside self-serve creators.
-**Conversion action:** Sign up free → generate or take a live call → buy a top-up or subscribe. Secondary: create an API key and ship a first API request.
+**Conversion action:** Sign up free → generate or take a live call → add credits or subscribe. Secondary: create an API key and ship a first API request.
 **Current metrics:** Unknown — not tracked in this repo. Fill in signup→paid conversion, free-credit burn rate, and API activation rate.
 
 ## Changelog
