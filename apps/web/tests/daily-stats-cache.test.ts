@@ -77,6 +77,30 @@ const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const REPORT_DATE = '2026-09-12';
 const WEBHOOK = 'https://telegram.invalid/daily-stats';
 
+// One recorded $4.31 call cost yesterday, so a dropped or emptied cache entry
+// changes the report.
+function callUsageContribution() {
+  return {
+    audioUsage: {},
+    calls: [],
+    events: [
+      {
+        dollar_amount: 4.31,
+        duration_seconds: 300,
+        id: 'call-usage',
+        input_chars: null,
+        metadata: {},
+        model: 'grok-voice-think-fast-2.0',
+        occurred_at: '2026-09-11T12:00:00Z',
+        source_id: 'call-1',
+        source_type: 'live_call',
+        user_id: 'customer',
+      },
+    ],
+    linkedCallIds: [],
+  };
+}
+
 function validCache() {
   const emptyResult = { count: 0, data: [], error: null };
   return {
@@ -225,6 +249,7 @@ describe('GET /api/daily-stats cache', () => {
   it('reports contribution from the cache without fresh reads', async () => {
     const cached = {
       ...validCache(),
+      contributionData: callUsageContribution(),
       allCreditTransactions: [
         {
           amount: 50_000,
@@ -252,7 +277,7 @@ describe('GET /api/daily-stats cache', () => {
     const report = await response.text();
     expect(report).toContain('$25.00 collected');
     expect(report).toContain(
-      '  - AI usage (est.): $0.00 · 14d avg $0.00/day\n',
+      '  - AI usage (est.): $4.31 · 14d avg $0.00/day\n',
     );
     expect(report).toContain('  - Custom, cloned voice: 0 · 0m\n');
     expect(report).not.toContain('Estimated usage cost:');
@@ -412,6 +437,8 @@ describe('GET /api/daily-stats cache', () => {
   });
 
   it('writes fresh results when the default cache is missing', async () => {
+    mocks.getContributionData.mockResolvedValueOnce(callUsageContribution());
+
     const response = await GET(request());
     assert(response);
 
@@ -428,7 +455,6 @@ describe('GET /api/daily-stats cache', () => {
     const cached = JSON.parse(mocks.writeFileSync.mock.calls[0][1]);
     expect(cached).toMatchObject({
       allCreditTransactions: [],
-      contributionData: { calls: [], events: [] },
       audio14dResult: { count: 0 },
       audioYesterdayResult: { data: [], error: null },
       publicCharacterIds: [],
@@ -436,6 +462,7 @@ describe('GET /api/daily-stats cache', () => {
       usageEvents14dResult: { data: [], error: null },
       version: 9,
     });
+    expect(cached.contributionData).toEqual(callUsageContribution());
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
