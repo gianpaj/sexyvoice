@@ -16,9 +16,9 @@ Cross-window calls follow the usage event timestamp. An adjacent-period test
 checks that the event cost is counted once. Assigning those costs to session end
 time would change the agreed reporting definition.
 
-Fresh contribution usage stays paired with fresh purchase history. Reusing the
-local activity cache's transactions could misclassify fresh customer usage or
-understate collections. This extra local read is intentional.
+Contribution usage stays paired with the purchase history read alongside it:
+both fresh, or both from the same local cache. Pairing fresh usage with cached
+transactions could misclassify customer usage or understate collections.
 
 API source types reach pricing unchanged. Linked audio token counts win over
 event metadata, with validated metadata used for missing linked counts.

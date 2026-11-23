@@ -143,8 +143,9 @@ in two short lines, with unpriced counts when present. Invoice
 provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
-Contribution uses fresh usage and collections even during local cached activity
-debugging. See [Query load](#query-load) for transaction read windows.
+The local cache stores contribution usage with the credit transactions read
+alongside it, so a cached report uses one snapshot of both. `?cache=off` reads
+both fresh. See [Query load](#query-load) for transaction read windows.
 
 ## Query load
 
@@ -192,10 +193,9 @@ One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered
 by the column it pages on.
 
-Fresh activity reports read credit transactions once for all time to supply
-lifetime and historical metrics, then slice them in memory for each window.
-Cached activity reports refresh only the last 30 days of transactions for
-contribution. Add reporting windows as in-memory filters over the shared read.
+Reports read credit transactions once for all time to supply lifetime,
+historical and contribution metrics, then slice them in memory for each window.
+Add reporting windows as in-memory filters over the shared read.
 
 Usage events carry no `profiles(username)` embed — PostgREST joins an embed per
 row, and the report labels only its top three users. Resolve names for the few

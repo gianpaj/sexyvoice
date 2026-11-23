@@ -12,7 +12,11 @@ import {
 } from '@/lib/clone/inworld';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatCallsSection } from './calls';
-import { formatContribution, summarizeContribution } from './contribution';
+import {
+  type ContributionData,
+  formatContribution,
+  summarizeContribution,
+} from './contribution';
 import { getContributionData } from './contribution-queries';
 
 // Debug cache file path (temporary for debugging)
@@ -36,7 +40,6 @@ import {
   getCallSessionsInRange,
   getCharactersInRange,
   getClonedAudioFilesInRange,
-  getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getProfileUsernamesByIds,
@@ -189,11 +192,14 @@ export async function GET(request: NextRequest) {
       }
     | undefined;
   let publicCharacterIds: string[] | undefined;
+  // Cached with the credit transactions it is paired with, so a cached report
+  // never mixes fresh usage with stale collections.
+  let contributionData: ContributionData | undefined;
   let loadedFromValidCache = false;
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 8 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 9 || typeof cached.reportDate !== 'string') {
       console.log(
         '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
@@ -215,6 +221,7 @@ export async function GET(request: NextRequest) {
       profilesTotalCountResult = cached.profilesTotalCountResult;
       apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
       allCreditTransactions = cached.allCreditTransactions;
+      contributionData = cached.contributionData;
       allTimePurchaseTransactions = cached.allTimePurchaseTransactions ?? [];
       activeSubscribersCount = cached.activeSubscribersCount;
       subscriptionsMrr = cached.subscriptionsMrr;
@@ -427,10 +434,16 @@ export async function GET(request: NextRequest) {
     ]);
 
     // One all-time read feeds every reporting window below.
-    allCreditTransactions = await _timed(
-      `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
-      getAllCreditTransactions(supabase, today, internalUserIds),
-    );
+    [allCreditTransactions, contributionData] = await Promise.all([
+      _timed(
+        `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
+        getAllCreditTransactions(supabase, today, internalUserIds),
+      ),
+      _timed(
+        `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
+      ),
+    ]);
 
     allTimePurchaseTransactions = allCreditTransactions.filter(
       (transaction) => transaction.type !== 'refund',
@@ -467,6 +480,11 @@ export async function GET(request: NextRequest) {
     );
   }
   if (usageEvents14dResult.error) throw usageEvents14dResult.error;
+  if (!contributionData) {
+    throw new Error(
+      'Contribution data was not loaded after cache validation/fetch',
+    );
+  }
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
@@ -484,6 +502,7 @@ export async function GET(request: NextRequest) {
       callSessionsTotalCountResult,
       clonesResult,
       characters14dResult,
+      contributionData,
       nextSubscriptionDueForPayment,
       profilesRecentResult,
       profilesTotalCountResult,
@@ -491,7 +510,7 @@ export async function GET(request: NextRequest) {
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 8,
+      version: 9,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -899,22 +918,8 @@ export async function GET(request: NextRequest) {
 
   const creditsTodayCount = purchasePrevDayData.length;
 
-  // Contribution uses fresh usage and collections; cached activity can omit payments.
-  const contributionData = await _timed(
-    `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-    getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
-  );
-  const contributionTransactions = loadedFromValidCache
-    ? await _timed(
-        `credit_transactions:30d paginated (cached path) ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        getCreditTransactionsInRange(
-          supabase,
-          thirtyDaysAgo,
-          today,
-          internalUserIds,
-        ),
-      )
-    : allCreditTransactions;
+  // Usage and collections come from the same fresh read or the same cache.
+  const contributionTransactions = allCreditTransactions;
   const contributionYesterday = summarizeContribution(
     contributionData,
     contributionTransactions,

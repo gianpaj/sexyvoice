@@ -13,7 +13,12 @@ const mocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
   fetch: vi.fn<typeof fetch>(),
   from: vi.fn(),
-  getContributionData: vi.fn(),
+  getContributionData: vi.fn().mockResolvedValue({
+    audioUsage: {},
+    calls: [],
+    events: [],
+    linkedCallIds: [],
+  }),
   getUserIdByStripeCustomerId: vi.fn(),
   queries: {
     getAllCreditTransactions: vi.fn().mockResolvedValue([]),
@@ -87,6 +92,12 @@ function validCache() {
     callSessionsTotalCountResult: emptyResult,
     clonesResult: emptyResult,
     characters14dResult: emptyResult,
+    contributionData: {
+      audioUsage: {},
+      calls: [],
+      events: [],
+      linkedCallIds: [],
+    },
     nextSubscriptionDueForPayment: null,
     profilesRecentResult: emptyResult,
     profilesTotalCountResult: emptyResult,
@@ -94,7 +105,7 @@ function validCache() {
     reportDate: REPORT_DATE,
     subscriptionsMrr: null,
     usageEvents14dResult: emptyResult,
-    version: 8,
+    version: 9,
   };
 }
 
@@ -211,9 +222,21 @@ describe('GET /api/daily-stats cache', () => {
     },
   );
 
-  it('refreshes only 30 days of collections for cached activity', async () => {
+  it('reports contribution from the cache without fresh reads', async () => {
     const cached = {
       ...validCache(),
+      allCreditTransactions: [
+        {
+          amount: 50_000,
+          created_at: '2026-09-11T12:00:00Z',
+          description: 'Purchase',
+          id: 'payment',
+          metadata: { dollarAmount: 25 },
+          profiles: null,
+          type: 'purchase',
+          user_id: 'customer',
+        },
+      ],
       audioYesterdayResult: {
         count: 2,
         data: [{ model: 'xai' }, { model: 'inworld-tts-2' }],
@@ -222,25 +245,6 @@ describe('GET /api/daily-stats cache', () => {
     };
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(JSON.stringify(cached));
-    mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
-    mocks.queries.getCreditTransactionsInRange.mockResolvedValueOnce([
-      {
-        amount: 50_000,
-        created_at: '2026-09-11T12:00:00Z',
-        description: 'Purchase',
-        id: 'payment',
-        metadata: { dollarAmount: 25 },
-        profiles: null,
-        type: 'purchase',
-        user_id: 'customer',
-      },
-    ]);
-    mocks.getContributionData.mockResolvedValueOnce({
-      audioUsage: {},
-      calls: [],
-      events: [],
-      linkedCallIds: [],
-    });
 
     const response = await GET(request());
     assert(response);
@@ -255,16 +259,9 @@ describe('GET /api/daily-stats cache', () => {
     expect(report).toContain(' · Inworld voices: 1,234 / 3,000\n');
     // Inworld clones count under Cloned, not Top models.
     expect(report).toMatch(/Top models: (?!.*Inworld).*$/m);
-    expect(
-      mocks.queries.getCreditTransactionsInRange,
-    ).toHaveBeenCalledExactlyOnceWith(
-      mocks.createAdminClient.mock.results[0].value,
-      new Date('2026-08-13T00:00:00Z'),
-      new Date('2026-09-12T00:00:00Z'),
-      ['internal'],
-    );
+    expect(mocks.queries.getCreditTransactionsInRange).not.toHaveBeenCalled();
     expect(mocks.queries.getAllCreditTransactions).not.toHaveBeenCalled();
-    expect(mocks.getContributionData).toHaveBeenCalledOnce();
+    expect(mocks.getContributionData).not.toHaveBeenCalled();
     expect(mocks.writeFileSync).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
@@ -273,12 +270,6 @@ describe('GET /api/daily-stats cache', () => {
     'splits calls by character and voice with cached activity=%s',
     async (cached) => {
       const audio = [{ model: 'xai' }];
-      mocks.getContributionData.mockResolvedValueOnce({
-        audioUsage: {},
-        calls: [],
-        events: [],
-        linkedCallIds: [],
-      });
       const publicCharacterIds = ['public-1'];
       const calls = [
         {
@@ -371,12 +362,6 @@ describe('GET /api/daily-stats cache', () => {
         { id: 'later', created_at: '2026-09-11T23:59:59.999Z' },
       ];
       mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
-      mocks.getContributionData.mockResolvedValueOnce({
-        audioUsage: {},
-        calls: [],
-        events: [],
-        linkedCallIds: [],
-      });
       if (cached) {
         mocks.existsSync.mockReturnValue(true);
         mocks.readFileSync.mockReturnValue(
@@ -413,7 +398,7 @@ describe('GET /api/daily-stats cache', () => {
   it('refreshes activity caches from an older version', async () => {
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(
-      JSON.stringify({ ...validCache(), version: 7 }),
+      JSON.stringify({ ...validCache(), version: 8 }),
     );
 
     const response = await GET(request());
@@ -443,12 +428,13 @@ describe('GET /api/daily-stats cache', () => {
     const cached = JSON.parse(mocks.writeFileSync.mock.calls[0][1]);
     expect(cached).toMatchObject({
       allCreditTransactions: [],
+      contributionData: { calls: [], events: [] },
       audio14dResult: { count: 0 },
       audioYesterdayResult: { data: [], error: null },
       publicCharacterIds: [],
       reportDate: REPORT_DATE,
       usageEvents14dResult: { data: [], error: null },
-      version: 8,
+      version: 9,
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
