@@ -1,8 +1,19 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { chatRunId, replayChat } from '@/lib/voice-spike/chat';
+import { chatRunId, createChatDb, replayChat } from '@/lib/voice-spike/chat';
 
 const thread = '60606060-6060-4060-8060-606060606061';
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe('local spike database', () => {
+  it('uses the normal local API when the override is blank', () => {
+    vi.stubEnv('VOICE_SPIKE_LOCAL_SUPABASE_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:55321');
+    vi.stubEnv('SUPABASE_SECRET_KEY', 'test-service-key');
+    expect(createChatDb()).toBeDefined();
+  });
+});
 
 describe('chat replay', () => {
   it('delivers only the unsent suffix after an SSE reconnect', async () => {

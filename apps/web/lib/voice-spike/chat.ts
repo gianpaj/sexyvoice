@@ -30,8 +30,8 @@ export function chatRunId(id: string) {
 
 export function createChatDb() {
   const url = new URL(
-    process.env.VOICE_SPIKE_LOCAL_SUPABASE_URL ??
-      process.env.NEXT_PUBLIC_SUPABASE_URL ??
+    process.env.VOICE_SPIKE_LOCAL_SUPABASE_URL?.trim() ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
       '',
   );
   const key = process.env.SUPABASE_SECRET_KEY;
