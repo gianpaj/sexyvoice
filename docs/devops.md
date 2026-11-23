@@ -55,7 +55,6 @@ then apply these migrations in timestamp order:
 3. `20261123140000_create_voice_chat_runs.sql`
 4. `20261123150000_erase_account_conversations.sql`
 5. `20261123160000_bound_conversation_erasure.sql`
-6. `20261123170000_rename_voice_chat_storage.sql`
 
 Apply the voice chat schema with erasure so messages, chat runs, and
 conversation leases retain their cascade rules. The LiveKit JS worker and
