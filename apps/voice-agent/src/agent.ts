@@ -1,11 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import {
-  cli,
-  defineAgent,
-  inference,
-  ServerOptions,
-  voice,
-} from '@livekit/agents';
+import { cli, defineAgent, ServerOptions, voice } from '@livekit/agents';
 import { TTS } from '@livekit/agents-plugin-inworld';
 import { VAD } from '@livekit/agents-plugin-silero';
 import { STT } from '@livekit/agents-plugin-xai';
@@ -22,6 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { parseJob } from './config.ts';
 import { CallMemoryAgent, loadCallMemory } from './memory.ts';
+import { TanStackLLM } from './tanstack-llm.ts';
 import { CallThread } from './thread.ts';
 
 if (
@@ -121,10 +116,7 @@ export default defineAgent({
     const session = new voice.AgentSession({
       vad: ctx.proc.userData.vad as Awaited<ReturnType<typeof VAD.load>>,
       stt: new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' }),
-      llm: new inference.LLM({
-        model: 'xai/grok-4.20-0309-non-reasoning',
-        modelOptions: { max_completion_tokens: 256 },
-      }),
+      llm: new TanStackLLM(job.conversationId),
       tts: new TTS({
         model: 'inworld-tts-2',
         voice: job.inworldVoiceId ?? 'Ashley',

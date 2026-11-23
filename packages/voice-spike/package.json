@@ -2,8 +2,13 @@
   "name": "@sexyvoice/voice-spike",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./reply": "./src/reply.ts"
+  },
   "dependencies": {
+    "@tanstack/ai": "1.8.0",
+    "@tanstack/ai-grok": "1.1.1",
     "zod": "catalog:"
   }
 }

@@ -151,6 +151,19 @@ Inworld replies, then resumed after a page reload and recalled the earlier
 typed turn without duplicating it. The demo handles a transcription stream
 ending during hangup by keeping the received text and closing the stream.
 
+### Shared Grok generation
+
+The JS worker and Next.js use the same TanStack AI Grok adapter. The worker
+passes LiveKit's current text context to the adapter and maps reply deltas and
+provider token counts into LiveKit's LLM stream. LiveKit handles turn detection
+and aborts the request when a caller interrupts. The worker still uses xAI STT
+and Inworld TTS.
+
+TanStack's direct browser realtime hook would move voice orchestration into a
+provider connection. The worker adapter keeps the existing voice selection and
+mute behavior. Contract tests exercise context, streamed text, normalized usage,
+and cancellation.
+
 ### Memory retrieval
 
 The worker reads the same scoped Supabase slots and hybrid RPC as Python.

@@ -139,7 +139,7 @@ isolated database for internal testing.
 | Agents and plugins | `1.10.0`                            | Node 24 Linux host boot and real call                         |
 | Native RTC         | `1.2.2`                             | WebRTC send/receive on Linux x64                              |
 | STT                | `grok-voice-transcribe-2.0`         | Explicit WebSocket model pin, contract test, real spoken turn |
-| LLM                | `xai/grok-4.20-0309-non-reasoning`  | Real gateway reply                                            |
+| LLM                | `xai/grok-4.20-0309-non-reasoning`  | TanStack AI direct xAI stream                                 |
 | TTS                | `inworld-tts-2`, Ashley, `BALANCED` | Real streamed audio and transcripts                           |
 
 The scoped pnpm patch for `@livekit/agents-plugin-xai@1.10.0` adds its missing

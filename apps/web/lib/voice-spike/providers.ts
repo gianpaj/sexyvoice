@@ -1,7 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
-import { chat, createModel, extendAdapter } from '@tanstack/ai';
-import { createGrokText } from '@tanstack/ai-grok';
+import { streamReply } from '@sexyvoice/voice-spike/reply';
 
 import type { ProbeProviders, SpeechChunk } from './probe';
 import { OUTPUT_SAMPLE_RATE } from './protocol';
@@ -113,32 +112,20 @@ export async function* streamInworldSpeech(
 
 export function createProbeProviders(): ProbeProviders {
   const threadId = randomUUID();
-  const grok420 = extendAdapter(createGrokText, [
-    createModel('grok-4.20-0309-non-reasoning', ['text']),
-  ]);
   return {
-    async *reply(history, controller) {
-      const apiKey = process.env.XAI_API_KEY;
-      if (!apiKey) throw new Error('XAI_API_KEY is required');
-      const stream = chat({
-        adapter: grok420('grok-4.20-0309-non-reasoning', apiKey, {
-          maxRetries: 0,
-        }),
+    async *reply(messages, abortController) {
+      const stream = streamReply({
         threadId,
-        abortController: controller,
-        messages: history.map(({ role, content }) => ({ role, content })),
+        abortController,
+        messages,
         systemPrompts: [
           'You are a conversational test assistant. Reply briefly, in one or two sentences.',
         ],
-        modelOptions: { max_output_tokens: 256 },
       });
       for await (const event of stream) {
-        if (event.type === 'TEXT_MESSAGE_CONTENT')
-          yield { type: 'text', text: event.delta };
-        if (event.type === 'RUN_FINISHED' && event.usage)
+        if (event.type === 'text') yield event;
+        if (event.type === 'finished' && event.usage)
           yield { type: 'usage', usage: event.usage };
-        if (event.type === 'RUN_ERROR')
-          throw new Error('Grok generation failed');
       }
     },
     speech: streamInworldSpeech,
