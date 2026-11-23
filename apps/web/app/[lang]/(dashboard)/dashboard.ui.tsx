@@ -22,6 +22,7 @@ import { type MouseEvent, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
+import { ChangelogMenu } from '@/components/changelog-menu';
 import CreditsSection from '@/components/credits-section';
 import { DashboardAnalytics } from '@/components/dashboard-analytics';
 import { NavigationPending } from '@/components/navigation-pending';
@@ -232,6 +233,7 @@ export default function DashboardUI({
               userId={userId}
             />
             <SidebarFooterMenu lang={lang} />
+            <ChangelogMenu />
           </SidebarFooter>
         </Sidebar>
 

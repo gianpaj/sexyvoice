@@ -1156,6 +1156,12 @@
     "profile": "Profile",
     "signOut": "Sign Out",
     "freeTools": "Free Tools",
+    "changelog": "Changelog",
+    "changelogDescription": "Recent updates, new features, and fixes",
+    "changelogViewAll": "View all releases",
+    "changelogAdded": "Added",
+    "changelogChanged": "Changed",
+    "changelogFixed": "Fixed",
     "subscriptionDiscount": "Get {extraCredits}% extra credits & {discount}% off the first month!"
   },
   "header": {

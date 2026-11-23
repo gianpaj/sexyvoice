@@ -21,7 +21,9 @@ releases only.
 
 ```md
 ### Added
+
 ### Changed
+
 ### Fixed
 ```
 
@@ -30,8 +32,11 @@ releases only.
 
 ```md
 #### External API
+
 #### Voice generation
+
 #### Cloning
+
 #### Internal
 ```
 
@@ -62,22 +67,28 @@ releases only.
 ### Added
 
 #### Cloning
+
 - Added a cloning capability with a supporting PR link. [#123](https://github.com/gianpaj/sexyvoice/pull/123)
 
 ### Changed
 
 #### External API
+
 - Updated a public `/api/v1/*` capability with clear user-facing wording.
 
 ### Fixed
 
 #### Internal
+
 - Corrected a shipped internal regression with specific impact.
 ```
 
 ## Checklist for future updates
 
 - Confirm the release version in `apps/web/package.json`.
+- Mirror the new release in `apps/web/data/changelog.ts`, which feeds the
+  dashboard sidebar's changelog panel.
+  `apps/web/tests/changelog.test.ts` checks that both stay in sync.
 - If the public API changed, also update the API version in
   `lib/api/openapi.ts`.
 - Confirm every item is supported by merged PRs or direct commits.
