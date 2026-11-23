@@ -273,8 +273,10 @@ export function getCallSessionDurationsBefore(
   );
 }
 
-// The call agent stores the character in `metadata`; `call_sessions` has no
-// character column. Null for calls with an unsaved custom prompt.
+// The call agent (gianpaj/sexycall, `CallSessionStore`) stores the character
+// in `metadata`; `call_sessions` has no character column. Null for calls with
+// an unsaved custom prompt. If the agent stops writing the key, every call
+// counts as custom and `Predefined characters` drops to zero without an error.
 export type DailyStatsCallSession = Pick<
   Tables<'call_sessions'>,
   | 'id'
