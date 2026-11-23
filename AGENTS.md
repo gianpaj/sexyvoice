@@ -290,7 +290,7 @@ to that API when the browser uses a Tailnet proxy.
 `VOICE_SPIKE_USER_IDS` restricts the Next.js voice probe to explicit Supabase
 test users in development/preview. Empty disables it; production is blocked.
 The JS browser call at `/{lang}/dashboard/voice-spike` uses the same allowlist
-and a separate token route. Its worker in `apps/voice-agent` also requires
+and a separate token route in local Next.js development. Its worker in `apps/voice-agent` also requires
 `VOICE_SPIKE_ENABLED=true`, matching LiveKit credentials, `XAI_API_KEY`, and
 `INWORLD_API_KEY`. It always dispatches `sexyvoice-js-spike`; never route the
 spike through the Python token endpoint. It stores conversation history and

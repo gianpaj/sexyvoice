@@ -37,7 +37,8 @@ function enable() {
     session_id: 'test-session',
   });
   vi.stubEnv('VOICE_SPIKE_USER_IDS', 'test-user');
-  vi.stubEnv('VERCEL_ENV', 'preview');
+  vi.stubEnv('VERCEL_ENV', undefined);
+  vi.stubEnv('NODE_ENV', 'development');
   vi.stubEnv('LIVEKIT_URL', 'wss://example.livekit.cloud');
   vi.stubEnv('LIVEKIT_API_KEY', 'api-key');
   vi.stubEnv('LIVEKIT_API_SECRET', 'a-long-test-secret-at-least-32-characters');
@@ -202,6 +203,12 @@ describe('JS spike call dispatch', () => {
     vi.stubEnv('VERCEL_ENV', 'production');
     expect((await POST(request())).status).toBe(404);
   });
+  it('disables browser dispatch in hosted previews before auth', async () => {
+    enable();
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    expect((await POST(request())).status).toBe(404);
+    expect(createClient).not.toHaveBeenCalled();
+  });
   it('accepts the configured HTTPS development origin behind a local proxy', async () => {
     enable();
     vi.stubEnv('NODE_ENV', 'development');
@@ -214,7 +221,7 @@ describe('JS spike call dispatch', () => {
         .status,
     ).toBe(403);
     vi.stubEnv('NODE_ENV', 'production');
-    expect((await POST(request('https://demo.example:8447'))).status).toBe(403);
+    expect((await POST(request('https://demo.example:8447'))).status).toBe(404);
   });
   it('always dispatches the JS worker and cannot grant metadata mutation', async () => {
     enable();

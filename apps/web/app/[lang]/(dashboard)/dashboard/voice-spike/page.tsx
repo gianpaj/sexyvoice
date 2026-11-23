@@ -5,7 +5,10 @@ import { z } from 'zod';
 import { LivekitSpike } from '@/components/call/livekit-spike';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
-import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
+import {
+  isLocalSpikeEnvironment,
+  isSpikeAllowed,
+} from '@/lib/voice-spike/protocol';
 
 export default async function VoiceSpike({
   searchParams,
@@ -15,6 +18,7 @@ export default async function VoiceSpike({
     conversation?: string | string[];
   }>;
 }) {
+  if (!isLocalSpikeEnvironment()) notFound();
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
   if (

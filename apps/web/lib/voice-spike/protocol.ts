@@ -74,3 +74,10 @@ export function isSpikeAllowed(
       .includes(userId),
   );
 }
+
+export function isLocalSpikeEnvironment() {
+  return (
+    process.env.NODE_ENV === 'development' &&
+    (process.env.VERCEL_ENV ?? 'development') === 'development'
+  );
+}

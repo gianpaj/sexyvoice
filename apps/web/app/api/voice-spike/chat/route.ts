@@ -14,7 +14,11 @@ import {
   replayChat,
   wireRunId,
 } from '@/lib/voice-spike/chat';
-import { CHAT_ROUTE, isSpikeAllowed } from '@/lib/voice-spike/protocol';
+import {
+  CHAT_ROUTE,
+  isLocalSpikeEnvironment,
+  isSpikeAllowed,
+} from '@/lib/voice-spike/protocol';
 
 export const maxDuration = 80;
 
@@ -34,11 +38,7 @@ const offsetSchema = z
 
 async function authorize() {
   const { NODE_ENV, VERCEL_ENV, VOICE_SPIKE_USER_IDS } = process.env;
-  const environment = VERCEL_ENV ?? NODE_ENV;
-  if (
-    !VOICE_SPIKE_USER_IDS ||
-    (environment !== 'development' && environment !== 'preview')
-  )
+  if (!(VOICE_SPIKE_USER_IDS && isLocalSpikeEnvironment()))
     return APIErrorResponse('Not found', 404);
   const claims = await getVerifiedClaims(await createClient());
   if (!claims?.sub) return APIErrorResponse('Unauthorized', 401);
@@ -48,6 +48,7 @@ async function authorize() {
 }
 
 export async function POST(request: Request) {
+  if (!isLocalSpikeEnvironment()) return APIErrorResponse('Not found', 404);
   const origin = request.headers.get('origin');
   const devOrigin =
     process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SITE_URL

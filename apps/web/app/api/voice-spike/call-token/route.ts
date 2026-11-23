@@ -9,7 +9,10 @@ import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
 import { createClient } from '@/lib/supabase/server';
-import { isSpikeAllowed } from '@/lib/voice-spike/protocol';
+import {
+  isLocalSpikeEnvironment,
+  isSpikeAllowed,
+} from '@/lib/voice-spike/protocol';
 
 const requestSchema = z.strictObject({
   audioReferenceId: z.uuid().optional(),
@@ -17,11 +20,7 @@ const requestSchema = z.strictObject({
 });
 
 export async function POST(request: Request) {
-  if (
-    !process.env.VOICE_SPIKE_USER_IDS ||
-    process.env.VERCEL_ENV === 'production' ||
-    (!process.env.VERCEL_ENV && process.env.NODE_ENV !== 'development')
-  )
+  if (!(process.env.VOICE_SPIKE_USER_IDS && isLocalSpikeEnvironment()))
     return APIErrorResponse('Not found', 404);
   const origin = request.headers.get('origin');
   const developmentOrigin =

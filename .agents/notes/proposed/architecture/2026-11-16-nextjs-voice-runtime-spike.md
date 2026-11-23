@@ -168,6 +168,10 @@ and cancellation.
 
 ### Resumable chat delivery
 
+Serve the browser demo from local Next.js development. The web app and worker
+use the same isolated Supabase project for user IDs, threads, and leases.
+Use the private HTTPS proxy for remote browser checks.
+
 The web app admits a chat reply under the same per-user lease as the LiveKit
 worker. It stores the caller turn and returns a receipt before the background
 producer starts. Supabase checkpoints the visible assistant text in its

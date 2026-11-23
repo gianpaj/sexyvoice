@@ -188,10 +188,6 @@ without the column, the call page fails to load.
 
 ### Internal Next.js voice probe
 
-The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
-and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
-to that API when the browser uses a Tailnet proxy.
-
 `VOICE_SPIKE_USER_IDS` is an optional comma-separated list of Supabase test
 user UUIDs. Leave it empty in production; the handler also rejects production
 regardless of this value. The development/preview probe reuses `XAI_API_KEY` and
@@ -207,6 +203,10 @@ lease expires. See [the runbook](../apps/web/lib/voice-spike/README.md) and
 
 ### Internal JS browser call
 
+The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
+and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+to that API when the browser uses a Tailnet proxy.
+
 For a browser on another device, bind Next.js to `0.0.0.0` and use a private
 HTTPS proxy. Set `NEXT_PUBLIC_SITE_URL` to its web origin and
 `NEXT_PUBLIC_SUPABASE_URL` to a reachable HTTPS proxy for the local API;
@@ -221,18 +221,18 @@ Next.js and its persistent `apps/voice-agent` worker. Set
 `VOICE_SPIKE_ENABLED=true` only on that worker. Both services need matching
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`; the worker also needs
 `XAI_API_KEY` and `INWORLD_API_KEY`. The token route dispatches
-`sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. It rejects production.
+`sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. Run Next.js and
+the worker locally with the same isolated Supabase project.
 The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
 and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
 Optional `OPENAI_API_KEY` on the voice worker enables embeddings for hybrid
 memory recall. Without it, the worker uses full-text recall.
-For preview configuration, use `vercel env add VOICE_SPIKE_USER_IDS preview`
-and the existing LiveKit variable names; keep worker credentials server-only.
 
 The browser uses LiveKit media directly, so the agent requires persistent Node
-hosting outside Vercel Functions. Local calls have a five-minute cap, a fixed
-English test voice, and no customer credit, history, or memory writes. Shared
-admission, billing parity, iOS testing, and deployed long-call tests remain
+hosting. Local calls have a five-minute cap and use Ashley or an owned Inworld
+voice. Chat and call turns share a saved thread and opted-in memory recall.
+The demo records chat token usage. Customer billing parity, iOS testing, and
+deployed long-call tests remain
 required before customer use. See the [runbook](../apps/voice-agent/README.md).
 
 ### LiveKit and call analysis

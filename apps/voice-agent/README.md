@@ -28,9 +28,10 @@ Apply the thread migration to the isolated local Supabase project first. Set
 `SUPABASE_SECRET_KEY` to that project's server key. The worker rejects non-local
 database URLs.
 
-Configure `apps/web/.env.local` with the normal Supabase settings and the same
+Configure `apps/web/.env.local` for the same isolated Supabase project and set
+`XAI_API_KEY` for chat. Both services use the same
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and
-`VOICE_SPIKE_USER_IDS`. Provider keys stay in the worker. The JS route ignores
+`VOICE_SPIKE_USER_IDS`. Keep xAI and Inworld credentials server-side. The JS route ignores
 `LIVEKIT_AGENT_NAME` and always dispatches `sexyvoice-js-spike`.
 
 In separate terminals, from the repository root:
@@ -44,8 +45,8 @@ Sign in with an allowed test account at
 `http://localhost:3007/en/dashboard/voice-spike`. An existing Python worker
 can stay connected: explicit dispatch selects only the JS worker. Do not run
 two JS workers against the same project when comparing local changes.
-A preview deployment needs this persistent worker running separately;
-Vercel hosts the page and token request, not the agent's media connection.
+Run both services locally. Use the private HTTPS proxy below for remote browser
+tests.
 
 ## Continue a conversation
 
@@ -112,7 +113,7 @@ Remove only these demo proxies with `tailscale serve --https=8447 off` and
 
 ## Implemented bounds
 
-- Authenticated, same-origin token requests; development/preview only.
+- Authenticated, same-origin token requests in Next.js development.
 - Worker revalidates the allowlist, runtime, and short dispatch lifetime before
   opening providers. Browser input stays off until the JS runtime marker and
   mute RPC are acknowledged. Startup has a 60-second deadline.
