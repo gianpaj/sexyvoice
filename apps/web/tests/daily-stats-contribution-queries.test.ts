@@ -273,7 +273,7 @@ describe('contribution reads', () => {
       expect(request.operations).toContainEqual([
         'select',
         [
-          'id, started_at, duration_seconds, credits_used, status, free_call, model',
+          'id, started_at, duration_seconds, credits_used, status, free_call, model, character_id:metadata->>character_id',
         ],
       ]);
       expect(request.operations).toContainEqual([
