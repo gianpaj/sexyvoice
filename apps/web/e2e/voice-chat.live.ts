@@ -195,3 +195,92 @@ test('keeps the reader’s position until they jump to the latest turn', async (
   await expect(jump).toHaveCount(0);
   await expect(log).toBeFocused();
 });
+
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`renders a burst reply with motion preference ${reducedMotion}`, async ({
+    page,
+  }) => {
+    const threadId = 'd9d5e2a3-4f7c-45fe-9b67-03ff98ba72b3';
+    const saved =
+      'A longer saved reply appears in full as soon as history loads.';
+    const reply = 'Here are the first six words. '.repeat(20).trimEnd();
+    const shortReply = 'Hey, how are you?';
+    let sends = 0;
+    await page.emulateMedia({ reducedMotion });
+    await page.clock.install();
+    await page.route('**/api/voice-chat/chat**', async (route) => {
+      if (route.request().method() === 'GET') {
+        return route.fulfill({
+          json: {
+            messages: [
+              {
+                id: 'saved',
+                role: 'assistant',
+                parts: [{ type: 'text', content: saved }],
+              },
+            ],
+            activeRun: null,
+            callActive: false,
+          },
+        });
+      }
+      const { runId } = route.request().postDataJSON();
+      sends += 1;
+      const messageId = `new-reply-${sends}`;
+      const delta = sends === 1 ? reply : shortReply;
+      const events = [
+        { type: 'RUN_STARTED', threadId, runId },
+        { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
+        { type: 'TEXT_MESSAGE_CONTENT', messageId, delta },
+        { type: 'TEXT_MESSAGE_END', messageId },
+        { type: 'RUN_FINISHED', threadId, runId },
+      ];
+      return route.fulfill({
+        contentType: 'text/event-stream',
+        body: events
+          .map(
+            (event, index) =>
+              `id: ${index}\ndata: ${JSON.stringify(event)}\n\n`,
+          )
+          .join(''),
+      });
+    });
+    await page.goto(`/en/dashboard/voice-spike?conversation=${threadId}`);
+    const messages = page.getByRole('log').locator('p:not([role="status"])');
+    await expect(messages).toHaveText([saved]);
+
+    const composer = page.getByRole('textbox', {
+      name: 'Message',
+      exact: true,
+    });
+    const send = page.getByRole('button', { name: 'Send', exact: true });
+    const startCall = page.getByRole('button', {
+      name: 'Start call',
+      exact: true,
+    });
+    await expect(startCall).toBeEnabled();
+    await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
+    await composer.fill('Tell me more.');
+    await send.click({ force: true });
+    await expect(messages).toHaveText([
+      saved,
+      'Tell me more.',
+      reducedMotion === 'reduce' ? reply : 'Here are the first six words.',
+    ]);
+    await expect(startCall).toBeEnabled();
+
+    if (reducedMotion === 'no-preference') {
+      await page.clock.runFor(80);
+      await expect(messages.last()).toHaveText(
+        /^Here are the first six words\. Here/,
+      );
+      await expect(messages.last()).not.toHaveText(reply);
+      await page.clock.runFor(920);
+      await expect(messages.last()).toHaveText(reply);
+    }
+
+    await composer.fill('Hi');
+    await send.click({ force: true });
+    await expect(messages.last()).toHaveText(shortReply);
+  });
+}

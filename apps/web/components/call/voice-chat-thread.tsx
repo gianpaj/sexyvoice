@@ -63,6 +63,8 @@ export function VoiceChatThread({
   );
   const [awaitingText, setAwaitingText] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [revealReplyId, setRevealReplyId] = useState<string>();
+  const revealNextReply = useRef(false);
   const transcript = useRef<VoiceChatTranscriptHandle>(null);
   const pending = useRef<string | null>(null);
   const currentDraft = useRef(draft);
@@ -79,6 +81,10 @@ export function VoiceChatThread({
         if (currentDraft.current.trim() === pending.current) onDraft('');
         pending.current = null;
         onRememberThread(threadId);
+      }
+      if (event.type === 'TEXT_MESSAGE_CONTENT' && revealNextReply.current) {
+        revealNextReply.current = false;
+        setRevealReplyId(event.messageId);
       }
       if (
         event.type === 'TEXT_MESSAGE_CONTENT' ||
@@ -154,6 +160,8 @@ export function VoiceChatThread({
     const text = draft.trim();
     if (!text || busy || unavailable || pending.current) return;
     pending.current = text;
+    revealNextReply.current = true;
+    setRevealReplyId(undefined);
     setSubmitting(true);
     setAwaitingText(true);
     transcript.current?.scrollToLatest();
@@ -165,6 +173,7 @@ export function VoiceChatThread({
       await chat.sendMessage(text);
     } finally {
       pending.current = null;
+      revealNextReply.current = false;
       setSubmitting(false);
       setAwaitingText(false);
     }
@@ -198,6 +207,7 @@ export function VoiceChatThread({
       <VoiceChatTranscript
         messages={visibleMessages}
         ref={transcript}
+        revealReplyId={unavailable ? undefined : revealReplyId}
         status={status ? t(status) : undefined}
       />
       {unavailable && (

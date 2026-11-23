@@ -1,12 +1,16 @@
 'use client';
 
 import { ArrowDown } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type Ref,
   useCallback,
+  useEffect,
+  useEffectEvent,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -27,6 +31,7 @@ export interface VoiceChatTranscriptHandle {
 interface VoiceChatTranscriptProps {
   messages: VoiceChatMessage[];
   ref?: Ref<VoiceChatTranscriptHandle>;
+  revealReplyId?: string;
   status?: string;
 }
 
@@ -34,6 +39,7 @@ interface VoiceChatTranscriptProps {
 export function VoiceChatTranscript({
   messages,
   ref,
+  revealReplyId,
   status,
 }: VoiceChatTranscriptProps) {
   const t = useTranslations('voiceChat');
@@ -41,6 +47,7 @@ export function VoiceChatTranscript({
   const content = useRef<HTMLDivElement>(null);
   const followsLatest = useRef(true);
   const [showJump, setShowJump] = useState(false);
+  const latestId = messages.at(-1)?.id;
 
   const scrollToLatest = useCallback(() => {
     followsLatest.current = true;
@@ -100,7 +107,11 @@ export function VoiceChatTranscript({
                       : 'rounded-es-md bg-muted text-foreground',
                   )}
                 >
-                  {text}
+                  {!user && id === latestId && id === revealReplyId ? (
+                    <PacedReply text={text} />
+                  ) : (
+                    text
+                  )}
                 </p>
               </div>
             ))}
@@ -132,4 +143,45 @@ export function VoiceChatTranscript({
       )}
     </div>
   );
+}
+
+const REVEAL_INTERVAL_MS = 80;
+const REVEAL_WINDOW_MS = 960;
+const wordSegmenter =
+  typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, { granularity: 'word' })
+    : null;
+
+function PacedReply({ text }: { text: string }) {
+  const reduceMotion = useReducedMotion();
+  const wordStarts = useMemo(
+    () =>
+      Array.from(wordSegmenter?.segment(text) ?? []).flatMap(
+        ({ index, isWordLike }) => (isWordLike ? [index] : []),
+      ),
+    [text],
+  );
+  const [shownWords, setShownWords] = useState(6);
+  const hasBacklog = shownWords < wordStarts.length;
+
+  const revealBatch = useEffectEvent((deadline: number) => {
+    const stepsLeft = Math.max(
+      1,
+      Math.ceil((deadline - performance.now()) / REVEAL_INTERVAL_MS),
+    );
+    setShownWords((shown) => {
+      const remaining = Math.max(0, wordStarts.length - shown);
+      const batch = Math.max(3, Math.ceil(remaining / stepsLeft));
+      return shown + Math.min(remaining, batch);
+    });
+  });
+
+  useEffect(() => {
+    if (reduceMotion || !hasBacklog) return;
+    const deadline = performance.now() + REVEAL_WINDOW_MS;
+    const timer = setInterval(() => revealBatch(deadline), REVEAL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [hasBacklog, reduceMotion]);
+
+  return reduceMotion ? text : text.slice(0, wordStarts[shownWords]);
 }
