@@ -7,21 +7,21 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { listSpikeCharacters } from '@/lib/voice-spike/characters';
-import { createChatDb } from '@/lib/voice-spike/chat';
 import {
-  isLocalSpikeEnvironment,
-  isSpikeAllowed,
-} from '@/lib/voice-spike/protocol';
+  isLocalVoiceChatEnvironment,
+  isVoiceChatAllowed,
+} from '@/lib/voice-chat/access';
+import { listVoiceChatCharacters } from '@/lib/voice-chat/characters';
+import { createChatDb } from '@/lib/voice-chat/chat';
 
-const selection = z.union([z.uuid(), z.literal('demo')]);
+const selection = z.union([z.uuid(), z.literal('default')]);
 
-export async function startSpikeConversation(
+export async function startCharacterConversation(
   locale: Locale,
   _previous: boolean,
   form: FormData,
 ): Promise<boolean> {
-  if (!(isLocalSpikeEnvironment() && i18n.locales.includes(locale)))
+  if (!(isLocalVoiceChatEnvironment() && i18n.locales.includes(locale)))
     return false;
   const characterId = selection.safeParse(form.get('character'));
   if (!characterId.success) return false;
@@ -30,9 +30,9 @@ export async function startSpikeConversation(
   if (
     !(
       userId &&
-      isSpikeAllowed(
+      isVoiceChatAllowed(
         userId,
-        process.env.VOICE_SPIKE_USER_IDS,
+        process.env.VOICE_CHAT_USER_IDS,
         process.env.VERCEL_ENV,
         process.env.NODE_ENV,
       )
@@ -41,11 +41,11 @@ export async function startSpikeConversation(
     return false;
 
   const page = `/${locale}/dashboard/voice-spike`;
-  if (characterId.data === 'demo') redirect(page);
+  if (characterId.data === 'default') redirect(page);
   let threadId: string;
   try {
     if (!(await hasUserPaid(userId))) return false;
-    const character = (await listSpikeCharacters(userId)).find(
+    const character = (await listVoiceChatCharacters(userId)).find(
       ({ id }) => id === characterId.data,
     );
     if (!character) return false;

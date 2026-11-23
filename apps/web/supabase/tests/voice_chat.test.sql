@@ -3,8 +3,8 @@ set local search_path = public, extensions;
 select plan(18);
 
 insert into auth.users (id, aud, role, email) values
-  ('10101010-1010-4010-8010-101010101010', 'authenticated', 'authenticated', 'spike-chat-a@example.test'),
-  ('20202020-2020-4020-8020-202020202020', 'authenticated', 'authenticated', 'spike-chat-b@example.test');
+  ('10101010-1010-4010-8010-101010101010', 'authenticated', 'authenticated', 'voice-chat-a@example.test'),
+  ('20202020-2020-4020-8020-202020202020', 'authenticated', 'authenticated', 'voice-chat-b@example.test');
 
 select ok(not has_table_privilege('authenticated', 'voice_chat_runs', 'SELECT'), 'chat receipts are private');
 select ok(not has_function_privilege('authenticated', 'save_voice_chat_reply(uuid,uuid,text,text,jsonb)', 'EXECUTE'), 'browser cannot write replies');

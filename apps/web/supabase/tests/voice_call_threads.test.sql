@@ -19,7 +19,7 @@ select is((public.open_voice_call(
 )).uses_default_character, true, 'first call creates a demo thread');
 select throws_ok($$select public.open_voice_call(
   '10101010-1010-4010-8010-101010101010', '60606060-6060-4060-8060-606060606062', false, 'room-b')$$,
-  '23505', null, 'one JS demo call per user even on different threads');
+  '23505', null, 'one voice call per user even on different threads');
 select throws_ok($$select public.open_voice_call(
   '20202020-2020-4020-8020-202020202020', '60606060-6060-4060-8060-606060606061', true, 'room-b')$$,
   'P0002', null, 'another user cannot resume the thread');

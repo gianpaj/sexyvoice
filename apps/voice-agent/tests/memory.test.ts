@@ -1,5 +1,5 @@
 import { llm, voice } from '@livekit/agents';
-import { loadMemory, selectPreload } from '@sexyvoice/voice-spike/memory';
+import { loadMemory, selectPreload } from '@sexyvoice/voice-chat/memory';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

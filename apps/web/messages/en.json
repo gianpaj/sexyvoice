@@ -1488,13 +1488,13 @@
     "pace": "Pace",
     "vocalSounds": "Vocal sounds"
   },
-  "voiceSpike": {
+  "voiceChat": {
     "character": "Choose character",
     "newConversation": "New conversation",
     "characterError": "Could not start a conversation with this character.",
-    "title": "JS call demo",
+    "title": "Voice chat",
     "idle": "Ready to call",
-    "connecting": "Connecting to the JS agent…",
+    "connecting": "Connecting…",
     "connected": "In call",
     "reconnecting": "Reconnecting…",
     "call": "Start call",
@@ -1513,9 +1513,9 @@
     "chatError": "Could not load or continue the reply.",
     "refreshChat": "Refresh chat",
     "notice": "Internal test · 5-minute call limit · No credit charges.",
-    "workerMissing": "The JS agent did not connect. Check that the spike worker is running.",
+    "workerMissing": "The voice agent did not connect. Try again.",
     "connectError": "Could not start or continue the call. Check your network connection and microphone permission, then try again.",
-    "providerError": "A voice provider failed. End the call and check the worker logs.",
+    "providerError": "Voice is temporarily unavailable. End the call and try again.",
     "sendError": "Could not send. Your message is still here.",
     "ended": "The call ended. You can start another call."
   }

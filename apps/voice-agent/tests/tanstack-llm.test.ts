@@ -1,5 +1,5 @@
 import { initializeLogger, llm } from '@livekit/agents';
-import type { streamReply } from '@sexyvoice/voice-spike/reply';
+import type { streamReply } from '@sexyvoice/voice-chat/reply';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TanStackLLM } from '../src/tanstack-llm.ts';

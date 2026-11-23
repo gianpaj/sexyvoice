@@ -567,11 +567,11 @@ Treat this file as the source of truth for **implemented E2E coverage**, not pro
 
 ## Internal JS call experiment
 
-`/{lang}/dashboard/voice-spike` is gated by `VOICE_SPIKE_USER_IDS` in local
+`/{lang}/dashboard/voice-spike` is gated by `VOICE_CHAT_USER_IDS` in local
 Next.js development. Component tests cover worker selection, startup cancellation,
 streamed transcripts, typed turns, and mute across reconnect.
 
-`voice-spike.live.config.ts` tests the chat-to-call-to-chat flow with real
+`voice-chat.live.config.ts` tests the chat-to-call-to-chat flow with real
 providers in Chromium, Firefox, desktop WebKit, and mobile WebKit. It uses an
 authenticated local account. The test drops the first SSE stream, checks that
 both modes remember the same conversation, plays Inworld audio, toggles mute,

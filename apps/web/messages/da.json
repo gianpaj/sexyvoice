@@ -1486,13 +1486,13 @@
     "pace": "Tempo",
     "vocalSounds": "Stemmelyde"
   },
-  "voiceSpike": {
+  "voiceChat": {
     "character": "Vælg karakter",
     "newConversation": "Ny samtale",
     "characterError": "Samtalen med denne karakter kunne ikke startes.",
-    "title": "JS-opkaldsdemo",
+    "title": "Stemmechat",
     "idle": "Klar til at ringe",
-    "connecting": "Forbinder til JS-agenten…",
+    "connecting": "Forbinder…",
     "connected": "I opkald",
     "reconnecting": "Genopretter forbindelse…",
     "call": "Start opkald",
@@ -1511,9 +1511,9 @@
     "chatError": "Svaret kunne ikke indlæses eller fortsættes.",
     "refreshChat": "Opdater chat",
     "notice": "Intern test · Opkald på op til 5 minutter · Ingen brug af credits.",
-    "workerMissing": "JS-agenten oprettede ikke forbindelse. Kontrollér, at testprocessen kører.",
+    "workerMissing": "Stemmeassistenten kunne ikke oprette forbindelse. Prøv igen.",
     "connectError": "Opkaldet kunne ikke startes eller fortsættes. Kontrollér din netværksforbindelse og mikrofontilladelse, og prøv igen.",
-    "providerError": "En stemmeudbyder fejlede. Afslut opkaldet, og kontrollér processens logfiler.",
+    "providerError": "Stemmechat er midlertidigt utilgængelig. Afslut opkaldet, og prøv igen.",
     "sendError": "Kunne ikke sende. Din besked er stadig her.",
     "ended": "Opkaldet er afsluttet. Du kan starte et nyt."
   }

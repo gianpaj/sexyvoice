@@ -248,9 +248,9 @@ importers:
       '@livekit/rtc-node':
         specifier: 1.2.2
         version: 1.2.2
-      '@sexyvoice/voice-spike':
+      '@sexyvoice/voice-chat':
         specifier: workspace:*
-        version: link:../../packages/voice-spike
+        version: link:../../packages/voice-chat
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.116.0(@opentelemetry/api@1.9.1)
@@ -336,9 +336,9 @@ importers:
       '@sentry/nextjs':
         specifier: 10.75.2
         version: 10.75.2(@opentelemetry/core@2.12.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(next@16.4.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.86.3))(react@19.3.1)(supports-color@8.1.1)(webpack@5.99.9(@swc/core@1.15.47(@swc/helpers@0.5.23))(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.28))
-      '@sexyvoice/voice-spike':
+      '@sexyvoice/voice-chat':
         specifier: workspace:*
-        version: link:../../packages/voice-spike
+        version: link:../../packages/voice-chat
       '@supabase-cache-helpers/postgrest-react-query':
         specifier: ^1.13.9
         version: 1.13.9(@supabase/postgrest-js@2.116.0)(@tanstack/react-query@5.91.0(react@19.3.1))(react@19.3.1)
@@ -596,7 +596,7 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.11)(jsdom@28.1.0(supports-color@8.1.1))(msw@2.15.0(@types/node@24.10.4)(typescript@7.0.2))(vite@7.3.7(@types/node@24.10.4)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.86.3)(terser@5.48.0)(tsx@4.19.3)(yaml@2.9.1))
 
-  packages/voice-spike:
+  packages/voice-chat:
     dependencies:
       '@supabase/supabase-js':
         specifier: 'catalog:'

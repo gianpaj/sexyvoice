@@ -6,7 +6,7 @@ agreed; runtime integration and production rollout remain pending.
 The [source review](2026-11-16-conversation-context-and-stream-recovery.md)
 records the context, shared-memory, and durable-stream contracts.
 
-The [TypeScript voice spike](2026-11-16-tanstack-nextjs-voice-spike.md) tests
+The [TypeScript voice spike](2026-11-16-nextjs-voice-websocket.md) tests
 whether Next.js can own the cascade voice runtime too. Its result determines
 the runtime choice; the product, history, memory, and pricing contracts below
 still apply. Sexyvoice owns these plans.

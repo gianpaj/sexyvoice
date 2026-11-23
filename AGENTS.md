@@ -280,7 +280,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   so those modules must use relative imports with `.ts` extensions and no `@/`
   aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency bypass.
 
-### Internal voice spike
+### Internal voice chat
 
 `NEXT_PUBLIC_SITE_URL` supplies an additional dev hostname and the exact
 allowed origin for the internal call-token route behind an HTTPS proxy.
@@ -289,18 +289,18 @@ localhost addresses refer to the browser's device. Setup belongs in the
 [JS call runbook](apps/voice-agent/README.md#access-from-another-device).
 
 The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
-and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+and requires a loopback Supabase API. Set `VOICE_CHAT_LOCAL_SUPABASE_URL`
 to that API when the browser uses a Tailnet proxy.
 
-`VOICE_SPIKE_USER_IDS` restricts the Next.js voice probe to explicit Supabase
+`VOICE_CHAT_USER_IDS` restricts the Next.js voice probe to explicit Supabase
 test users in development/preview. Empty disables it; production is blocked.
 The JS browser call at `/{lang}/dashboard/voice-spike` uses the same allowlist
 and a separate token route in local Next.js development. Its worker in `apps/voice-agent` also requires
-`VOICE_SPIKE_ENABLED=true`, matching LiveKit credentials, `XAI_API_KEY`, and
-`INWORLD_API_KEY`. It always dispatches `sexyvoice-js-spike`; never route the
-spike through the Python token endpoint. It stores conversation history and
-reuses opted-in Supabase memory. The demo does not debit customer credits.
-See the [JS call runbook](apps/voice-agent/README.md) and [Next.js probe runbook](apps/web/lib/voice-spike/README.md).
+`VOICE_CHAT_WORKER_ENABLED=true`, matching LiveKit credentials, `XAI_API_KEY`, and
+`INWORLD_API_KEY`. It dispatches `sexyvoice-voice-chat` through the voice chat token route.
+Voice chat stores conversation history, reuses opted-in Supabase memory,
+and runs without debiting customer credits.
+See the [JS call runbook](apps/voice-agent/README.md) and [Next.js probe runbook](apps/web/lib/voice-websocket/README.md).
 
 ## Banners
 

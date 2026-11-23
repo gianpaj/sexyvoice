@@ -2,7 +2,7 @@ import { llm } from '@livekit/agents';
 import {
   loadThreadCharacter,
   replyInstructions,
-} from '@sexyvoice/voice-spike/history';
+} from '@sexyvoice/voice-chat/history';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 

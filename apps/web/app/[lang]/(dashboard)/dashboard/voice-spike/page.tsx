@@ -2,19 +2,19 @@ import { randomUUID } from 'node:crypto';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
-import { LivekitSpike } from '@/components/call/livekit-spike';
+import { LiveKitVoiceChat } from '@/components/call/livekit-voice-chat';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { listSpikeCharacters } from '@/lib/voice-spike/characters';
 import {
-  isLocalSpikeEnvironment,
-  isSpikeAllowed,
-} from '@/lib/voice-spike/protocol';
-import { startSpikeConversation } from './actions';
+  isLocalVoiceChatEnvironment,
+  isVoiceChatAllowed,
+} from '@/lib/voice-chat/access';
+import { listVoiceChatCharacters } from '@/lib/voice-chat/characters';
+import { startCharacterConversation } from './actions';
 
-export default async function VoiceSpike({
+export default async function VoiceChatPage({
   params,
   searchParams,
 }: {
@@ -24,15 +24,15 @@ export default async function VoiceSpike({
     conversation?: string | string[];
   }>;
 }) {
-  if (!isLocalSpikeEnvironment()) notFound();
+  if (!isLocalVoiceChatEnvironment()) notFound();
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
   if (
     !(
       claims?.sub &&
-      isSpikeAllowed(
+      isVoiceChatAllowed(
         claims.sub,
-        process.env.VOICE_SPIKE_USER_IDS,
+        process.env.VOICE_CHAT_USER_IDS,
         process.env.VERCEL_ENV,
         process.env.NODE_ENV,
       )
@@ -47,7 +47,7 @@ export default async function VoiceSpike({
   if (Array.isArray(voice) || !thread.success) notFound();
   const [characters, savedThread] = await Promise.all([
     hasUserPaid(claims.sub).then((paid) =>
-      paid ? listSpikeCharacters(claims.sub) : [],
+      paid ? listVoiceChatCharacters(claims.sub) : [],
     ),
     thread.data
       ? supabase
@@ -62,14 +62,14 @@ export default async function VoiceSpike({
     ? savedThread.data.character_name
     : undefined;
   return (
-    <LivekitSpike
+    <LiveKitVoiceChat
       audioReferenceId={characterName ? undefined : voice}
       characterName={characterName}
       characters={characters}
       chatThreadId={thread.data ?? randomUUID()}
       conversationId={thread.data}
       key={thread.data ?? 'new'}
-      startConversation={startSpikeConversation.bind(null, lang)}
+      startConversation={startCharacterConversation.bind(null, lang)}
     />
   );
 }

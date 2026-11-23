@@ -1490,13 +1490,13 @@
     "pace": "Ritmo",
     "vocalSounds": "Suoni vocali"
   },
-  "voiceSpike": {
+  "voiceChat": {
     "character": "Scegli un personaggio",
     "newConversation": "Nuova conversazione",
     "characterError": "Impossibile avviare una conversazione con questo personaggio.",
-    "title": "Demo chiamata JS",
+    "title": "Chat vocale",
     "idle": "Pronto per chiamare",
-    "connecting": "Connessione all’agente JS…",
+    "connecting": "Connessione…",
     "connected": "In chiamata",
     "reconnecting": "Riconnessione…",
     "call": "Avvia chiamata",
@@ -1515,9 +1515,9 @@
     "chatError": "Impossibile caricare o continuare la risposta.",
     "refreshChat": "Aggiorna chat",
     "notice": "Test interno · Chiamate di massimo 5 minuti · Nessun credito addebitato.",
-    "workerMissing": "L’agente JS non si è connesso. Verifica che il processo di test sia in esecuzione.",
+    "workerMissing": "L’assistente vocale non è riuscito a connettersi. Riprova.",
     "connectError": "Impossibile avviare o continuare la chiamata. Controlla la connessione di rete e il permesso del microfono, poi riprova.",
-    "providerError": "Un servizio vocale non funziona. Termina la chiamata e controlla i log del processo.",
+    "providerError": "La chat vocale è temporaneamente non disponibile. Termina la chiamata e riprova.",
     "sendError": "Invio non riuscito. Il messaggio è ancora qui.",
     "ended": "La chiamata è terminata. Puoi avviarne un’altra."
   }

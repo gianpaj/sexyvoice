@@ -205,25 +205,25 @@ without the column, the call page fails to load.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
 
-### Internal Next.js voice probe
+### Next.js WebSocket voice comparison
 
-`VOICE_SPIKE_USER_IDS` is an optional comma-separated list of Supabase test
+`VOICE_CHAT_USER_IDS` is an optional comma-separated list of Supabase test
 user UUIDs. Leave it empty in production; the handler also rejects production
 regardless of this value. The development/preview probe reuses `XAI_API_KEY` and
 `INWORLD_API_KEY`. It charges no customer credits and must remain internal.
 
 For a preview test, add the allowlist with
-`vercel env add VOICE_SPIKE_USER_IDS preview` from `apps/web`. Do not put provider
+`vercel env add VOICE_CHAT_USER_IDS preview` from `apps/web`. Do not put provider
 keys in public variables. Local WebSocket tests require Vercel CLI 54.14.2+ and
 `vercel dev`; `next dev` cannot run the upgrade helper. The probe uses a
 300-second function limit and 10–240 second leases. It does not resume after a
-lease expires. See [the runbook](../apps/web/lib/voice-spike/README.md) and
-[the long-call experiments](../plans/2026-11-16-tanstack-nextjs-voice-spike.md).
+lease expires. See [the runbook](../apps/web/lib/voice-websocket/README.md) and
+[the long-call experiments](../plans/2026-11-16-nextjs-voice-websocket.md).
 
-### Internal JS browser call
+### LiveKit voice chat
 
 The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
-and requires a loopback Supabase API. Set `VOICE_SPIKE_LOCAL_SUPABASE_URL`
+and requires a loopback Supabase API. Set `VOICE_CHAT_LOCAL_SUPABASE_URL`
 to that API when the browser uses a Tailnet proxy.
 
 For a browser on another device, bind Next.js to `0.0.0.0` and use a private
@@ -235,12 +235,12 @@ development, alongside the direct request origin, so a TLS-terminating proxy
 can pass the origin check without trusting arbitrary forwarded headers. See
 [remote access](../apps/voice-agent/README.md#access-from-another-device).
 
-`/{lang}/dashboard/voice-spike` uses the same `VOICE_SPIKE_USER_IDS` gate in
+`/{lang}/dashboard/voice-spike` uses the same `VOICE_CHAT_USER_IDS` gate in
 Next.js and its persistent `apps/voice-agent` worker. Set
-`VOICE_SPIKE_ENABLED=true` only on that worker. Both services need matching
+`VOICE_CHAT_WORKER_ENABLED=true` only on that worker. Both services need matching
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`; the worker also needs
 `XAI_API_KEY` and `INWORLD_API_KEY`. The token route dispatches
-`sexyvoice-js-spike` independently of `LIVEKIT_AGENT_NAME`. Run Next.js and
+`sexyvoice-voice-chat` independently of `LIVEKIT_AGENT_NAME`. Run Next.js and
 the worker locally with the same isolated Supabase project.
 The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
 and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
@@ -250,9 +250,11 @@ memory recall. Without it, the worker uses full-text recall.
 The browser uses LiveKit media directly, so the agent requires persistent Node
 hosting. Local calls have a five-minute cap and use Ashley or an owned Inworld
 voice. Chat and call turns share a saved thread and opted-in memory recall.
-The demo records chat token usage. Customer billing parity, iOS testing, and
-deployed long-call tests remain
-required before customer use. See the [runbook](../apps/voice-agent/README.md).
+Chat records token usage and calls log projected credits. A hosted pilot
+requires a dedicated worker deployment, a server-side allowlist, and a decision
+on credit settlement and spend limits. If pilot accounts can also use the
+Python call path, enforce one active interaction across both runtimes. See the
+[runbook](../apps/voice-agent/README.md).
 
 ### LiveKit and call analysis
 

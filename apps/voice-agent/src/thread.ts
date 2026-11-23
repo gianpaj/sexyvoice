@@ -6,7 +6,7 @@ import {
   historySchema,
   roleSchema,
   threadSchema,
-} from '@sexyvoice/voice-spike/history';
+} from '@sexyvoice/voice-chat/history';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface CallKey {

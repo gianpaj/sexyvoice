@@ -1490,13 +1490,13 @@
     "pace": "Tempo",
     "vocalSounds": "Stimmliche Laute"
   },
-  "voiceSpike": {
+  "voiceChat": {
     "character": "Figur auswählen",
     "newConversation": "Neues Gespräch",
     "characterError": "Mit dieser Figur konnte kein Gespräch gestartet werden.",
-    "title": "JS-Anrufdemo",
+    "title": "Sprachchat",
     "idle": "Bereit zum Anrufen",
-    "connecting": "Verbindung zum JS-Agenten wird hergestellt…",
+    "connecting": "Verbindung wird hergestellt…",
     "connected": "Im Gespräch",
     "reconnecting": "Verbindung wird wiederhergestellt…",
     "call": "Anruf starten",
@@ -1515,9 +1515,9 @@
     "chatError": "Die Antwort konnte nicht geladen oder fortgesetzt werden.",
     "refreshChat": "Chat aktualisieren",
     "notice": "Interner Test · Anrufe bis zu 5 Minuten · Keine Abbuchung von Credits.",
-    "workerMissing": "Der JS-Agent hat sich nicht verbunden. Prüfe, ob der Testprozess läuft.",
+    "workerMissing": "Der Sprachassistent konnte keine Verbindung herstellen. Versuche es erneut.",
     "connectError": "Der Anruf konnte nicht gestartet oder fortgesetzt werden. Prüfe deine Netzwerkverbindung und Mikrofonberechtigung und versuche es erneut.",
-    "providerError": "Ein Sprachanbieter ist ausgefallen. Beende den Anruf und prüfe die Prozessprotokolle.",
+    "providerError": "Der Sprachchat ist vorübergehend nicht verfügbar. Beende den Anruf und versuche es erneut.",
     "sendError": "Senden fehlgeschlagen. Deine Nachricht ist noch hier.",
     "ended": "Der Anruf wurde beendet. Du kannst erneut anrufen."
   }

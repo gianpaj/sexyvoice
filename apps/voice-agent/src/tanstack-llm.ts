@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { llm } from '@livekit/agents';
-import { REPLY_MODEL, streamReply } from '@sexyvoice/voice-spike/reply';
+import { REPLY_MODEL, streamReply } from '@sexyvoice/voice-chat/reply';
 
 import type { TrackReply } from './call-accounting.ts';
 

@@ -1,6 +1,6 @@
 # Agent Note: Shared conversation history
 
-Status: proposed — schema verified in isolated local Supabase; runtime integration pending
+Status: proposed — LiveKit JS uses the schema locally; Python integration is pending
 
 ## Problem
 
@@ -56,6 +56,14 @@ settle tokens, extract memory, or implement resumable streams. Add those with
 the runtime work and its tests. TanStack persistence and its per-run durability
 log are separate; message rows alone cannot replay a stream.
 
+The local LiveKit JS implementation stores one `voice_conversation_leases`
+row per active account. A lease names the call room or `chat:<run-id>`. The
+`voice_chat_runs` row stores the reply state, usage, message position, and
+expiry. Reconnects read the saved reply text from `conversation_messages`.
+Run expiry ends active generation and recovery. Completed replies remain
+replayable while the run row exists. Thread erasure cascades both tables. Keep the original run ID hash namespace so existing replies
+remain addressable after the schema rename.
+
 ## Alternatives considered
 
 - One growing transcript JSON per thread makes pagination, independent
@@ -98,6 +106,6 @@ procedural syntax also parse offline; Biome does not check SQL. Production is
 unchanged. Runtime admission, billing, replay, and Python integration need their
 own later verification.
 
-The upgrade from `main` applies all five conversation migrations with plain
-`supabase migration up --local`. The full pgTAP suite passes 193 assertions
-after the upgrade.
+Use `supabase migration up --local` for the ordered conversation migrations.
+The forward rename preserves existing threads, messages, and runs. After the
+rename, all 193 pgTAP assertions pass in the isolated local project.

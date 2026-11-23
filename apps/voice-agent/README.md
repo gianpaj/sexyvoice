@@ -1,4 +1,4 @@
-# Internal JS browser call
+# LiveKit voice chat
 
 A short LiveKit Agents JS call runs in this monorepo with xAI streaming STT,
 Grok 4.20 through TanStack AI and the xAI API, and streaming Inworld TTS. Next.js issues
@@ -19,11 +19,12 @@ cp apps/voice-agent/.env.example apps/voice-agent/.env.local
 ```
 
 Fill the worker file with credentials for a test LiveKit project, xAI, and
-Inworld. `VOICE_SPIKE_USER_IDS` lists the Supabase UUIDs allowed to test;
-`VOICE_SPIKE_ENABLED=true` explicitly enables this worker. Keep it off in
+Inworld. `VOICE_CHAT_USER_IDS` lists the Supabase UUIDs allowed to test;
+`VOICE_CHAT_WORKER_ENABLED=true` explicitly enables this worker. Keep it off in
 production. Calls use Ashley by default and speak English.
 
-Apply the thread migration to the isolated local Supabase project first. Set
+Apply the [voice chat schema](../../docs/devops.md#account-deletion-migration-order)
+to the isolated local Supabase project first. Set
 `NEXT_PUBLIC_SUPABASE_URL` in the worker file to its loopback API URL and
 `SUPABASE_SECRET_KEY` to that project's server key. The worker rejects non-local
 database URLs.
@@ -31,8 +32,8 @@ database URLs.
 Configure `apps/web/.env.local` for the same isolated Supabase project and set
 `XAI_API_KEY` for chat. Both services use the same
 `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and
-`VOICE_SPIKE_USER_IDS`. Keep xAI and Inworld credentials server-side. The JS route ignores
-`LIVEKIT_AGENT_NAME` and always dispatches `sexyvoice-js-spike`.
+`VOICE_CHAT_USER_IDS`. Keep xAI and Inworld credentials server-side. The JS route ignores
+`LIVEKIT_AGENT_NAME` and always dispatches `sexyvoice-voice-chat`.
 
 In separate terminals, from the repository root:
 
@@ -56,8 +57,8 @@ Open the page without the conversation parameter to start fresh.
 
 The worker reads up to 32 recent turns and 12,000 characters when starting a
 call. It saves committed typed and spoken turns to `conversation_messages`
-and allows one active JS demo call per user. Demo calls do not create
-`call_sessions` or charge credits.
+and allows one active call or text reply per account. The worker records
+shadow usage without creating `call_sessions` or charging credits.
 
 ## Supabase memory
 
@@ -78,7 +79,7 @@ and updates remain in the Python path.
 ## Shadow call accounting
 
 Run the local worker at info level to collect one structured
-`Voice spike shadow accounting` event per finalized call:
+`Voice call shadow accounting` event per finalized call:
 
 ```sh
 cd apps/voice-agent
@@ -113,7 +114,7 @@ fallback. Calls use the character's saved voice and the thread's STT language.
 The conversation URL resumes the same thread.
 
 To run the live chat-to-call test with a custom fixture, set
-`PLAYWRIGHT_VOICE_SPIKE_CHARACTER_NAME` to an owned character whose prompt
+`PLAYWRIGHT_VOICE_CHAT_CHARACTER_NAME` to an owned character whose prompt
 answers "jade compass" when asked for its public studio marker and
 "amber sundial" when asked for its private studio marker. Link a saved
 Inworld voice to that character.
@@ -129,7 +130,7 @@ Missing or inaccessible clones fail the call request.
 The provider voice ID travels in LiveKit's server-side job metadata. The
 browser receives a join token without that metadata. To exercise this flow
 with the live browser suite below, set
-`PLAYWRIGHT_VOICE_SPIKE_AUDIO_REFERENCE_ID` to the row UUID and use the
+`PLAYWRIGHT_VOICE_CHAT_AUDIO_REFERENCE_ID` to the row UUID and use the
 clone owner's browser auth fixture.
 
 ## Access from another device
@@ -148,7 +149,7 @@ Set `NEXT_PUBLIC_SITE_URL` to the web proxy's HTTPS origin and
 `NEXT_PUBLIC_SUPABASE_URL` to the API proxy's HTTPS origin in
 `apps/web/.env.local`. Keep the local project's keys. Restart Next.js after
 changing URLs. The configured site hostname is allowed for development assets;
-the spike accepts that exact origin during development when a proxy changes
+voice chat accepts that exact origin during development when a proxy changes
 the internal request URL. Forwarded host headers do not expand the allowlist.
 
 Remove only these demo proxies with `tailscale serve --https=8447 off` and
@@ -174,13 +175,13 @@ Remove only these demo proxies with `tailscale serve --https=8447 off` and
 
 At `/dashboard/voice-spike`, send text first or use the phone button to start
 a call. Set `XAI_API_KEY` in the web app for text replies, and set
-`VOICE_SPIKE_LOCAL_SUPABASE_URL=http://127.0.0.1:55321` when the browser uses a
+`VOICE_CHAT_LOCAL_SUPABASE_URL=http://127.0.0.1:55321` when the browser uses a
 Tailnet Supabase URL. Keep the web and worker on the same isolated Supabase
 project. A reload reattaches to an active chat reply. The thread contains chat
 and call turns, and calls still use the five-minute demo limit.
 
-Character selection, checked memory extraction, and customer credit settlement
-are pending. Use synthetic conversations on the isolated database.
+Paid test accounts can start a thread with an owned Inworld character.
+Checked memory extraction and customer credit settlement are pending.
 
 ## Provider compatibility
 
@@ -242,7 +243,7 @@ mute/unmute, hangup, and network recovery before browser support is accepted.
 
 ```sh
 pnpm --filter @sexyvoice/voice-agent test
-pnpm --filter @sexyvoice/web test run tests/voice-spike tests/components/call/livekit-spike.test.tsx
+pnpm --filter @sexyvoice/web test tests/voice-chat tests/components/call/livekit-voice-chat.test.tsx
 pnpm type-check
 pnpm fixall
 ```
@@ -252,11 +253,11 @@ pnpm fixall
 This explicit Playwright configuration uses real providers and an allowlisted
 local account. It does not mock the token route or start the web/agent servers.
 Save an authenticated Playwright storage state for the local account as
-`apps/web/.auth/voice-spike.json` (ignored; restrict it to your user). Point the
+`apps/web/.auth/voice-chat.json` (ignored; restrict it to your user). Point the
 existing `PLAYWRIGHT_BASE_URL` at the HTTPS demo origin and run:
 
 ```sh
-PLAYWRIGHT_BASE_URL=https://YOUR-DEMO-HOST pnpm --filter @sexyvoice/web exec playwright test --config=e2e/voice-spike.live.config.ts
+PLAYWRIGHT_BASE_URL=https://YOUR-DEMO-HOST pnpm --filter @sexyvoice/web exec playwright test --config=e2e/voice-chat.live.config.ts
 ```
 
 Projects are `chromium`, `firefox`, `webkit-desktop`, and `webkit-mobile`.
@@ -277,6 +278,6 @@ turn and acknowledged server mute.
 These results establish the local browser/provider path. Physical microphone
 quality, iOS audio permission/unlock, constrained networks, deployed worker
 images, provider invoice reconciliation, and 30/60-minute calls remain unverified.
-The [spike plan](../../plans/2026-11-16-livekit-agents-js-spike.md) owns those
+The [LiveKit voice chat plan](../../plans/2026-11-16-livekit-voice-chat.md) owns those
 experiments and the production decision gates. Python baseline inspected:
 `23cac3548c49c7aeeeb1f59ac57da761908bdf34`.
