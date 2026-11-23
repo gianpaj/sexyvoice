@@ -48,10 +48,10 @@ insert into public.conversations (id, user_id, character_id, character_name, lan
 select is((select count(*)::int from public.conversations where user_id = '10101010-1010-4010-8010-101010101010'),
   2, 'one user can keep multiple threads with the same character');
 
-insert into public.call_sessions (id, user_id, model, voice_id, conversation_id) values
-  ('70707070-7070-4070-8070-707070707071', '10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606061'),
-  ('70707070-7070-4070-8070-707070707072', '20202020-2020-4020-8020-202020202020', 'inworld-tts', '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606063'),
-  ('70707070-7070-4070-8070-707070707073', '10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030', null);
+insert into public.call_sessions (id, user_id, model, voice_id, conversation_id, status) values
+  ('70707070-7070-4070-8070-707070707071', '10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606061', 'completed'),
+  ('70707070-7070-4070-8070-707070707072', '20202020-2020-4020-8020-202020202020', 'inworld-tts', '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606063', 'completed'),
+  ('70707070-7070-4070-8070-707070707073', '10101010-1010-4010-8010-101010101010', 'inworld-tts', '30303030-3030-4030-8030-303030303030', null, 'completed');
 
 insert into public.conversation_messages (conversation_id, id, position, role, source, parts) values
   ('60606060-6060-4060-8060-606060606061', 'user-1', 1, 'user', 'chat', '[{"type":"text","content":"Hello"}]'),

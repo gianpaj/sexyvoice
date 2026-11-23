@@ -35,9 +35,9 @@ select public.start_voice_chat(
   '30303030-3030-4030-8030-303030303030', '60606060-6060-4060-8060-606060606063',
   '70707070-7070-4070-8070-707070707073', 'Keep my chat.'
 ) as other_chat_started \gset
-insert into public.call_sessions (id, user_id, conversation_id, model, voice_id, credits_used)
+insert into public.call_sessions (id, user_id, conversation_id, model, voice_id, credits_used, status)
 values ('80808080-8080-4080-8080-808080808080', '20202020-2020-4020-8020-202020202020',
-  '60606060-6060-4060-8060-606060606062', 'inworld-tts', '90909090-9090-4090-8090-909090909090', 500);
+  '60606060-6060-4060-8060-606060606062', 'inworld-tts', '90909090-9090-4090-8090-909090909090', 500, 'completed');
 
 select is(public.erase_account_conversations('10101010-1010-4010-8010-101010101010'), 1, 'erase the active chat thread');
 select is(public.erase_account_conversations('20202020-2020-4020-8020-202020202020'), 1, 'erase the active call thread');

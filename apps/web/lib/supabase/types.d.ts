@@ -396,6 +396,7 @@ declare type Database = {
           free_call: boolean | null;
           id: string;
           last_metered_at: string;
+          livekit_room_name: string | null;
           max_output_tokens: number | null;
           metadata: Json | null;
           model: string;
@@ -417,6 +418,7 @@ declare type Database = {
           free_call?: boolean | null;
           id?: string;
           last_metered_at?: string;
+          livekit_room_name?: string | null;
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model: string;
@@ -438,6 +440,7 @@ declare type Database = {
           free_call?: boolean | null;
           id?: string;
           last_metered_at?: string;
+          livekit_room_name?: string | null;
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model?: string;
@@ -1109,6 +1112,7 @@ declare type Database = {
           total_credits: number;
         }[];
       };
+      has_active_voice_call: { Args: { p_user_id: string }; Returns: boolean };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;

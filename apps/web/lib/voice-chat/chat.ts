@@ -206,14 +206,11 @@ export async function getChatHistory(db: Db, userId: string, threadId: string) {
 }
 
 async function isCallActive(db: Db, userId: string) {
-  const lease = await db
-    .from('voice_conversation_leases')
-    .select('room_name')
-    .eq('user_id', userId)
-    .gt('expires_at', new Date().toISOString())
-    .maybeSingle();
-  if (lease.error) throw new Error('Could not load voice lease');
-  return Boolean(lease.data && !lease.data.room_name.startsWith('chat:'));
+  const { data, error } = await db.rpc('has_active_voice_call', {
+    p_user_id: userId,
+  });
+  if (error) throw new Error('Could not load active call status');
+  return data === true;
 }
 
 export function readChat(db: Db, userId: string, runId: string) {
