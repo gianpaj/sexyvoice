@@ -43,7 +43,15 @@ therefore reached the docs only on a later docs deploy.
 - Web-only pushes skip the docs build without a marker. Checked locally:
   `turbo-ignore` skipped `97743d47` and `2e895b33` (web only) and built
   `69878437` (touches `apps/docs/content`).
-- PR preview deploys of the docs show API changes before they ship.
+- Docs previews show API changes before they ship, with one gap. A branch's
+  first push has no previous deployment, so `turbo-ignore` compares only
+  `HEAD^1`. If that push holds several commits and the last one is web-only,
+  the docs preview is skipped until a later push touches `apps/docs`.
+  Production is unaffected because `main` always has a previous deployment.
+- CI runs the spec test through `turbo run test --affected`, which selects it
+  only when `apps/web` changes. Adding the spec to the web test's turbo
+  `inputs` doesn't change that selection, so a hand edit to `openapi.json`
+  goes unchecked. The docs forbid hand edits instead.
 - Changing the OpenAPI output means committing the refreshed `openapi.json`;
   the test fails until you do.
 - A shallow Vercel clone that lacks the previous SHA makes `turbo-ignore`

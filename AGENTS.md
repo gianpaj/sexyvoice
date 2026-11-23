@@ -235,7 +235,8 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `apps/docs/content/docs/api-reference/openapi.json`, not the live
   `/api/v1/openapi`. When the OpenAPI output changes, refresh it with
   `pnpm --filter @sexyvoice/web openapi:docs`; the `api-v1-openapi-docs-spec` test
-  fails while the file is stale. Re-run
+  fails while the file is stale. Never edit the file by hand: CI runs the
+  test only when `apps/web` changes, so a hand edit can ship unchecked. Re-run
   `pnpm --filter @sexyvoice/docs generate-openapi-docs` when endpoints are
   added or removed.
 - External speech generation always generates fresh audio and uploads to the
