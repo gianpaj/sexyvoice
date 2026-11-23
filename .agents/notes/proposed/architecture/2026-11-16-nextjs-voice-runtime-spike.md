@@ -240,3 +240,24 @@ A speech socket is only one part of a voice agent. Replacing LiveKit can require
 more custom media machinery than the deployment simplification saves. An open
 upstream PR can change. Provider usage during cancellation still costs money.
 A local mock cannot prove deployed duration or mobile audio behavior.
+
+### Custom characters in chat and calls
+
+The internal picker opens a thread for an owned custom character with a saved
+Inworld voice. The account's existing purchase check applies. The thread holds
+the character ID, display name, and locale. Next.js and the JS worker load the
+localized personality from the saved character at runtime so an edited prompt
+applies on the next chat reply or call. The worker uses the thread's language
+for STT. The token route resolves the saved Inworld voice with an owner and
+provider check and sends the provider ID through server-side room dispatch.
+
+We considered snapshotting the prompt on the thread and using the demo voice
+for unsupported characters. Prompt storage would duplicate private text and
+make edits harder to reason about. Falling back to Ashley would hide a missing
+or incompatible saved voice. The picker offers owned Inworld characters and
+the call route rejects unavailable voices.
+
+Live Chromium and Firefox tests verified the character prompt in chat and
+on a call, audio playback, and the same thread after hangup and reload. The
+fixture used a stock Inworld voice linked through a saved reference. Testing
+an actual cloned voice is still open.

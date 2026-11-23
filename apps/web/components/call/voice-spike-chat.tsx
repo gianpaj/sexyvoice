@@ -5,6 +5,7 @@ import { ArrowDown, Phone, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   type FormEvent,
+  useActionState,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -21,7 +22,13 @@ export interface VoiceSpikeMessage {
   user: boolean;
 }
 
-interface ChatProps {
+export interface SpikeCharacterPicker {
+  characterName?: string;
+  characters?: { id: string; name: string }[];
+  startConversation?: (previous: boolean, form: FormData) => Promise<boolean>;
+}
+
+interface ChatProps extends SpikeCharacterPicker {
   draft: string;
   error: string | null;
   onDraft: (text: string) => void;
@@ -33,6 +40,9 @@ interface ChatProps {
 
 export function VoiceSpikeChat({
   threadId,
+  characterName,
+  characters,
+  startConversation,
   draft,
   error,
   onDraft,
@@ -188,7 +198,7 @@ export function VoiceSpikeChat({
   return (
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-72 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="font-semibold text-xl">{t('title')}</h1>
+        <h1 className="font-semibold text-xl">{characterName ?? t('title')}</h1>
         <Button
           aria-label={t('call')}
           disabled={busy || unavailable}
@@ -198,6 +208,13 @@ export function VoiceSpikeChat({
           <Phone />
         </Button>
       </header>
+      {startConversation && (characters?.length || characterName) ? (
+        <CharacterPicker
+          characters={characters ?? []}
+          disabled={busy}
+          startConversation={startConversation}
+        />
+      ) : null}
       {error && (
         <p className="text-destructive text-sm" role="alert">
           {error}
@@ -276,5 +293,50 @@ export function VoiceSpikeChat({
         </Button>
       </form>
     </section>
+  );
+}
+
+function CharacterPicker({
+  characters,
+  disabled,
+  startConversation,
+}: Required<Pick<SpikeCharacterPicker, 'characters' | 'startConversation'>> & {
+  disabled: boolean;
+}) {
+  const t = useTranslations('voiceSpike');
+  const [ok, submit, pending] = useActionState(startConversation, true);
+  return (
+    <form action={submit}>
+      <fieldset
+        className="flex items-center gap-2"
+        disabled={disabled || pending}
+      >
+        <select
+          aria-label={t('character')}
+          className="h-9 min-w-0 flex-1 rounded-md border bg-background px-2 text-sm"
+          defaultValue=""
+          name="character"
+          required
+        >
+          <option disabled value="">
+            {t('character')}
+          </option>
+          <option value="demo">{t('title')}</option>
+          {characters.map(({ id, name }) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <Button size="sm" type="submit" variant="outline">
+          {t('newConversation')}
+        </Button>
+      </fieldset>
+      {!ok && (
+        <p className="text-destructive text-sm" role="alert">
+          {t('characterError')}
+        </p>
+      )}
+    </form>
   );
 }

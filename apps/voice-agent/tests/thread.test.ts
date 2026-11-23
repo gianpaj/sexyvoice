@@ -1,4 +1,8 @@
 import { llm } from '@livekit/agents';
+import {
+  loadThreadCharacter,
+  replyInstructions,
+} from '@sexyvoice/voice-spike/history';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +12,48 @@ const turn = (id: string, role: 'user' | 'assistant', content: string) =>
   llm.ChatMessage.create({ id, role, content });
 
 describe('JS call conversation context', () => {
+  it('loads the owned character’s localized prompt with its default as fallback', async () => {
+    const stored = {
+      name: 'Mira',
+      is_public: false,
+      user_id: 'owner',
+      session_config: {},
+      prompts: {
+        prompt: 'Speak as Mira.',
+        localized_prompts: { es: 'Habla como Mira.' },
+      },
+    };
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: stored }),
+    };
+    const db = {
+      from: vi.fn().mockReturnValue(query),
+    } as unknown as SupabaseClient;
+    const character = await loadThreadCharacter(db, 'owner', 'character', 'es');
+    expect(character?.instructions).toBe('Habla como Mira.');
+    expect(
+      replyInstructions(
+        {
+          character_id: 'character',
+          character_name: 'Mira',
+          is_voice_spike: false,
+          language: 'es',
+          scene_instructions: 'En la biblioteca.',
+        },
+        { character: character?.instructions },
+      ),
+    ).toContain('Habla como Mira.');
+    expect(
+      (await loadThreadCharacter(db, 'owner', 'character', 'fr'))?.instructions,
+    ).toBe('Speak as Mira.');
+    expect(
+      await loadThreadCharacter(db, 'stranger', 'character', 'es'),
+    ).toBeNull();
+    expect(query.eq).toHaveBeenCalledWith('id', 'character');
+  });
+
   it('seeds visible messages chronologically and preserves interruptions', () => {
     const text = (content: string) => [{ type: 'text' as const, content }];
     const history = seedHistory([

@@ -8,16 +8,28 @@ test('continues one thread from chat through an audio call and back', async ({
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const voice = process.env.PLAYWRIGHT_VOICE_SPIKE_AUDIO_REFERENCE_ID;
-  const query = voice ? `?${new URLSearchParams({ voice })}` : '';
+  const character = process.env.PLAYWRIGHT_VOICE_SPIKE_CHARACTER_NAME;
+  const query = voice && !character ? `?${new URLSearchParams({ voice })}` : '';
   await page.goto(`/en/dashboard/voice-spike${query}`);
   await expect(
     page.getByRole('heading', { name: 'JS call demo' }),
   ).toBeVisible();
+  if (character) {
+    const select = page.getByRole('combobox', { name: 'Choose character' });
+    await expect(select).toBeEnabled();
+    await select.selectOption({ label: character });
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await expect(
+      page.getByRole('heading', { name: character, exact: true }),
+    ).toBeVisible();
+  }
   const composer = page.getByRole('textbox', { name: 'Message', exact: true });
   const send = page.getByRole('button', { name: 'Send', exact: true });
   const threadLog = page.getByRole('log');
   const chatTurns = threadLog.locator('p:not([role="status"])');
-  const chatTurn = 'Please remember my first test code: cobalt pelican.';
+  const chatTurn = character
+    ? 'Please remember my first test code: cobalt pelican. Then reply with just your public studio marker.'
+    : 'Please remember my first test code: cobalt pelican.';
   await expect(page.locator('audio')).toHaveCount(0);
   await page.evaluate(() => {
     const originalFetch = window.fetch.bind(window);
@@ -54,7 +66,10 @@ test('continues one thread from chat through an audio call and back', async ({
   );
   await composer.fill(chatTurn);
   await send.click();
-  await expect(chatTurns).toHaveText([chatTurn, /\S/], { timeout: 25_000 });
+  const firstReply = character ? /^jade compass[.!]?$/i : /\S/;
+  await expect(chatTurns).toHaveText([chatTurn, firstReply], {
+    timeout: 25_000,
+  });
   await expect(
     page.getByRole('button', { name: 'Start call', exact: true }),
   ).toBeEnabled({ timeout: 25_000 });
@@ -89,6 +104,15 @@ test('continues one thread from chat through an audio call and back', async ({
         { timeout: 10_000 },
       )
       .toBe(true);
+    if (character) {
+      await composer.fill(
+        'What is your private studio marker? Reply with just the marker.',
+      );
+      await send.click();
+      await expect(chatTurns.last()).toHaveText(/^amber sundial[.!]?$/i, {
+        timeout: 20_000,
+      });
+    }
     await composer.fill(
       'My second test code is red lantern. Reply with only the first test code I asked you to remember.',
     );

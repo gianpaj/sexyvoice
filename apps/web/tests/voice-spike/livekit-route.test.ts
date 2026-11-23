@@ -1,4 +1,5 @@
 import { Room } from '@livekit/protocol';
+import { loadThreadCharacter } from '@sexyvoice/voice-spike/history';
 import { RoomServiceClient, TokenVerifier } from 'livekit-server-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,8 +10,15 @@ vi.mock('@/lib/supabase/auth', () => ({
   getVerifiedClaims: vi.fn(),
 }));
 
+vi.mock('@sexyvoice/voice-spike/history', () => ({
+  loadThreadCharacter: vi.fn(),
+}));
+vi.mock('@/lib/supabase/queries', () => ({ hasUserPaid: vi.fn() }));
+vi.mock('@/lib/voice-spike/chat', () => ({ createChatDb: vi.fn() }));
+
 import { POST } from '@/app/api/voice-spike/call-token/route';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 afterEach(() => {
@@ -108,6 +116,106 @@ describe('JS spike call dispatch', () => {
       data: { id: voiceId, is_voice_spike: false, character_id: null },
     });
     expect((await POST(resume())).status).toBe(404);
+  });
+
+  it('uses the owned custom character voice and keeps it out of the join token', async () => {
+    enable();
+    const characterId = '3b7c46ab-a565-43e2-9aec-afdec427fd69';
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValueOnce({
+          data: {
+            id: voiceId,
+            character_id: characterId,
+            is_voice_spike: false,
+            language: 'es',
+          },
+        })
+        .mockResolvedValueOnce({ data: { voice_id: 'workspace__character' } }),
+    };
+    vi.mocked(createClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue(query),
+    } as never);
+    vi.mocked(hasUserPaid).mockResolvedValue(true);
+    vi.mocked(loadThreadCharacter).mockResolvedValue({
+      name: 'Character',
+      isPublic: false,
+      sessionConfig: { model: 'inworld-tts', audioReferenceId: voiceId },
+      instructions: 'Private character prompt',
+    });
+    const createRoom = vi
+      .spyOn(RoomServiceClient.prototype, 'createRoom')
+      .mockResolvedValue(new Room());
+
+    const response = await POST(
+      request(undefined, JSON.stringify({ conversationId: voiceId })),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    const token = await new TokenVerifier(
+      'api-key',
+      process.env.LIVEKIT_API_SECRET!,
+    ).verify(payload.accessToken);
+    expect(loadThreadCharacter).toHaveBeenCalledWith(
+      undefined,
+      'test-user',
+      characterId,
+      'es',
+    );
+    expect(query.eq.mock.calls).toContainEqual(['provider', 'inworld']);
+    expect(
+      JSON.parse(createRoom.mock.calls[0][0].agents?.[0].metadata ?? ''),
+    ).toMatchObject({
+      conversationId: voiceId,
+      resume: true,
+      inworldVoiceId: 'workspace__character',
+    });
+    expect(JSON.stringify(token)).not.toContain('workspace__character');
+    expect(JSON.stringify(createRoom.mock.calls[0][0])).not.toContain(
+      'Private character prompt',
+    );
+  });
+
+  it('rejects inaccessible characters, unpaid resumes, and overrides of the saved voice', async () => {
+    enable();
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: voiceId,
+          character_id: voiceId,
+          is_voice_spike: false,
+          language: 'en',
+        },
+      }),
+    };
+    vi.mocked(createClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue(query),
+    } as never);
+    const createRoom = vi.spyOn(RoomServiceClient.prototype, 'createRoom');
+    const resume = (audioReferenceId?: string) =>
+      request(
+        undefined,
+        JSON.stringify({ conversationId: voiceId, audioReferenceId }),
+      );
+    vi.mocked(loadThreadCharacter).mockResolvedValueOnce(null);
+    expect((await POST(resume())).status).toBe(404);
+    vi.mocked(loadThreadCharacter).mockResolvedValue({
+      name: 'Character',
+      isPublic: false,
+      sessionConfig: { model: 'inworld-tts', audioReferenceId: voiceId },
+      instructions: 'Private character prompt',
+    });
+    vi.mocked(hasUserPaid).mockResolvedValueOnce(false);
+    expect((await POST(resume())).status).toBe(403);
+    vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+    expect((await POST(resume(voiceId))).status).toBe(400);
+    expect(createRoom).not.toHaveBeenCalled();
   });
 
   it('dispatches only the authenticated owner’s Inworld voice outside the browser token', async () => {

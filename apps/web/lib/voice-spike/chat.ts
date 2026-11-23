@@ -4,6 +4,7 @@ import {
   boundedHistory,
   HISTORY_ROWS,
   historySchema,
+  loadThreadCharacter,
   replyInstructions,
   threadSchema,
 } from '@sexyvoice/voice-spike/history';
@@ -14,6 +15,7 @@ import { EventType, type StreamChunk } from '@tanstack/ai';
 import type { UIMessage } from '@tanstack/ai-react';
 import { z } from 'zod';
 
+import { hasUserPaidAdmin } from '@/lib/supabase/queries';
 import { CHAT_HISTORY_PAGE_SIZE } from './protocol';
 
 const READ_TIMEOUT_MS = 4000;
@@ -100,14 +102,27 @@ export async function generateChatReply(
     if (thread.error || history.error)
       throw new Error('Could not load chat context');
     const config = threadSchema.parse(thread.data);
+    const character = config.character_id
+      ? await loadThreadCharacter(
+          db,
+          userId,
+          config.character_id,
+          config.language,
+        )
+      : null;
+    if (
+      config.character_id &&
+      !(character && (character.isPublic || (await hasUserPaidAdmin(userId))))
+    )
+      throw new Error('Character unavailable');
     const memory = await loadMemory(db, userId, config.character_id);
     const recalled = await memory?.recall?.(text);
     const turns = boundedHistory(historySchema.parse(history.data));
-    const systemPrompts = replyInstructions(
-      config,
-      memory?.instructions,
+    const systemPrompts = replyInstructions(config, {
+      character: character?.instructions,
+      memory: memory?.instructions,
       recalled,
-    );
+    });
     let lastSaved = 0;
     for await (const event of streamReply({
       threadId: conversationId,

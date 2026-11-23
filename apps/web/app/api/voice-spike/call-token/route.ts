@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { AGENT_NAME, RUNTIME } from '@sexyvoice/voice-spike';
+import { loadThreadCharacter } from '@sexyvoice/voice-spike/history';
 import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -8,7 +9,10 @@ import { z } from 'zod';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { spikeCharacterVoiceReference } from '@/lib/voice-spike/characters';
+import { createChatDb } from '@/lib/voice-spike/chat';
 import {
   isLocalSpikeEnvironment,
   isSpikeAllowed,
@@ -60,24 +64,52 @@ export async function POST(request: Request) {
     return APIErrorResponse('Invalid call selection', 400);
 
   const resumeId = selection.data.conversationId;
+  let audioReferenceId = selection.data.audioReferenceId;
   if (resumeId) {
     const { data, error } = await supabase
       .from('conversations')
-      .select('id,character_id,is_voice_spike')
+      .select('id,character_id,is_voice_spike,language')
       .eq('id', resumeId)
       .eq('user_id', claims.sub)
       .maybeSingle();
     if (error) return APIErrorResponse('Conversation lookup unavailable', 503);
     if (!(data && (data.is_voice_spike || data.character_id)))
       return APIErrorResponse('Conversation not found', 404);
+    if (data.character_id) {
+      try {
+        const character = await loadThreadCharacter(
+          createChatDb(),
+          claims.sub,
+          data.character_id,
+          data.language,
+        );
+        if (!character) return APIErrorResponse('Character not found', 404);
+        if (!character.isPublic) {
+          if (!(await hasUserPaid(claims.sub)))
+            return APIErrorResponse(
+              'Custom characters require a paid account',
+              403,
+            );
+          if (audioReferenceId)
+            return APIErrorResponse('The character supplies the voice', 400);
+          audioReferenceId = spikeCharacterVoiceReference(
+            character.sessionConfig,
+          );
+          if (!audioReferenceId)
+            return APIErrorResponse('Voice not found', 404);
+        }
+      } catch {
+        return APIErrorResponse('Character lookup unavailable', 503);
+      }
+    }
   }
   const conversationId = resumeId ?? randomUUID();
 
   let inworldVoiceId: string | undefined;
-  if (selection.data.audioReferenceId) {
+  if (audioReferenceId) {
     try {
       const reference = await getOwnedCallVoice(
-        selection.data.audioReferenceId,
+        audioReferenceId,
         claims.sub,
         'inworld',
       );

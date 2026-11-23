@@ -1480,6 +1480,9 @@
     "vocalSounds": "Sonidos vocales"
   },
   "voiceSpike": {
+    "character": "Elegir personaje",
+    "newConversation": "Nueva conversación",
+    "characterError": "No se pudo iniciar una conversación con este personaje.",
     "title": "Demo de llamada JS",
     "idle": "Listo para llamar",
     "connecting": "Conectando con el agente JS…",

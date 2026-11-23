@@ -12,7 +12,10 @@ import {
   RUNTIME,
   RUNTIME_ATTRIBUTE,
 } from '@sexyvoice/voice-spike';
-import { replyInstructions } from '@sexyvoice/voice-spike/history';
+import {
+  loadThreadCharacter,
+  replyInstructions,
+} from '@sexyvoice/voice-spike/history';
 import { loadMemory } from '@sexyvoice/voice-spike/memory';
 import { createClient } from '@supabase/supabase-js';
 
@@ -91,7 +94,19 @@ export default defineAgent({
           'sv.spike.error': 'history',
         })
         .catch(() => undefined);
-    const opened = await thread.open(job.resume).catch(async () => {
+    const { opened, character } = await (async () => {
+      const opened = await thread.open(job.resume);
+      const { character_id: characterId, language } = opened.thread;
+      const character = characterId
+        ? await loadThreadCharacter(db, job.userId, characterId, language)
+        : null;
+      if (
+        characterId &&
+        !(character && (character.isPublic || job.inworldVoiceId))
+      )
+        throw new Error('Character unavailable');
+      return { opened, character };
+    })().catch(async () => {
       await reportStorageError();
       await thread.close();
       throw new Error('Voice spike history unavailable');
@@ -99,15 +114,19 @@ export default defineAgent({
     const memory = await loadMemory(db, job.userId, opened.thread.character_id);
     const agentOptions = {
       chatCtx: opened.chatCtx,
-      instructions: replyInstructions(opened.thread, memory?.instructions).join(
-        '\n',
-      ),
+      instructions: replyInstructions(opened.thread, {
+        character: character?.instructions,
+        memory: memory?.instructions,
+      }).join('\n'),
     };
     const agent = memory?.recall
       ? new CallMemoryAgent(agentOptions, memory.recall)
       : new voice.Agent(agentOptions);
     const accounting = new CallAccounting();
-    const stt = new STT({ model: 'grok-voice-transcribe-2.0', language: 'en' });
+    const stt = new STT({
+      model: 'grok-voice-transcribe-2.0',
+      language: opened.thread.language,
+    });
     stt.on('metrics_collected', (metric) => {
       accounting.recordTranscription(metric.audioDurationMs);
     });

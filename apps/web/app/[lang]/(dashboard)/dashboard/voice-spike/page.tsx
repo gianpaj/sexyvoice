@@ -3,16 +3,22 @@ import { notFound } from 'next/navigation';
 import { z } from 'zod';
 
 import { LivekitSpike } from '@/components/call/livekit-spike';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { listSpikeCharacters } from '@/lib/voice-spike/characters';
 import {
   isLocalSpikeEnvironment,
   isSpikeAllowed,
 } from '@/lib/voice-spike/protocol';
+import { startSpikeConversation } from './actions';
 
 export default async function VoiceSpike({
+  params,
   searchParams,
 }: {
+  params: Promise<{ lang: Locale }>;
   searchParams: Promise<{
     voice?: string | string[];
     conversation?: string | string[];
@@ -33,14 +39,37 @@ export default async function VoiceSpike({
     )
   )
     notFound();
-  const { voice, conversation } = await searchParams;
+  const [{ lang }, { voice, conversation }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const thread = z.uuid().optional().safeParse(conversation);
   if (Array.isArray(voice) || !thread.success) notFound();
+  const [characters, savedThread] = await Promise.all([
+    hasUserPaid(claims.sub).then((paid) =>
+      paid ? listSpikeCharacters(claims.sub) : [],
+    ),
+    thread.data
+      ? supabase
+          .from('conversations')
+          .select('character_id,character_name')
+          .eq('user_id', claims.sub)
+          .eq('id', thread.data)
+          .maybeSingle()
+      : undefined,
+  ]);
+  const characterName = savedThread?.data?.character_id
+    ? savedThread.data.character_name
+    : undefined;
   return (
     <LivekitSpike
-      audioReferenceId={voice}
+      audioReferenceId={characterName ? undefined : voice}
+      characterName={characterName}
+      characters={characters}
       chatThreadId={thread.data ?? randomUUID()}
       conversationId={thread.data}
+      key={thread.data ?? 'new'}
+      startConversation={startSpikeConversation.bind(null, lang)}
     />
   );
 }

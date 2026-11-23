@@ -103,6 +103,21 @@ underreported by the SDK. The report has no total or invoice-equivalent cost.
 It excludes LiveKit media, worker compute, and workspace discounts. The event
 contains the room name, duration, and counters.
 
+## Custom character conversations
+
+On the local demo page, paid test accounts can choose one of their custom
+characters with a saved Inworld voice and select **New conversation**.
+The selected dashboard locale becomes the thread language. Chat and calls read
+the character's localized prompt on the server, with the default prompt as a
+fallback. Calls use the character's saved voice and the thread's STT language.
+The conversation URL resumes the same thread.
+
+To run the live chat-to-call test with a custom fixture, set
+`PLAYWRIGHT_VOICE_SPIKE_CHARACTER_NAME` to an owned character whose prompt
+answers "jade compass" when asked for its public studio marker and
+"amber sundial" when asked for its private studio marker. Link a saved
+Inworld voice to that character.
+
 ## Saved Inworld voice comparison
 
 Sign in as the owner of a consented test clone, then open

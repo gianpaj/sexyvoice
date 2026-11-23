@@ -15,7 +15,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { VoiceSpikeChat, type VoiceSpikeMessage } from './voice-spike-chat';
+import {
+  type SpikeCharacterPicker,
+  VoiceSpikeChat,
+  type VoiceSpikeMessage,
+} from './voice-spike-chat';
 
 interface LiveMessage extends VoiceSpikeMessage {
   timestamp: number;
@@ -24,9 +28,12 @@ type State = 'idle' | 'connecting' | 'connected' | 'reconnecting';
 
 export function LivekitSpike({
   audioReferenceId,
+  characterName,
+  characters,
+  startConversation,
   conversationId,
   chatThreadId,
-}: {
+}: SpikeCharacterPicker & {
   audioReferenceId?: string;
   conversationId?: string;
   chatThreadId?: string;
@@ -347,6 +354,8 @@ export function LivekitSpike({
   if (chatThreadId && state === 'idle') {
     return (
       <VoiceSpikeChat
+        characterName={characterName}
+        characters={characters}
         draft={chatDraft}
         error={error}
         key={chatRevision}
@@ -356,6 +365,7 @@ export function LivekitSpike({
           thread.current = id;
         }}
         onStartCall={start}
+        startConversation={startConversation}
         threadId={thread.current ?? chatThreadId}
       />
     );
@@ -364,7 +374,9 @@ export function LivekitSpike({
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-96 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-semibold text-xl">{t('title')}</h1>
+          <h1 className="font-semibold text-xl">
+            {characterName ?? t('title')}
+          </h1>
           <p className="text-muted-foreground text-sm">{t(state)}</p>
         </div>
         <div className="flex gap-2">

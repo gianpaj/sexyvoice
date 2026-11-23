@@ -1480,6 +1480,9 @@
     "vocalSounds": "Stimmliche Laute"
   },
   "voiceSpike": {
+    "character": "Figur auswählen",
+    "newConversation": "Neues Gespräch",
+    "characterError": "Mit dieser Figur konnte kein Gespräch gestartet werden.",
     "title": "JS-Anrufdemo",
     "idle": "Bereit zum Anrufen",
     "connecting": "Verbindung zum JS-Agenten wird hergestellt…",

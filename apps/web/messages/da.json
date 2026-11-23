@@ -1476,6 +1476,9 @@
     "vocalSounds": "Stemmelyde"
   },
   "voiceSpike": {
+    "character": "Vælg karakter",
+    "newConversation": "Ny samtale",
+    "characterError": "Samtalen med denne karakter kunne ikke startes.",
     "title": "JS-opkaldsdemo",
     "idle": "Klar til at ringe",
     "connecting": "Forbinder til JS-agenten…",

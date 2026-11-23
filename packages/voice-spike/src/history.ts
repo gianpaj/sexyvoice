@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 export const HISTORY_ROWS = 32;
@@ -45,15 +46,66 @@ export function boundedHistory(rowsNewestFirst: History) {
   return turns.reverse();
 }
 
+const characterSchema = z.object({
+  name: z.string(),
+  is_public: z.boolean(),
+  user_id: z.string().nullable(),
+  session_config: z.unknown(),
+  prompts: z
+    .object({
+      prompt: z.string(),
+      localized_prompts: z.record(z.string(), z.string()).nullable(),
+    })
+    .nullable(),
+});
+
+export async function loadThreadCharacter(
+  db: SupabaseClient,
+  userId: string,
+  characterId: string,
+  language: string,
+) {
+  const { data, error } = await db
+    .from('characters')
+    .select(
+      'name, is_public, user_id, session_config, prompts(prompt, localized_prompts)',
+    )
+    .eq('id', characterId)
+    .maybeSingle();
+  if (error) throw new Error('Could not load character');
+  if (!data) return null;
+  const character = characterSchema.parse(data);
+  if (!character.is_public && character.user_id !== userId) return null;
+  const instructions =
+    character.prompts?.localized_prompts?.[language]?.trim() ||
+    character.prompts?.prompt.trim();
+  return instructions
+    ? {
+        name: character.name,
+        isPublic: character.is_public,
+        sessionConfig: character.session_config,
+        instructions,
+      }
+    : null;
+}
+
 export function replyInstructions(
   thread: z.infer<typeof threadSchema>,
-  memory?: string,
-  recalled?: string,
+  {
+    character,
+    memory,
+    recalled,
+  }: {
+    character?: string;
+    memory?: string;
+    recalled?: string;
+  } = {},
 ) {
   return [
     thread.is_voice_spike
       ? 'You are a friendly conversational test assistant.'
       : `You are ${thread.character_name}. Conversation language: ${thread.language}.`,
+    character,
     'Reply briefly. Treat typed and spoken messages as part of one conversation.',
     thread.scene_instructions,
     memory,

@@ -1478,6 +1478,9 @@
     "vocalSounds": "Vocal sounds"
   },
   "voiceSpike": {
+    "character": "Choose character",
+    "newConversation": "New conversation",
+    "characterError": "Could not start a conversation with this character.",
     "title": "JS call demo",
     "idle": "Ready to call",
     "connecting": "Connecting to the JS agent…",
