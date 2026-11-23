@@ -202,6 +202,20 @@ export function getCharactersInRange(
   });
 }
 
+// Predefined characters are a short curated list, so one unpaginated read covers it.
+export async function getPublicCharacterIds(
+  supabase: DailyStatsSupabaseClient,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('characters')
+    .select('id')
+    .eq('is_public', true);
+  if (error) throw error;
+  return ((data ?? []) as Pick<Tables<'characters'>, 'id'>[]).map(
+    (row) => row.id,
+  );
+}
+
 export function getCreditTransactionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
@@ -259,28 +273,32 @@ export function getCallSessionDurationsBefore(
   );
 }
 
+// The call agent (gianpaj/sexycall, `CallSessionStore`) stores the character
+// in `metadata`; `call_sessions` has no character column. Null for calls with
+// an unsaved custom prompt. If the agent stops writing the key, every call
+// counts as custom and `Predefined characters` drops to zero without an error.
+export type DailyStatsCallSession = Pick<
+  Tables<'call_sessions'>,
+  | 'id'
+  | 'started_at'
+  | 'duration_seconds'
+  | 'credits_used'
+  | 'status'
+  | 'free_call'
+  | 'model'
+> & { character_id: string | null };
+
 export function getCallSessionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
   end: Date,
   excludeUserIds: readonly string[] = [],
 ) {
-  return fetchAllPages<
-    Pick<
-      Tables<'call_sessions'>,
-      | 'id'
-      | 'started_at'
-      | 'duration_seconds'
-      | 'credits_used'
-      | 'status'
-      | 'free_call'
-      | 'model'
-    >
-  >('started_at', (cursor) => {
+  return fetchAllPages<DailyStatsCallSession>('started_at', (cursor) => {
     let query = supabase
       .from('call_sessions')
       .select(
-        'id, started_at, duration_seconds, credits_used, status, free_call, model',
+        'id, started_at, duration_seconds, credits_used, status, free_call, model, character_id:metadata->>character_id',
       )
       .gte('started_at', start.toISOString())
       .lt('started_at', end.toISOString());
