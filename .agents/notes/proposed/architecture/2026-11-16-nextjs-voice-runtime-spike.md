@@ -65,30 +65,24 @@ A worker-side lookup would require separate Supabase credentials for this
 probe. The [JS spike plan](../../../../plans/2026-11-16-livekit-agents-js-spike.md#next-experiment)
 records the dispatch check and the remaining real-clone comparison.
 
-The 60-second startup deadline reports a connection failure until browser WebRTC connects.
-Only a connected browser waiting for the JS runtime reports a missing worker;
-a stalled runtime handshake reports a connection failure. This distinction avoids
-diagnosing blocked ICE as a stopped worker. Runtime discovery waits for media
-connection before sending RPCs or opening the microphone. A reconnect before
-runtime discovery keeps the startup deadline rather than rejecting the call.
+The 60-second startup deadline reports a connection failure until browser WebRTC
+connects. Only a connected browser waiting for the JS runtime reports a missing
+worker. Runtime discovery waits for media connection before sending RPCs or
+publishing the microphone. A reconnect before runtime discovery keeps the
+startup deadline.
 
-The JS demo gives Firefox `rtcConfig.bundlePolicy = "max-bundle"` through
-LiveKit's public connection options. This shares one ICE/DTLS transport across
-the SDK's initial media sections. Chrome, Safari, and iOS Firefox keep defaults;
-the Python call UI retains default bundling. The web app shares one SDK pin,
-so the 2.23.0 to 2.24.1 upgrade also affects the Python flow. Real Chrome and
-Safari calls through `/dashboard/call` remain a merge gate; JS demo tests do
-not cover them. Python-flow Firefox connectivity is also unverified. See the
+Firefox captures the microphone locally before ICE starts. Mozilla limits ICE
+to the interface that loaded the page when the origin lacks capture permission,
+which can leave a Tailnet page without a route to public STUN or TURN servers.
+The demo reuses the local track after the JS runtime handshake and stops it on
+cancellation or failure. See [Mozilla's WebRTC report](https://bugzilla.mozilla.org/show_bug.cgi?id=2091495).
+
+Firefox keeps `rtcConfig.bundlePolicy = "max-bundle"` to share one ICE/DTLS
+transport across the initial media sections. Chrome, Safari, and iOS Firefox
+use the SDK defaults. The shared 2.24.1 SDK pin reaches the Python call flow,
+which still needs real Chrome and Safari checks before merge. Firefox on macOS
+also needs a demo retest. See the
 [browser evidence and remaining checks](../../../../apps/voice-agent/README.md#browser-transport-findings).
-
-LiveKit 2.24.1 with default bundling fails ICE in Linux Firefox 153. The same
-SDK with max-bundle connects through TURN/TLS and receives decoded audio.
-Two consecutive application calls pass text, audio playback, mute/unmute, and
-hangup in both Firefox and Chrome. These results identify a working configuration;
-they do not establish the underlying browser/server defect. The user reports
-Safari typing and speaking work. Firefox 160 on macOS still needs a user retest;
-Safari device coverage, interruption, network recovery, and long calls remain
-acceptance work. Linux WebKit is not a substitute for Safari devices.
 
 The [browser verification log](../../../../apps/voice-agent/README.md#browser-transport-findings)
 also records successful phone playback over Tailscale with the default voice,
@@ -110,9 +104,10 @@ hostname mismatches.
 - Downgrade LiveKit or patch its preallocated media layout: isolated Firefox
   calls work with 2.17.0 and with the layout removed from 2.24.1. Both add
   maintenance or lose upstream fixes. The public max-bundle option works with
-  the pinned SDK and preserves its media layout. Relay-only mode, dual peer
-  connections, longer startup deadlines, and early microphone capture did not
-  resolve the reproduced failure. Forced TLS diagnostics were inconsistent.
+  the pinned SDK and preserves its media layout. Separate peer connections
+  fail the Linux Firefox call even with TURN/TLS forced. Early microphone
+  capture in the single-peer configuration addresses Firefox's interface
+  restriction while retaining the bundling setting that works on Linux.
 
 - [LiveKit Agents JS in this repository](../../../../plans/2026-11-16-livekit-agents-js-spike.md):
   the preferred next comparison. It keeps LiveKit media handling and TypeScript

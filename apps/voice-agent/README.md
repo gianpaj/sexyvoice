@@ -158,19 +158,20 @@ The JS Inworld plugin does not expose Python's five-reply/1,500-character
 ## Browser transport findings
 
 The web app pins `livekit-client` 2.24.1, including the Python call page at
-`/dashboard/call`. In the internal demo, Firefox receives
-`rtcConfig.bundlePolicy = "max-bundle"` at connection time; Chrome, Safari,
-and iOS Firefox keep SDK defaults. This policy creates one ICE/DTLS transport
-for the SDK's initial media layout. See [WebRTC bundling](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#bundlepolicy).
+`/dashboard/call`. In the internal demo, Firefox captures the microphone before
+starting WebRTC and publishes that track only after the JS agent handshake.
+Without capture permission, Firefox can limit ICE to the network interface
+that loaded the page. A Tailnet interface may have no route to public STUN or
+TURN servers. See [Mozilla's WebRTC report](https://bugzilla.mozilla.org/show_bug.cgi?id=2091495).
 
-On Linux Firefox 153, SDK defaults fail ICE with TURN error 701. The max-bundle
-probe connects through a TLS relay and receives decoded audio samples. The
-application passes two consecutive Firefox calls and two Chrome calls with
-real Inworld playback, typed replies, microphone mute/unmute, and hangup.
-Unit checks protect the browser-specific configuration. The repeated calls use
-synthetic microphone tracks; recognizable speech through Firefox STT still needs
-a device check. The user reports Safari typing and speaking work; Firefox 160
-on macOS needs confirmation of this fix.
+Firefox also uses `rtcConfig.bundlePolicy = "max-bundle"` to share an ICE/DTLS
+transport across the initial media sections. Firefox 153 on Linux failed ICE
+with SDK defaults. Separate send and receive peer connections also failed on
+the Tailnet, even with TURN/TLS forced. The microphone-first configuration
+passes live Inworld playback, typed replies, mute/unmute, and hangup in Linux
+Firefox 153 and Chromium over the Tailnet. The automated calls use synthetic
+microphones. Firefox 160 on macOS still needs a device test. The user confirmed
+typing and speaking in Safari.
 
 On 2026-11-18, the user confirmed a successful phone call with the default
 Ashley voice through the Tailscale demo and said it sounded the same.
@@ -186,8 +187,8 @@ forced reconnect, hardcoded TURN endpoint, or browser preference change.
 Before merging the SDK upgrade, verify a real Python-flow call through
 `/dashboard/call` in Chrome and Safari: microphone capture, greeting playback,
 mute/unmute, and hangup. The JS demo results do not cover that flow. The
-Firefox max-bundle option applies only to the demo; Python-flow Firefox
-connectivity with default bundling is unverified.
+Firefox capture and bundling options apply only to the demo. Firefox
+connectivity in the Python flow remains unverified.
 
 Required browser targets are Chrome, Firefox, desktop Safari, and iOS Safari.
 Linux WebKit is an automated engine check, not Safari certification. Real Mac

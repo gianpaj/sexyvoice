@@ -2,7 +2,13 @@
 
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { MUTE_RPC, RUNTIME, RUNTIME_ATTRIBUTE } from '@sexyvoice/voice-spike';
-import { type RemoteParticipant, Room, RoomEvent } from 'livekit-client';
+import {
+  createLocalAudioTrack,
+  type LocalAudioTrack,
+  type RemoteParticipant,
+  Room,
+  RoomEvent,
+} from 'livekit-client';
 import { Mic, MicOff, Phone, PhoneOff, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +34,11 @@ export function LivekitSpike({
   const t = useTranslations('voiceSpike');
   const [room, setRoom] = useState<Room | null>(null);
   const active = useRef<Room | null>(null);
+  const pendingMicrophone = useRef<LocalAudioTrack | null>(null);
+  const releasePendingMicrophone = useCallback(() => {
+    pendingMicrophone.current?.stop();
+    pendingMicrophone.current = null;
+  }, []);
   const thread = useRef(conversationId);
   const [state, setState] = useState<State>('idle');
   const [muted, setMuted] = useState(false);
@@ -56,9 +67,10 @@ export function LivekitSpike({
       if (deadline.current) clearTimeout(deadline.current);
       const current = active.current;
       active.current = null;
+      releasePendingMicrophone();
       current?.disconnect().catch(() => undefined);
     };
-  }, []);
+  }, [releasePendingMicrophone]);
   useEffect(() => {
     if (priorMessages.length || messages.length || thinking)
       end.current?.scrollIntoView({ block: 'end' });
@@ -77,6 +89,7 @@ export function LivekitSpike({
   const stop = async () => {
     const current = active.current;
     active.current = null;
+    releasePendingMicrophone();
     agent.current = null;
     if (deadline.current) clearTimeout(deadline.current);
     setThinking(false);
@@ -90,8 +103,13 @@ export function LivekitSpike({
     setPriorMessages(history);
     setMessages([]);
     setState('connecting');
+    const firefox = /Firefox\//.test(navigator.userAgent);
+    const audioCaptureDefaults = {
+      echoCancellation: true,
+      noiseSuppression: true,
+    };
     const current = new Room({
-      audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true },
+      audioCaptureDefaults,
       publishDefaults: { stopMicTrackOnMute: true },
     });
     active.current = current;
@@ -148,11 +166,14 @@ export function LivekitSpike({
           payload: JSON.stringify({ muted: false }),
         });
         if (active.current !== current) return;
-        await current.localParticipant.setMicrophoneEnabled(true);
+        const microphone = pendingMicrophone.current;
+        if (microphone) await current.localParticipant.publishTrack(microphone);
+        else await current.localParticipant.setMicrophoneEnabled(true);
         if (active.current !== current) {
           await current.localParticipant.setMicrophoneEnabled(false);
           return;
         }
+        pendingMicrophone.current = null;
         if (deadline.current) clearTimeout(deadline.current);
         mutedRef.current = false;
         setMuted(false);
@@ -199,6 +220,7 @@ export function LivekitSpike({
     current.on(RoomEvent.Disconnected, () => {
       if (active.current !== current) return;
       active.current = null;
+      releasePendingMicrophone();
       agent.current = null;
       if (deadline.current) clearTimeout(deadline.current);
       if (mounted.current) {
@@ -235,13 +257,21 @@ export function LivekitSpike({
       if (active.current !== current) return;
       assignedThread = token.conversationId;
       await audioReady;
+      if (active.current !== current) return;
+      if (firefox) {
+        // Before capture permission, Firefox can restrict ICE to the Tailnet interface.
+        const microphone = await createLocalAudioTrack(audioCaptureDefaults);
+        if (active.current !== current) {
+          microphone.stop();
+          return;
+        }
+        pendingMicrophone.current = microphone;
+      }
       // A shared ICE transport avoids Firefox startup failures with this SDK's media layout.
       await current.connect(
         token.url,
         token.accessToken,
-        /Firefox\//.test(navigator.userAgent)
-          ? { rtcConfig: { bundlePolicy: 'max-bundle' } }
-          : undefined,
+        firefox ? { rtcConfig: { bundlePolicy: 'max-bundle' } } : undefined,
       );
       mediaConnected = true;
       if (active.current !== current) {

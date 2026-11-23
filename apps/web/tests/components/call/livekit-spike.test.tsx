@@ -16,6 +16,7 @@ import messages from '@/messages/en.json';
 
 const sdk = vi.hoisted(() => ({
   rooms: [] as any[],
+  createLocalAudioTrack: vi.fn(),
 }));
 vi.mock('@livekit/components-react', async () => {
   const { createContext } = await import('react');
@@ -25,6 +26,7 @@ vi.mock('@livekit/components-react', async () => {
   };
 });
 vi.mock('livekit-client', () => ({
+  createLocalAudioTrack: sdk.createLocalAudioTrack,
   RoomEvent: {
     ParticipantConnected: 'participant',
     ParticipantAttributesChanged: 'attributes',
@@ -38,6 +40,7 @@ vi.mock('livekit-client', () => ({
     localParticipant = {
       identity: 'spike-user-test',
       performRpc: vi.fn().mockResolvedValue('{}'),
+      publishTrack: vi.fn().mockResolvedValue(undefined),
       setMicrophoneEnabled: vi.fn().mockResolvedValue(undefined),
       sendText: vi.fn().mockResolvedValue({ id: 'typed-1', timestamp: 1 }),
     };
@@ -87,6 +90,7 @@ async function connect() {
 }
 beforeEach(() => {
   sdk.rooms = [];
+  sdk.createLocalAudioTrack.mockReset().mockResolvedValue({ stop: vi.fn() });
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
@@ -164,8 +168,67 @@ describe('JS browser call', () => {
         'js-token',
         options,
       );
+      expect(sdk.createLocalAudioTrack).toHaveBeenCalledTimes(options ? 1 : 0);
     },
   );
+  it('waits for Firefox microphone permission before connecting and publishes after the JS handshake', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Firefox/160.0');
+    const microphone = { stop: vi.fn() };
+    const capture = Promise.withResolvers<typeof microphone>();
+    sdk.createLocalAudioTrack.mockReturnValueOnce(capture.promise);
+    view();
+    fireEvent.click(screen.getByRole('button', { name: 'Start call' }));
+    const room = sdk.rooms[0];
+    await waitFor(() => expect(sdk.createLocalAudioTrack).toHaveBeenCalled());
+    expect(room.connect).not.toHaveBeenCalled();
+
+    await act(async () => capture.resolve(microphone));
+    expect(room.connect).toHaveBeenCalled();
+    await act(async () =>
+      room.emit('participant', { identity: 'python', attributes: {} }),
+    );
+    expect(room.localParticipant.publishTrack).not.toHaveBeenCalled();
+
+    const handshake = Promise.withResolvers<string>();
+    room.localParticipant.performRpc.mockReturnValueOnce(handshake.promise);
+    await act(async () => room.emit('participant', jsAgent));
+    expect(room.localParticipant.publishTrack).not.toHaveBeenCalled();
+    await act(async () => handshake.resolve('{}'));
+    await screen.findByText('In call');
+    expect(room.localParticipant.publishTrack).toHaveBeenCalledWith(microphone);
+    expect(room.localParticipant.setMicrophoneEnabled).not.toHaveBeenCalled();
+  });
+
+  it('stops the Firefox microphone if permission arrives after hangup', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Firefox/160.0');
+    const microphone = { stop: vi.fn() };
+    const capture = Promise.withResolvers<typeof microphone>();
+    sdk.createLocalAudioTrack.mockReturnValueOnce(capture.promise);
+    view();
+    fireEvent.click(screen.getByRole('button', { name: 'Start call' }));
+    const room = sdk.rooms[0];
+    await waitFor(() => expect(sdk.createLocalAudioTrack).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+    await act(async () => capture.resolve(microphone));
+    expect(microphone.stop).toHaveBeenCalledOnce();
+    expect(room.connect).not.toHaveBeenCalled();
+  });
+
+  it('stops the unpublished Firefox microphone when ICE fails', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Firefox/160.0');
+    const microphone = { stop: vi.fn() };
+    sdk.createLocalAudioTrack.mockResolvedValueOnce(microphone);
+    view();
+    fireEvent.click(screen.getByRole('button', { name: 'Start call' }));
+    const room = sdk.rooms[0];
+    room.connect.mockRejectedValueOnce(new Error('ICE failed'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      messages.voiceSpike.connectError,
+    );
+    expect(microphone.stop).toHaveBeenCalledOnce();
+    expect(room.localParticipant.publishTrack).not.toHaveBeenCalled();
+  });
+
   it('requests only the JS route and waits for the JS runtime before opening the microphone', async () => {
     view();
     const room = await start();
