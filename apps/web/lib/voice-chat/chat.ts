@@ -119,11 +119,14 @@ export async function generateChatReply(
     const memory = await loadMemory(db, userId, config.character_id);
     const recalled = await memory?.recall?.(text);
     const turns = boundedHistory(historySchema.parse(history.data));
-    const systemPrompts = replyInstructions(config, {
-      character: character?.instructions,
-      memory: memory?.instructions,
-      recalled,
-    });
+    const systemPrompts = [
+      ...replyInstructions(config, {
+        character: character?.instructions,
+        memory: memory?.instructions,
+        recalled,
+      }),
+      'Match the depth of your reply to the latest user message. For a greeting or quick check-in, reply in one short, in-character sentence with at most one question. Expand when the user asks for detail.',
+    ];
     let lastSaved = 0;
     for await (const event of streamReply({
       threadId: conversationId,
