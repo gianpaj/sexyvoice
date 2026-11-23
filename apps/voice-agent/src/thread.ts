@@ -37,6 +37,7 @@ export function committedTurn(item: llm.ChatItem) {
 export class CallThread {
   private pending = Promise.resolve();
   private failed = false;
+  private closing?: Promise<void>;
   private readonly params;
 
   private readonly db: SupabaseClient;
@@ -74,7 +75,7 @@ export class CallThread {
 
   append(item: llm.ChatItem, onFailure: () => void) {
     const turn = committedTurn(item);
-    if (!turn) return;
+    if (!turn || this.closing !== undefined) return;
     this.pending = this.pending
       .then(async () => {
         if (this.failed) return;
@@ -93,7 +94,12 @@ export class CallThread {
       });
   }
 
-  async close() {
+  close() {
+    this.closing ??= this.release();
+    return this.closing;
+  }
+
+  private async release() {
     await this.pending;
     if (this.failed)
       throw new Error('Conversation history could not be flushed');

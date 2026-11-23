@@ -99,6 +99,8 @@ describe('JS call conversation context', () => {
     thread.append(turn('two', 'assistant', 'Second'), fail);
     thread.append(turn('three', 'user', 'Third'), fail);
     const closed = thread.close();
+    expect(thread.close()).toBe(closed);
+    thread.append(turn('late', 'assistant', 'After sealing'), fail);
     await Promise.resolve();
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(from).not.toHaveBeenCalled();

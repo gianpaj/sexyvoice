@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { cli, defineAgent, ServerOptions, voice } from '@livekit/agents';
+import { cli, defineAgent, log, ServerOptions, voice } from '@livekit/agents';
 import { TTS } from '@livekit/agents-plugin-inworld';
 import { VAD } from '@livekit/agents-plugin-silero';
 import { STT } from '@livekit/agents-plugin-xai';
@@ -16,6 +16,7 @@ import { replyInstructions } from '@sexyvoice/voice-spike/history';
 import { loadMemory } from '@sexyvoice/voice-spike/memory';
 import { createClient } from '@supabase/supabase-js';
 
+import { closeCall } from './call-cleanup.ts';
 import { parseJob } from './config.ts';
 import { CallMemoryAgent } from './memory.ts';
 import { TanStackLLM } from './tanstack-llm.ts';
@@ -120,16 +121,29 @@ export default defineAgent({
     let cleanup: Promise<void> | undefined;
     const close = () => {
       clearTimeout(deadline);
-      cleanup ??= session.close().finally(() => thread.close());
+      cleanup ??= closeCall({
+        closeSession: () => session.close(),
+        disconnect: () => ctx.room.disconnect(),
+        flush: () => thread.close(),
+        onCloseFailure: () =>
+          log().warn(
+            { roomName },
+            'Voice spike session teardown did not finish',
+          ),
+      });
       return cleanup;
     };
     const finish = async () => {
-      await close().finally(() => ctx.deleteRoom());
+      await close().finally(() => ctx.deleteRoom(roomName));
     };
     const deadline = setTimeout(() => {
       finish().catch(() => ctx.shutdown('spike deadline'));
     }, MAX_CALL_MS);
-    ctx.addShutdownCallback(close);
+    ctx.addShutdownCallback(() => {
+      clearTimeout(deadline);
+      // The SDK calls this after disconnecting, even when its own close times out.
+      return thread.close();
+    });
     session.on(
       voice.AgentSessionEventTypes.ConversationItemAdded,
       ({ item }) => {
@@ -169,6 +183,7 @@ export default defineAgent({
         participantIdentity: participant.identity,
         textInputCallback: (current, event) => {
           if (
+            cleanup ||
             event.participantIdentity !== participant.identity ||
             event.text.length > 2000
           )
@@ -178,7 +193,9 @@ export default defineAgent({
         },
       },
     });
+    if (cleanup) return;
     await local.setAttributes({ [RUNTIME_ATTRIBUTE]: RUNTIME });
+    if (cleanup) return;
     session.generateReply({
       instructions: opened.chatCtx.items.length
         ? 'Briefly welcome the caller back and let them pick up this conversation.'
