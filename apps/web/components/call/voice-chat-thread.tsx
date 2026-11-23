@@ -209,6 +209,7 @@ export function VoiceChatThread({
         ref={transcript}
         revealReplyId={unavailable ? undefined : revealReplyId}
         status={status ? t(status) : undefined}
+        streamingReply={hasReply && (chat.isLoading || chat.sessionGenerating)}
       />
       {unavailable && (
         <div className="flex items-center justify-between gap-2" role="alert">

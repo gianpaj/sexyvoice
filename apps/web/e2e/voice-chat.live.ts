@@ -203,7 +203,9 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     const threadId = 'd9d5e2a3-4f7c-45fe-9b67-03ff98ba72b3';
     const saved =
       'A longer saved reply appears in full as soon as history loads.';
-    const reply = 'Here are the first six words. '.repeat(20).trimEnd();
+    const rest = 'Here is another line. '.repeat(20).trimEnd();
+    const markdown = `Here are the **first six words. Here** is another line.\n\n${rest}`;
+    const reply = `Here are the first six words. Here is another line.\n\n${rest}`;
     const shortReply = 'Hey, how are you?';
     let sends = 0;
     await page.emulateMedia({ reducedMotion });
@@ -216,7 +218,12 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
               {
                 id: 'saved',
                 role: 'assistant',
-                parts: [{ type: 'text', content: saved }],
+                parts: [
+                  {
+                    type: 'text',
+                    content: saved.replace('saved reply', '*saved reply*'),
+                  },
+                ],
               },
             ],
             activeRun: null,
@@ -227,7 +234,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       const { runId } = route.request().postDataJSON();
       sends += 1;
       const messageId = `new-reply-${sends}`;
-      const delta = sends === 1 ? reply : shortReply;
+      const delta = sends === 1 ? markdown : shortReply;
       const events = [
         { type: 'RUN_STARTED', threadId, runId },
         { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
@@ -248,6 +255,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     await page.goto(`/en/dashboard/voice-spike?conversation=${threadId}`);
     const messages = page.getByRole('log').locator('p:not([role="status"])');
     await expect(messages).toHaveText([saved]);
+    await expect(messages.first().locator('em')).toHaveText('saved reply');
 
     const composer = page.getByRole('textbox', {
       name: 'Message',
@@ -260,14 +268,17 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     });
     await expect(startCall).toBeEnabled();
     await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
-    await composer.fill('Tell me more.');
+    await composer.fill('Tell me **more**.');
     await send.click({ force: true });
     await expect(messages).toHaveText([
       saved,
-      'Tell me more.',
+      'Tell me **more**.',
       reducedMotion === 'reduce' ? reply : 'Here are the first six words.',
     ]);
     await expect(startCall).toBeEnabled();
+    await expect(messages.last().locator('strong')).toHaveText(
+      reducedMotion === 'reduce' ? 'first six words. Here' : 'first six words.',
+    );
 
     if (reducedMotion === 'no-preference') {
       await page.clock.runFor(80);
@@ -278,6 +289,11 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       await page.clock.runFor(920);
       await expect(messages.last()).toHaveText(reply);
     }
+
+    await expect(messages.last().locator('strong')).toHaveText(
+      'first six words. Here',
+    );
+    expect(await messages.last().textContent()).toBe(reply);
 
     await composer.fill('Hi');
     await send.click({ force: true });
