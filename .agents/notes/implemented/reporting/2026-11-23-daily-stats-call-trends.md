@@ -35,8 +35,8 @@ change under 10%; the owner reads those as engagement signals.
   character are unsaved custom prompts, so they count as custom.
 
 `getCallSessionsInRange` selects `metadata->>character_id`, and
-`getPublicCharacterIds` reads the featured character IDs. The local activity
-cache stores those IDs at version 7.
+`getPublicCharacterIds` reads the featured character IDs, which the local
+activity cache stores with the rest of the report data.
 
 ## Alternatives considered
 
