@@ -1285,7 +1285,7 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div className="flex justify-start gap-2 sm:w-full">
+          <div className="flex flex-wrap items-start justify-start gap-2 sm:w-full">
             {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
               <>
                 <StreamingWaveformPlayer
