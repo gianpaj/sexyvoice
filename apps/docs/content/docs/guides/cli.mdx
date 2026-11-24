@@ -71,16 +71,16 @@ Generate speech audio from text.
 
 Common flags:
 
-| Flag         | Short | Description                            |
-| ------------ | ----- | -------------------------------------- |
-| `--voice`    | `-v`  | Voice name to use                      |
-| `--model-id` | `-m`  | Model ID: `gpro`, `grok`, or `orpheus` |
-| `--format`   | `-f`  | Response format: `wav` or `mp3`        |
-| `--style`    |       | Optional style prompt                  |
-| `--seed`     |       | Optional deterministic seed            |
-| `--output`   | `-o`  | Save to a file, or use `-` for stdout  |
-| `--play`     | `-p`  | Play audio locally                     |
-| `--json`     |       | Emit CLI result metadata as JSON       |
+| Flag         | Short | Description                                          |
+| ------------ | ----- | ---------------------------------------------------- |
+| `--voice`    | `-v`  | Voice name to use                                    |
+| `--model-id` | `-m`  | Model ID: `gpro`, `grok`, or `orpheus`               |
+| `--format`   | `-f`  | Response format: `wav` or `mp3`                      |
+| `--style`    |       | Optional style prompt                                |
+| `--seed`     |       | Integer seed for Gemini; no guaranteed repeatability |
+| `--output`   | `-o`  | Save to a file, or use `-` for stdout                |
+| `--play`     | `-p`  | Play audio locally                                   |
+| `--json`     |       | Emit CLI result metadata as JSON                     |
 
 ### `sexyvoice voices`
 
@@ -113,8 +113,8 @@ sexyvoice key
 ```
 
 <Callout type="warn">
-  Only run `sexyvoice key` in a private terminal. Do not paste API keys into logs, tickets,
-  screenshots, or client-side code.
+  Only run `sexyvoice key` in a private terminal. Do not paste API keys into
+  logs, tickets, screenshots, or client-side code.
 </Callout>
 
 ### `sexyvoice config`
