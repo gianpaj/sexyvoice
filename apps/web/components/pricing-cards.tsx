@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Gift, Loader2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
 
@@ -270,6 +270,7 @@ export function PricingCards({
                   variant={plan.buttonVariant as 'outline' | 'default'}
                 >
                   <Link href="/signup" prefetch={false}>
+                    {!plan.id && <Gift aria-hidden />}
                     {plan.buttonText}
                   </Link>
                 </Button>
