@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LiveKitVoiceChat } from '@/components/call/livekit-voice-chat';
+import { prepareCallFromCard } from '@/components/call/voice-chat-room';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import messages from '@/messages/en.json';
@@ -477,7 +478,7 @@ describe('JS browser call', () => {
 });
 
 describe('Python Inworld call on the chat page', () => {
-  async function startPythonCall() {
+  async function startPythonCall(fromCard = false) {
     const conversationId = '60606060-6060-4060-8060-606060606061';
     const preset = {
       id: '63765019-12dc-46b6-85e3-dd8b5238c9a0',
@@ -505,6 +506,7 @@ describe('Python Inworld call on the chat page', () => {
             conversationId,
           }),
     );
+    if (fromCard) prepareCallFromCard().handOff(conversationId);
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <LiveKitVoiceChat
@@ -515,8 +517,13 @@ describe('Python Inworld call on the chat page', () => {
         />
       </NextIntlClientProvider>,
     );
-    await screen.findByText('Earlier text');
-    const room = await start();
+    if (!fromCard) {
+      await screen.findByText('Earlier text');
+      const room = await start();
+      return { room, conversationId };
+    }
+    const [room] = sdk.rooms;
+    await waitFor(() => expect(room.connect).toHaveBeenCalled());
     return { room, conversationId };
   }
 
@@ -532,6 +539,27 @@ describe('Python Inworld call on the chat page', () => {
       }),
     );
   }
+
+  it('dials once on arrival from a card and reuses its unlocked room', async () => {
+    const { room, conversationId } = await startPythonCall(true);
+    expect(sdk.rooms).toHaveLength(1);
+    expect(room.startAudio).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/call-token',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining(conversationId),
+      }),
+    );
+    await admitPythonAgent(room);
+    expect(await screen.findByTestId('inworld-call-view')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+    expect(
+      await screen.findByRole('button', { name: 'Start call' }),
+    ).toBeEnabled();
+    expect(room.connect).toHaveBeenCalledOnce();
+    window.history.replaceState(null, '', '/');
+  });
 
   it('uses the linked token and preserves history while typing with the microphone off', async () => {
     const { room, conversationId } = await startPythonCall();

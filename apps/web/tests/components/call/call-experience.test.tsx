@@ -33,6 +33,10 @@ const toastMock = vi.hoisted(() =>
   }),
 );
 const routerPush = vi.hoisted(() => vi.fn());
+const handOff = vi.hoisted(() => vi.fn());
+vi.mock('@/components/call/voice-chat-room', () => ({
+  prepareCallFromCard: () => ({ discard: vi.fn(), handOff }),
+}));
 const convertAudio = vi.hoisted(() => vi.fn());
 
 vi.mock('@livekit/components-react', () => ({
@@ -203,6 +207,7 @@ beforeEach(() => {
   toastMock.success.mockClear();
   toastMock.error.mockClear();
   routerPush.mockClear();
+  handOff.mockClear();
   window.scrollTo = vi.fn();
   fetchMock = vi.fn(async (url: string, init: RequestInit) => {
     if (url === '/api/clone-voice') {
@@ -252,7 +257,7 @@ describe('CallExperience picker', () => {
     expect(screen.getByText('Footer')).toBeInTheDocument();
   });
 
-  it('opens chat only for eligible saved Inworld characters', async () => {
+  it('starts a conversation call from an eligible Inworld card', async () => {
     const openConversation = vi.fn().mockResolvedValue('linked-thread');
     const clonedCharacter = {
       ...own,
@@ -268,10 +273,14 @@ describe('CallExperience picker', () => {
       openConversation,
       savedVoices: [{ ...savedVoice, provider: 'inworld' }],
     });
-    expect(screen.queryByRole('button', { name: 'Chat with Lily' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Call Lily' })).toBeVisible();
+    const featuredCall = screen.getByRole('button', { name: 'Call Lily' });
+    const listen = screen.getByRole('button', { name: 'Listen to Lily' });
+    expect(featuredCall.closest('article')).toBe(listen.closest('article'));
+    expect(featuredCall.compareDocumentPosition(listen)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     await userEvent.click(
-      screen.getByRole('button', { name: 'Chat with Inworld companion' }),
+      screen.getByRole('button', { name: 'Call Inworld companion' }),
     );
     await waitFor(() =>
       expect(routerPush).toHaveBeenCalledWith(
@@ -281,6 +290,7 @@ describe('CallExperience picker', () => {
     expect(openConversation).toHaveBeenCalledWith(
       expect.objectContaining({ characterId: clonedCharacter.id }),
     );
+    expect(handOff).toHaveBeenCalledExactlyOnceWith('linked-thread');
     expect(microphone.request).not.toHaveBeenCalled();
     expect(connection.connect).not.toHaveBeenCalled();
   });

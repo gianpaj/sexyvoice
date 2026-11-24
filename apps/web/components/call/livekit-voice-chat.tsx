@@ -13,13 +13,19 @@ import {
   createLocalAudioTrack,
   type LocalAudioTrack,
   type RemoteParticipant,
-  Room,
+  type Room,
   RoomEvent,
 } from 'livekit-client';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 import { flushSync } from 'react-dom';
 import { toast } from 'sonner';
 
@@ -28,6 +34,11 @@ import type { Preset } from '@/data/presets';
 import { getCallerTime } from '@/lib/caller-time';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { VoiceChatComposer } from './voice-chat-composer';
+import {
+  audioCaptureDefaults,
+  createVoiceChatRoom,
+  takeCallFromCard,
+} from './voice-chat-room';
 import {
   type VoiceChatCharacterPicker,
   VoiceChatThread,
@@ -134,7 +145,10 @@ export function LiveKitVoiceChat({
     if (!pythonCall) setRoom(null);
     await current?.disconnect();
   };
-  const start = async (history: VoiceChatMessage[] = []) => {
+  const start = async (
+    history: VoiceChatMessage[] = [],
+    prepared?: ReturnType<typeof takeCallFromCard>,
+  ) => {
     if (active.current) return;
     setError(null);
     setPriorMessages(history);
@@ -147,14 +161,7 @@ export function LiveKitVoiceChat({
     setMessages([]);
     setState('connecting');
     const firefox = /Firefox\//.test(navigator.userAgent);
-    const audioCaptureDefaults = {
-      echoCancellation: true,
-      noiseSuppression: true,
-    };
-    const current = new Room({
-      audioCaptureDefaults,
-      publishDefaults: { stopMicTrackOnMute: true },
-    });
+    const current = prepared?.room ?? createVoiceChatRoom();
     active.current = current;
     current.registerTextStreamHandler(
       'lk.transcription',
@@ -318,7 +325,7 @@ export function LiveKitVoiceChat({
     );
     try {
       // Unlock audio synchronously from the user's call gesture, before any fetch.
-      const audioReady = current.startAudio();
+      const audioReady = prepared?.audioReady ?? current.startAudio();
       // Attach a handler immediately, including when the token request fails.
       audioReady.catch(() => undefined);
       const response = pythonCall
@@ -384,6 +391,18 @@ export function LiveKitVoiceChat({
       fail('connectError');
     }
   };
+  const startFromCard = useEffectEvent((id: string) => {
+    const prepared = takeCallFromCard(id);
+    if (prepared) start([], prepared).catch(() => undefined);
+  });
+  const linkedConversationId = pythonCall ? conversationId : undefined;
+  useEffect(() => {
+    if (!linkedConversationId) return;
+    // Defer consumption so React's Strict Mode setup/cleanup leaves one attempt.
+    const timer = setTimeout(() => startFromCard(linkedConversationId), 0);
+    return () => clearTimeout(timer);
+  }, [linkedConversationId]);
+
   const setMicrophoneMuted = async (next: boolean) => {
     const current = active.current;
     if (!(current && agent.current) || changingMute) return false;

@@ -41,6 +41,7 @@ import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
+import { prepareCallFromCard } from './voice-chat-room';
 
 // Krisp touches browser-only APIs when it loads.
 const InCallView = dynamic(
@@ -219,22 +220,45 @@ function CallExperienceScreens({
     if (findPreset(presetId)) setPanelOpen(true);
   }, []);
 
+  const openLinkedConversation = async (presetId: string, dial: boolean) => {
+    if (connecting || !openConversation) return;
+    setConnecting(true);
+    player.stop();
+    let prepared: ReturnType<typeof prepareCallFromCard> | undefined;
+    let handedOff = false;
+    try {
+      prepared = dial ? prepareCallFromCard() : undefined;
+      const id = await openConversation({
+        characterId: presetId,
+        language: pgState.language,
+        scene: pgState.sceneInstructions ?? null,
+      });
+      if (!id) {
+        toast.error(chat('chatError'));
+        return;
+      }
+      prepared?.handOff(id);
+      handedOff = true;
+      router.push(`/dashboard/call?conversation=${id}`);
+    } catch {
+      toast.error(chat('chatError'));
+    } finally {
+      if (!handedOff) {
+        prepared?.discard();
+        setConnecting(false);
+      }
+    }
+  };
+
   const startCall = async () => {
     if (connecting) return;
     const presetId = pgState.selectedPresetId;
+    if (presetId && chatCharacterIds.includes(presetId)) {
+      await openLinkedConversation(presetId, false);
+      return;
+    }
     setConnecting(true);
     try {
-      if (presetId && openConversation && chatCharacterIds.includes(presetId)) {
-        player.stop();
-        const id = await openConversation({
-          characterId: presetId,
-          language: pgState.language,
-          scene: pgState.sceneInstructions ?? null,
-        });
-        if (id) router.push(`/dashboard/call?conversation=${id}`);
-        else toast.error(chat('chatError'));
-        return;
-      }
       if (!(await microphone.request())) {
         setEnded(null);
         setPanelOpen(true);
@@ -258,6 +282,10 @@ function CallExperienceScreens({
   const callCharacter = (presetId: string) => {
     if (connecting || pendingCallId) return;
     selectPreset(presetId);
+    if (chatCharacterIds.includes(presetId)) {
+      openLinkedConversation(presetId, true).catch(() => undefined);
+      return;
+    }
     setPendingCallId(presetId);
   };
   const startPendingCall = useEffectEvent(() => {
@@ -357,7 +385,6 @@ function CallExperienceScreens({
         </div>
         {mobileCredits}
         <CharacterPicker
-          chatCharacterIds={chatCharacterIds}
           connectingId={
             pendingCallId ?? (connecting ? pgState.selectedPresetId : null)
           }

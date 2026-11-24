@@ -295,6 +295,58 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
   });
 }
 
+test('the Inworld card dials immediately and registers the call UI', async ({
+  browserName,
+  page,
+}) => {
+  const character = process.env.PLAYWRIGHT_LINKED_CALL_CHARACTER_NAME;
+  // biome-ignore lint/suspicious/noSkippedTests: The real Python call requires an explicit fixture.
+  test.skip(
+    !character,
+    'A paid test character with an owned Inworld voice is required.',
+  );
+  test.setTimeout(90_000);
+  if (browserName === 'webkit') {
+    await page.context().grantPermissions(['microphone']);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/en/dashboard/call');
+  const end = page.getByRole('button', { name: 'End call', exact: true });
+  const tokenRequest = page.waitForRequest(
+    (request) =>
+      new URL(request.url()).pathname === '/api/call-token' &&
+      request.method() === 'POST',
+  );
+  await page
+    .getByRole('button', { name: `Call ${character}`, exact: true })
+    .click();
+  try {
+    await expect(page).toHaveURL(
+      /dashboard\/call\?conversation=[a-f0-9-]{36}$/,
+    );
+    await tokenRequest;
+    await expect(page.getByTestId('inworld-call-view')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Type instead of speaking' }),
+    ).toBeEnabled({ timeout: 65_000 });
+    await expect
+      .poll(
+        () =>
+          page
+            .locator('audio')
+            .evaluateAll((elements) =>
+              elements.some(
+                (element) => !element.paused && element.currentTime > 0,
+              ),
+            ),
+        { timeout: 15_000 },
+      )
+      .toBe(true);
+  } finally {
+    if (await end.isVisible()) await end.click();
+  }
+});
+
 test('keeps the Inworld thread through a Python call on mobile', async ({
   browserName,
   page,
@@ -314,7 +366,11 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/en/dashboard/call');
   await page
-    .getByRole('button', { name: `Chat with ${character}`, exact: true })
+    .getByRole('button', { name: `Open ${character}`, exact: true })
+    .click();
+  await page
+    .getByTestId('call-panel')
+    .getByRole('button', { name: 'Chat', exact: true })
     .click();
   await expect(page).toHaveURL(/dashboard\/call\?conversation=[a-f0-9-]{36}$/);
   const threadUrl = page.url();
