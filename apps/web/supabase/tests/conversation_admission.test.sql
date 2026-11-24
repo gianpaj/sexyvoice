@@ -1,6 +1,6 @@
 begin;
 set local search_path = public, extensions;
-select plan(15);
+select plan(16);
 
 insert into auth.users (id, aud, role, email) values
   ('10101010-1010-4010-8010-101010101010', 'authenticated', 'authenticated', 'admission@example.test');
@@ -59,6 +59,12 @@ select is((select call_session_id from public.conversation_messages where id = '
  '80808080-8080-4080-8080-808080808080'::uuid, 'the turn is linked to the billing record');
 update public.call_sessions set status = 'completed' where id = '80808080-8080-4080-8080-808080808080';
 select throws_ok('execute append_turn', 'P0002', null, 'a completed linked call cannot append late turns');
+
+-- Simulate a generator dying with a retained lease that has passed its deadline.
+insert into public.voice_conversation_leases (user_id, conversation_id, room_name, expires_at)
+  values ('10101010-1010-4010-8010-101010101010', '60606060-6060-4060-8060-606060606061',
+    'chat:abandoned', pg_catalog.clock_timestamp() - interval '1 second');
+select lives_ok('execute legacy_call', 'an expired chat lease does not block a legacy call');
 
 select * from finish();
 rollback;

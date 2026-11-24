@@ -31,7 +31,8 @@ begin
       where user_id = new.user_id and expires_at > pg_catalog.clock_timestamp()
     )) then
     raise exception 'Another call or reply is in progress'
-      using errcode = '23505', constraint = 'conversation_admission';
+      using errcode = '23505', constraint = 'conversation_admission',
+        hint = 'conversation_admission';
   end if;
 
   return new;
