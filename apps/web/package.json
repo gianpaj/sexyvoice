@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "analyze": "next experimental-analyze",
+    "api-errors:docs": "vitest run api-v1-error-codes-docs -u",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
     "build": "next build",
     "build:content": "contentlayer2 build",

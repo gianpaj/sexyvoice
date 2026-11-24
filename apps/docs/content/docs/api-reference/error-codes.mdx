@@ -19,20 +19,25 @@ Errors handled by the authenticated API endpoints return this JSON shape.
 
 ## Error Codes
 
-| HTTP | Code                          | Type                    | Meaning                                                                         |
-| ---- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
-| 400  | `invalid_request`             | `invalid_request_error` | Malformed JSON, missing or unknown fields, or invalid values.                   |
-| 400  | `input_too_long`              | `invalid_request_error` | Effective text exceeds the model or account limit, including Gemini style.      |
-| 400  | `unsupported_response_format` | `invalid_request_error` | The model does not return the requested format.                                 |
-| 401  | `invalid_api_key`             | `authentication_error`  | The Bearer key is missing, invalid, revoked, or expired.                        |
-| 402  | `insufficient_credits`        | `permission_error`      | The account does not have enough credits for generation.                        |
-| 404  | `voice_not_found`             | `not_found_error`       | The voice ID is unavailable or the name does not exist for the requested model. |
-| 422  | `content_policy_violation`    | `invalid_request_error` | A provider blocked the content.                                                 |
-| 422  | `output_limit_exceeded`       | `invalid_request_error` | Gemini reached its audio output limit. Shorten the input before retrying.       |
-| 429  | `rate_limit_exceeded`         | `rate_limit_error`      | The API key has reached its shared request limit.                               |
-| 429  | `provider_quota_exceeded`     | `rate_limit_error`      | Gemini quota or billing is temporarily exhausted.                               |
-| 500  | `server_error`                | `server_error`          | Internal service or provider failure.                                           |
-| 503  | `provider_unavailable`        | `server_error`          | The upstream service is temporarily unavailable or timed out.                   |
+{/* BEGIN GENERATED ERROR CODES */}
+
+| HTTP | Code | Type | Meaning |
+| --- | --- | --- | --- |
+| 400 | `input_too_long` | `invalid_request_error` | Effective text exceeds the model or account limit, including Gemini style. |
+| 400 | `invalid_request` | `invalid_request_error` | Malformed JSON, missing or unknown fields, or invalid values. |
+| 400 | `unsupported_response_format` | `invalid_request_error` | The model does not return the requested format. |
+| 401 | `invalid_api_key` | `authentication_error` | The Bearer key is missing, invalid, revoked, or expired. |
+| 402 | `insufficient_credits` | `permission_error` | The account does not have enough credits for generation. |
+| 404 | `voice_not_found` | `not_found_error` | The voice ID is unavailable or the name does not exist for the requested model. |
+| 422 | `content_policy_violation` | `invalid_request_error` | A provider blocked the content. |
+| 422 | `output_limit_exceeded` | `invalid_request_error` | Gemini reached its audio output limit. Shorten the input before retrying. |
+| 429 | `provider_quota_exceeded` | `rate_limit_error` | Gemini quota or billing is temporarily exhausted. |
+| 429 | `rate_limit_exceeded` | `rate_limit_error` | The API key has reached its shared request limit. |
+| 500 | `server_error` | `server_error` | Internal service or provider failure. |
+| 503 | `provider_unavailable` | `server_error` | The upstream service is temporarily unavailable or timed out. Retry with backoff. |
+| 503 | `server_error` | `server_error` | Gemini returned no audio. Retry with backoff. |
+
+{/* END GENERATED ERROR CODES */}
 
 For `voice_not_found`, choose an available ID or a matching name and model
 from [GET /api/v1/voices](./endpoints/api/v1/voices/get).
