@@ -3,7 +3,8 @@ title: "Error Codes"
 description: "Centralized error response format and code semantics for API."
 ---
 
-All errors return this shape:
+Errors handled by the authenticated API endpoints return this JSON shape.
+`param` is `null` when the error is not tied to a specific parameter.
 
 ```json
 {
@@ -16,16 +17,7 @@ All errors return this shape:
 }
 ```
 
-## Error Types
-
-- `invalid_request_error`: Request shape or parameter invalid.
-- `authentication_error`: Missing or invalid API key.
-- `permission_error`: Account is authenticated but operation is blocked (for example, insufficient credits).
-- `not_found_error`: Referenced resource does not exist.
-- `rate_limit_error`: Request exceeds configured rate limits.
-- `server_error`: Internal processing failure.
-
-## Common Codes
+## Error Codes
 
 {/* BEGIN GENERATED ERROR CODES */}
 
@@ -47,19 +39,16 @@ All errors return this shape:
 
 {/* END GENERATED ERROR CODES */}
 
-## Voice lookup errors and client compatibility
+For `voice_not_found`, choose an available ID or a matching name and model
+from [GET /api/v1/voices](./endpoints/api/v1/voices/get).
+An unsupported model value is a `400 invalid_request`, not a `404`.
 
-`POST /api/v1/speech` returns HTTP `404` with `error.code = "voice_not_found"`
-when a voice ID is unavailable or a voice name does not exist for the requested
-model. This applies to every supported model, including `gpro`, `gpro31`,
-`orpheus`, and `xai`, as well as `gpro38`.
-
-If your client handles HTTP `400` with `model_not_found`, also handle HTTP `404`
-with `voice_not_found` for voice/model mismatches. Select an available voice ID
-or a matching name and model from `GET /api/v1/voices` before retrying. Invalid
-request shapes and unsupported model values still return HTTP `400` validation
-errors.
+For `rate_limit_exceeded`, wait until the
+[rate-limit reset time](./api#rate-limits-and-request-ids). Use backoff for
+`provider_quota_exceeded` and HTTP `503`. Speech requests are not idempotent:
+if a connection drops or times out, retrying can generate and charge for
+another audio file.
 
 ## Debugging with request-id
 
-Every response includes `request-id` header. Save it with your logs and include it in bug reports.
+Save the `request-id` header when present and include it in support requests.
