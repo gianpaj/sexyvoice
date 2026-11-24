@@ -31,7 +31,9 @@ session insert. An active Python call keeps admission until its billing
 row leaves `active`. Existing Python call startup handles stale-session
 cleanup.
 
-Apply both migrations before deploying their consumers. The cross-repository
+Deploy SexyCall's admission conflict handler first. Then apply both migrations
+before deploying the Next.js and LiveKit JS consumers that use the new RPCs.
+Enable linked calls after both steps. The cross-repository
 test in SexyCall exercises the TypeScript dispatch builder and Python
 adapters against the same local Supabase project. Browser verification
 requires a named Python worker and runtime selection in the call page.
