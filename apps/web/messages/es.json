@@ -1491,6 +1491,14 @@
     "vocalSounds": "Sonidos vocales"
   },
   "voiceChat": {
+    "openChat": "Chatear",
+    "chatName": "Chatear con {name}",
+    "backToCharacters": "Volver a personajes",
+    "typeInstead": "Escribir en vez de hablar",
+    "backToVoice": "Volver a la voz",
+    "micOffWhileTyping": "Micrófono apagado mientras escribes",
+    "openThread": "Mostrar conversación",
+    "closeThread": "Ocultar conversación",
     "character": "Elegir personaje",
     "newConversation": "Nueva conversación",
     "characterError": "No se pudo iniciar una conversación con este personaje.",

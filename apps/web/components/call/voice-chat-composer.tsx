@@ -1,22 +1,29 @@
 'use client';
 
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Mic } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { Ref } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 interface VoiceChatComposerProps {
   draft: string;
+  inputRef?: Ref<HTMLTextAreaElement>;
+  onBackToVoice?: () => void;
   onDraft: (text: string) => void;
   onSend: () => void;
   placeholder: string;
   sendDisabled: boolean;
+  switchingMode?: boolean;
 }
 
 // Text-only Prompt Input using the shadcn Input Group pattern.
 export function VoiceChatComposer({
   draft,
+  inputRef,
+  onBackToVoice,
+  switchingMode,
   onDraft,
   onSend,
   placeholder,
@@ -33,6 +40,19 @@ export function VoiceChatComposer({
         if (canSend) onSend();
       }}
     >
+      {onBackToVoice && (
+        <Button
+          aria-label={t('backToVoice')}
+          className="size-11 shrink-0 rounded-full"
+          disabled={switchingMode}
+          onClick={onBackToVoice}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <Mic aria-hidden="true" />
+        </Button>
+      )}
       <Textarea
         aria-label={t('message')}
         className="field-sizing-content max-h-36 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-3 py-2.5 text-base leading-6 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -49,6 +69,7 @@ export function VoiceChatComposer({
           }
         }}
         placeholder={placeholder}
+        ref={inputRef}
         rows={1}
         value={draft}
       />

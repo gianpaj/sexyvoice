@@ -1491,6 +1491,14 @@
     "vocalSounds": "Stimmliche Laute"
   },
   "voiceChat": {
+    "openChat": "Chatten",
+    "chatName": "Mit {name} chatten",
+    "backToCharacters": "Zurück zu den Charakteren",
+    "typeInstead": "Tippen statt sprechen",
+    "backToVoice": "Zurück zum Sprechen",
+    "micOffWhileTyping": "Mikrofon beim Tippen aus",
+    "openThread": "Unterhaltung anzeigen",
+    "closeThread": "Unterhaltung ausblenden",
     "character": "Figur auswählen",
     "newConversation": "Neues Gespräch",
     "characterError": "Mit dieser Figur konnte kein Gespräch gestartet werden.",

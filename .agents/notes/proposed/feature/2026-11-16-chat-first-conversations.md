@@ -1,6 +1,6 @@
 # Agent Note: Chat-first conversations
 
-Status: proposed — pilot runtime selected and shared contracts implemented
+Status: proposed — local Inworld pilot implemented on the call page
 
 ## Problem
 
@@ -55,9 +55,24 @@ provides browser and thread-integration evidence for that check.
 
 SexyVoice owns the [shared contracts](../../../../packages/voice-chat/contracts/README.md).
 SexyCall tests a pinned dispatch schema and generates its RPC types from the
-migrated database. The Postgres tests cover shared history and admission. The
-browser and named Python worker still need their pilot handoff and LiveKit
-smoke test.
+migrated database. The Postgres tests cover shared history and admission.
+
+Paid, allowlisted local users open chat from an owned Inworld character on
+`/dashboard/call`. The phone button dispatches the `sexycall-inworld-chat`
+worker using the current thread ID. The keyboard button releases browser
+capture and waits for the worker to disable audio input before enabling Send.
+The character still speaks. A microphone button returns to voice, and the
+conversation button opens the complete visible thread with jump-to-latest.
+Grok Realtime keeps its existing voice controls.
+
+Python continues to write the legacy call transcript for existing operational
+tooling, while shared message rows supply the thread. Next.js chat records
+token usage with the reply run. Customer credit settlement for standalone chat
+and text-only replies during a call remain open pilot decisions.
+
+The local Playwright test verifies Inworld playback, auto-mute, recall of a
+pre-call message, and persistence after reload in Chromium and Firefox at a
+390px viewport. Physical Safari and longer paid test calls remain unverified.
 
 ## Alternatives considered
 

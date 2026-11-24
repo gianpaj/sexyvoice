@@ -7,6 +7,7 @@ import {
   RUNTIME,
   RUNTIME_ATTRIBUTE,
 } from '@sexyvoice/voice-chat';
+import { PYTHON_CALL_RUNTIME } from '@sexyvoice/voice-chat/dispatch';
 import {
   createLocalAudioTrack,
   type LocalAudioTrack,
@@ -15,10 +16,16 @@ import {
   RoomEvent,
 } from 'livekit-client';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import type { Preset } from '@/data/presets';
+import { getCallerTime } from '@/lib/caller-time';
+import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
   type VoiceChatCharacterPicker,
@@ -29,6 +36,11 @@ import {
   VoiceChatTranscript,
   type VoiceChatTranscriptHandle,
 } from './voice-chat-transcript';
+
+const InworldCallView = dynamic(
+  () => import('./inworld-call-view').then((module) => module.InworldCallView),
+  { ssr: false },
+);
 
 interface LiveMessage extends VoiceChatMessage {
   timestamp: number;
@@ -42,12 +54,17 @@ export function LiveKitVoiceChat({
   startConversation,
   conversationId,
   chatThreadId,
+  pythonCall,
 }: VoiceChatCharacterPicker & {
   audioReferenceId?: string;
   conversationId?: string;
   chatThreadId?: string;
+  pythonCall?: { language: string; preset: Preset };
 }) {
   const t = useTranslations('voiceChat');
+  const tCall = useTranslations('call');
+  const callStatus = useTranslations('call.inCall');
+  const runtime = pythonCall ? PYTHON_CALL_RUNTIME : RUNTIME;
   const [room, setRoom] = useState<Room | null>(null);
   const active = useRef<Room | null>(null);
   const pendingMicrophone = useRef<LocalAudioTrack | null>(null);
@@ -60,6 +77,11 @@ export function LiveKitVoiceChat({
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const [changingMute, setChangingMute] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [threadOpen, setThreadOpen] = useState(false);
+  const [lastSent, setLastSent] = useState<string | null>(null);
+  const [agentState, setAgentState] = useState('');
+  const input = useRef<HTMLTextAreaElement>(null);
   const [thinking, setThinking] = useState(false);
   const [draft, setDraft] = useState('');
   const [chatDraft, setChatDraft] = useState('');
@@ -106,13 +128,17 @@ export function LiveKitVoiceChat({
     if (deadline.current) clearTimeout(deadline.current);
     setThinking(false);
     setState('idle');
-    setRoom(null);
+    if (!pythonCall) setRoom(null);
     await current?.disconnect();
   };
   const start = async (history: VoiceChatMessage[] = []) => {
     if (active.current) return;
     setError(null);
     setPriorMessages(history);
+    setTyping(false);
+    setThreadOpen(false);
+    setLastSent(null);
+    setAgentState('');
     setMessages([]);
     setState('connecting');
     const firefox = /Firefox\//.test(navigator.userAgent);
@@ -147,11 +173,38 @@ export function LiveKitVoiceChat({
       },
     );
     setRoom(current);
-    const fail = (key: 'connectError' | 'providerError' | 'workerMissing') => {
+    const failWithMessage = (message: string) => {
       if (active.current !== current) return;
-      setError(t(key));
+      setError(message);
       stop().catch(() => undefined);
     };
+    const fail = (key: 'connectError' | 'providerError' | 'workerMissing') =>
+      failWithMessage(
+        pythonCall && key === 'workerMissing'
+          ? tCall('agentUnavailable')
+          : t(key),
+      );
+    if (pythonCall) {
+      current.localParticipant.registerRpcMethod('pg.error', ({ payload }) => {
+        const { error } = JSON.parse(payload);
+        let message = t('connectError');
+        if (error === 'active_call') message = tCall('activeCallError');
+        if (error === 'insufficient_credits') {
+          message = tCall('notEnoughCredits', {
+            count: MINIMUM_CREDITS_FOR_CALL,
+          });
+        }
+        setTimeout(() => failWithMessage(message), 0);
+        return Promise.resolve('{"handled":true}');
+      });
+      current.localParticipant.registerRpcMethod('pg.toast', ({ payload }) => {
+        const { title, description, variant } = JSON.parse(payload);
+        if (variant === 'warning') toast.warning(title, { description });
+        else if (variant === 'error') toast.error(title, { description });
+        else toast.info(title, { description });
+        return Promise.resolve('{"shown":true}');
+      });
+    }
     let accepting = false;
     let assignedThread: string | undefined;
     let mediaConnected = false;
@@ -159,7 +212,7 @@ export function LiveKitVoiceChat({
       if (
         active.current !== current ||
         !mediaConnected ||
-        participant.attributes[RUNTIME_ATTRIBUTE] !== RUNTIME
+        participant.attributes[RUNTIME_ATTRIBUTE] !== runtime
       )
         return;
       const failure = participant.attributes[ERROR_ATTRIBUTE];
@@ -167,16 +220,20 @@ export function LiveKitVoiceChat({
         fail(failure === 'provider' ? 'providerError' : 'connectError');
         return;
       }
-      setThinking(participant.attributes['lk.agent.state'] === 'thinking');
+      const nextAgentState = participant.attributes['lk.agent.state'] ?? '';
+      setAgentState(nextAgentState);
+      setThinking(nextAgentState === 'thinking');
       if (accepting) return;
       accepting = true;
       agent.current = participant.identity;
       try {
-        await current.localParticipant.performRpc({
+        const reply = await current.localParticipant.performRpc({
           destinationIdentity: participant.identity,
           method: MUTE_RPC,
           payload: JSON.stringify({ muted: false }),
         });
+        if (pythonCall && JSON.parse(reply).ok !== true)
+          throw new Error('Microphone unavailable');
         if (active.current !== current) return;
         const microphone = pendingMicrophone.current;
         if (microphone) await current.localParticipant.publishTrack(microphone);
@@ -224,11 +281,18 @@ export function LiveKitVoiceChat({
           method: MUTE_RPC,
           payload: JSON.stringify({ muted: mutedRef.current }),
         })
-        .then(() => {
+        .then((reply) => {
+          if (pythonCall && JSON.parse(reply).ok !== true)
+            throw new Error('Microphone unavailable');
           if (active.current === current) setState('connected');
         })
         .catch(() => fail('connectError'));
     });
+    if (pythonCall) {
+      current.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        if (participant.identity === agent.current) failWithMessage(t('ended'));
+      });
+    }
     current.on(RoomEvent.Disconnected, () => {
       if (active.current !== current) return;
       active.current = null;
@@ -236,7 +300,7 @@ export function LiveKitVoiceChat({
       agent.current = null;
       if (deadline.current) clearTimeout(deadline.current);
       if (mounted.current) {
-        setRoom(null);
+        if (!pythonCall) setRoom(null);
         setState('idle');
         setThinking(false);
         setError(t('ended'));
@@ -252,19 +316,38 @@ export function LiveKitVoiceChat({
       const audioReady = current.startAudio();
       // Attach a handler immediately, including when the token request fails.
       audioReady.catch(() => undefined);
-      const response = await fetch('/api/voice-chat/call-token', {
-        method: 'POST',
-        ...((audioReferenceId || thread.current) && {
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            audioReferenceId,
-            conversationId: thread.current,
-          }),
-        }),
-      });
+      const response = pythonCall
+        ? await fetch('/api/call-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...getCallerTime(),
+              conversationId: thread.current,
+              instructions: '',
+              language: pythonCall.language,
+              selectedPresetId: pythonCall.preset.id,
+              sessionConfig: pythonCall.preset.sessionConfig,
+            }),
+          })
+        : await fetch('/api/voice-chat/call-token', {
+            method: 'POST',
+            ...((audioReferenceId || thread.current) && {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                audioReferenceId,
+                conversationId: thread.current,
+              }),
+            }),
+          });
+      if (pythonCall && response.status === 402) {
+        failWithMessage(
+          tCall('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }),
+        );
+        return;
+      }
       if (!response.ok) throw new Error('Token unavailable');
       const token = await response.json();
-      if (token.runtime !== RUNTIME || !token.accessToken || !token.url)
+      if (token.runtime !== runtime || !token.accessToken || !token.url)
         throw new Error('Invalid runtime');
       if (active.current !== current) return;
       assignedThread = token.conversationId;
@@ -296,35 +379,39 @@ export function LiveKitVoiceChat({
       fail('connectError');
     }
   };
-  const toggleMute = async () => {
+  const setMicrophoneMuted = async (next: boolean) => {
     const current = active.current;
-    if (!(current && agent.current) || changingMute) return;
-    const next = !muted;
+    if (!(current && agent.current) || changingMute) return false;
+    if (next === mutedRef.current) return true;
     setChangingMute(true);
     try {
       if (next) await current.localParticipant.setMicrophoneEnabled(false);
-      await current.localParticipant.performRpc({
+      const reply = await current.localParticipant.performRpc({
         destinationIdentity: agent.current,
         method: MUTE_RPC,
         payload: JSON.stringify({ muted: next }),
       });
-      if (active.current !== current) return;
+      if (pythonCall && JSON.parse(reply).ok !== true)
+        throw new Error('Microphone unavailable');
+      if (active.current !== current) return false;
       if (!next) {
         await current.localParticipant.setMicrophoneEnabled(true);
         if (active.current !== current) {
           await current.localParticipant.setMicrophoneEnabled(false);
-          return;
+          return false;
         }
       }
       if (active.current === current) {
         mutedRef.current = next;
         setMuted(next);
       }
+      return true;
     } catch {
       if (active.current === current) {
         setError(t('connectError'));
         await stop();
       }
+      return false;
     } finally {
       setChangingMute(false);
     }
@@ -332,13 +419,20 @@ export function LiveKitVoiceChat({
   const send = async () => {
     const text = draft.trim();
     const current = active.current;
-    if (!(text && current) || state !== 'connected' || sending) return;
+    if (
+      !(text && current && agent.current) ||
+      state !== 'connected' ||
+      sending ||
+      (pythonCall && !mutedRef.current)
+    )
+      return;
     setSending(true);
     setThinking(true);
     transcript.current?.scrollToLatest();
     try {
       const sent = await current.localParticipant.sendText(text, {
         topic: 'lk.chat',
+        ...(pythonCall && { destinationIdentities: [agent.current] }),
       });
       if (active.current !== current) return;
       appendMessage({
@@ -347,6 +441,7 @@ export function LiveKitVoiceChat({
         user: true,
         timestamp: sent.timestamp,
       });
+      setLastSent(text);
       setDraft('');
     } catch {
       if (active.current === current) {
@@ -357,25 +452,77 @@ export function LiveKitVoiceChat({
       setSending(false);
     }
   };
-  if (chatThreadId && state === 'idle') {
+  const idleChat = chatThreadId && state === 'idle' && (
+    <VoiceChatThread
+      backToCharacters={Boolean(pythonCall)}
+      characterName={characterName}
+      characters={characters}
+      draft={chatDraft}
+      error={error}
+      key={chatRevision}
+      onDraft={setChatDraft}
+      onRefresh={refreshChat}
+      onRememberThread={(id) => {
+        thread.current = id;
+      }}
+      onStartCall={start}
+      startConversation={startConversation}
+      threadId={thread.current ?? chatThreadId}
+    />
+  );
+  if (pythonCall && room) {
+    const ready = state === 'connected';
+    const readyStatus = callStatus(
+      agentState === 'speaking' ? 'speaking' : 'listening',
+    );
+    const status =
+      state === 'connecting' || state === 'reconnecting'
+        ? t(state)
+        : readyStatus;
     return (
-      <VoiceChatThread
-        characterName={characterName}
-        characters={characters}
-        draft={chatDraft}
-        error={error}
-        key={chatRevision}
-        onDraft={setChatDraft}
-        onRefresh={refreshChat}
-        onRememberThread={(id) => {
-          thread.current = id;
-        }}
-        onStartCall={start}
-        startConversation={startConversation}
-        threadId={thread.current ?? chatThreadId}
-      />
+      <RoomContext.Provider value={room}>
+        <InworldCallView
+          active={state !== 'idle'}
+          changingMute={changingMute}
+          draft={draft}
+          error={error}
+          inputRef={input}
+          lastSent={lastSent}
+          messages={[...priorMessages, ...messages]}
+          muted={muted}
+          onDraft={setDraft}
+          onHangUp={() => stop().catch(() => undefined)}
+          onReturnToVoice={() => {
+            setMicrophoneMuted(false)
+              .then((changed) => {
+                if (changed) setTyping(false);
+              })
+              .catch(() => undefined);
+          }}
+          onSend={() => send().catch(() => undefined)}
+          onShowThread={() => setThreadOpen((open) => !open)}
+          onToggleMute={() => setMicrophoneMuted(!muted).catch(() => undefined)}
+          onType={() => {
+            setMicrophoneMuted(true).catch(() => undefined);
+            // iOS requires focus inside the keyboard button's user gesture.
+            flushSync(() => setTyping(true));
+            input.current?.focus();
+          }}
+          preset={pythonCall.preset}
+          ready={ready}
+          sending={sending}
+          status={status}
+          thinking={thinking}
+          threadOpen={threadOpen}
+          transcriptRef={transcript}
+          typing={typing}
+        >
+          {idleChat}
+        </InworldCallView>
+      </RoomContext.Provider>
     );
   }
+  if (idleChat) return idleChat;
   return (
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-96 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
@@ -391,7 +538,7 @@ export function LiveKitVoiceChat({
               aria-label={t(muted ? 'unmute' : 'mute')}
               disabled={changingMute}
               onClick={() => {
-                toggleMute().catch(() => undefined);
+                setMicrophoneMuted(!muted).catch(() => undefined);
               }}
               size="icon"
               variant="outline"

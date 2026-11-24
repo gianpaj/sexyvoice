@@ -1491,6 +1491,14 @@
     "vocalSounds": "Sons vocaux"
   },
   "voiceChat": {
+    "openChat": "Discuter",
+    "chatName": "Discuter avec {name}",
+    "backToCharacters": "Retour aux personnages",
+    "typeInstead": "Écrire au lieu de parler",
+    "backToVoice": "Reprendre la voix",
+    "micOffWhileTyping": "Micro coupé pendant la saisie",
+    "openThread": "Afficher la conversation",
+    "closeThread": "Masquer la conversation",
     "character": "Choisir un personnage",
     "newConversation": "Nouvelle conversation",
     "characterError": "Impossible de démarrer une conversation avec ce personnage.",

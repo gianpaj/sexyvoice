@@ -1,7 +1,10 @@
+import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { z } from 'zod';
 
 import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
+import { LiveKitVoiceChat } from '@/components/call/livekit-voice-chat';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -34,18 +37,22 @@ import {
   hasUserPaid,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { canUseCallChat } from '@/lib/voice-chat/access';
+import { getCharacterVoiceReferenceId } from '@/lib/voice-chat/characters';
+import { openCallConversation } from './actions';
 
 export const generateMetadata = createDashboardMetadata('/dashboard/call');
 
 export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
   searchParams: Promise<{
+    conversation?: string | string[];
     custom?: string | string[];
     voice?: string | string[];
   }>;
 }) {
   const { lang } = await props.params;
-  const { custom, voice } = await props.searchParams;
+  const { conversation, custom, voice } = await props.searchParams;
   const returnFromClone =
     custom === '1'
       ? { voiceId: typeof voice === 'string' ? voice : null }
@@ -102,6 +109,45 @@ export default async function Call(props: {
     mapCharacterToPreset(character as CharacterRow),
   );
 
+  const chatEnabled = isPaidUser && canUseCallChat(userId);
+  const inworldVoiceIds = new Set(
+    savedVoices
+      .filter(({ provider }) => provider === 'inworld')
+      .map(({ id }) => id),
+  );
+  const chatCharacterIds = chatEnabled
+    ? initialCustomCharacters.flatMap(({ id, sessionConfig, instructions }) => {
+        const voiceId = getCharacterVoiceReferenceId(sessionConfig);
+        return voiceId && inworldVoiceIds.has(voiceId) && instructions.trim()
+          ? [id]
+          : [];
+      })
+    : [];
+  if (conversation !== undefined && chatEnabled) {
+    const thread = z.uuid().safeParse(conversation);
+    if (!thread.success) notFound();
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('character_id,language')
+      .eq('id', thread.data)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw new Error('Could not load conversation');
+    const preset = initialCustomCharacters.find(
+      ({ id }) => id === data?.character_id,
+    );
+    if (!(data && preset && chatCharacterIds.includes(preset.id))) notFound();
+    return (
+      <LiveKitVoiceChat
+        characterName={preset.name}
+        chatThreadId={thread.data}
+        conversationId={thread.data}
+        key={thread.data}
+        pythonCall={{ preset, language: data.language }}
+      />
+    );
+  }
+
   return (
     <PlaygroundStateProvider
       defaultPresets={defaultPresets}
@@ -131,6 +177,7 @@ export default async function Call(props: {
                   />
                 </div>
               }
+              openConversation={chatEnabled ? openCallConversation : undefined}
               returnFromClone={returnFromClone}
               savedVoices={savedVoices}
             >

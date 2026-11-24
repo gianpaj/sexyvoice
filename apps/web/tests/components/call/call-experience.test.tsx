@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CallExperience } from '@/components/call/call-experience';
@@ -149,10 +149,14 @@ let fetchMock: ReturnType<typeof vi.fn>;
 function renderExperience({
   customCharacters = [own],
   isPaidUser = true,
+  openConversation,
   returnFromClone = null,
+  savedVoices = [savedVoice],
 }: {
   customCharacters?: Preset[];
   isPaidUser?: boolean;
+  openConversation?: ComponentProps<typeof CallExperience>['openConversation'];
+  savedVoices?: SavedCallVoice[];
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
@@ -165,8 +169,9 @@ function renderExperience({
         <CallExperience
           callVoices={callVoices}
           isPaidUser={isPaidUser}
+          openConversation={openConversation}
           returnFromClone={returnFromClone}
-          savedVoices={[savedVoice]}
+          savedVoices={savedVoices}
         >
           <p>Footer</p>
         </CallExperience>
@@ -245,6 +250,39 @@ describe('CallExperience picker', () => {
       within(featuredSection).getByRole('button', { name: 'Call Lily' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Footer')).toBeInTheDocument();
+  });
+
+  it('opens chat only for eligible saved Inworld characters', async () => {
+    const openConversation = vi.fn().mockResolvedValue('linked-thread');
+    const clonedCharacter = {
+      ...own,
+      name: 'Inworld companion',
+      sessionConfig: {
+        ...own.sessionConfig,
+        model: ModelId.INWORLD_TTS,
+        audioReferenceId: savedVoice.id,
+      },
+    };
+    renderExperience({
+      customCharacters: [clonedCharacter],
+      openConversation,
+      savedVoices: [{ ...savedVoice, provider: 'inworld' }],
+    });
+    expect(screen.queryByRole('button', { name: 'Chat with Lily' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Call Lily' })).toBeVisible();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Chat with Inworld companion' }),
+    );
+    await waitFor(() =>
+      expect(routerPush).toHaveBeenCalledWith(
+        '/dashboard/call?conversation=linked-thread',
+      ),
+    );
+    expect(openConversation).toHaveBeenCalledWith(
+      expect.objectContaining({ characterId: clonedCharacter.id }),
+    );
+    expect(microphone.request).not.toHaveBeenCalled();
+    expect(connection.connect).not.toHaveBeenCalled();
   });
 
   it('offers an upgrade instead of the creator to free users', () => {

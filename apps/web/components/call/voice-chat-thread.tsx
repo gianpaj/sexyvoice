@@ -1,11 +1,12 @@
 'use client';
 
 import { fetchServerSentEvents, useChat } from '@tanstack/ai-react';
-import { Phone } from 'lucide-react';
+import { ArrowLeft, Phone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Link } from '@/lib/i18n/navigation';
 import { CHAT_HISTORY_PAGE_SIZE, CHAT_ROUTE } from '@/lib/voice-chat/protocol';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
@@ -21,6 +22,7 @@ export interface VoiceChatCharacterPicker {
 }
 
 interface ChatProps extends VoiceChatCharacterPicker {
+  backToCharacters?: boolean;
   draft: string;
   error: string | null;
   onDraft: (text: string) => void;
@@ -32,6 +34,7 @@ interface ChatProps extends VoiceChatCharacterPicker {
 
 export function VoiceChatThread({
   threadId,
+  backToCharacters,
   characterName,
   characters,
   startConversation,
@@ -182,7 +185,18 @@ export function VoiceChatThread({
   return (
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-72 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="font-semibold text-xl">{characterName ?? t('title')}</h1>
+        <div className="flex items-center gap-2">
+          {backToCharacters && (
+            <Button asChild size="icon" variant="ghost">
+              <Link aria-label={t('backToCharacters')} href="/dashboard/call">
+                <ArrowLeft aria-hidden="true" />
+              </Link>
+            </Button>
+          )}
+          <h1 className="font-semibold text-xl">
+            {characterName ?? t('title')}
+          </h1>
+        </div>
         <Button
           aria-label={t('call')}
           disabled={busy || unavailable}

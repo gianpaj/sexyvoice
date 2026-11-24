@@ -77,7 +77,11 @@ function useAgentWatchdog() {
   }, [connectionState, agent, disconnect, hasSeenAgent, t]);
 }
 
-function AudioSettingsMenu() {
+export function AudioSettingsMenu({
+  buttonClass = roundButton,
+}: {
+  buttonClass?: string;
+} = {}) {
   const t = useTranslations('call');
   const deviceSelect = usePersistentMediaDevice();
   const { microphoneTrack } = useLocalParticipant();
@@ -106,7 +110,7 @@ function AudioSettingsMenu() {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t('inCall.audioSettings')}
-          className={`${roundButton} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
+          className={`${buttonClass} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
           type="button"
         >
           <SlidersHorizontal aria-hidden="true" className="size-6" />
@@ -152,13 +156,19 @@ function AudioSettingsMenu() {
   );
 }
 
-function RecordButton({ recording }: { recording: CallRecording }) {
+export function RecordButton({
+  recording,
+  buttonClass = roundButton,
+}: {
+  recording: CallRecording;
+  buttonClass?: string;
+}) {
   const t = useTranslations('call.inCall');
   if (recording.mode) {
     return (
       <button
         aria-label={t('stopRecording')}
-        className={`${roundButton} border border-red-500/60 bg-red-950/40 text-red-400 hover:bg-red-950/60`}
+        className={`${buttonClass} border border-red-500/60 bg-red-950/40 text-red-400 hover:bg-red-950/60`}
         onClick={recording.stop}
         type="button"
       >
@@ -171,7 +181,7 @@ function RecordButton({ recording }: { recording: CallRecording }) {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t('record')}
-          className={`${roundButton} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
+          className={`${buttonClass} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
           type="button"
         >
           <Disc aria-hidden="true" className="size-6" />

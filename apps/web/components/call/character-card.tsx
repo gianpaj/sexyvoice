@@ -3,6 +3,7 @@
 import {
   Copy,
   Loader2,
+  MessageCircle,
   MoreHorizontal,
   Pencil,
   PhoneCall,
@@ -25,6 +26,7 @@ import { ListenButton } from './listen-button';
 
 interface CharacterCardProps {
   /** This character's call is starting. */
+  chatEnabled?: boolean;
   connecting?: boolean;
   description: string;
   /** Another call is starting, so this card's Call waits. */
@@ -46,6 +48,7 @@ interface CharacterCardProps {
 }
 
 export function CharacterCard({
+  chatEnabled,
   connecting = false,
   description,
   disabled = false,
@@ -59,6 +62,9 @@ export function CharacterCard({
 }: CharacterCardProps) {
   const t = useTranslations('call.picker');
   const tCall = useTranslations('call');
+  const chat = useTranslations('voiceChat');
+  const CallIcon = chatEnabled ? MessageCircle : PhoneCall;
+  const callLabel = chatEnabled ? chat('openChat') : t('call');
   const { name } = preset;
 
   return (
@@ -98,7 +104,9 @@ export function CharacterCard({
           playing={playing}
         />
         <button
-          aria-label={t('callName', { name })}
+          aria-label={
+            chatEnabled ? chat('chatName', { name }) : t('callName', { name })
+          }
           className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-55"
           disabled={connecting || disabled}
           onClick={onCall}
@@ -107,9 +115,9 @@ export function CharacterCard({
           {connecting ? (
             <Loader2 aria-hidden="true" className="size-[15px] animate-spin" />
           ) : (
-            <PhoneCall aria-hidden="true" className="size-[15px]" />
+            <CallIcon aria-hidden="true" className="size-[15px]" />
           )}
-          {connecting ? tCall('connecting') : t('call')}
+          {connecting ? tCall('connecting') : callLabel}
         </button>
       </div>
       {menu && (

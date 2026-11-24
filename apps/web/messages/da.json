@@ -1487,6 +1487,14 @@
     "vocalSounds": "Stemmelyde"
   },
   "voiceChat": {
+    "openChat": "Chat",
+    "chatName": "Chat med {name}",
+    "backToCharacters": "Tilbage til karakterer",
+    "typeInstead": "Skriv i stedet for at tale",
+    "backToVoice": "Tilbage til tale",
+    "micOffWhileTyping": "Mikrofonen er slået fra, mens du skriver",
+    "openThread": "Vis samtale",
+    "closeThread": "Skjul samtale",
     "character": "Vælg karakter",
     "newConversation": "Ny samtale",
     "characterError": "Samtalen med denne karakter kunne ikke startes.",

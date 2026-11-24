@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Copy,
   Loader2,
+  MessageCircle,
   Mic,
   Pencil,
   PhoneCall,
@@ -48,6 +49,7 @@ import { SceneSelector } from './scene-selector';
 
 interface CallPanelProps {
   callVoices: DBVoice[];
+  chatEnabled?: boolean;
   connecting: boolean;
   isPaidUser: boolean;
   microphone: MicrophoneStatus;
@@ -65,6 +67,7 @@ const LANGUAGE_CODES = callLanguages.map(({ value }) => value);
 
 export function CallPanel({
   callVoices,
+  chatEnabled,
   connecting,
   isPaidUser,
   microphone,
@@ -79,6 +82,9 @@ export function CallPanel({
 }: CallPanelProps) {
   const t = useTranslations('call.panel');
   const tCall = useTranslations('call');
+  const tChat = useTranslations('voiceChat');
+  const CallIcon = chatEnabled ? MessageCircle : PhoneCall;
+  const callLabel = chatEnabled ? tChat('openChat') : tCall('startCall');
   const locale = useLocale();
   const isMobile = useIsMobile();
   const { pgState, dispatch, helpers } = usePlaygroundState();
@@ -296,9 +302,9 @@ export function CallPanel({
                   className="size-[18px] animate-spin"
                 />
               ) : (
-                <PhoneCall aria-hidden="true" className="size-[18px]" />
+                <CallIcon aria-hidden="true" className="size-[18px]" />
               )}
-              {connecting ? tCall('connecting') : tCall('startCall')}
+              {connecting ? tCall('connecting') : callLabel}
             </button>
           )}
 

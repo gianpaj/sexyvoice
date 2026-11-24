@@ -16,6 +16,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { CharacterCard } from './character-card';
 
 interface CharacterPickerProps {
+  chatCharacterIds?: string[];
   /** The character whose call is starting, if any. */
   connectingId?: string | null;
   highlightId?: string | null;
@@ -49,6 +50,7 @@ const createCardClass =
   'flex min-h-[200px] flex-col items-start justify-center gap-2.5 rounded-[14px] border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 p-5 text-left';
 
 export function CharacterPicker({
+  chatCharacterIds = [],
   connectingId = null,
   highlightId,
   isPaidUser,
@@ -70,6 +72,7 @@ export function CharacterPicker({
     const key = `character:${preset.id}`;
     return (
       <CharacterCard
+        chatEnabled={chatCharacterIds.includes(preset.id)}
         connecting={connectingId === preset.id}
         description={getPresetDescription(preset, pgState.language)}
         disabled={connectingId !== null}

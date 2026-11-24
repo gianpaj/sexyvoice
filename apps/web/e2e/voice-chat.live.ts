@@ -294,3 +294,98 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     await expect(messages.last()).toHaveText(shortReply);
   });
 }
+
+test('keeps the Inworld thread through a Python call on mobile', async ({
+  browserName,
+  page,
+}) => {
+  const character = process.env.PLAYWRIGHT_LINKED_CALL_CHARACTER_NAME;
+  // biome-ignore lint/suspicious/noSkippedTests: The real Python call requires an explicit fixture.
+  test.skip(
+    !character,
+    'A paid test character with an owned Inworld voice is required.',
+  );
+  test.setTimeout(120_000);
+  if (browserName === 'webkit') {
+    await page.context().grantPermissions(['microphone']);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/en/dashboard/call');
+  await page
+    .getByRole('button', { name: `Chat with ${character}`, exact: true })
+    .click();
+  await expect(page).toHaveURL(/dashboard\/call\?conversation=[a-f0-9-]{36}$/);
+  const threadUrl = page.url();
+  const composer = page.getByRole('textbox', { name: 'Message', exact: true });
+  const send = page.getByRole('button', { name: 'Send', exact: true });
+  const start = page.getByRole('button', { name: 'Start call', exact: true });
+  const keyboard = page.getByRole('button', {
+    name: 'Type instead of speaking',
+  });
+  const earlier =
+    'For this test, my code word is paper iguana. Reply with only confirmed. Keep it private until I ask for it.';
+  const typed =
+    'Reply in English with my code word followed by the word acknowledged.';
+  const bubbles = page
+    .getByRole('log')
+    .locator('[data-slot="voice-chat-bubble"]');
+  await composer.fill(earlier);
+  await send.click();
+  await expect(bubbles).toHaveText([earlier, /\S/], {
+    timeout: 25_000,
+  });
+  await expect(start).toBeEnabled();
+  await start.click();
+  try {
+    await expect(keyboard).toBeEnabled({ timeout: 65_000 });
+    await expect(composer).toHaveCount(0);
+    await expect
+      .poll(
+        () =>
+          page
+            .locator('audio')
+            .evaluateAll((elements) =>
+              elements.some(
+                (element) => !element.paused && element.currentTime > 0,
+              ),
+            ),
+        { timeout: 15_000 },
+      )
+      .toBe(true);
+
+    await keyboard.click();
+    await expect(composer).toBeFocused();
+    await expect(page.getByText('Mic off while you type')).toBeVisible();
+    await composer.fill(typed);
+    await send.click();
+    await expect(page.getByText(typed, { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Show conversation' }).click();
+    await expect(bubbles.first()).toHaveText(earlier);
+    await expect(bubbles.last()).toHaveText(
+      /paper iguana[\s,.:!?–—]+acknowledged/i,
+      {
+        timeout: 25_000,
+      },
+    );
+    await page.getByRole('button', { name: 'Back to voice' }).click();
+    await expect(composer).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Mute microphone' }),
+    ).toBeEnabled();
+  } finally {
+    const end = page.getByRole('button', { name: 'End call', exact: true });
+    if (await end.isVisible()) await end.click();
+  }
+  await expect(start).toBeEnabled({ timeout: 20_000 });
+  await expect(
+    page.getByRole('log').getByText(typed, { exact: true }),
+  ).toHaveCount(1);
+  await page.reload();
+  await expect(
+    page.getByRole('log').getByText(typed, { exact: true }),
+  ).toHaveCount(1);
+  await expect(page).toHaveURL(threadUrl);
+  expect(errors).toEqual([]);
+});

@@ -166,6 +166,12 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `VOICE_CHAT_LOCAL_SUPABASE_URL` - Loopback Supabase API for chat persistence when the browser uses a Tailnet proxy. Next.js also needs `XAI_API_KEY` for chat.
      - `VOICE_CHAT_WORKER_ENABLED` - Worker only; set to `true` in `apps/voice-agent/.env.local` for the internal JS call. The worker also needs the LiveKit, xAI, and Inworld credentials from its `.env.example`; it runs separately from Next.js.
      - Configure the worker with isolated local Supabase credentials and an optional OpenAI key for [hybrid memory recall](apps/voice-agent/README.md#supabase-memory).
+     - The local `/dashboard/call` pilot offers **Chat** for a paid test account's
+       custom character with a saved Inworld voice. The phone button uses the
+       same thread with the [named SexyCall Python worker](https://github.com/gianpaj/sexycall#inworld-voices).
+       Run it against the same local Supabase and LiveKit project.
+       `PLAYWRIGHT_LINKED_CALL_CHARACTER_NAME` selects the character for the
+       Python call test in the [live browser matrix](apps/voice-agent/README.md#live-browser-matrix).
    - Real-time Calls (LiveKit)
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`

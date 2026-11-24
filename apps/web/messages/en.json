@@ -1489,6 +1489,14 @@
     "vocalSounds": "Vocal sounds"
   },
   "voiceChat": {
+    "openChat": "Chat",
+    "chatName": "Chat with {name}",
+    "backToCharacters": "Back to characters",
+    "typeInstead": "Type instead of speaking",
+    "backToVoice": "Back to voice",
+    "micOffWhileTyping": "Mic off while you type",
+    "openThread": "Show conversation",
+    "closeThread": "Hide conversation",
     "character": "Choose character",
     "newConversation": "New conversation",
     "characterError": "Could not start a conversation with this character.",
