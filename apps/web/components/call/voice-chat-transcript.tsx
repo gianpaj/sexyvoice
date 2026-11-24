@@ -114,7 +114,7 @@ export function VoiceChatTranscript({
                     'wrap-anywhere max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                     user
                       ? 'whitespace-pre-wrap rounded-ee-md'
-                      : 'rounded-es-md [&_p+p]:mt-2 [&_p]:whitespace-pre-wrap',
+                      : 'rounded-es-md [&_ol]:list-decimal [&_ol]:ps-5 [&_p+p]:mt-2 [&_p]:whitespace-pre-wrap [&_ul]:list-disc [&_ul]:ps-5',
                     user &&
                       (inCall
                         ? 'bg-[#4c41a0] text-white'

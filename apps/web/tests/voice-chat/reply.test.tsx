@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 
 import { VoiceChatReply } from '@/components/call/voice-chat-reply';
@@ -48,4 +48,36 @@ it('keeps paragraphs and link labels without loading media or linking out', () =
   );
   expect(paragraphs).toEqual(['First paragraph.', 'Second paragraph.']);
   expect(container.querySelector('img, a')).toBeNull();
+});
+
+it.each([
+  { paced: false, streaming: false },
+  { paced: false, streaming: true },
+  { paced: true, streaming: true },
+])('preserves Markdown lists with %o', async (mode) => {
+  const view = render(
+    <VoiceChatReply
+      {...mode}
+      text={
+        '1. Give me a call\n2. Send me a message\n\n- One more thing\n- Last item'
+      }
+    />,
+  );
+
+  await waitFor(
+    () => {
+      const [ordered, unordered] = view.getAllByRole('list');
+      expect(
+        within(ordered)
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['Give me a call', 'Send me a message']);
+      expect(
+        within(unordered)
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['One more thing', 'Last item']);
+    },
+    { timeout: 3000 },
+  );
 });

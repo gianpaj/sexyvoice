@@ -8,7 +8,16 @@ import remend from 'remend';
 const StreamingReply = lazy(() => import('./voice-chat-streaming-reply'));
 const markdownOptions = {
   // Streamdown uses this element internally for the word fade.
-  allowedElements: ['p', 'strong', 'em', 'br', 'streamdown-tail'],
+  allowedElements: [
+    'p',
+    'strong',
+    'em',
+    'br',
+    'ol',
+    'ul',
+    'li',
+    'streamdown-tail',
+  ],
   skipHtml: true,
   unwrapDisallowed: true,
 };
