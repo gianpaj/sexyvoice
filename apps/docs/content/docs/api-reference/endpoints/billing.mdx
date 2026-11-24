@@ -1,23 +1,25 @@
 ---
-title: 'Billing'
-openapi: 'GET /api/v1/billing'
+title: "Billing"
+description: "Check your remaining credits and most recent billing transaction."
+openapi: "GET /api/v1/billing"
 ---
 
 Retrieve your current credit balance and latest billing transaction.
 
 ## What it returns
 
-- `creditsLeft`: Current available credits.
-- `lastUpdated`: Last credits table update timestamp, or `null` if never updated.
+- `creditsLeft`: Current available credits, or `0` if there is no balance record.
+- `lastUpdated`: Last balance update timestamp, or `null` if unavailable.
 - `userId`: User ID linked to your API key.
 - `lastBillingTransaction`: Most recent `purchase` or `topup` transaction, or
-  `null` if none exists yet.
+  `null` if none exists yet. Credit additions still use the value `topup`
+  in the API. `reference_id`, `subscription_id`, and `metadata` can be `null`.
 
 ## Example Request
 
 ```bash
 curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}"
 ```
 
 ## Example Response
@@ -44,5 +46,6 @@ curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
 
 ## Debugging
 
-All responses include a `request-id` header. Store it in your logs and include
-it in support requests when troubleshooting.
+See the [billing endpoint reference](./api/v1/billing/get) for the response
+schema and the [API overview](../api#rate-limits-and-request-ids) for the
+headers returned by this endpoint.
