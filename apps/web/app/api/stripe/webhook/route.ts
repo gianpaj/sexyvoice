@@ -65,7 +65,7 @@ async function processEvent(event: Stripe.Event) {
         );
         break;
 
-      // Subscription recurring payments - this is where credits are awarded for renewals
+      // Subscription payments award credits for initial invoices and renewals
       case 'invoice.payment_succeeded': {
         await handleInvoicePaymentSucceeded(
           event.data.object as Stripe.Invoice,
@@ -210,15 +210,17 @@ async function handleCheckoutSessionCompleted(
         `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
     } else if (session.mode === 'subscription') {
-      // Handle initial subscription checkout
-      const customerId = session.customer as string | null;
-      const subscriptionId = session.subscription as string | null;
+      // Invoice payment events award subscription credits; checkout only syncs Redis.
+      const customerId =
+        typeof session.customer === 'string'
+          ? session.customer
+          : session.customer?.id;
 
-      if (!(customerId && subscriptionId)) {
-        const error = new Error('Missing customer or subscription ID');
+      if (!customerId) {
+        const error = new Error('Missing customer ID in subscription checkout');
         console.error(
-          '[STRIPE HOOK] Missing customer or subscription ID in subscription checkout',
-          { customerId, subscriptionId },
+          '[STRIPE HOOK] Missing customer ID in subscription checkout',
+          { session_id: session.id },
         );
         Sentry.captureException(error, {
           extra: {
@@ -232,94 +234,7 @@ async function handleCheckoutSessionCompleted(
         return;
       }
 
-      // Sync subscription data to Redis
       await syncStripeDataToKV(customerId);
-
-      // Award initial subscription credits
-      const userId = await getUserIdByStripeCustomerId(customerId);
-      if (!userId) {
-        const error = new Error(
-          `User not found with stripe_id: "${customerId}"`,
-        );
-        console.error(`User not found with stripe_id: "${customerId}"`);
-        Sentry.captureException(error, {
-          extra: {
-            customer_id: customerId,
-          },
-          tags: {
-            event_type: 'checkout_session_completed',
-            section: 'stripe_webhook',
-          },
-        });
-        return;
-      }
-
-      // Get subscription details to determine credit amount. The latest
-      // invoice is expanded because subscription-mode checkout sessions have
-      // a null payment_intent — the initial payment lives on that invoice.
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ['latest_invoice.payment_intent'],
-      });
-      const priceId = subscription.items.data[0].price.id;
-
-      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
-        applyFirstMonthDiscount:
-          !!session.metadata?.subscriptionDiscountCouponId,
-      });
-      let credits = 0;
-      let dollarAmount = 0;
-
-      switch (priceId) {
-        case process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.starter.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
-          break;
-        case process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.standard.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
-          break;
-        // TODO: use `pro_monthly` look up key
-        case process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.pro.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
-          break;
-        default:
-          console.error('[STRIPE HOOK] Invalid subscription price ID', {
-            priceId,
-          });
-          return;
-      }
-
-      // Get the payment intent for the initial subscription payment,
-      // falling back to the subscription's first invoice
-      const latestInvoice =
-        typeof subscription.latest_invoice === 'object'
-          ? subscription.latest_invoice
-          : null;
-      const paymentIntentId =
-        resolvePaymentIntentId(session.payment_intent) ??
-        resolvePaymentIntentId(latestInvoice?.payment_intent);
-      if (!paymentIntentId) {
-        // No payment on the initial invoice (e.g. trial or 100% discount);
-        // recurring invoices are handled by invoice.payment_succeeded
-        console.warn(
-          '[STRIPE HOOK] No payment intent in subscription checkout session',
-          { session_id: session.id, subscription_id: subscriptionId },
-        );
-        return;
-      }
-
-      await insertSubscriptionCreditTransaction(
-        userId,
-        paymentIntentId,
-        subscriptionId,
-        credits,
-        dollarAmount,
-      );
-
-      console.log(
-        `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
-      );
     }
   } catch (error) {
     const extra = {
@@ -342,7 +257,7 @@ async function handleCheckoutSessionCompleted(
   }
 }
 
-// Handles successful invoice payments (recurring subscription payments)
+// Handles successful initial and recurring subscription invoice payments
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   try {
     // Only process subscription invoices, not one-time invoices
@@ -355,7 +270,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
     const customerId = invoice.customer as string;
     const subscriptionId = invoice.subscription as string;
-    const paymentIntentId = invoice.payment_intent as string | null;
+    const paymentIntentId = resolvePaymentIntentId(invoice.payment_intent);
 
     if (!paymentIntentId) {
       console.error(
@@ -390,9 +305,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0].price.id;
 
-    // The first invoice may carry the first-month discount coupon; record the
-    // discounted amount so this path matches checkout.session.completed
-    // (the reference_id dedupe makes the two paths idempotent)
+    // The first invoice may carry the first-month discount coupon.
     const isInitialSubscriptionInvoice =
       invoice.billing_reason === 'subscription_create';
     const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
@@ -438,7 +351,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     );
 
     console.log(
-      `[STRIPE HOOK] Recurring subscription credits added: ${credits} to user: ${userId}`,
+      `[STRIPE HOOK] Subscription credits added: ${credits} to user: ${userId}`,
     );
 
     // Also update Redis cache with latest subscription status

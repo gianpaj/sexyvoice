@@ -62,6 +62,8 @@ The repository has three main workspaces:
 - **Vercel Edge Config** supplies default call instructions. Character prompts
   come from PostgreSQL and are resolved again when the server mints a token.
 - **Stripe** manages subscriptions, top-ups, and credit purchases.
+  Subscription credits are awarded by `invoice.payment_succeeded` for initial
+  payments and renewals. Subscription checkout completion only syncs Redis.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
 
