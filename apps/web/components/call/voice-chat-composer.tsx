@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUp, Mic, VolumeX } from 'lucide-react';
+import { ArrowUp, Mic, MicOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Ref } from 'react';
 
@@ -12,13 +12,11 @@ interface VoiceChatComposerProps {
   draft: string;
   inCall?: boolean;
   inputRef?: Ref<HTMLTextAreaElement>;
-  onBackToVoice?: () => void;
+  microphone?: { disabled: boolean; muted: boolean; onToggle: () => void };
   onDraft: (text: string) => void;
   onSend: () => void;
   placeholder: string;
   sendDisabled: boolean;
-  speakerOff?: boolean;
-  switchingMode?: boolean;
 }
 
 // Text-only Prompt Input using the shadcn Input Group pattern.
@@ -26,13 +24,11 @@ export function VoiceChatComposer({
   draft,
   inCall,
   inputRef,
-  onBackToVoice,
-  switchingMode,
+  microphone,
   onDraft,
   onSend,
   placeholder,
   sendDisabled,
-  speakerOff,
 }: VoiceChatComposerProps) {
   const t = useTranslations('voiceChat');
   const canSend = !sendDisabled && Boolean(draft.trim());
@@ -50,24 +46,19 @@ export function VoiceChatComposer({
         if (canSend) onSend();
       }}
     >
-      {onBackToVoice && (
+      {microphone && (
         <Button
-          aria-label={t(speakerOff ? 'speakerOn' : 'backToVoice')}
-          className={cn(
-            'size-11 shrink-0 rounded-full',
-            inCall &&
-              (speakerOff
-                ? 'border-[#674523] bg-[#2a2019] text-[#f0a860]'
-                : 'border-[#242c52] bg-[#161d3b] text-slate-100'),
-          )}
-          disabled={switchingMode}
-          onClick={onBackToVoice}
+          aria-label={t(microphone.muted ? 'unmute' : 'mute')}
+          className="size-11 shrink-0 rounded-full border-[#242c52] bg-[#161d3b] text-slate-100"
+          disabled={microphone.disabled}
+          onClick={microphone.onToggle}
+          onPointerDown={(event) => event.preventDefault()}
           size="icon"
           type="button"
           variant="outline"
         >
-          {speakerOff ? (
-            <VolumeX aria-hidden="true" />
+          {microphone.muted ? (
+            <MicOff aria-hidden="true" />
           ) : (
             <Mic aria-hidden="true" />
           )}

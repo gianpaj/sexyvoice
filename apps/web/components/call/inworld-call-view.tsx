@@ -4,14 +4,7 @@ import {
   RoomAudioRenderer,
   useConnectionState,
 } from '@livekit/components-react';
-import {
-  Keyboard,
-  MessageSquare,
-  Mic,
-  MicOff,
-  PhoneOff,
-  VolumeX,
-} from 'lucide-react';
+import { Keyboard, MessageSquare, Mic, MicOff, PhoneOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, type Ref, useLayoutEffect, useRef } from 'react';
 
@@ -43,12 +36,10 @@ interface InworldCallViewProps {
   onReturnToVoice: () => void;
   onSend: () => void;
   onToggleMute: () => void;
-  onToggleSpeaker: () => void;
   onType: () => void;
   preset: Preset;
   ready: boolean;
   sending: boolean;
-  speakerOff: boolean;
   status: string;
   thinking: boolean;
   transcriptRef: Ref<VoiceChatTranscriptHandle>;
@@ -71,14 +62,12 @@ export function InworldCallView({
   typing,
   draft,
   sending,
-  speakerOff,
   messages,
   thinking,
   inputRef,
   transcriptRef,
   onHangUp,
   onToggleMute,
-  onToggleSpeaker,
   onType,
   onReturnToVoice,
   onDraft,
@@ -142,18 +131,6 @@ export function InworldCallView({
       <PhoneOff aria-hidden="true" className={typing ? 'size-5' : undefined} />
     </button>
   );
-  const speakerButton = (
-    <Button
-      aria-label={t('speakerOff')}
-      className="size-11"
-      disabled={disabled}
-      onClick={onToggleSpeaker}
-      size="icon"
-      variant="ghost"
-    >
-      <VolumeX aria-hidden="true" />
-    </Button>
-  );
   const elapsed = (
     <time className="text-slate-400 text-sm tabular-nums">{formattedTime}</time>
   );
@@ -169,54 +146,35 @@ export function InworldCallView({
       data-testid="inworld-call-view"
       ref={callView}
     >
-      <header
-        className={cn(
-          'flex shrink-0 items-center justify-between gap-2',
-          typing && 'border-b px-4',
-          typing &&
-            (speakerOff
-              ? 'border-[#674523] bg-[#2a2019] text-[#f0a860]'
-              : 'border-[#3c3270] bg-[#1b1636] text-[#c3b6ff]'),
-        )}
-      >
-        {typing ? (
+      {typing ? (
+        <header className="flex shrink-0 items-center justify-between gap-2 border-[#3c3270] border-b bg-[#1b1636] px-4 text-[#c3b6ff]">
           <span
             className="inline-flex items-center gap-2 text-xs"
             role="status"
           >
-            {speakerOff ? (
-              <>
-                <VolumeX aria-hidden="true" className="size-4 shrink-0" />
-                {t('readingReplies')}
-              </>
+            {muted ? (
+              <MicOff aria-hidden="true" className="size-4 shrink-0" />
             ) : (
-              muted && (
-                <>
-                  <MicOff aria-hidden="true" className="size-4 shrink-0" />
-                  {t('micOffWhileTyping')}
-                </>
-              )
+              <Mic aria-hidden="true" className="size-4 shrink-0" />
             )}
+            {t(muted ? 'micOffWhileTyping' : 'muteToType')}
           </span>
-        ) : (
-          speakerButton
-        )}
-        <div className="flex shrink-0 items-center gap-1">
-          {typing && !speakerOff && speakerButton}
-          {!typing && elapsed}
           <Button
-            aria-label={t(typing ? 'closeThread' : 'openThread')}
-            aria-pressed={typing}
-            className="size-11"
+            aria-label={t('closeThread')}
+            className="size-11 shrink-0"
             disabled={disabled}
-            onClick={typing ? onReturnToVoice : onType}
+            onClick={onReturnToVoice}
             size="icon"
             variant="ghost"
           >
             <MessageSquare aria-hidden="true" />
           </Button>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <header className="flex h-11 shrink-0 items-center justify-end px-2">
+          {elapsed}
+        </header>
+      )}
       {typing ? (
         <div className="flex shrink-0 items-center gap-3 px-5 py-4">
           <CharacterAvatar
@@ -269,13 +227,11 @@ export function InworldCallView({
             draft={draft}
             inCall
             inputRef={inputRef}
-            onBackToVoice={speakerOff ? onToggleSpeaker : onReturnToVoice}
+            microphone={{ disabled, muted, onToggle: onToggleMute }}
             onDraft={onDraft}
             onSend={onSend}
             placeholder={t('placeholder')}
             sendDisabled={disabled || !muted || sending}
-            speakerOff={speakerOff}
-            switchingMode={disabled}
           />
         </>
       ) : (
@@ -310,7 +266,7 @@ export function InworldCallView({
           <AudioSettingsMenu buttonClass={round} disabled={!ready} />
         </div>
       )}
-      {!speakerOff && <RoomAudioRenderer />}
+      <RoomAudioRenderer />
     </section>
   );
 }

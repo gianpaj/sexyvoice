@@ -64,17 +64,12 @@ URL shows its chat with a phone button, and the character details panel also
 opens chat without dialing. Both call buttons dispatch `sexycall-inworld-chat`
 with the thread ID.
 
-The keyboard and chat buttons open the full thread and composer. Send waits
-for the worker to disable audio input. The top-right chat button closes the
-composer and restores voice, preserving any microphone mute the caller set
-before typing. Turning the speaker off also opens the thread, removes browser
-playback, and mutes the microphone. The linked worker requires muted input before
-disabling audio output with LiveKit's session API. This cuts off synthesis in
-flight and streams later replies through the existing transcription topic
-without sending them to Inworld. Restoring the speaker keeps the microphone
-muted until the user chooses to speak. Silent turns retain the live call's
-minute metering and limits. Deploy the linked worker with speaker control
-before exposing this control in the web app. Grok Realtime keeps its existing
+The keyboard button opens the full thread and composer and mutes the caller.
+The composer mic toggle preserves the draft and keyboard focus. Send requires
+the worker to confirm that audio input is off, which prevents background speech
+from starting another turn. The character's replies play aloud. The top-right
+chat button closes the composer and restores the mic if muting was automatic.
+An explicit mic change takes precedence. Grok Realtime keeps its existing
 voice controls.
 
 Python continues to write the legacy call transcript for existing operational
@@ -93,9 +88,8 @@ and historical receipts retain their rate. Chat remains behind its existing
 local allowlist during verification.
 
 The local Playwright test verifies Inworld playback, auto-mute, recall of a
-pre-call message, speaker-off replies, restored playback, and persistence
-after reload in Chromium and Firefox at a 390px viewport. The Python test
-exercises the pinned LiveKit pipeline and verifies transcription without TTS.
+pre-call message, independent microphone control, and persistence after reload
+in Chromium and Firefox at a 390px viewport.
 Linux WebKit times out before the caller completes the LiveKit
 connection in both desktop and mobile profiles. The desktop retry also times
 out after granting microphone permission. Physical Safari and longer paid test

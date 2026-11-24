@@ -649,109 +649,49 @@ describe('Python Inworld call on the chat page', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('closes silent chat from the header without unmuting a manually muted mic', async () => {
+  it('toggles the mic without closing the composer or losing the draft', async () => {
     const { room } = await startPythonCall();
     await admitPythonAgent(room);
+    expect(
+      screen.queryByRole('button', { name: 'Show conversation' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Turn speaker off' }),
+    ).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Type instead of speaking' }),
+    );
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(composer, { target: { value: 'Still here' } });
+    const unmute = await screen.findByRole('button', {
+      name: 'Unmute microphone',
+    });
+    await waitFor(() => expect(unmute).toBeEnabled());
+    fireEvent.click(unmute);
 
     const mute = await screen.findByRole('button', { name: 'Mute microphone' });
     await waitFor(() => expect(mute).toBeEnabled());
-    fireEvent.click(mute);
-    const speaker = screen.getByRole('button', { name: 'Turn speaker off' });
-    await waitFor(() => expect(speaker).toBeEnabled());
-    fireEvent.click(speaker);
-
-    const hide = screen.getByRole('button', { name: 'Hide conversation' });
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveFocus();
-    await waitFor(() => expect(hide).toBeEnabled());
-    fireEvent.click(hide);
-
-    expect(
-      await screen.findByRole('button', { name: 'Unmute microphone' }),
-    ).toBeEnabled();
-    expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull();
+    expect(composer).toBeVisible();
+    expect(composer).toHaveValue('Still here');
+    expect(composer).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
     expect(screen.getByTestId('room-audio')).toBeInTheDocument();
-    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
-      false,
-    );
-    expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
-      destinationIdentity: 'agent-python',
-      method: 'sv.voice-chat.speaker',
-      payload: '{"enabled":true}',
-    });
-  });
-
-  it('mutes both directions and waits for the worker before allowing silent replies', async () => {
-    const { room } = await startPythonCall();
-    await admitPythonAgent(room);
-    const speaker = await screen.findByRole('button', {
-      name: 'Turn speaker off',
-    });
-    await waitFor(() => expect(speaker).toBeEnabled());
-    expect(screen.getByTestId('room-audio')).toBeInTheDocument();
-
-    const silent = Promise.withResolvers<string>();
-    room.localParticipant.performRpc
-      .mockResolvedValueOnce('{"ok":true}')
-      .mockReturnValueOnce(silent.promise);
-    fireEvent.click(speaker);
-    expect(screen.queryByTestId('room-audio')).toBeNull();
-    expect(screen.getByText('Earlier text')).toBeVisible();
-    expect(screen.getByText('Speaker off · reading replies')).toBeVisible();
-    const composer = screen.getByRole('textbox', { name: 'Message' });
-    fireEvent.change(composer, { target: { value: 'A quiet reply' } });
-    const send = screen.getByRole('button', { name: 'Send' });
-    expect(send).toBeDisabled();
-    await waitFor(() =>
-      expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
-        destinationIdentity: 'agent-python',
-        method: 'sv.voice-chat.speaker',
-        payload: '{"enabled":false}',
-      }),
-    );
-    expect(
-      room.localParticipant.performRpc.mock.calls.at(-2)?.[0],
-    ).toMatchObject({
-      method: 'sv.voice-chat.mute',
-      payload: '{"muted":true}',
-    });
-
-    await act(async () => silent.resolve('{"ok":true}'));
-    expect(send).toBeEnabled();
-    fireEvent.click(send);
-    await waitFor(() =>
-      expect(room.localParticipant.sendText).toHaveBeenCalledWith(
-        'A quiet reply',
-        { topic: 'lk.chat', destinationIdentities: ['agent-python'] },
-      ),
-    );
-
-    const resume = Promise.withResolvers<string>();
-    room.localParticipant.performRpc.mockReturnValueOnce(resume.promise);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Turn speaker back on' }),
-    );
-    expect(screen.queryByTestId('room-audio')).toBeNull();
-    await waitFor(() =>
-      expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
-        destinationIdentity: 'agent-python',
-        method: 'sv.voice-chat.speaker',
-        payload: '{"enabled":true}',
-      }),
-    );
-    await act(async () => resume.resolve('{"ok":true}'));
-    expect(screen.getByTestId('room-audio')).toBeInTheDocument();
-    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
-      false,
-    );
-    expect(screen.getByRole('button', { name: 'Back to voice' })).toBeEnabled();
-    expect(screen.getByText('Earlier text')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide conversation' }));
-    await waitFor(() =>
-      expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull(),
-    );
     expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
       true,
     );
-    window.history.replaceState(null, '', '/');
+
+    fireEvent.click(mute);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Hide conversation' }));
+    await waitFor(() => expect(composer).not.toBeInTheDocument());
+    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
+      false,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Unmute microphone' }),
+    ).toBeEnabled();
   });
 });

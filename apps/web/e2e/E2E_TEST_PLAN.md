@@ -578,6 +578,10 @@ both modes remember the same conversation, plays Inworld audio, toggles mute,
 and verifies that the saved thread reloads after hangup. Real Safari devices are
 also required for browser acceptance. See the [worker runbook](../../voice-agent/README.md).
 
+The same live configuration covers the Python-backed Inworld call page. It
+dials from a character card, resumes a chat in a call, toggles the microphone
+while the composer stays focused, and reloads the thread after hangup.
+
 Physical iOS/Android capture, keyboard/safe-area behavior, bandwidth limits,
 packet loss, background/resume, and deployed 30/60-minute calls are pending.
 Do not treat the local 390px viewport check as those device/network results.
