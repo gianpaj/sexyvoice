@@ -43,11 +43,12 @@ Claude GitHub App authentication requires the workflow content to match the
 default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
 execution; test review changes after they reach the default branch.
 
-### Account-deletion migration order
+### Conversation and account-deletion migration order
 
-Before merging a release that calls `erase_account_conversations`, the
-production database operator must verify that
-`20261118090000_restrict_call_session_writes.sql` from `main` is applied,
+Deploy [SexyCall's admission conflict handler](../packages/voice-chat/contracts/README.md#thread-history-and-admission)
+before running `supabase db push`. The push installs the admission trigger
+on the production `call_sessions` table along with the erasure and history
+RPCs. Verify that `20261118090000_restrict_call_session_writes.sql` is applied,
 then apply these migrations in timestamp order:
 
 1. `20261118130000_create_conversations.sql`
@@ -55,6 +56,8 @@ then apply these migrations in timestamp order:
 3. `20261123140000_create_voice_chat_runs.sql`
 4. `20261123150000_erase_account_conversations.sql`
 5. `20261123160000_bound_conversation_erasure.sql`
+6. `20261123180000_read_conversation_context.sql`
+7. `20261123190000_share_conversation_admission.sql`
 
 Apply the voice chat schema with erasure so messages, chat runs, and
 conversation leases retain their cascade rules. The LiveKit JS worker and
