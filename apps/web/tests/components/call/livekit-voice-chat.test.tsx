@@ -70,8 +70,16 @@ vi.mock('livekit-client', () => ({
   },
 }));
 vi.mock('@/components/call/in-call-view', () => ({
-  AudioSettingsMenu: () => null,
-  RecordButton: () => null,
+  AudioSettingsMenu: ({ disabled }: { disabled?: boolean }) => (
+    <button disabled={disabled} type="button">
+      Audio settings
+    </button>
+  ),
+  RecordButton: ({ disabled }: { disabled?: boolean }) => (
+    <button disabled={disabled} type="button">
+      Record call
+    </button>
+  ),
 }));
 const jsAgent = {
   identity: 'agent-js',
@@ -561,6 +569,25 @@ describe('Python Inworld call on the chat page', () => {
     window.history.replaceState(null, '', '/');
   });
 
+  it('keeps the same call controls mounted until they are ready', async () => {
+    vi.stubGlobal('MediaRecorder', vi.fn());
+    vi.stubGlobal('AudioContext', vi.fn());
+    const { room } = await startPythonCall();
+    const controls = await Promise.all(
+      [
+        'Mute microphone',
+        'Type instead of speaking',
+        'Record call',
+        'Audio settings',
+      ].map((name) => screen.findByRole('button', { name })),
+    );
+    for (const control of controls) expect(control).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'End call' })).toBeEnabled();
+    await admitPythonAgent(room);
+    for (const control of controls) expect(control).toBeEnabled();
+    window.history.replaceState(null, '', '/');
+  });
+
   it('uses the linked token and preserves history while typing with the microphone off', async () => {
     const { room, conversationId } = await startPythonCall();
     expect(fetch).toHaveBeenCalledWith(
@@ -611,9 +638,8 @@ describe('Python Inworld call on the chat page', () => {
       },
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }));
     expect(await screen.findByText('Earlier text')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to voice' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide conversation' }));
     await waitFor(() =>
       expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull(),
     );
@@ -621,6 +647,37 @@ describe('Python Inworld call on the chat page', () => {
       true,
     );
     window.history.replaceState(null, '', '/');
+  });
+
+  it('closes silent chat from the header without unmuting a manually muted mic', async () => {
+    const { room } = await startPythonCall();
+    await admitPythonAgent(room);
+
+    const mute = await screen.findByRole('button', { name: 'Mute microphone' });
+    await waitFor(() => expect(mute).toBeEnabled());
+    fireEvent.click(mute);
+    const speaker = screen.getByRole('button', { name: 'Turn speaker off' });
+    await waitFor(() => expect(speaker).toBeEnabled());
+    fireEvent.click(speaker);
+
+    const hide = screen.getByRole('button', { name: 'Hide conversation' });
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveFocus();
+    await waitFor(() => expect(hide).toBeEnabled());
+    fireEvent.click(hide);
+
+    expect(
+      await screen.findByRole('button', { name: 'Unmute microphone' }),
+    ).toBeEnabled();
+    expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull();
+    expect(screen.getByTestId('room-audio')).toBeInTheDocument();
+    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
+      false,
+    );
+    expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
+      destinationIdentity: 'agent-python',
+      method: 'sv.voice-chat.speaker',
+      payload: '{"enabled":true}',
+    });
   });
 
   it('mutes both directions and waits for the worker before allowing silent replies', async () => {
@@ -688,6 +745,13 @@ describe('Python Inworld call on the chat page', () => {
     );
     expect(screen.getByRole('button', { name: 'Back to voice' })).toBeEnabled();
     expect(screen.getByText('Earlier text')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Hide conversation' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull(),
+    );
+    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
+      true,
+    );
     window.history.replaceState(null, '', '/');
   });
 });

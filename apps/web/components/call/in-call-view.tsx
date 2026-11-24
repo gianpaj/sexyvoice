@@ -44,7 +44,7 @@ import {
 const AGENT_TIMEOUT_MS = 10_000;
 
 const roundButton =
-  'flex size-16 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2';
+  'flex size-16 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2 disabled:opacity-50';
 
 /**
  * Disconnects when the agent never joins, or leaves and does not come back,
@@ -79,8 +79,10 @@ function useAgentWatchdog() {
 
 export function AudioSettingsMenu({
   buttonClass = roundButton,
+  disabled = false,
 }: {
   buttonClass?: string;
+  disabled?: boolean;
 } = {}) {
   const t = useTranslations('call');
   const deviceSelect = usePersistentMediaDevice();
@@ -111,6 +113,7 @@ export function AudioSettingsMenu({
         <button
           aria-label={t('inCall.audioSettings')}
           className={`${buttonClass} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
+          disabled={disabled}
           type="button"
         >
           <SlidersHorizontal aria-hidden="true" className="size-6" />
@@ -159,9 +162,11 @@ export function AudioSettingsMenu({
 export function RecordButton({
   recording,
   buttonClass = roundButton,
+  disabled = false,
 }: {
   recording: CallRecording;
   buttonClass?: string;
+  disabled?: boolean;
 }) {
   const t = useTranslations('call.inCall');
   if (recording.mode) {
@@ -169,6 +174,7 @@ export function RecordButton({
       <button
         aria-label={t('stopRecording')}
         className={`${buttonClass} border border-red-500/60 bg-red-950/40 text-red-400 hover:bg-red-950/60`}
+        disabled={disabled}
         onClick={recording.stop}
         type="button"
       >
@@ -182,6 +188,7 @@ export function RecordButton({
         <button
           aria-label={t('record')}
           className={`${buttonClass} border border-slate-700/70 bg-slate-800/60 text-slate-50 hover:bg-slate-800`}
+          disabled={disabled}
           type="button"
         >
           <Disc aria-hidden="true" className="size-6" />
@@ -265,8 +272,8 @@ export function InCallView({
             <Mic aria-hidden="true" className="size-6" />
           )}
         </button>
-        {connected && canRecordCalls() && (
-          <RecordButton recording={recording} />
+        {canRecordCalls() && (
+          <RecordButton disabled={!connected} recording={recording} />
         )}
         <button
           aria-label={t('end')}
@@ -276,7 +283,7 @@ export function InCallView({
         >
           <PhoneOff aria-hidden="true" className="size-6" />
         </button>
-        {connected && <AudioSettingsMenu />}
+        <AudioSettingsMenu disabled={!connected} />
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ export interface VoiceChatTranscriptHandle {
 }
 
 interface VoiceChatTranscriptProps {
+  inCall?: boolean;
   messages: VoiceChatMessage[];
   ref?: Ref<VoiceChatTranscriptHandle>;
   revealReplyId?: string;
@@ -35,6 +36,7 @@ interface VoiceChatTranscriptProps {
 
 // Message Scroller with bottom-aligned Message/Bubble rows.
 export function VoiceChatTranscript({
+  inCall,
   messages,
   ref,
   revealReplyId,
@@ -77,7 +79,10 @@ export function VoiceChatTranscript({
       <div
         aria-label={t('messages')}
         aria-relevant="additions"
-        className="h-full overflow-y-auto overscroll-contain rounded-2xl border bg-muted/25 focus-visible:outline-2 focus-visible:outline-ring"
+        className={cn(
+          'h-full overflow-y-auto overscroll-contain focus-visible:outline-2 focus-visible:outline-ring',
+          !inCall && 'rounded-2xl border bg-muted/25',
+        )}
         onScroll={({ currentTarget }) => {
           const distance =
             currentTarget.scrollHeight -
@@ -91,7 +96,13 @@ export function VoiceChatTranscript({
         // biome-ignore lint/a11y/noNoninteractiveTabindex: Users need keyboard access to scroll the transcript.
         tabIndex={0}
       >
-        <div className="flex min-h-full flex-col p-3 sm:p-4" ref={content}>
+        <div
+          className={cn(
+            'flex min-h-full flex-col',
+            inCall ? 'px-5 py-4' : 'p-3 sm:p-4',
+          )}
+          ref={content}
+        >
           <div className="mt-auto flex flex-col gap-2">
             {messages.map(({ id, text, user }) => (
               <div
@@ -102,8 +113,16 @@ export function VoiceChatTranscript({
                   className={cn(
                     'wrap-anywhere max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                     user
-                      ? 'whitespace-pre-wrap rounded-ee-md bg-primary text-primary-foreground'
-                      : 'rounded-es-md bg-muted text-foreground [&_p+p]:mt-2 [&_p]:whitespace-pre-wrap',
+                      ? 'whitespace-pre-wrap rounded-ee-md'
+                      : 'rounded-es-md [&_p+p]:mt-2 [&_p]:whitespace-pre-wrap',
+                    user &&
+                      (inCall
+                        ? 'bg-[#4c41a0] text-white'
+                        : 'bg-primary text-primary-foreground'),
+                    !user &&
+                      (inCall
+                        ? 'border border-[#242c52] bg-[#161d3b] text-slate-100'
+                        : 'bg-muted text-foreground'),
                   )}
                   data-slot="voice-chat-bubble"
                 >
@@ -124,7 +143,18 @@ export function VoiceChatTranscript({
                 className="self-start px-3.5 py-2 text-muted-foreground text-sm"
                 role="status"
               >
-                {status}
+                {inCall ? (
+                  <>
+                    <span className="sr-only">{status}</span>
+                    <span aria-hidden="true" className="flex gap-1.5 py-1">
+                      <span className="size-1.5 rounded-full bg-violet-400/50" />
+                      <span className="size-1.5 rounded-full bg-violet-400/75" />
+                      <span className="size-1.5 rounded-full bg-violet-400" />
+                    </span>
+                  </>
+                ) : (
+                  status
+                )}
               </p>
             )}
           </div>

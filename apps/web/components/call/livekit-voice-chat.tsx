@@ -92,8 +92,7 @@ export function LiveKitVoiceChat({
   const [speakerOff, setSpeakerOff] = useState(false);
   const [changingSpeaker, setChangingSpeaker] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [threadOpen, setThreadOpen] = useState(false);
-  const [lastSent, setLastSent] = useState<string | null>(null);
+  const restoreMicrophone = useRef(false);
   const [agentState, setAgentState] = useState('');
   const input = useRef<HTMLTextAreaElement>(null);
   const [thinking, setThinking] = useState(false);
@@ -155,8 +154,7 @@ export function LiveKitVoiceChat({
     setTyping(false);
     setSpeakerOff(false);
     setChangingSpeaker(false);
-    setThreadOpen(false);
-    setLastSent(null);
+    restoreMicrophone.current = false;
     setAgentState('');
     setMessages([]);
     setState('connecting');
@@ -440,22 +438,28 @@ export function LiveKitVoiceChat({
       setChangingMute(false);
     }
   };
+  const openComposer = () => {
+    // iOS needs the focus call inside the user's tap.
+    flushSync(() => setTyping(true));
+    input.current?.focus();
+  };
+
   const toggleSpeaker = async () => {
     const current = active.current;
     const identity = agent.current;
-    if (!(current && identity) || changingMute || changingSpeaker) return;
+    if (!(current && identity) || changingMute || changingSpeaker) return false;
     const enabled = speakerOff;
     setChangingSpeaker(true);
     try {
       if (enabled) {
         await current.startAudio();
       } else {
+        if (!typing) restoreMicrophone.current = !mutedRef.current;
         setSpeakerOff(true);
-        setTyping(true);
-        setThreadOpen(true);
-        if (!(await setMicrophoneMuted(true))) return;
+        if (!typing) openComposer();
+        if (!(await setMicrophoneMuted(true))) return false;
       }
-      if (active.current !== current) return;
+      if (active.current !== current) return false;
       const reply = await current.localParticipant.performRpc({
         destinationIdentity: identity,
         method: SPEAKER_RPC,
@@ -463,16 +467,27 @@ export function LiveKitVoiceChat({
       });
       if (JSON.parse(reply).ok !== true)
         throw new Error('Speaker control unavailable');
-      if (active.current === current) setSpeakerOff(!enabled);
+      if (active.current !== current) return false;
+      setSpeakerOff(!enabled);
+      return true;
     } catch {
       if (active.current === current) {
         setError(t('connectError'));
         await stop();
       }
+      return false;
     } finally {
       if (active.current === current) setChangingSpeaker(false);
     }
   };
+
+  const returnToVoice = async () => {
+    input.current?.blur();
+    if (speakerOff && !(await toggleSpeaker())) return;
+    if (restoreMicrophone.current && !(await setMicrophoneMuted(false))) return;
+    setTyping(false);
+  };
+
   const send = async () => {
     const text = draft.trim();
     const current = active.current;
@@ -499,7 +514,6 @@ export function LiveKitVoiceChat({
         user: true,
         timestamp: sent.timestamp,
       });
-      setLastSent(text);
       setDraft('');
     } catch {
       if (active.current === current) {
@@ -545,27 +559,18 @@ export function LiveKitVoiceChat({
           draft={draft}
           error={error}
           inputRef={input}
-          lastSent={lastSent}
           messages={[...priorMessages, ...messages]}
           muted={muted}
           onDraft={setDraft}
           onHangUp={() => stop().catch(() => undefined)}
-          onReturnToVoice={() => {
-            setMicrophoneMuted(false)
-              .then((changed) => {
-                if (changed) setTyping(false);
-              })
-              .catch(() => undefined);
-          }}
+          onReturnToVoice={() => returnToVoice().catch(() => undefined)}
           onSend={() => send().catch(() => undefined)}
-          onShowThread={() => setThreadOpen((open) => !open)}
           onToggleMute={() => setMicrophoneMuted(!muted).catch(() => undefined)}
           onToggleSpeaker={() => toggleSpeaker().catch(() => undefined)}
           onType={() => {
+            restoreMicrophone.current = !mutedRef.current;
             setMicrophoneMuted(true).catch(() => undefined);
-            // iOS requires focus inside the keyboard button's user gesture.
-            flushSync(() => setTyping(true));
-            input.current?.focus();
+            openComposer();
           }}
           preset={pythonCall.preset}
           ready={ready}
@@ -573,7 +578,6 @@ export function LiveKitVoiceChat({
           speakerOff={speakerOff}
           status={status}
           thinking={thinking}
-          threadOpen={threadOpen}
           transcriptRef={transcript}
           typing={typing}
         >

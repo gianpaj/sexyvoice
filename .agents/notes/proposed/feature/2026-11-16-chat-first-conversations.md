@@ -57,14 +57,18 @@ SexyVoice owns the [shared contracts](../../../../packages/voice-chat/contracts/
 SexyCall tests a pinned dispatch schema and generates its RPC types from the
 migrated database. The Postgres tests cover shared history and admission.
 
-Paid, allowlisted local users open chat from an owned Inworld character on
-`/dashboard/call`. The phone button dispatches the `sexycall-inworld-chat`
-worker using the current thread ID. The keyboard button releases browser
-capture and waits for the worker to disable audio input before enabling Send.
-The character still speaks. A microphone button returns to voice, and the
-conversation button opens the complete visible thread with jump-to-latest.
-Turning the speaker off takes the user to the thread, removes browser playback,
-and mutes the microphone. The linked worker requires muted input before
+Paid, allowlisted local users can call an owned Inworld character from its
+card on `/dashboard/call`. The tap unlocks LiveKit audio before navigation.
+A one-use browser handoff dials the new thread after navigation. Opening a saved
+URL shows its chat with a phone button, and the character details panel also
+opens chat without dialing. Both call buttons dispatch `sexycall-inworld-chat`
+with the thread ID.
+
+The keyboard and chat buttons open the full thread and composer. Send waits
+for the worker to disable audio input. The top-right chat button closes the
+composer and restores voice, preserving any microphone mute the caller set
+before typing. Turning the speaker off also opens the thread, removes browser
+playback, and mutes the microphone. The linked worker requires muted input before
 disabling audio output with LiveKit's session API. This cuts off synthesis in
 flight and streams later replies through the existing transcription topic
 without sending them to Inworld. Restoring the speaker keeps the microphone

@@ -418,7 +418,6 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     await composer.fill(typed);
     await send.click();
     await expect(page.getByText(typed, { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Show conversation' }).click();
     await expect(bubbles.first()).toHaveText(earlier);
     await expect(bubbles.last()).toHaveText(
       /paper iguana[\s,.:!?–—]+acknowledged/i,
@@ -426,7 +425,7 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
         timeout: 25_000,
       },
     );
-    await page.getByRole('button', { name: 'Back to voice' }).click();
+    await page.getByRole('button', { name: 'Hide conversation' }).click();
     await expect(composer).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: 'Mute microphone' }),
