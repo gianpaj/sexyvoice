@@ -3,7 +3,7 @@ title: List available voices
 full: true
 _openapi:
   preload:
-    - https://sexyvoice.ai/api/v1/openapi
+    - ./content/docs/api-reference/openapi.json
   method: GET
   webhook: false
   toc: []
@@ -21,7 +21,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <Comp document="https://sexyvoice.ai/api/v1/openapi" operations={[{"path":"/api/v1/voices","method":"get"}]} showDescription />
+      <Comp document="./content/docs/api-reference/openapi.json" operations={[{"path":"/api/v1/voices","method":"get"}]} showDescription />
     </>
   );
 }

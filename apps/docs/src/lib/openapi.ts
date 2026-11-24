@@ -1,6 +1,6 @@
 import { createOpenAPI } from 'fumadocs-openapi/server';
 
 export const openapi = createOpenAPI({
-  // the OpenAPI schema, you can also give it an external URL.
-  input: ['https://sexyvoice.ai/api/v1/openapi'],
+  // Refresh with `pnpm --filter @sexyvoice/web openapi:docs`.
+  input: ['./content/docs/api-reference/openapi.json'],
 });
