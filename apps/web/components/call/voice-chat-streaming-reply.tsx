@@ -1,7 +1,7 @@
 'use client';
 
 import { Streamdown } from '@lobehub/streamdown';
-import { type ComponentProps, useEffect, useMemo, useState } from 'react';
+import { type ComponentProps, useEffect, useState } from 'react';
 
 // Silky skips smoothing on appends over 100 characters. Feed bursts in
 // smaller chunks so that a single SSE event can still reveal gradually.
@@ -15,7 +15,7 @@ export default function StreamingReply({
 }: Omit<ComponentProps<typeof Streamdown>, 'granularity' | 'smoothing'> & {
   initialContent: string;
 }) {
-  const chars = useMemo(() => Array.from(content), [content]);
+  const chars = Array.from(content);
   const [fedChars, setFedChars] = useState(
     () => Array.from(initialContent).length,
   );
