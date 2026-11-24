@@ -1,10 +1,17 @@
 import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { captureException, logger } from '@sentry/nextjs';
+import { callerIdentity } from '@sexyvoice/voice-chat';
+import {
+  createPythonCallDispatch,
+  PYTHON_CALL_RUNTIME,
+} from '@sexyvoice/voice-chat/dispatch';
+import { loadThreadCharacter } from '@sexyvoice/voice-chat/history';
 import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { callScenes } from '@/data/call-scenes';
+import { ModelId } from '@/data/models';
 import {
   defaultLanguage,
   getInitialInstruction,
@@ -27,6 +34,9 @@ import {
   resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { canUseCallChat } from '@/lib/voice-chat/access';
+import { getCharacterVoiceReferenceId } from '@/lib/voice-chat/characters';
+import { createChatDb } from '@/lib/voice-chat/chat';
 
 function appendSceneInstructions(
   instructions: string,
@@ -122,7 +132,9 @@ export async function POST(request: Request) {
       return APIErrorResponse('Invalid JSON in request body', 400);
     }
 
-    const roomName = `ro-${crypto.randomUUID()}`;
+    const { conversationId } = playgroundState;
+    const linked = conversationId !== undefined;
+    const roomName = `${linked ? 'voice-chat' : 'ro'}-${crypto.randomUUID()}`;
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     if (!(apiKey && apiSecret)) {
@@ -135,7 +147,7 @@ export async function POST(request: Request) {
     const {
       instructions: clientInstructions,
       language = defaultLanguage,
-      sceneInstructions,
+      sceneInstructions: clientSceneInstructions,
       selectedPresetId,
       selectedSceneId,
       memory,
@@ -143,6 +155,47 @@ export async function POST(request: Request) {
       timeZone,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
+
+    let sceneInstructions = clientSceneInstructions;
+    if (linked) {
+      if (
+        !(
+          canUseCallChat(user.id) &&
+          selectedPresetId &&
+          model === ModelId.INWORLD_TTS
+        )
+      )
+        return APIErrorResponse('Conversation not found', 404);
+      const { data: thread, error } = await supabase
+        .from('conversations')
+        .select('character_id, language, scene_instructions')
+        .eq('user_id', user.id)
+        .eq('id', conversationId)
+        .maybeSingle();
+      if (error)
+        return APIErrorResponse('Conversation lookup unavailable', 503);
+      if (
+        !thread ||
+        thread.character_id !== selectedPresetId ||
+        thread.language !== language
+      )
+        return APIErrorResponse('Conversation not found', 404);
+      const character = await loadThreadCharacter(
+        createChatDb(),
+        user.id,
+        selectedPresetId,
+        language,
+      );
+      const savedVoiceId = getCharacterVoiceReferenceId(
+        character?.sessionConfig,
+      );
+      if (
+        !savedVoiceId ||
+        savedVoiceId !== playgroundState.sessionConfig.audioReferenceId
+      )
+        return APIErrorResponse('Voice not found', 404);
+      sceneInstructions = thread.scene_instructions;
+    }
 
     const selectedLanguage = languageInitialInstructions[language]
       ? language
@@ -292,7 +345,8 @@ export async function POST(request: Request) {
 
     // Create access token
     const at = new AccessToken(apiKey, apiSecret, {
-      identity: 'human',
+      identity: linked ? callerIdentity(user.id) : 'human',
+      ...(linked && { ttl: 120 }),
       metadata: JSON.stringify(metadata),
     });
 
@@ -301,7 +355,7 @@ export async function POST(request: Request) {
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
-      canUpdateOwnMetadata: true,
+      canUpdateOwnMetadata: !linked,
       room: roomName,
       roomJoin: true,
     });
@@ -309,11 +363,19 @@ export async function POST(request: Request) {
     // Create room configuration + dispatch agent
     at.roomConfig = new RoomConfiguration({
       agents: [
-        new RoomAgentDispatch({
-          // Must match the agent's LIVEKIT_AGENT_NAME; use a dev name locally.
-          agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall',
-        }),
+        new RoomAgentDispatch(
+          linked
+            ? createPythonCallDispatch({
+                roomName,
+                userId: user.id,
+                conversationId,
+                resume: true,
+                audioReferenceId: voiceObj.id,
+              })
+            : { agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall' },
+        ),
       ],
+      ...(linked && { maxParticipants: 2, emptyTimeout: 30 }),
       name: roomName,
     });
 
@@ -332,6 +394,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       accessToken: await at.toJwt(),
       url: process.env.LIVEKIT_URL,
+      ...(linked && { conversationId, runtime: PYTHON_CALL_RUNTIME }),
     });
   } catch (error) {
     console.error('Error generating token:', error);

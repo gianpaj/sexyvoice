@@ -21,3 +21,15 @@ export function isLocalVoiceChatEnvironment() {
     (process.env.VERCEL_ENV ?? 'development') === 'development'
   );
 }
+
+export function canUseCallChat(userId: string) {
+  return (
+    isLocalVoiceChatEnvironment() &&
+    isVoiceChatAllowed(
+      userId,
+      process.env.VOICE_CHAT_USER_IDS,
+      process.env.VERCEL_ENV,
+      process.env.NODE_ENV,
+    )
+  );
+}

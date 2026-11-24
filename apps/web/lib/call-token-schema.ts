@@ -18,6 +18,7 @@ const sessionConfigSchema = z.object({
 export const callTokenPlaygroundStateSchema = z.object({
   clientTime: z.iso.datetime({ offset: true }).optional().catch(undefined),
   instructions: z.string(),
+  conversationId: z.uuid().optional(),
   language: z
     .enum([
       'ar',
