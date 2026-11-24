@@ -18,7 +18,7 @@ call turns. Chat and calls share history and the credit wallet.
 
 Only one generation or call runs per user. Chat reserves bounded credits and
 settles once from authoritative token usage. The agreed rate version is
-`grok420-chat-v1`: 50 / 10 / 100 credits per 1,000 uncached input / cached input /
+`grok420-chat-v2`: 75 / 12 / 150 credits per 1,000 uncached input / cached input /
 output tokens. Free and paid users consume credits at the same rate. Calls
 retain minute metering. Browser mute also gates Python audio input. Text mode
 has no voice session. Resume the accepted reply after disconnect without
@@ -120,9 +120,10 @@ branch's migrations in a disposable local Supabase project.
   still need ownership, billing, Python integration, and conformance tests.
 - Porting memory extraction to TypeScript duplicates verification and correction
   rules. A shared Python interface keeps those rules in one place.
-- Pricing at 10 / 2 / 20 increases the model-cost allowance for a fully spent
-  trial fivefold. Pricing at 100 / 20 / 200 shortens the trial. The selected
-  middle rate keeps a useful trial with room for other product costs.
+- Keeping 50 / 10 / 100 leaves a higher Grok cost per spent signup credit.
+  Using 75 / 15 / 150 passes on less of the provider's cache discount.
+  Using 100 / 20 / 200 buys fewer trial replies. At 75 / 12 / 150, each token
+  class has the same provider cost per credit before rounding.
 
 ## Acceptance criteria
 

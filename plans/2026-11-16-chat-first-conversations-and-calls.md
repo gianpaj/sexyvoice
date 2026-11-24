@@ -54,7 +54,7 @@ This release does not complete their in-call typing capability.
    Keep an unaccepted draft. Clear it after server acceptance. Show a failed
    message with an explicit Retry action; never silently resend.
 
-Customer rates are 50 / 10 / 100 credits per 1,000 uncached input / cached input /
+Customer rates are 75 / 12 / 150 credits per 1,000 uncached input / cached input /
 output tokens. Use decisions 2, 3, and 5 as the documented implementation
 defaults: exclusive modes, shared history, and completing accepted replies after
 a network drop. Missing final usage follows the failure policy below.
@@ -228,15 +228,16 @@ and replay data. Exclude content from logs and telemetry.
 
 ## Token billing and credit safety
 
-Use the agreed customer rate version `grok420-chat-v1`. Free and paid users
+Use customer rate version `grok420-chat-v2` for new replies. Free and paid users
 consume the same credits per token; purchase packages determine the cash paid
-for those credits. Missing rates reject generation before provider spending.
+for those credits. A reply settles at the version selected at admission.
+Missing rates reject generation before provider spending.
 
-| Token category | Credits per 1,000 tokens | Credits per million tokens | Tokens per credit |
-| -------------- | -----------------------: | -------------------------: | ----------------: |
-| Uncached input |                       50 |                     50,000 |                20 |
-| Cached input   |                       10 |                     10,000 |               100 |
-| Output         |                      100 |                    100,000 |                10 |
+| Token category | Credits per 1,000 tokens | Credits per million tokens |
+| -------------- | -----------------------: | -------------------------: |
+| Uncached input |                       75 |                     75,000 |
+| Cached input   |                       12 |                     12,000 |
+| Output         |                      150 |                    150,000 |
 
 All supplied instructions and conversation history count as input. Cached
 tokens are a subset of that input, not an additional input charge. The general
@@ -252,21 +253,19 @@ credits = ceil((uncached_input * input_rate
 For this rate version, use the equivalent integer calculation:
 
 ```text
-credits = ceil((5 * uncached_input + cached_input_tokens + 10 * output_tokens) / 100)
-        = ceil(uncached_input / 20 + cached_input_tokens / 100 + output_tokens / 10)
+credits = ceil((75 * uncached_input + 12 * cached_input_tokens + 150 * output_tokens) / 1000)
 ```
 
-For nonnegative integer counts, `ceil(numerator / 100)` can be computed as
-integer division of `numerator + 99` by 100. Round once per generation, after
+For nonnegative integer counts, `ceil(numerator / 1000)` is integer division
+of `numerator + 999` by 1000. Round once per generation, after
 combining all token categories. Do not round each category or charge in blocks
 of 1,000 tokens. An actual all-zero usage result costs zero credits; missing
 usage is a separate failure state.
 
-Credits spent entirely on uncached input buy `credits * 20` tokens. Thus
-10,000 credits buy up to 200,000 uncached input tokens in aggregate across
-requests. Spent entirely on cached input, they buy 1,000,000 tokens; spent
-entirely on output, they buy 100,000 tokens. A real exchange shares its budget
-between the supplied context and the generated answer.
+For uncached input alone, divide available credits by 0.075 and round down.
+Before per-reply rounding, 10,000 credits cover up to 133,333 uncached input
+tokens, 833,333 cached input tokens, or 66,666 output tokens. An exchange
+shares its budget between the supplied context and the generated answer.
 
 ### Provider costs and worked examples
 
@@ -293,15 +292,15 @@ in the metered input tokens and in the reservation budget.
 
 | Example exchange                               | Grok cost | Customer credits | Customer USD at the base Standard pack |
 | ---------------------------------------------- | --------: | ---------------: | -------------------------------------: |
-| 2,000 uncached input + 200 output              |    $0.003 |              120 |                                 $0.048 |
-| 5,000 uncached input + 300 output              |    $0.007 |              280 |                                 $0.112 |
-| 500 uncached + 4,500 cached input + 300 output | $0.002275 |              100 |                                 $0.040 |
-| 16,000 uncached input + 500 output             |  $0.02125 |              850 |                                 $0.340 |
+| 2,000 uncached input + 200 output              |    $0.003 |              180 |                                 $0.072 |
+| 5,000 uncached input + 300 output              |    $0.007 |              420 |                                 $0.168 |
+| 500 uncached + 4,500 cached input + 300 output | $0.002275 |              137 |                                $0.0548 |
+| 16,000 uncached input + 500 output             |  $0.02125 |             1275 |                                  $0.51 |
 
 The configured base Standard pack is $10 for 25,000 credits, or $0.0004 per
 credit. Pro is $75 for 300,000 credits; its normal subscription adds 15%, giving
-345,000 credits for $75. Those subscription credits leave 88.5% margin over
-uncached input/output model costs at the agreed rates, before other costs and
+345,000 credits for $75. Those subscription credits leave about 92.3% margin
+over Grok token costs at these rates, before other costs and
 promotions. These are assumptions from Sexyvoice's `lib/stripe/pricing.ts`;
 deployment promotions and first-month discounts can change realized revenue.
 
@@ -312,16 +311,14 @@ character prompt and earlier turns, so there is no fixed number of messages
 per grant.
 
 At the proposed maximum of 16,384 entirely uncached input tokens and 1,024
-output tokens, one exchange uses 922 credits and costs $0.02304. Ten such
-exchanges use 9,220 credits and cost $0.2304, leaving 780 credits. Admission
-must let a smaller affordable exchange use that remainder. For example,
-14,000 uncached input tokens and an 800-token reply cost exactly 780 credits
-and $0.0195, bringing the total to 10,000 credits and $0.2499.
+output tokens, one exchange uses 1,383 credits and costs $0.02304. Seven such
+exchanges use 9,681 credits and cost $0.16128, leaving 319 credits. Admission
+lets a smaller affordable exchange use that remainder.
 
-For tokens covered by settled credits, input and output cost at most $0.000025
-per credit; cached input costs $0.000020 per credit. Rounding up can only reduce
-the provider cost per credit. Therefore a fully spent text-only grant covers
-at most $0.25 in metered Grok usage, or $250 for 1,000 fully spent grants.
+The credit rates match Grok 4.20's provider price ratios. Before rounding,
+60,000 credits correspond to $1 in metered Grok usage for any mix of tokens.
+A fully spent text-only grant covers up to about $0.1667 in metered usage, or
+$166.67 for 1,000 fully spent grants.
 Calls and other features consume the same wallet under their own rates.
 
 This is a bound on metered token usage, not an unconditional provider-spend
@@ -338,8 +335,8 @@ and have 200 uncached tokens. Round customer credits once on each exchange.
 
 | Modeled 50-exchange conversation    |  Grok cost | Credits used | Exchanges covered by the free grant |
 | ----------------------------------- | ---------: | -----------: | ----------------------------------- |
-| No cache hits                       |  $0.421875 |       16,900 | 36, using 9,648 credits             |
-| All earlier request prefixes cached | $0.0951675 |        4,454 | All 50, with 5,546 credits left     |
+| No cache hits                       |  $0.421875 |       25,325 | 28, using 9,562 credits             |
+| All earlier request prefixes cached | $0.0951675 |        5,735 | All 50, with 4,265 credits left     |
 
 These are reproducible estimates, not promised trial lengths. Prefix changes,
 eviction, and routing can reduce hits. Use per-conversation routing and stable

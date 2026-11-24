@@ -265,7 +265,7 @@ Multiple saved threads remain possible; a thread menu is outside this spike.
   JS on the same simulated-wallet fixtures for periodic metering, low balances,
   exhaustion, and final reconciliation. Use simulated wallets throughout
   shadow mode. A reconnect must not create another reservation, greeting, or
-  charge. Text retains the product plan's `grok420-chat-v1` rates.
+  charge. Standalone text uses the rate version specified in the product plan.
 - The report records observed uncached/cached/output LLM tokens, forwarded STT
   duration, and TTS characters, with separate cost estimates for each provider.
   Missing usage stays unpriced. Reconcile cancelled and retried attempts
