@@ -142,11 +142,7 @@ async function PricingTable({
       name: pPlans.starter.name,
       price: subscriptionPackages.starter.dollarAmount,
       recurringPrice: subscriptionPackages.starter.recurringDollarAmount,
-      pricePer1kCredits: (
-        (subscriptionPackages.starter.dollarAmount /
-          subscriptionPackages.starter.baseCredits) *
-        1000
-      ).toFixed(2),
+      pricePer1kCredits: subscriptionPackages.starter.pricePer1kCredits,
       subscriptionBonusCredits: (
         subscriptionPackages.starter.credits -
         subscriptionPackages.starter.baseCredits
@@ -169,9 +165,7 @@ async function PricingTable({
       saveFromPrevPlanPer1kCredits: hideFreePlan
         ? Number(
             (
-              (subscriptionPackages.starter.dollarAmount /
-                subscriptionPackages.starter.baseCredits) *
-                1000 -
+              Number(subscriptionPackages.starter.pricePer1kCredits) -
               Number(subscriptionPackages.standard.pricePer1kCredits)
             ).toFixed(2),
           )
