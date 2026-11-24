@@ -33,11 +33,13 @@ import type { Preset } from '@/data/presets';
 import type { CallRecordingFiles } from '@/hooks/use-call-recording';
 import { formatTime } from '@/hooks/use-call-timer';
 import { getCallerTime } from '@/lib/caller-time';
+import { useRouter } from '@/lib/i18n/navigation';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
   audioCaptureDefaults,
   createVoiceChatRoom,
+  prepareCallFromCard,
   takeCallFromCard,
 } from './voice-chat-room';
 import {
@@ -72,8 +74,13 @@ export function LiveKitVoiceChat({
   audioReferenceId?: string;
   conversationId?: string;
   chatThreadId?: string;
-  pythonCall?: { language: string; preset: Preset };
+  pythonCall?: {
+    language: string;
+    openConversation: () => Promise<string | null>;
+    preset: Preset;
+  };
 }) {
+  const router = useRouter();
   const t = useTranslations('voiceChat');
   const tCall = useTranslations('call');
   const callStatus = useTranslations('call.inCall');
@@ -89,6 +96,7 @@ export function LiveKitVoiceChat({
   const [state, setState] = useState<State>('idle');
   const linkedCallStartedAt = useRef<number | null>(null);
   const [endedDuration, setEndedDuration] = useState<string>();
+  const [callingAgain, setCallingAgain] = useState(false);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const [changingMute, setChangingMute] = useState(false);
@@ -488,6 +496,29 @@ export function LiveKitVoiceChat({
       setSending(false);
     }
   };
+  const callAgain = async () => {
+    if (!pythonCall || callingAgain) return;
+    setCallingAgain(true);
+    setError(null);
+    let prepared: ReturnType<typeof prepareCallFromCard> | undefined;
+    try {
+      prepared = prepareCallFromCard();
+      const id = await pythonCall.openConversation();
+      if (!id) throw new Error('Conversation unavailable');
+      if (!mounted.current) {
+        prepared.discard();
+        return;
+      }
+      prepared.handOff(id);
+      router.push(`/dashboard/call?conversation=${id}`);
+    } catch {
+      prepared?.discard();
+      if (mounted.current) {
+        setError(t('chatError'));
+        setCallingAgain(false);
+      }
+    }
+  };
   const idleChat = (recording?: CallRecordingFiles) =>
     chatThreadId && (
       <VoiceChatThread
@@ -500,7 +531,9 @@ export function LiveKitVoiceChat({
         key={chatRevision}
         linked={
           pythonCall && {
+            callingAgain,
             duration: endedDuration,
+            onCallAgain: callAgain,
             onContinueChat: () => {
               setEndedDuration(undefined);
               setError(null);

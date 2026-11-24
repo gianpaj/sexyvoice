@@ -63,7 +63,8 @@ A one-use browser handoff dials the new thread after navigation. Opening a saved
 URL shows the conversation in the Call layout, with a phone button. The
 character details panel also opens Chat. When an established call ends, the
 Call summary offers Call again, Chat, and Back to characters. Call again waits
-for the worker to finish saving the call and reuses the same thread. Chat
+for the worker to finish saving the call, then starts a new thread with the
+same character, language, and scene. Chat opens the finished thread and
 retains the TanStack history and stream recovery, Streamdown formatting, and
 recording downloads. Both call buttons dispatch `sexycall-inworld-chat` with
 the thread ID.

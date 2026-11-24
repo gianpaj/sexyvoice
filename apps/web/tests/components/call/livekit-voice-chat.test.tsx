@@ -19,7 +19,12 @@ import messages from '@/messages/en.json';
 
 const sdk = vi.hoisted(() => ({
   rooms: [] as any[],
+  push: vi.fn(),
   createLocalAudioTrack: vi.fn(),
+}));
+vi.mock('@/lib/i18n/navigation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/i18n/navigation')>()),
+  useRouter: () => ({ push: sdk.push }),
 }));
 vi.mock('@livekit/components-react', async () => {
   const { createContext } = await import('react');
@@ -111,6 +116,7 @@ async function connect() {
 }
 beforeEach(() => {
   sdk.rooms = [];
+  sdk.push.mockClear();
   sdk.createLocalAudioTrack.mockReset().mockResolvedValue({ stop: vi.fn() });
   vi.stubGlobal(
     'fetch',
@@ -486,7 +492,10 @@ describe('JS browser call', () => {
 });
 
 describe('Python Inworld call on the chat page', () => {
-  async function startPythonCall(fromCard = false) {
+  async function startPythonCall(
+    fromCard = false,
+    openConversation = vi.fn().mockResolvedValue(null),
+  ) {
     const conversationId = '60606060-6060-4060-8060-606060606061';
     const preset = {
       id: '63765019-12dc-46b6-85e3-dd8b5238c9a0',
@@ -521,7 +530,7 @@ describe('Python Inworld call on the chat page', () => {
           characterName={preset.name}
           chatThreadId={conversationId}
           conversationId={conversationId}
-          pythonCall={{ preset, language: 'en' }}
+          pythonCall={{ preset, language: 'en', openConversation }}
         />
       </NextIntlClientProvider>,
     );
@@ -573,6 +582,37 @@ describe('Python Inworld call on the chat page', () => {
     expect(screen.getByText('Earlier text')).toBeVisible();
     expect(screen.getByRole('textbox', { name: 'Message' })).toBeEnabled();
     expect(room.connect).toHaveBeenCalledOnce();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('opens a fresh conversation when calling again from the summary', async () => {
+    const freshId = '60606060-6060-4060-8060-606060606062';
+    const openConversation = vi.fn().mockResolvedValue(freshId);
+    const { room, conversationId } = await startPythonCall(
+      true,
+      openConversation,
+    );
+    await admitPythonAgent(room);
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+    const callAgain = await screen.findByRole('button', { name: 'Call again' });
+    await waitFor(() => expect(callAgain).toBeEnabled());
+    fireEvent.click(callAgain);
+
+    await waitFor(() =>
+      expect(sdk.push).toHaveBeenCalledWith(
+        `/dashboard/call?conversation=${freshId}`,
+      ),
+    );
+    expect(openConversation).toHaveBeenCalledOnce();
+    expect(sdk.rooms[1].startAudio).toHaveBeenCalledOnce();
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([url]) => url === '/api/call-token'),
+    ).toHaveLength(1);
+    expect(new URL(window.location.href).searchParams.get('conversation')).toBe(
+      conversationId,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    expect(await screen.findByText('Earlier text')).toBeVisible();
     window.history.replaceState(null, '', '/');
   });
 

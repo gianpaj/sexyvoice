@@ -35,7 +35,9 @@ interface ChatProps extends VoiceChatCharacterPicker {
   draft: string;
   error: string | null;
   linked?: {
+    callingAgain: boolean;
     duration?: string;
+    onCallAgain: () => Promise<void>;
     onContinueChat: () => void;
     preset: Preset;
     recording?: CallRecordingFiles;
@@ -230,9 +232,9 @@ export function VoiceChatThread({
     return (
       <CallEndedView
         callDisabled={busy || unavailable}
-        connecting={false}
+        connecting={linked.callingAgain}
         duration={linked.duration}
-        onCallAgain={startCall}
+        onCallAgain={() => linked.onCallAgain().catch(() => undefined)}
         onChat={linked.onContinueChat}
         preset={linked.preset}
         recording={linked.recording}

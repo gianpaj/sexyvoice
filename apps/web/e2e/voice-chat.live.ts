@@ -347,7 +347,7 @@ test('the Inworld card dials immediately and registers the call UI', async ({
   }
 });
 
-test('keeps the Inworld thread through a Python call on mobile', async ({
+test('resumes a saved Inworld thread and starts a fresh one on redial', async ({
   browserName,
   page,
 }) => {
@@ -357,7 +357,7 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     !character,
     'A paid test character with an owned Inworld voice is required.',
   );
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   if (browserName === 'webkit') {
     await page.context().grantPermissions(['microphone']);
   }
@@ -455,12 +455,25 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
   const summary = page.getByTestId('call-ended-view');
   await expect(summary).toBeVisible();
   await expect(composer).toHaveCount(0);
-  await expect(summary.getByRole('button', { name: 'Call again' })).toBeEnabled(
-    {
-      timeout: 20_000,
-    },
-  );
-  await summary.getByRole('button', { name: 'Chat', exact: true }).click();
+  const callAgain = summary.getByRole('button', { name: 'Call again' });
+  await expect(callAgain).toBeEnabled({ timeout: 20_000 });
+  await callAgain.click();
+  try {
+    await expect(keyboard).toBeEnabled({ timeout: 65_000 });
+    await expect(page).toHaveURL(
+      /dashboard\/call\?conversation=[a-f0-9-]{36}$/,
+    );
+    expect(page.url()).not.toBe(threadUrl);
+    await keyboard.click();
+    await expect(composer).toBeFocused();
+    await expect(page.getByText(earlier, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(typed, { exact: true })).toHaveCount(0);
+  } finally {
+    const end = page.getByRole('button', { name: 'End call', exact: true });
+    if (await end.isVisible()) await end.click();
+  }
+
+  await page.goto(threadUrl);
   await expect(chat).toBeVisible();
   await expect(
     page.getByRole('log').getByText(typed, { exact: true }),

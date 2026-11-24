@@ -128,7 +128,7 @@ export default async function Call(props: {
     if (!thread.success) notFound();
     const { data, error } = await supabase
       .from('conversations')
-      .select('character_id,language')
+      .select('character_id,language,scene_instructions')
       .eq('id', thread.data)
       .eq('user_id', userId)
       .maybeSingle();
@@ -143,7 +143,15 @@ export default async function Call(props: {
         chatThreadId={thread.data}
         conversationId={thread.data}
         key={thread.data}
-        pythonCall={{ preset, language: data.language }}
+        pythonCall={{
+          preset,
+          language: data.language,
+          openConversation: openCallConversation.bind(null, {
+            characterId: preset.id,
+            language: data.language,
+            scene: data.scene_instructions,
+          }),
+        }}
       />
     );
   }

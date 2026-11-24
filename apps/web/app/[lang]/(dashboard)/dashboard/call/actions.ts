@@ -16,7 +16,11 @@ const selection = z.object({
   scene: z.string().trim().max(8000).nullable(),
 });
 
-export async function openCallConversation(input: z.input<typeof selection>) {
+export async function openCallConversation(input: {
+  characterId: string;
+  language: string;
+  scene: string | null;
+}) {
   const parsed = selection.safeParse(input);
   if (!parsed.success) return null;
   const { characterId, language, scene } = parsed.data;
