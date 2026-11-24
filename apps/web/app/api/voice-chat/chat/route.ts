@@ -5,8 +5,9 @@ import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 import {
+  canUseCallChat,
   isLocalVoiceChatEnvironment,
-  isVoiceChatAllowed,
+  isVoiceChatRequestOrigin,
 } from '@/lib/voice-chat/access';
 import {
   chatEventsResponse,
@@ -37,29 +38,17 @@ const offsetSchema = z
   .transform(Number);
 
 async function authorize() {
-  const { NODE_ENV, VERCEL_ENV, VOICE_CHAT_USER_IDS } = process.env;
-  if (!(VOICE_CHAT_USER_IDS && isLocalVoiceChatEnvironment()))
+  if (!(process.env.VOICE_CHAT_USER_IDS && isLocalVoiceChatEnvironment()))
     return APIErrorResponse('Not found', 404);
   const claims = await getVerifiedClaims(await createClient());
   if (!claims?.sub) return APIErrorResponse('Unauthorized', 401);
-  if (
-    !isVoiceChatAllowed(claims.sub, VOICE_CHAT_USER_IDS, VERCEL_ENV, NODE_ENV)
-  )
-    return APIErrorResponse('Not found', 404);
+  if (!canUseCallChat(claims.sub)) return APIErrorResponse('Not found', 404);
   return claims.sub;
 }
 
 export async function POST(request: Request) {
   if (!isLocalVoiceChatEnvironment()) return APIErrorResponse('Not found', 404);
-  const origin = request.headers.get('origin');
-  const devOrigin =
-    process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SITE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-      : null;
-  if (
-    !origin ||
-    (origin !== new URL(request.url).origin && origin !== devOrigin)
-  )
+  if (!isVoiceChatRequestOrigin(request))
     return APIErrorResponse('Invalid origin', 403);
   const userId = await authorize();
   if (typeof userId !== 'string') return userId;

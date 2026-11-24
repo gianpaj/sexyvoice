@@ -8,8 +8,8 @@ import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  canUseCallChat,
   isLocalVoiceChatEnvironment,
-  isVoiceChatAllowed,
 } from '@/lib/voice-chat/access';
 import { listVoiceChatCharacters } from '@/lib/voice-chat/characters';
 import { startCharacterConversation } from './actions';
@@ -27,18 +27,7 @@ export default async function VoiceChatPage({
   if (!isLocalVoiceChatEnvironment()) notFound();
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
-  if (
-    !(
-      claims?.sub &&
-      isVoiceChatAllowed(
-        claims.sub,
-        process.env.VOICE_CHAT_USER_IDS,
-        process.env.VERCEL_ENV,
-        process.env.NODE_ENV,
-      )
-    )
-  )
-    notFound();
+  if (!(claims?.sub && canUseCallChat(claims.sub))) notFound();
   const [{ lang }, { voice, conversation }] = await Promise.all([
     params,
     searchParams,

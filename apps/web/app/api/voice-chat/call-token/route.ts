@@ -12,8 +12,9 @@ import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  canUseCallChat,
   isLocalVoiceChatEnvironment,
-  isVoiceChatAllowed,
+  isVoiceChatRequestOrigin,
 } from '@/lib/voice-chat/access';
 import { getCharacterVoiceReferenceId } from '@/lib/voice-chat/characters';
 import { createChatDb } from '@/lib/voice-chat/chat';
@@ -26,28 +27,12 @@ const requestSchema = z.strictObject({
 export async function POST(request: Request) {
   if (!(process.env.VOICE_CHAT_USER_IDS && isLocalVoiceChatEnvironment()))
     return APIErrorResponse('Not found', 404);
-  const origin = request.headers.get('origin');
-  const developmentOrigin =
-    process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SITE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-      : null;
-  if (
-    origin !== new URL(request.url).origin &&
-    (!developmentOrigin || origin !== developmentOrigin)
-  )
+  if (!isVoiceChatRequestOrigin(request))
     return APIErrorResponse('Invalid origin', 403);
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
   if (!claims?.sub) return APIErrorResponse('Unauthorized', 401);
-  if (
-    !isVoiceChatAllowed(
-      claims.sub,
-      process.env.VOICE_CHAT_USER_IDS,
-      process.env.VERCEL_ENV,
-      process.env.NODE_ENV,
-    )
-  )
-    return APIErrorResponse('Not found', 404);
+  if (!canUseCallChat(claims.sub)) return APIErrorResponse('Not found', 404);
   const {
     LIVEKIT_API_KEY: apiKey,
     LIVEKIT_API_SECRET: apiSecret,

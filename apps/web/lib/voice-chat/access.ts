@@ -33,3 +33,15 @@ export function canUseCallChat(userId: string) {
     )
   );
 }
+
+export function isVoiceChatRequestOrigin(request: Request) {
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+  if (origin === new URL(request.url).origin) return true;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  return Boolean(
+    process.env.NODE_ENV === 'development' &&
+      siteUrl &&
+      origin === URL.parse(siteUrl)?.origin,
+  );
+}
