@@ -61,7 +61,7 @@ The repository has three main workspaces:
   external API keys.
 - **Vercel Edge Config** supplies default call instructions. Character prompts
   come from PostgreSQL and are resolved again when the server mints a token.
-- **Stripe** manages subscriptions, top-ups, and credit purchases.
+- **Stripe** manages subscriptions and one-time credit purchases.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
 

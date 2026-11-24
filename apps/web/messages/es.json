@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Llama a un personaje con tu propia voz",
         "subtitle": "Dale una personalidad y elige una de nuestras voces o clona una con 10 segundos de audio: la tuya o una de la que tengas los derechos. Llámalo cuando quieras: siempre responde en su papel.",
-        "note": "Desbloquea personajes propios con una recarga o suscripción.",
+        "note": "Desbloquea personajes propios con una compra única o suscripción.",
         "action": "Crear tu personaje",
         "cloningLink": "Descubre cómo funciona la clonación de voz"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Luego, llámala",
         "subtitle": "Dale tu voz clonada a un personaje y habla con él en directo, en tiempo real.",
-        "note": "Desbloquea llamadas con voces clonadas con una recarga o suscripción.",
+        "note": "Desbloquea llamadas con voces clonadas con una compra única o suscripción.",
         "action": "Probar una llamada"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "¿Cómo se cobra la clonación de voz?",
-              "answer": "Guardar una voz es gratis después de una recarga o un pago de suscripción. Generar audio con una voz clonada consume más créditos que con nuestras voces estándar, y los textos más largos consumen más. Las llamadas en directo se cobran a la tarifa de llamadas. El panel y la API comparten el mismo saldo."
+              "answer": "Guardar una voz es gratis después de una compra única o un pago de suscripción. Generar audio con una voz clonada consume más créditos que con nuestras voces estándar, y los textos más largos consumen más. Las llamadas en directo se cobran a la tarifa de llamadas. El panel y la API comparten el mismo saldo."
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",
@@ -285,7 +285,7 @@
             },
             {
               "question": "¿Cómo hago una llamada de voz con una voz clonada?",
-              "answer": "Ve a la página de llamadas, crea un personaje y selecciona tu voz clonada guardada. Guarda el personaje e inicia la llamada. Si aún no has guardado una voz, elige \"Clonar una voz\" al crear el personaje, o \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz. Una recarga o un pago de suscripción desbloquea los personajes personalizados y las voces guardadas."
+              "answer": "Ve a la página de llamadas, crea un personaje y selecciona tu voz clonada guardada. Guarda el personaje e inicia la llamada. Si aún no has guardado una voz, elige \"Clonar una voz\" al crear el personaje, o \"Guardar una voz para llamadas\" en la página Clonar. Graba o sube al menos 10 segundos de tu voz. Una compra única o un pago de suscripción desbloquea los personajes personalizados y las voces guardadas."
             },
             {
               "question": "¿Cuánto cuesta?",
@@ -450,7 +450,7 @@
     },
     "topup": {
       "title": "Comprar Créditos",
-      "description": "Recarga tus créditos instantáneamente o suscríbete y obtén más créditos",
+      "description": "Añade créditos al instante o suscríbete y obtén más créditos",
       "buyCredits": "Comprar Créditos",
       "onetimePurchase": "Compra única",
       "processing": "Procesando...",
@@ -502,7 +502,7 @@
     "balanceError": "No pudimos cargar tu saldo de créditos. Inténtalo de nuevo.",
     "retryBalance": "Reintentar",
     "title": "Créditos",
-    "topupButton": "Recargar",
+    "topupButton": "Añadir créditos",
     "totalCredits": "Total",
     "remainingCredits": "Restantes",
     "remainingTime": "Tiempo restante"
@@ -1073,7 +1073,7 @@
         "action": "Acción"
       },
       "empty": "Aún no hay claves API creadas.",
-      "unpaidEmpty": "Suscríbete o recarga tu cuenta para crear claves API.",
+      "unpaidEmpty": "Suscríbete o añade créditos para crear claves API.",
       "never": "Nunca",
       "statusActive": "Activa",
       "statusRevoked": "Revocada",

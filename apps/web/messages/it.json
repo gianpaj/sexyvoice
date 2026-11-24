@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Chiama un personaggio con la tua voce",
         "subtitle": "Dagli una personalità, poi scegli una delle nostre voci o clonane una da 10 secondi di audio: la tua o una di cui hai i diritti. Chiamalo quando vuoi: risponde sempre restando nel personaggio.",
-        "note": "Sblocca i personaggi personalizzati con una ricarica o un abbonamento.",
+        "note": "Sblocca i personaggi personalizzati con un acquisto singolo o un abbonamento.",
         "action": "Crea il tuo personaggio",
         "cloningLink": "Scopri come funziona la clonazione vocale"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Poi chiamala",
         "subtitle": "Dai la tua voce clonata a un personaggio e parlaci dal vivo, in tempo reale.",
-        "note": "Sblocca le chiamate con una voce clonata con una ricarica o un abbonamento.",
+        "note": "Sblocca le chiamate con una voce clonata con un acquisto singolo o un abbonamento.",
         "action": "Prova una chiamata vocale"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "Come viene calcolato il prezzo della clonazione vocale?",
-              "answer": "Salvare una voce è gratis dopo una ricarica o un pagamento di abbonamento. Generare il parlato con una voce clonata consuma più crediti rispetto alle nostre voci standard, e i testi più lunghi ne consumano di più. Le chiamate live usano la tariffa delle chiamate. Dashboard e API condividono lo stesso saldo."
+              "answer": "Salvare una voce è gratis dopo un acquisto singolo o un pagamento di abbonamento. Generare il parlato con una voce clonata consuma più crediti rispetto alle nostre voci standard, e i testi più lunghi ne consumano di più. Le chiamate live usano la tariffa delle chiamate. Dashboard e API condividono lo stesso saldo."
             },
             {
               "question": "Quali lingue supporta la clonazione vocale?",
@@ -285,7 +285,7 @@
             },
             {
               "question": "Come faccio una chiamata vocale con una voce clonata?",
-              "answer": "Vai alla pagina delle chiamate, crea un personaggio e seleziona la tua voce clonata salvata. Salva il personaggio e avvia la chiamata. Se non hai ancora salvato una voce, scegli \"Clona una voce\" mentre crei il personaggio, oppure \"Salva una voce per le chiamate\" nella pagina Clona. Registra o carica almeno 10 secondi della tua voce. Una ricarica o un pagamento di abbonamento sblocca i personaggi personalizzati e le voci salvate."
+              "answer": "Vai alla pagina delle chiamate, crea un personaggio e seleziona la tua voce clonata salvata. Salva il personaggio e avvia la chiamata. Se non hai ancora salvato una voce, scegli \"Clona una voce\" mentre crei il personaggio, oppure \"Salva una voce per le chiamate\" nella pagina Clona. Registra o carica almeno 10 secondi della tua voce. Un acquisto singolo o un pagamento di abbonamento sblocca i personaggi personalizzati e le voci salvate."
             },
             {
               "question": "Quanto costa?",
@@ -450,9 +450,9 @@
     },
     "topup": {
       "title": "Acquista crediti",
-      "description": "Ricarica i tuoi crediti istantaneamente o abbonati e ottieni più crediti",
+      "description": "Aggiungi crediti istantaneamente o abbonati e ottieni più crediti",
       "buyCredits": "Acquista crediti",
-      "onetimePurchase": "Acquisto una tantum",
+      "onetimePurchase": "Acquisto singolo",
       "processing": "Elaborazione...",
       "packages": {
         "starter": {
@@ -502,7 +502,7 @@
     "balanceError": "Non è stato possibile caricare il saldo dei crediti. Riprova.",
     "retryBalance": "Riprova",
     "title": "Crediti",
-    "topupButton": "Ricarica",
+    "topupButton": "Aggiungi crediti",
     "totalCredits": "Totale",
     "remainingCredits": "Rimanenti",
     "remainingTime": "Tempo rimanente"
@@ -1073,7 +1073,7 @@
         "action": "Azione"
       },
       "empty": "Nessuna chiave API creata.",
-      "unpaidEmpty": "Abbonati o ricarica il tuo account per creare chiavi API.",
+      "unpaidEmpty": "Abbonati o aggiungi crediti per creare chiavi API.",
       "never": "Mai",
       "statusActive": "Attiva",
       "statusRevoked": "Revocata",

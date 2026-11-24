@@ -9,7 +9,7 @@ Supported method: human-assisted account registration and API-key provisioning.
 Credentials are API keys issued to a user's paid account.
 
 1. Ask the user to [create an account](https://sexyvoice.ai/en/signup) or sign in.
-2. The account must have a subscription or credit top-up to create API keys.
+2. The account must have a subscription or one-time credit purchase to create API keys.
 3. Ask the user to open [Dashboard → API Keys](https://sexyvoice.ai/en/dashboard/api-keys)
    and create a named key for the agent. Each account can have up to 10 active keys.
 4. Have the user provide the key through a secure secret store. The full key is
@@ -29,7 +29,7 @@ The JSON body contains a required `name` (1–100 characters) and an optional
 
 A successful request returns HTTP 201 with `key` (the full API key) and `data`
 (key metadata, including its `id`). HTTP 401 means a signed-in session is required;
-HTTP 403 means the account needs a subscription or top-up.
+HTTP 403 means the account needs a subscription or one-time purchase.
 
 The external API does not offer OAuth token issuance, ID-JAG registration,
 verified-email assertions, or anonymous agent registration. Use the dashboard

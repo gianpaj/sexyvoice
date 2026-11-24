@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Call a character in your own voice",
         "subtitle": "Give them a personality, then pick one of our voices or clone one from 10 seconds of audio: yours, or one you have the rights to. Call them whenever you like, and they pick up in character every time.",
-        "note": "Unlock custom characters with a top-up or subscription.",
+        "note": "Unlock custom characters with a one-time purchase or subscription.",
         "action": "Create your character",
         "cloningLink": "See how voice cloning works"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Then call it",
         "subtitle": "Give your cloned voice to a character and talk to it live, in real time.",
-        "note": "Unlock cloned-voice calls with a top-up or subscription.",
+        "note": "Unlock cloned-voice calls with a one-time purchase or subscription.",
         "action": "Try a voice call"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "How is voice cloning priced?",
-              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
+              "answer": "Saving a voice is free once you have made a one-time purchase or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
@@ -285,7 +285,7 @@
             },
             {
               "question": "How do I make a voice call with a cloned voice?",
-              "answer": "Go to the Call page, create a character, and select your saved cloned voice. Save the character, then start the call. If you haven't saved a voice yet, choose \"Clone a voice\" in the character creator, or \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice. A top-up or subscription payment unlocks custom characters and saved voices."
+              "answer": "Go to the Call page, create a character, and select your saved cloned voice. Save the character, then start the call. If you haven't saved a voice yet, choose \"Clone a voice\" in the character creator, or \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice. A one-time purchase or subscription payment unlocks custom characters and saved voices."
             },
             {
               "question": "How much does it cost?",
@@ -448,7 +448,7 @@
     },
     "topup": {
       "title": "Buy Credits",
-      "description": "Top up your credits instantly or subscribe and get more credits",
+      "description": "Add credits instantly or subscribe and get more credits",
       "buyCredits": "Buy Credits",
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
@@ -500,7 +500,7 @@
     "balanceError": "We couldn't load your credit balance. Please try again.",
     "retryBalance": "Retry",
     "title": "Credits",
-    "topupButton": "Top-up",
+    "topupButton": "Add credits",
     "totalCredits": "Total",
     "remainingCredits": "Remaining",
     "remainingTime": "Remaining time"
@@ -1071,7 +1071,7 @@
         "action": "Action"
       },
       "empty": "No API keys created yet.",
-      "unpaidEmpty": "Subscribe or top up your account to create API keys.",
+      "unpaidEmpty": "Subscribe or add credits to create API keys.",
       "never": "Never",
       "statusActive": "Active",
       "statusRevoked": "Revoked",
