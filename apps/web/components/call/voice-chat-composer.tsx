@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUp, Mic } from 'lucide-react';
+import { ArrowUp, Mic, Volume2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Ref } from 'react';
 
@@ -15,6 +15,7 @@ interface VoiceChatComposerProps {
   onSend: () => void;
   placeholder: string;
   sendDisabled: boolean;
+  speakerOff?: boolean;
   switchingMode?: boolean;
 }
 
@@ -28,6 +29,7 @@ export function VoiceChatComposer({
   onSend,
   placeholder,
   sendDisabled,
+  speakerOff,
 }: VoiceChatComposerProps) {
   const t = useTranslations('voiceChat');
   const canSend = !sendDisabled && Boolean(draft.trim());
@@ -42,7 +44,7 @@ export function VoiceChatComposer({
     >
       {onBackToVoice && (
         <Button
-          aria-label={t('backToVoice')}
+          aria-label={t(speakerOff ? 'speakerOn' : 'backToVoice')}
           className="size-11 shrink-0 rounded-full"
           disabled={switchingMode}
           onClick={onBackToVoice}
@@ -50,7 +52,11 @@ export function VoiceChatComposer({
           type="button"
           variant="outline"
         >
-          <Mic aria-hidden="true" />
+          {speakerOff ? (
+            <Volume2 aria-hidden="true" />
+          ) : (
+            <Mic aria-hidden="true" />
+          )}
         </Button>
       )}
       <Textarea

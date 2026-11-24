@@ -63,16 +63,26 @@ worker using the current thread ID. The keyboard button releases browser
 capture and waits for the worker to disable audio input before enabling Send.
 The character still speaks. A microphone button returns to voice, and the
 conversation button opens the complete visible thread with jump-to-latest.
-Grok Realtime keeps its existing voice controls.
+Turning the speaker off takes the user to the thread, removes browser playback,
+and mutes the microphone. The linked worker requires muted input before
+disabling audio output with LiveKit's session API. This cuts off synthesis in
+flight and streams later replies through the existing transcription topic
+without sending them to Inworld. Restoring the speaker keeps the microphone
+muted until the user chooses to speak. Silent turns retain the live call's
+minute metering and limits. Deploy the linked worker with speaker control
+before exposing this control in the web app. Grok Realtime keeps its existing
+voice controls.
 
 Python continues to write the legacy call transcript for existing operational
 tooling, while shared message rows supply the thread. Next.js chat records
-token usage with the reply run. Customer credit settlement for standalone chat
-and text-only replies during a call remain open pilot decisions.
+token usage with the reply run. Customer credit settlement for
+standalone chat remains open for the pilot.
 
 The local Playwright test verifies Inworld playback, auto-mute, recall of a
-pre-call message, and persistence after reload in Chromium and Firefox at a
-390px viewport. Linux WebKit times out before the caller completes the LiveKit
+pre-call message, speaker-off replies, restored playback, and persistence
+after reload in Chromium and Firefox at a 390px viewport. The Python test
+exercises the pinned LiveKit pipeline and verifies transcription without TTS.
+Linux WebKit times out before the caller completes the LiveKit
 connection in both desktop and mobile profiles. The desktop retry also times
 out after granting microphone permission. Physical Safari and longer paid test
 calls remain unverified. All three cross-repo contract tests pass on the
@@ -82,6 +92,8 @@ branch's migrations in a disposable local Supabase project.
 
 - [In-call interleaving first](../../rejected/feature/2026-11-16-in-call-text-and-microphone-mute.md)
   does not provide the user's selected chat entry flow or token-based pricing.
+- Muting browser playback alone still runs synthesis and leaves the microphone
+  live. The linked worker gates input and output alongside the browser controls.
 - An always-connected LiveKit chat opens the voice infrastructure before the
   user asks for a call and complicates microphone and billing boundaries.
 - Independent histories for the two modes lose the conversation at call start

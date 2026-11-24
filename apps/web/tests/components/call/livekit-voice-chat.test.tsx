@@ -24,7 +24,7 @@ vi.mock('@livekit/components-react', async () => {
   const { createContext } = await import('react');
   return {
     RoomContext: createContext(null),
-    RoomAudioRenderer: () => null,
+    RoomAudioRenderer: () => <span data-testid="room-audio" />,
     useConnectionState: () => 'connected',
     useLocalParticipant: () => ({}),
     useVoiceAssistant: () => ({ state: 'listening' }),
@@ -477,7 +477,7 @@ describe('JS browser call', () => {
 });
 
 describe('Python Inworld call on the chat page', () => {
-  it('uses the linked token and preserves history while typing with the microphone off', async () => {
+  async function startPythonCall() {
     const conversationId = '60606060-6060-4060-8060-606060606061';
     const preset = {
       id: '63765019-12dc-46b6-85e3-dd8b5238c9a0',
@@ -517,6 +517,24 @@ describe('Python Inworld call on the chat page', () => {
     );
     await screen.findByText('Earlier text');
     const room = await start();
+    return { room, conversationId };
+  }
+
+  async function admitPythonAgent(room: Awaited<ReturnType<typeof start>>) {
+    room.localParticipant.performRpc.mockResolvedValue('{"ok":true}');
+    await act(async () =>
+      room.emit('participant', {
+        identity: 'agent-python',
+        attributes: {
+          'sv.voice-chat.runtime': 'voice-chat-python',
+          'lk.agent.state': 'listening',
+        },
+      }),
+    );
+  }
+
+  it('uses the linked token and preserves history while typing with the microphone off', async () => {
+    const { room, conversationId } = await startPythonCall();
     expect(fetch).toHaveBeenCalledWith(
       '/api/call-token',
       expect.objectContaining({
@@ -532,16 +550,7 @@ describe('Python Inworld call on the chat page', () => {
     await act(async () => room.emit('participant', jsAgent));
     expect(room.localParticipant.setMicrophoneEnabled).not.toHaveBeenCalled();
 
-    room.localParticipant.performRpc.mockResolvedValue('{"ok":true}');
-    await act(async () =>
-      room.emit('participant', {
-        identity: 'agent-python',
-        attributes: {
-          'sv.voice-chat.runtime': 'voice-chat-python',
-          'lk.agent.state': 'listening',
-        },
-      }),
-    );
+    await admitPythonAgent(room);
     const keyboard = await screen.findByRole('button', {
       name: 'Type instead of speaking',
     });
@@ -583,6 +592,74 @@ describe('Python Inworld call on the chat page', () => {
     expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
       true,
     );
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('mutes both directions and waits for the worker before allowing silent replies', async () => {
+    const { room } = await startPythonCall();
+    await admitPythonAgent(room);
+    const speaker = await screen.findByRole('button', {
+      name: 'Turn speaker off',
+    });
+    await waitFor(() => expect(speaker).toBeEnabled());
+    expect(screen.getByTestId('room-audio')).toBeInTheDocument();
+
+    const silent = Promise.withResolvers<string>();
+    room.localParticipant.performRpc
+      .mockResolvedValueOnce('{"ok":true}')
+      .mockReturnValueOnce(silent.promise);
+    fireEvent.click(speaker);
+    expect(screen.queryByTestId('room-audio')).toBeNull();
+    expect(screen.getByText('Earlier text')).toBeVisible();
+    expect(screen.getByText('Speaker off · reading replies')).toBeVisible();
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.change(composer, { target: { value: 'A quiet reply' } });
+    const send = screen.getByRole('button', { name: 'Send' });
+    expect(send).toBeDisabled();
+    await waitFor(() =>
+      expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
+        destinationIdentity: 'agent-python',
+        method: 'sv.voice-chat.speaker',
+        payload: '{"enabled":false}',
+      }),
+    );
+    expect(
+      room.localParticipant.performRpc.mock.calls.at(-2)?.[0],
+    ).toMatchObject({
+      method: 'sv.voice-chat.mute',
+      payload: '{"muted":true}',
+    });
+
+    await act(async () => silent.resolve('{"ok":true}'));
+    expect(send).toBeEnabled();
+    fireEvent.click(send);
+    await waitFor(() =>
+      expect(room.localParticipant.sendText).toHaveBeenCalledWith(
+        'A quiet reply',
+        { topic: 'lk.chat', destinationIdentities: ['agent-python'] },
+      ),
+    );
+
+    const resume = Promise.withResolvers<string>();
+    room.localParticipant.performRpc.mockReturnValueOnce(resume.promise);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Turn speaker back on' }),
+    );
+    expect(screen.queryByTestId('room-audio')).toBeNull();
+    await waitFor(() =>
+      expect(room.localParticipant.performRpc).toHaveBeenLastCalledWith({
+        destinationIdentity: 'agent-python',
+        method: 'sv.voice-chat.speaker',
+        payload: '{"enabled":true}',
+      }),
+    );
+    await act(async () => resume.resolve('{"ok":true}'));
+    expect(screen.getByTestId('room-audio')).toBeInTheDocument();
+    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
+      false,
+    );
+    expect(screen.getByRole('button', { name: 'Back to voice' })).toBeEnabled();
+    expect(screen.getByText('Earlier text')).toBeVisible();
     window.history.replaceState(null, '', '/');
   });
 });

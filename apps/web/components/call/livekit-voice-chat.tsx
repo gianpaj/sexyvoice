@@ -6,6 +6,7 @@ import {
   MUTE_RPC,
   RUNTIME,
   RUNTIME_ATTRIBUTE,
+  SPEAKER_RPC,
 } from '@sexyvoice/voice-chat';
 import { PYTHON_CALL_RUNTIME } from '@sexyvoice/voice-chat/dispatch';
 import {
@@ -77,6 +78,8 @@ export function LiveKitVoiceChat({
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const [changingMute, setChangingMute] = useState(false);
+  const [speakerOff, setSpeakerOff] = useState(false);
+  const [changingSpeaker, setChangingSpeaker] = useState(false);
   const [typing, setTyping] = useState(false);
   const [threadOpen, setThreadOpen] = useState(false);
   const [lastSent, setLastSent] = useState<string | null>(null);
@@ -136,6 +139,8 @@ export function LiveKitVoiceChat({
     setError(null);
     setPriorMessages(history);
     setTyping(false);
+    setSpeakerOff(false);
+    setChangingSpeaker(false);
     setThreadOpen(false);
     setLastSent(null);
     setAgentState('');
@@ -416,6 +421,39 @@ export function LiveKitVoiceChat({
       setChangingMute(false);
     }
   };
+  const toggleSpeaker = async () => {
+    const current = active.current;
+    const identity = agent.current;
+    if (!(current && identity) || changingMute || changingSpeaker) return;
+    const enabled = speakerOff;
+    setChangingSpeaker(true);
+    try {
+      if (enabled) {
+        await current.startAudio();
+      } else {
+        setSpeakerOff(true);
+        setTyping(true);
+        setThreadOpen(true);
+        if (!(await setMicrophoneMuted(true))) return;
+      }
+      if (active.current !== current) return;
+      const reply = await current.localParticipant.performRpc({
+        destinationIdentity: identity,
+        method: SPEAKER_RPC,
+        payload: JSON.stringify({ enabled }),
+      });
+      if (JSON.parse(reply).ok !== true)
+        throw new Error('Speaker control unavailable');
+      if (active.current === current) setSpeakerOff(!enabled);
+    } catch {
+      if (active.current === current) {
+        setError(t('connectError'));
+        await stop();
+      }
+    } finally {
+      if (active.current === current) setChangingSpeaker(false);
+    }
+  };
   const send = async () => {
     const text = draft.trim();
     const current = active.current;
@@ -423,6 +461,7 @@ export function LiveKitVoiceChat({
       !(text && current && agent.current) ||
       state !== 'connected' ||
       sending ||
+      changingSpeaker ||
       (pythonCall && !mutedRef.current)
     )
       return;
@@ -483,7 +522,7 @@ export function LiveKitVoiceChat({
       <RoomContext.Provider value={room}>
         <InworldCallView
           active={state !== 'idle'}
-          changingMute={changingMute}
+          changingMute={changingMute || changingSpeaker}
           draft={draft}
           error={error}
           inputRef={input}
@@ -502,6 +541,7 @@ export function LiveKitVoiceChat({
           onSend={() => send().catch(() => undefined)}
           onShowThread={() => setThreadOpen((open) => !open)}
           onToggleMute={() => setMicrophoneMuted(!muted).catch(() => undefined)}
+          onToggleSpeaker={() => toggleSpeaker().catch(() => undefined)}
           onType={() => {
             setMicrophoneMuted(true).catch(() => undefined);
             // iOS requires focus inside the keyboard button's user gesture.
@@ -511,6 +551,7 @@ export function LiveKitVoiceChat({
           preset={pythonCall.preset}
           ready={ready}
           sending={sending}
+          speakerOff={speakerOff}
           status={status}
           thinking={thinking}
           threadOpen={threadOpen}

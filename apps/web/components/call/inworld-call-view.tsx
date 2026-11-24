@@ -4,7 +4,14 @@ import {
   RoomAudioRenderer,
   useConnectionState,
 } from '@livekit/components-react';
-import { Keyboard, MessageSquare, Mic, MicOff, PhoneOff } from 'lucide-react';
+import {
+  Keyboard,
+  MessageSquare,
+  Mic,
+  MicOff,
+  PhoneOff,
+  VolumeX,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, type Ref, useLayoutEffect, useRef } from 'react';
 
@@ -38,10 +45,12 @@ interface InworldCallViewProps {
   onSend: () => void;
   onShowThread: () => void;
   onToggleMute: () => void;
+  onToggleSpeaker: () => void;
   onType: () => void;
   preset: Preset;
   ready: boolean;
   sending: boolean;
+  speakerOff: boolean;
   status: string;
   thinking: boolean;
   threadOpen: boolean;
@@ -65,6 +74,7 @@ export function InworldCallView({
   typing,
   draft,
   sending,
+  speakerOff,
   threadOpen,
   messages,
   lastSent,
@@ -74,6 +84,7 @@ export function InworldCallView({
   onShowThread,
   onHangUp,
   onToggleMute,
+  onToggleSpeaker,
   onType,
   onReturnToVoice,
   onDraft,
@@ -132,15 +143,29 @@ export function InworldCallView({
       ref={callView}
     >
       <header className="flex items-center justify-between gap-2">
-        <Button
-          aria-label={t(threadOpen ? 'closeThread' : 'openThread')}
-          aria-pressed={threadOpen}
-          onClick={onShowThread}
-          size="icon"
-          variant="ghost"
-        >
-          <MessageSquare aria-hidden="true" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            aria-label={t(threadOpen ? 'closeThread' : 'openThread')}
+            aria-pressed={threadOpen}
+            disabled={speakerOff}
+            onClick={onShowThread}
+            size="icon"
+            variant="ghost"
+          >
+            <MessageSquare aria-hidden="true" />
+          </Button>
+          {!speakerOff && (
+            <Button
+              aria-label={t('speakerOff')}
+              disabled={!ready || changingMute}
+              onClick={onToggleSpeaker}
+              size="icon"
+              variant="ghost"
+            >
+              <VolumeX aria-hidden="true" />
+            </Button>
+          )}
+        </div>
         <time className="text-slate-400 text-sm tabular-nums">
           {formattedTime}
         </time>
@@ -166,10 +191,20 @@ export function InworldCallView({
         >
           {preset.name}
         </h1>
-        <p aria-live="polite" className="text-[#b9aeff] text-sm">
-          {thinking ? t('thinking') : status}
-        </p>
-        {typing && muted && (
+        {speakerOff ? (
+          <p
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#674523] bg-[#2a2019] px-3 py-1 text-[#f0a860] text-xs"
+            role="status"
+          >
+            <VolumeX aria-hidden="true" className="size-3.5" />
+            {t('readingReplies')}
+          </p>
+        ) : (
+          <p aria-live="polite" className="text-[#b9aeff] text-sm">
+            {thinking ? t('thinking') : status}
+          </p>
+        )}
+        {typing && muted && !speakerOff && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#3c3270] bg-[#1b1636] px-3 py-1 text-[#c3b6ff] text-xs">
             <MicOff aria-hidden="true" className="size-3.5" />{' '}
             {t('micOffWhileTyping')}
@@ -247,15 +282,16 @@ export function InworldCallView({
         <VoiceChatComposer
           draft={draft}
           inputRef={inputRef}
-          onBackToVoice={onReturnToVoice}
+          onBackToVoice={speakerOff ? onToggleSpeaker : onReturnToVoice}
           onDraft={onDraft}
           onSend={onSend}
           placeholder={t('placeholder')}
           sendDisabled={!(ready && muted) || sending || changingMute}
+          speakerOff={speakerOff}
           switchingMode={!ready || changingMute}
         />
       )}
-      <RoomAudioRenderer />
+      {!speakerOff && <RoomAudioRenderer />}
     </section>
   );
 }

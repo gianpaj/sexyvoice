@@ -328,6 +328,7 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     'For this test, my code word is paper iguana. Reply with only confirmed. Keep it private until I ask for it.';
   const typed =
     'Reply in English with my code word followed by the word acknowledged.';
+  const silent = 'Can you send me a quiet reply?';
   const bubbles = page
     .getByRole('log')
     .locator('[data-slot="voice-chat-bubble"]');
@@ -374,6 +375,26 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     await expect(
       page.getByRole('button', { name: 'Mute microphone' }),
     ).toBeEnabled();
+
+    await page.getByRole('button', { name: 'Turn speaker off' }).click();
+    await expect(page.getByText('Speaker off · reading replies')).toBeVisible();
+    await expect(page.locator('audio')).toHaveCount(0);
+    await composer.fill(silent);
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(bubbles.nth(-2)).toHaveText(silent, {
+      timeout: 20_000,
+    });
+    await expect(bubbles.last()).toHaveText(/\S/);
+    await expect(page.locator('audio')).toHaveCount(0);
+    await expect(page).toHaveURL(threadUrl);
+
+    await page.getByRole('button', { name: 'Turn speaker back on' }).click();
+    await expect(page.getByText('Mic off while you type')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Back to voice' }),
+    ).toBeEnabled();
+    await expect(page.locator('audio')).toHaveCount(1);
   } finally {
     const end = page.getByRole('button', { name: 'End call', exact: true });
     if (await end.isVisible()) await end.click();
@@ -386,6 +407,8 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
   await expect(
     page.getByRole('log').getByText(typed, { exact: true }),
   ).toHaveCount(1);
+  await expect(bubbles.nth(-2)).toHaveText(silent);
+  await expect(bubbles.last()).toHaveText(/\S/);
   await expect(page).toHaveURL(threadUrl);
   expect(errors).toEqual([]);
 });
