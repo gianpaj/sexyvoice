@@ -412,31 +412,24 @@
           "Klon din stemme med kun 10 sekunders lyd"
         ]
       },
+      "paidFeatures": {
+        "title": "Inkluderet i alle betalte pakker",
+        "customCharacters": "Tilpassede figurer til stemmeopkald",
+        "longerText": "Op til dobbelt så meget tekst pr. talegenerering",
+        "apiAccess": "Adgang til API'et"
+      },
       "starter": {
-        "name": "Starter",
-        "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "name": "Starter"
       },
       "standard": {
         "name": "Standard",
-        "description": "For hobbyfolk, der skaber projekter med AI-lyd og tilpassede stemmer.",
         "creditsWithAudio": "{numCredits} kreditter (~11 min lyd)",
-        "creditsWithPromo": "{numCredits} kreditter",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "Stemmeopkald: Brugerdefinerede karakterer"
-        ]
+        "creditsWithPromo": "{numCredits} kreditter"
       },
       "pro": {
         "name": "Pro",
-        "description": "For større kreative behov og dristigere indhold.",
         "creditsWithAudio": "{numCredits} kreditter (~125 minutters lyd)",
-        "creditsWithPromo": "{numCredits} kreditter",
-        "features": [
-          "Alt i Gratis",
-          "Stemmeopkald: Brugerdefinerede karakterer"
-        ]
+        "creditsWithPromo": "{numCredits} kreditter"
       }
     },
     "subscriptionScheduledToCancel": {

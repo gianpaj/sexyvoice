@@ -40,8 +40,8 @@ export interface PlanData {
   buttonText: string;
   buttonVariant: string;
   creditsText: string;
-  description: string;
-  features: string[];
+  description?: string;
+  features?: string[];
   id?: CheckoutPlanId;
   isPopular?: boolean;
   name: string;
@@ -154,7 +154,10 @@ export function PricingCards({
 
           return (
             <Card
-              className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2`}
+              className={cn(
+                'relative row-span-3 grid grid-rows-subgrid gap-2 overflow-hidden p-6',
+                plan.isPopular && 'border-transparent ring-2 ring-promo-accent',
+              )}
               key={`${plan.name}-${billingMode}`}
             >
               {/* Promo corner badge — only during active promotions */}
@@ -165,7 +168,7 @@ export function PricingCards({
               )}
 
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <h3 className="font-semibold text-xl">{plan.name}</h3>
                   {!isPromoEnabled && plan.isPopular && (
                     <Badge className="rounded-full bg-promo-text">
@@ -219,8 +222,8 @@ export function PricingCards({
                       })}
                     </p>
                   )}
-                {!isPromoEnabled && plan.pricePer1kCredits ? (
-                  <div className="mt-1 text-muted-foreground text-xs tabular-nums">
+                {!isPromoEnabled && plan.pricePer1kCredits && (
+                  <div className="mt-1 font-medium text-xs tabular-nums">
                     {t('pricePer1kCredits', {
                       price: format.number(Number(plan.pricePer1kCredits), {
                         style: 'currency',
@@ -246,14 +249,13 @@ export function PricingCards({
                       </>
                     )}
                   </div>
-                ) : (
-                  /* Keep vertical rhythm consistent across cards */
-                  <div className="mt-1 h-4" />
+                )}
+                {plan.description && (
+                  <p className="mt-3 text-muted-foreground text-sm">
+                    {plan.description}
+                  </p>
                 )}
               </div>
-              <p className="text-muted-foreground text-sm">
-                {plan.description}
-              </p>
               {checkoutEnabled && plan.id ? (
                 <CheckoutForm
                   billingMode={billingMode}
@@ -290,8 +292,8 @@ export function PricingCards({
                     </div>
                   )}
                 </div>
-                {plan.features.map((feature, index) => (
-                  <div className="flex items-center text-sm" key={index}>
+                {plan.features?.map((feature) => (
+                  <div className="flex items-center text-sm" key={feature}>
                     <Check
                       aria-hidden="true"
                       className="mr-2 size-4 min-w-fit"
@@ -303,6 +305,33 @@ export function PricingCards({
             </Card>
           );
         })}
+        {plans.some((plan) => plan.id) && (
+          <div
+            className={cn(
+              'col-span-full rounded-lg border bg-primary/10 p-4',
+              plans.length === 4 && 'lg:col-[2/-1]',
+            )}
+          >
+            <h3 className="mb-2 font-semibold text-sm">
+              {t('paidFeatures.title')}
+            </h3>
+            <ul className="grid gap-2 text-muted-foreground text-sm md:grid-cols-[1fr_1.35fr_auto]">
+              {[
+                t('paidFeatures.customCharacters'),
+                t('paidFeatures.longerText'),
+                t('paidFeatures.apiAccess'),
+              ].map((feature) => (
+                <li className="flex items-start gap-2" key={feature}>
+                  <Check
+                    aria-hidden
+                    className="mt-0.5 size-4 shrink-0 text-blue-300"
+                  />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -358,36 +387,37 @@ function CheckoutForm({
   );
 
   return (
-    <>
+    <form action={formActionDispatch}>
+      <input name="packageId" type="hidden" value={planId} />
+      <input
+        name="type"
+        type="hidden"
+        value={billingMode === 'monthly' ? 'subscription' : 'topup'}
+      />
+      <input name="uiMode" type="hidden" value="hosted" />
+      <Button
+        className="hit-area-6 my-4 w-full"
+        disabled={pending}
+        type="submit"
+        variant={buttonVariant as 'outline' | 'default'}
+      >
+        {pending ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {creditsT('topup.processing')}
+          </>
+        ) : (
+          buttonText
+        )}
+      </Button>
       {state.error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3">
+        <div
+          className="rounded-md border border-red-200 bg-red-50 p-3"
+          role="alert"
+        >
           <p className="text-red-600 text-xs">{state.error}</p>
         </div>
       ) : null}
-      <form action={formActionDispatch}>
-        <input name="packageId" type="hidden" value={planId} />
-        <input
-          name="type"
-          type="hidden"
-          value={billingMode === 'monthly' ? 'subscription' : 'topup'}
-        />
-        <input name="uiMode" type="hidden" value="hosted" />
-        <Button
-          className="hit-area-6 my-4 w-full"
-          disabled={pending}
-          type="submit"
-          variant={buttonVariant as 'outline' | 'default'}
-        >
-          {pending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {creditsT('topup.processing')}
-            </>
-          ) : (
-            buttonText
-          )}
-        </Button>
-      </form>
-    </>
+    </form>
   );
 }

@@ -90,6 +90,12 @@ describe('pricing bonus presentation', () => {
       expect(screen.getByText(normalize(introductoryLabel))).toBeVisible();
       expect(screen.getByText(normalize(priceLabel))).toBeVisible();
       expect(screen.getByText(normalize(savingsLabel))).toBeVisible();
+      const { title, ...paidFeatures } =
+        translations.credits.plans.paidFeatures;
+      expect(screen.getByRole('heading', { name: title })).toBeVisible();
+      for (const feature of Object.values(paidFeatures)) {
+        expect(screen.getByText(feature)).toBeVisible();
+      }
 
       await user.click(
         screen.getByRole('button', {
@@ -98,6 +104,7 @@ describe('pricing bonus presentation', () => {
       );
       expect(screen.getByText(normalize(priceLabel))).toBeVisible();
       expect(screen.getByText(normalize(savingsLabel))).toBeVisible();
+      expect(screen.getByRole('heading', { name: title })).toBeVisible();
     },
   );
 
