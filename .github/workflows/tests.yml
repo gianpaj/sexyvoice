@@ -50,3 +50,6 @@ jobs:
 
       - name: Run tests
         run: pnpm test:affected
+
+      - name: Check API error-code docs
+        run: pnpm --filter @sexyvoice/web test api-v1-error-codes-docs

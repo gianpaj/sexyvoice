@@ -1,4 +1,4 @@
-import type { ZodError, z } from 'zod';
+import type { z } from 'zod';
 
 import { ErrorResponseSchema, type ErrorTypeSchema } from '@/lib/api/schemas';
 
@@ -26,16 +26,5 @@ export function createApiError(params: {
       param: params.param ?? null,
       type: params.type,
     },
-  });
-}
-
-export function zodErrorToApiError(error: ZodError): ApiErrorBody {
-  const issue = error.issues[0];
-  const param = issue?.path[0];
-  return createApiError({
-    code: 'invalid_request',
-    message: issue?.message ?? 'Invalid request body',
-    param: typeof param === 'string' ? param : null,
-    type: 'invalid_request_error',
   });
 }

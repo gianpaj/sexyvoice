@@ -221,7 +221,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   keys and always compare hashes.
 - Rate-limit with `consumeRateLimit()` and return headers via
   `jsonWithRateLimitHeaders()`.
-- Use `externalApiErrorResponse()` for structured errors.
+- Use `externalApiErrorResponse()` with a key from `EXTERNAL_API_ERROR_DEFINITIONS`
+  for structured errors. After changing the definitions, regenerate the error
+  table with `pnpm --filter @sexyvoice/web api-errors:docs`; CI checks it.
 - Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
   API users are resolved from API keys, not session cookies.
 - Call `updateApiKeyLastUsed()` in a `finally` block.
