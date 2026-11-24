@@ -87,10 +87,10 @@ releases only.
 
 - Confirm the release version in `apps/web/package.json`.
 - Mirror the new release in `apps/web/data/changelog.ts` (version, date,
-  change types, and PR links) and add the localized `area`/`text` copy to
-  `sidebar.changelogReleases` in every `apps/web/messages/*.json` file, in
-  the same release and entry order. These feed the dashboard sidebar's
-  changelog panel.
+  `area`/`text` copy, change types, and PR links), in the same release and
+  entry order. The panel copy is English only — `Changelog.md` is the single
+  source of changelog text and is not translated into `apps/web/messages/`.
+  These feed the dashboard sidebar's changelog panel.
   `apps/web/tests/changelog.test.ts` checks that everything stays in sync.
 - If the public API changed, also update the API version in
   `lib/api/openapi.ts`.

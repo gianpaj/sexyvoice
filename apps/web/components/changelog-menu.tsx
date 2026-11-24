@@ -2,7 +2,7 @@
 
 import { ExternalLink, Megaphone } from 'lucide-react';
 import Link from 'next/link';
-import { useFormatter, useMessages, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   type ComponentProps,
   createContext,
@@ -90,9 +90,7 @@ export function ChangelogMenu() {
 export function ChangelogSheet({ children }: { children: ReactNode }) {
   const t = useTranslations('sidebar');
   const format = useFormatter();
-  const messages = useMessages();
   const [open, setOpen] = useState(false);
-  const localizedReleases = messages.sidebar.changelogReleases;
 
   return (
     <OpenChangelogContext.Provider value={() => setOpen(true)}>
@@ -105,10 +103,8 @@ export function ChangelogSheet({ children }: { children: ReactNode }) {
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4">
             <div className="flex flex-col gap-6 pb-4">
-              {changelogReleases.map((release, releaseIndex) => {
+              {changelogReleases.map((release) => {
                 const releaseDate = parseChangelogDate(release.date);
-                const localizedEntries =
-                  localizedReleases[releaseIndex]?.entries;
                 return (
                   <section
                     className="flex flex-col gap-3"
@@ -128,36 +124,33 @@ export function ChangelogSheet({ children }: { children: ReactNode }) {
                       </time>
                     </div>
                     <ul className="flex flex-col gap-3">
-                      {release.entries.map((entry, entryIndex) => {
-                        const localized = localizedEntries?.[entryIndex];
-                        return (
-                          <li className="flex flex-col gap-1" key={entryIndex}>
-                            <div className="flex items-center gap-1.5">
-                              <Badge
-                                variant={CHANGE_TYPE_BADGE_VARIANTS[entry.type]}
+                      {release.entries.map((entry, entryIndex) => (
+                        <li className="flex flex-col gap-1" key={entryIndex}>
+                          <div className="flex items-center gap-1.5">
+                            <Badge
+                              variant={CHANGE_TYPE_BADGE_VARIANTS[entry.type]}
+                            >
+                              {t(CHANGE_TYPE_MESSAGE_KEYS[entry.type])}
+                            </Badge>
+                            <span className="text-muted-foreground text-xs">
+                              {entry.area}
+                            </span>
+                            {entry.prs?.map((pr) => (
+                              <Link
+                                className="text-muted-foreground text-xs hover:underline"
+                                href={pullRequestUrl(pr)}
+                                key={pr}
+                                target="_blank"
                               >
-                                {t(CHANGE_TYPE_MESSAGE_KEYS[entry.type])}
-                              </Badge>
-                              <span className="text-muted-foreground text-xs">
-                                {localized?.area}
-                              </span>
-                              {entry.prs?.map((pr) => (
-                                <Link
-                                  className="text-muted-foreground text-xs hover:underline"
-                                  href={pullRequestUrl(pr)}
-                                  key={pr}
-                                  target="_blank"
-                                >
-                                  #{pr}
-                                </Link>
-                              ))}
-                            </div>
-                            <p className="text-muted-foreground text-sm leading-relaxed">
-                              {localized?.text}
-                            </p>
-                          </li>
-                        );
-                      })}
+                                #{pr}
+                              </Link>
+                            ))}
+                          </div>
+                          <p className="text-muted-foreground text-sm leading-relaxed">
+                            {entry.text}
+                          </p>
+                        </li>
+                      ))}
                     </ul>
                   </section>
                 );

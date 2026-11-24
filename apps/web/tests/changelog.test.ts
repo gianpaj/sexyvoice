@@ -1,5 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -105,33 +104,6 @@ function documentedReleases(): DocumentedRelease[] {
   return releases;
 }
 
-interface LocalizedReleaseCopy {
-  entries?: { area?: string; text?: string }[];
-}
-
-// `sidebar.changelogReleases` per locale file, e.g. { "en.json": [...] }.
-const localizedReleases: Record<string, LocalizedReleaseCopy[] | undefined> =
-  Object.fromEntries(
-    readdirSync(fileURLToPath(new URL('../messages/', import.meta.url)))
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => [
-        file,
-        (
-          JSON.parse(
-            readFileSync(
-              join(
-                fileURLToPath(new URL('../messages/', import.meta.url)),
-                file,
-              ),
-              'utf8',
-            ),
-          ) as { sidebar?: { changelogReleases?: LocalizedReleaseCopy[] } }
-        ).sidebar?.changelogReleases,
-      ]),
-  );
-
-const enReleases = localizedReleases['en.json'];
-
 describe('changelog data', () => {
   const documented = documentedReleases();
 
@@ -154,46 +126,20 @@ describe('changelog data', () => {
     }
   });
 
-  it('mirrors every documented entry in the English copy', () => {
-    expect(enReleases).toHaveLength(changelogReleases.length);
+  it('mirrors every documented entry in the panel copy', () => {
     for (const release of changelogReleases) {
-      const index = changelogReleases.indexOf(release);
       const match = documented.find(
         (entry) => entry.version === release.version,
       );
-      const localizedEntries = enReleases?.[index]?.entries ?? [];
       expect(
-        localizedEntries,
-        `release ${release.version} entry count`,
-      ).toHaveLength(release.entries.length);
-      expect(
-        release.entries.map((entry, entryIndex) => ({
-          area: localizedEntries[entryIndex]?.area,
+        release.entries.map((entry) => ({
+          area: entry.area,
           prs: entry.prs ?? [],
-          text: localizedEntries[entryIndex]?.text,
+          text: entry.text,
           type: entry.type,
         })),
         `release ${release.version} entries`,
       ).toEqual(match?.entries);
-    }
-  });
-
-  it('provides an entry for every release in every locale', () => {
-    for (const [file, releases] of Object.entries(localizedReleases)) {
-      expect(releases, `${file} sidebar.changelogReleases`).toHaveLength(
-        changelogReleases.length,
-      );
-      for (const [index, release] of (releases ?? []).entries()) {
-        const entries = release.entries ?? [];
-        expect(
-          entries,
-          `${file} release ${changelogReleases[index]?.version}`,
-        ).toHaveLength(changelogReleases[index]?.entries.length ?? 0);
-        for (const entry of entries) {
-          expect(entry.area?.trim().length).toBeGreaterThan(0);
-          expect(entry.text?.trim().length).toBeGreaterThan(0);
-        }
-      }
     }
   });
 
