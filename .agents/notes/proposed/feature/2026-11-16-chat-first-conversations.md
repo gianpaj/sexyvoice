@@ -72,7 +72,11 @@ and text-only replies during a call remain open pilot decisions.
 
 The local Playwright test verifies Inworld playback, auto-mute, recall of a
 pre-call message, and persistence after reload in Chromium and Firefox at a
-390px viewport. Physical Safari and longer paid test calls remain unverified.
+390px viewport. Linux WebKit times out before the caller completes the LiveKit
+connection in both desktop and mobile profiles. The desktop retry also times
+out after granting microphone permission. Physical Safari and longer paid test
+calls remain unverified. All three cross-repo contract tests pass on the
+branch's migrations in a disposable local Supabase project.
 
 ## Alternatives considered
 
