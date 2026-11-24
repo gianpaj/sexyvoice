@@ -58,10 +58,15 @@ then apply these migrations in timestamp order:
 5. `20261123160000_bound_conversation_erasure.sql`
 6. `20261123180000_read_conversation_context.sql`
 7. `20261123190000_share_conversation_admission.sql`
+8. `20261124200000_add_text_chat_usage.sql`
+9. `20261124200100_bill_voice_chat_runs.sql`
+10. `20261124200200_update_voice_chat_rates.sql`
 
 Apply the voice chat schema with erasure so messages, chat runs, and
-conversation leases retain their cascade rules. The LiveKit JS worker and
-voice chat page require a local database.
+conversation leases retain their cascade rules. The billing migration schedules
+the `expire-voice-chat-runs` job in `pg_cron`. It runs every minute to release
+credit reservations for expired replies, regardless of web feature access.
+The LiveKit JS worker and voice chat page require a local database.
 The account-deletion action runs in production and fails when the erasure RPC
 is missing. Apply the migrations before the web deployment that calls it.
 
