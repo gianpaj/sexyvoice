@@ -40,7 +40,7 @@ describe('GET /api/usage-events', () => {
     vi.clearAllMocks();
   });
 
-  it('scopes events and both summaries to verified claims without getUser', async () => {
+  it('filters chat usage and scopes both summaries to verified claims', async () => {
     const client = mockClient({
       data: { claims: { sub: 'claims-user' } },
       error: null,
@@ -51,10 +51,11 @@ describe('GET /api/usage-events', () => {
     });
     const summary = {
       bySourceType: {
-        api_tts: { count: 21, credits: 42 },
+        api_tts: { count: 0, credits: 0 },
         api_voice_cloning: { count: 0, credits: 0 },
         audio_processing: { count: 0, credits: 0 },
         live_call: { count: 0, credits: 0 },
+        text_chat: { count: 21, credits: 42 },
         tts: { count: 0, credits: 0 },
         voice_cloning: { count: 0, credits: 0 },
       },
@@ -65,7 +66,7 @@ describe('GET /api/usage-events', () => {
     vi.mocked(getAllTimeUsageSummary).mockResolvedValueOnce(summary);
 
     const response = await GET(
-      request('?page=2&pageSize=10&sourceType=api_tts&includeSummary=true'),
+      request('?page=2&pageSize=10&sourceType=text_chat&includeSummary=true'),
     );
 
     expect(response.status).toBe(200);
@@ -84,7 +85,7 @@ describe('GET /api/usage-events', () => {
       {
         page: 2,
         pageSize: 10,
-        sourceType: 'api_tts',
+        sourceType: 'text_chat',
       },
     );
     expect(getMonthlyUsageSummary).toHaveBeenCalledWith(client, 'claims-user');

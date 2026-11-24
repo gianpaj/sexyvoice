@@ -224,6 +224,7 @@ export const E2E_MONTHLY_USAGE_SUMMARY: MonthlyUsageSummary = {
     ...E2E_MONTHLY_USAGE_SUMMARY_VALUES.bySourceType,
     api_tts: { count: 0, credits: 0 },
     api_voice_cloning: { count: 0, credits: 0 },
+    text_chat: { count: 0, credits: 0 },
   },
 };
 
@@ -233,6 +234,7 @@ export const E2E_ALL_TIME_USAGE_SUMMARY: MonthlyUsageSummary = {
     ...E2E_ALL_TIME_USAGE_SUMMARY_VALUES.bySourceType,
     api_tts: { count: 0, credits: 0 },
     api_voice_cloning: { count: 0, credits: 0 },
+    text_chat: { count: 0, credits: 0 },
   },
 };
 

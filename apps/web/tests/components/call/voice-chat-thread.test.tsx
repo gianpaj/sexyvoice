@@ -107,3 +107,40 @@ it('submits only the new turn after hydrating a long thread', async () => {
     { role: 'user', content: 'The new turn' },
   ]);
 });
+
+it('keeps a rejected draft and shows the low-credit message', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.method === 'POST'
+          ? new Response(null, { status: 402 })
+          : Response.json({
+              messages: [],
+              activeRun: null,
+              callActive: false,
+            }),
+      ),
+    ),
+  );
+  const onDraft = vi.fn();
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <VoiceChatThread
+        draft="Keep this draft"
+        error={null}
+        onDraft={onDraft}
+        onRefresh={vi.fn()}
+        onRememberThread={vi.fn()}
+        onStartCall={vi.fn()}
+        threadId="b3bfc7ad-36f9-4b70-8e64-3baca9968620"
+      />
+    </NextIntlClientProvider>,
+  );
+
+  const send = screen.getByRole('button', { name: 'Send' });
+  await waitFor(() => expect(send).toBeEnabled());
+  fireEvent.click(send);
+  expect(await screen.findByText('Add credits to continue.')).toBeVisible();
+  expect(onDraft).not.toHaveBeenCalled();
+});

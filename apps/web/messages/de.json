@@ -1211,6 +1211,7 @@
         "tts": "Stimmgenerierung",
         "voice_cloning": "Stimmklonen",
         "live_call": "Live-Anruf",
+        "text_chat": "Textchat",
         "audio_processing": "Audiobereinigung",
         "api_tts": "API-Stimmgenerierung",
         "api_voice_cloning": "API-Stimmklonen"
@@ -1236,6 +1237,7 @@
     "units": {
       "chars": "Zeichen",
       "mins": "Minuten",
+      "tokens": "Tokens",
       "secs": "Sekunden",
       "operation": "Operation"
     }
@@ -1524,6 +1526,7 @@
     "loadingChat": "Unterhaltung wird geladen…",
     "latest": "Zur neuesten Nachricht",
     "chatError": "Die Antwort konnte nicht geladen oder fortgesetzt werden.",
+    "chatLowCredits": "Lade Guthaben auf, um fortzufahren.",
     "refreshChat": "Chat aktualisieren",
     "notice": "Interner Test · Anrufe bis zu 5 Minuten · Keine Abbuchung von Credits.",
     "workerMissing": "Der Sprachassistent konnte keine Verbindung herstellen. Versuche es erneut.",

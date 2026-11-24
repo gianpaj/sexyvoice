@@ -75,8 +75,18 @@ voice controls.
 
 Python continues to write the legacy call transcript for existing operational
 tooling, while shared message rows supply the thread. Next.js chat records
-token usage with the reply run. Customer credit settlement for
-standalone chat remains open for the pilot.
+token usage with the reply run. Standalone chat reserves wallet credits on
+admission and settles from Grok's final token counts. A missing count releases
+the hold, including after an expired run. The existing usage dashboard shows
+text-chat credits and tokens, and cost reporting labels model spend as an
+estimate. The worker budgets serialized UTF-8 input plus framing at the
+uncached rate, keeps the instructions and newest user turn, and trims older
+turns or reduces the reply cap as needed. Settlement caps charges at the
+hold if the provider reports usage beyond it. Apply the usage enum and
+billing migrations before exposing this route. To change prices, insert a new version with its effective time in
+`public.voice_chat_rates` through a migration. Keep published rows so in-flight
+and historical receipts retain their rate. Chat remains behind its existing
+local allowlist during verification.
 
 The local Playwright test verifies Inworld playback, auto-mute, recall of a
 pre-call message, speaker-off replies, restored playback, and persistence

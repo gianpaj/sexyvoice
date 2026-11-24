@@ -1211,6 +1211,7 @@
         "tts": "Generación de voz",
         "voice_cloning": "Clonación",
         "live_call": "Llama",
+        "text_chat": "Chat de texto",
         "audio_processing": "Limpieza de audio",
         "api_tts": "Generación de voz API",
         "api_voice_cloning": "Clonación de voz API"
@@ -1236,6 +1237,7 @@
     "units": {
       "chars": "caracteres",
       "mins": "minutos",
+      "tokens": "tokens",
       "secs": "segundos",
       "operation": "operación"
     }
@@ -1524,6 +1526,7 @@
     "loadingChat": "Cargando conversación…",
     "latest": "Ir al último mensaje",
     "chatError": "No se pudo cargar o continuar la respuesta.",
+    "chatLowCredits": "Añade créditos para continuar.",
     "refreshChat": "Actualizar chat",
     "notice": "Prueba interna · Llamadas de hasta 5 minutos · Sin cargos en créditos.",
     "workerMissing": "El asistente de voz no pudo conectarse. Inténtalo de nuevo.",

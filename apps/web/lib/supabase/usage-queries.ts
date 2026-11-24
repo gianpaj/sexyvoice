@@ -1,14 +1,7 @@
 import type { TypedSupabaseClient } from './client';
 
-export type UsageSourceType =
-  | 'tts'
-  | 'voice_cloning'
-  | 'live_call'
-  | 'audio_processing'
-  | 'api_tts'
-  | 'api_voice_cloning';
-
-export type UsageUnitType = 'chars' | 'mins' | 'secs' | 'operation';
+export type UsageSourceType = Enums<'usage_source_type'>;
+export type UsageUnitType = Enums<'usage_unit_type'>;
 
 export type UsageEvent = Tables<'usage_events'>;
 
@@ -84,6 +77,7 @@ function buildSummaryFromRpcData(
       api_voice_cloning: { count: 0, credits: 0 },
       audio_processing: { count: 0, credits: 0 },
       live_call: { count: 0, credits: 0 },
+      text_chat: { count: 0, credits: 0 },
       tts: { count: 0, credits: 0 },
       voice_cloning: { count: 0, credits: 0 },
     },

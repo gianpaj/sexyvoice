@@ -1207,6 +1207,7 @@
         "tts": "Stemmegenerering",
         "voice_cloning": "Stemmekloning",
         "live_call": "Live-opkald",
+        "text_chat": "Tekstchat",
         "audio_processing": "Lydrensning",
         "api_tts": "Stemmegenerering via API",
         "api_voice_cloning": "Stemmekloning via API"
@@ -1232,6 +1233,7 @@
     "units": {
       "chars": "tegn",
       "mins": "minutter",
+      "tokens": "tokens",
       "secs": "sekunder",
       "operation": "operation"
     }
@@ -1520,6 +1522,7 @@
     "loadingChat": "Indlæser samtalen…",
     "latest": "Gå til nyeste besked",
     "chatError": "Svaret kunne ikke indlæses eller fortsættes.",
+    "chatLowCredits": "Tilføj kreditter for at fortsætte.",
     "refreshChat": "Opdater chat",
     "notice": "Intern test · Opkald på op til 5 minutter · Ingen brug af credits.",
     "workerMissing": "Stemmeassistenten kunne ikke oprette forbindelse. Prøv igen.",

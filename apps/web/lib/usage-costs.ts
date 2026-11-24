@@ -87,6 +87,12 @@ export function resolveUsageCost(
   call?: CallSessionCostInput,
   audioUsage?: unknown,
 ): UsageCost {
+  if (event.source_type === 'text_chat') {
+    const amount = dimension(event.dollar_amount);
+    return amount === null
+      ? { amount: 0, basis: 'unknown' }
+      : { amount, basis: 'estimated' };
+  }
   if (
     event.dollar_amount !== null &&
     Number.isFinite(event.dollar_amount) &&

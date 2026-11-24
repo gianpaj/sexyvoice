@@ -1209,6 +1209,7 @@
         "tts": "Voice generation",
         "voice_cloning": "Voice Cloning",
         "live_call": "Live Call",
+        "text_chat": "Text Chat",
         "audio_processing": "Audio cleanup",
         "api_tts": "API voice generation",
         "api_voice_cloning": "API voice cloning"
@@ -1234,6 +1235,7 @@
     "units": {
       "chars": "characters",
       "mins": "minutes",
+      "tokens": "tokens",
       "secs": "seconds",
       "operation": "operation"
     }
@@ -1522,6 +1524,7 @@
     "loadingChat": "Loading conversation…",
     "latest": "Jump to latest",
     "chatError": "Could not load or continue the reply.",
+    "chatLowCredits": "Add credits to continue.",
     "refreshChat": "Refresh chat",
     "notice": "Internal test · 5-minute call limit · No credit charges.",
     "workerMissing": "The voice agent did not connect. Try again.",

@@ -14,6 +14,7 @@ const sourceTypeLabels: Record<UsageSourceType, string> = {
   api_voice_cloning: 'API Voice Cloning',
   audio_processing: 'Audio Processing',
   live_call: 'Live Call',
+  text_chat: 'Text Chat',
   tts: 'TTS',
   voice_cloning: 'Voice Cloning',
 };

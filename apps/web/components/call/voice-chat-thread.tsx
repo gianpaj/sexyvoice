@@ -7,7 +7,11 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Link } from '@/lib/i18n/navigation';
-import { CHAT_HISTORY_PAGE_SIZE, CHAT_ROUTE } from '@/lib/voice-chat/protocol';
+import {
+  CHAT_BALANCE_ERROR,
+  CHAT_HISTORY_PAGE_SIZE,
+  CHAT_ROUTE,
+} from '@/lib/voice-chat/protocol';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
   type VoiceChatMessage,
@@ -47,10 +51,12 @@ export function VoiceChatThread({
 }: ChatProps) {
   const t = useTranslations('voiceChat');
   const [callActive, setCallActive] = useState(false);
+  const [lowCredits, setLowCredits] = useState(false);
   const [connection] = useState(() =>
     fetchServerSentEvents(CHAT_ROUTE, {
       fetchClient: async (input, init) => {
         const response = await fetch(input, init);
+        if (response.status === 402) setLowCredits(true);
         if (
           response.ok &&
           init?.method === 'GET' &&
@@ -80,6 +86,8 @@ export function VoiceChatThread({
     threadId,
     queue: 'drop',
     onChunk: (event) => {
+      if (event.type === 'RUN_ERROR' && event.code === CHAT_BALANCE_ERROR)
+        setLowCredits(true);
       if (event.type === 'RUN_STARTED' && pending.current !== null) {
         if (currentDraft.current.trim() === pending.current) onDraft('');
         pending.current = null;
@@ -163,6 +171,7 @@ export function VoiceChatThread({
     const text = draft.trim();
     if (!text || busy || unavailable || pending.current) return;
     pending.current = text;
+    setLowCredits(false);
     revealNextReply.current = true;
     setRevealReplyId(undefined);
     setSubmitting(true);
@@ -227,7 +236,9 @@ export function VoiceChatThread({
       />
       {unavailable && (
         <div className="flex items-center justify-between gap-2" role="alert">
-          <p className="text-destructive text-sm">{t('chatError')}</p>
+          <p className="text-destructive text-sm">
+            {t(lowCredits ? 'chatLowCredits' : 'chatError')}
+          </p>
           <Button onClick={onRefresh} size="sm" variant="outline">
             {t('refreshChat')}
           </Button>

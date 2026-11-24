@@ -912,12 +912,56 @@ declare type Database = {
           },
         ];
       };
+      voice_chat_rates: {
+        Row: {
+          cached_credits_per_million: number;
+          cached_usd_per_million: number;
+          effective_at: string;
+          input_credits_per_million: number;
+          input_token_limit: number;
+          input_usd_per_million: number;
+          model: string;
+          output_credits_per_million: number;
+          output_token_limit: number;
+          output_usd_per_million: number;
+          version: string;
+        };
+        Insert: {
+          cached_credits_per_million: number;
+          cached_usd_per_million: number;
+          effective_at: string;
+          input_credits_per_million: number;
+          input_token_limit: number;
+          input_usd_per_million: number;
+          model: string;
+          output_credits_per_million: number;
+          output_token_limit: number;
+          output_usd_per_million: number;
+          version: string;
+        };
+        Update: {
+          cached_credits_per_million?: number;
+          cached_usd_per_million?: number;
+          effective_at?: string;
+          input_credits_per_million?: number;
+          input_token_limit?: number;
+          input_usd_per_million?: number;
+          model?: string;
+          output_credits_per_million?: number;
+          output_token_limit?: number;
+          output_usd_per_million?: number;
+          version?: string;
+        };
+        Relationships: [];
+      };
       voice_chat_runs: {
         Row: {
           assistant_position: number;
           conversation_id: string;
           expires_at: string;
           id: string;
+          rate_version: string | null;
+          reserved_credits: number;
           status: string;
           usage: Json | null;
           user_id: string;
@@ -927,6 +971,8 @@ declare type Database = {
           conversation_id: string;
           expires_at: string;
           id: string;
+          rate_version?: string | null;
+          reserved_credits?: number;
           status?: string;
           usage?: Json | null;
           user_id: string;
@@ -936,6 +982,8 @@ declare type Database = {
           conversation_id?: string;
           expires_at?: string;
           id?: string;
+          rate_version?: string | null;
+          reserved_credits?: number;
           status?: string;
           usage?: Json | null;
           user_id?: string;
@@ -947,6 +995,13 @@ declare type Database = {
             isOneToOne: false;
             referencedRelation: 'conversations';
             referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'voice_chat_runs_rate_version_fkey';
+            columns: ['rate_version'];
+            isOneToOne: false;
+            referencedRelation: 'voice_chat_rates';
+            referencedColumns: ['version'];
           },
         ];
       };
@@ -1104,6 +1159,7 @@ declare type Database = {
         Args: { p_user_id: string };
         Returns: number;
       };
+      expire_voice_chat_runs: { Args: never; Returns: number };
       get_usage_summary: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };
         Returns: {
@@ -1220,8 +1276,9 @@ declare type Database = {
         | 'live_call'
         | 'audio_processing'
         | 'api_tts'
-        | 'api_voice_cloning';
-      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation';
+        | 'api_voice_cloning'
+        | 'text_chat';
+      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation' | 'tokens';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1364,8 +1421,9 @@ declare const Constants = {
         'audio_processing',
         'api_tts',
         'api_voice_cloning',
+        'text_chat',
       ],
-      usage_unit_type: ['chars', 'mins', 'secs', 'operation'],
+      usage_unit_type: ['chars', 'mins', 'secs', 'operation', 'tokens'],
     },
   },
 } as const;

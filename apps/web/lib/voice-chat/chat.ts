@@ -8,14 +8,19 @@ import {
   threadSchema,
 } from '@sexyvoice/voice-chat/history';
 import { loadMemory } from '@sexyvoice/voice-chat/memory';
-import { streamReply } from '@sexyvoice/voice-chat/reply';
+import {
+  REPLY_MODEL,
+  ReplyStreamError,
+  streamReply,
+} from '@sexyvoice/voice-chat/reply';
 import { createClient } from '@supabase/supabase-js';
 import { EventType, type StreamChunk } from '@tanstack/ai';
 import type { UIMessage } from '@tanstack/ai-react';
 import { z } from 'zod';
 
 import { hasUserPaidAdmin } from '@/lib/supabase/queries';
-import { CHAT_HISTORY_PAGE_SIZE } from './protocol';
+import { fitChatBudget } from './chat-budget';
+import { CHAT_BALANCE_ERROR, CHAT_HISTORY_PAGE_SIZE } from './protocol';
 
 const READ_TIMEOUT_MS = 4000;
 const REPLY_MAX_CHARS = 8000;
@@ -66,8 +71,9 @@ export async function generateChatReply(
   text: string,
 ) {
   const abortController = new AbortController();
-  const timer = globalThis.setTimeout(() => abortController.abort(), 55_000);
+  let timer = globalThis.setTimeout(() => abortController.abort(), 55_000);
   let reply = '';
+  let replyCapped = false;
   let status: 'completed' | 'interrupted' = 'interrupted';
   let usage: Json = null;
   const save = async (state: 'streaming' | typeof status) => {
@@ -82,7 +88,7 @@ export async function generateChatReply(
     return data;
   };
   try {
-    const [thread, history] = await Promise.all([
+    const [thread, history, reservation] = await Promise.all([
       db
         .from('conversations')
         .select(
@@ -95,9 +101,31 @@ export async function generateChatReply(
         p_user_id: userId,
         p_conversation_id: conversationId,
       }),
+      db
+        .from('voice_chat_runs')
+        .select(
+          'expires_at,reserved_credits,voice_chat_rates!inner(model,input_token_limit,output_token_limit,input_credits_per_million,output_credits_per_million)',
+        )
+        .eq('user_id', userId)
+        .eq('id', runId)
+        .eq('status', 'streaming')
+        .gt('expires_at', new Date().toISOString())
+        .single(),
     ]);
-    if (thread.error || history.error)
+    if (thread.error || history.error || reservation.error)
       throw new Error('Could not load chat context');
+    // Leave time for settlement even if the post-response worker began late.
+    const remaining =
+      Date.parse(reservation.data.expires_at) - Date.now() - 9000;
+    if (remaining <= 0) throw new Error('Chat reservation expired');
+    clearTimeout(timer);
+    timer = globalThis.setTimeout(
+      () => abortController.abort(),
+      Math.min(55_000, remaining),
+    );
+    const rate = reservation.data.voice_chat_rates;
+    if (rate.model !== REPLY_MODEL)
+      throw new Error('Chat model price unavailable');
     const config = threadSchema.parse(thread.data);
     const character = config.character_id
       ? await loadThreadCharacter(
@@ -113,43 +141,80 @@ export async function generateChatReply(
     )
       throw new Error('Character unavailable');
     const memory = await loadMemory(db, userId, config.character_id);
-    const recalled = await memory?.recall?.(text);
     const turns = conversationContextSchema.parse(history.data);
-    const systemPrompts = [
+    if (turns.at(-1)?.id !== `chat-user:${runId}`)
+      throw new Error('Chat turn is no longer current');
+    const messages = turns.map(({ role, content }) => ({ role, content }));
+    let systemPrompts = [
       ...replyInstructions(config, {
         character: character?.instructions,
         memory: memory?.instructions,
-        recalled,
       }),
       'Match the depth of your reply to the latest user message. For a greeting or quick check-in, reply in one short, in-character sentence with at most one question. Expand when the user asks for detail.',
     ];
+    const limits = {
+      reservedCredits: reservation.data.reserved_credits,
+      inputTokenLimit: rate.input_token_limit,
+      outputTokenLimit: rate.output_token_limit,
+      inputCreditsPerMillion: rate.input_credits_per_million,
+      outputCreditsPerMillion: rate.output_credits_per_million,
+    };
+    let budget = fitChatBudget(systemPrompts, messages, limits);
+    if (budget === CHAT_BALANCE_ERROR) {
+      usage = { failure: CHAT_BALANCE_ERROR };
+      return;
+    }
+    if (!budget) throw new Error('Chat prompt exceeds the input limit');
+
+    abortController.signal.throwIfAborted();
+    const recalled = await memory?.recall?.(text);
+    if (recalled) {
+      const expandedPrompts = [...systemPrompts, recalled];
+      const expandedBudget = fitChatBudget(expandedPrompts, messages, limits);
+      if (expandedBudget && expandedBudget !== CHAT_BALANCE_ERROR) {
+        systemPrompts = expandedPrompts;
+        budget = expandedBudget;
+      }
+    }
+    abortController.signal.throwIfAborted();
     let lastSaved = 0;
     for await (const event of streamReply({
       threadId: conversationId,
       runId,
-      messages: turns.map(({ role, content }) => ({ role, content })),
+      ...budget,
       systemPrompts,
       abortController,
     })) {
       if (event.type === 'finished') {
         usage = event.usage ?? null;
-        if (reply.trim()) status = 'completed';
-      } else {
+        if (reply.trim() && !replyCapped) status = 'completed';
+      } else if (!replyCapped) {
         const next = reply + event.text;
-        if (next.length > REPLY_MAX_CHARS) throw new Error('Reply is too long');
-        reply = next;
+        replyCapped = next.length > REPLY_MAX_CHARS;
+        // Keep consuming the stream for authoritative usage at the text cap.
+        reply = replyCapped
+          ? next.slice(0, REPLY_MAX_CHARS).replace(/[\uD800-\uDBFF]$/, '')
+          : next;
         if (Date.now() - lastSaved >= 180) {
           if (!(await save('streaming'))) return;
           lastSaved = Date.now();
         }
       }
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof ReplyStreamError && error.usage) usage = error.usage;
     status = 'interrupted';
   } finally {
     clearTimeout(timer);
     abortController.abort();
-    await save(status).catch(() => undefined);
+    try {
+      await save(status);
+    } catch {
+      // The first settlement may have committed without a response.
+      await save(status).catch(() => {
+        console.error('Chat settlement failed', { runId });
+      });
+    }
   }
 }
 
@@ -287,7 +352,12 @@ export async function* replayChat(
               : {
                   type: EventType.RUN_ERROR,
                   runId: wireId,
-                  message: 'The reply was interrupted.',
+                  ...(status === CHAT_BALANCE_ERROR
+                    ? {
+                        code: CHAT_BALANCE_ERROR,
+                        message: 'Not enough credits for this reply',
+                      }
+                    : { message: 'The reply was interrupted.' }),
                 },
         } satisfies DeliveryEvent;
       }

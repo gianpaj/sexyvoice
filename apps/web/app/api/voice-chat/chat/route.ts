@@ -87,6 +87,8 @@ export async function POST(request: Request) {
       });
       if (error?.code === '23505')
         return APIErrorResponse('Another call or reply is in progress', 409);
+      if (error?.code === 'SV402')
+        return APIErrorResponse('Not enough credits for this reply', 402);
       if (error?.code === 'P0002')
         return APIErrorResponse('Conversation unavailable', 404);
       if (error) throw new Error('Chat admission failed');

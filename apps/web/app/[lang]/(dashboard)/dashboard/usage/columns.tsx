@@ -42,6 +42,7 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   api_voice_cloning: 'bg-rose-100 text-rose-900 border-rose-200',
   audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
   live_call: 'bg-green-100 text-green-900 border-green-200',
+  text_chat: 'bg-cyan-100 text-cyan-900 border-cyan-200',
   tts: 'bg-purple-100 text-purple-900 border-purple-200',
   voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
 };
@@ -63,6 +64,8 @@ function formatQuantity(
       return `${formattedNumber} ${tUnits('mins')}`;
     case 'secs':
       return `${formattedNumber} ${tUnits('secs')}`;
+    case 'tokens':
+      return `${formattedNumber} ${tUnits('tokens')}`;
     case 'operation':
       return `${formattedNumber} ${tUnits('operation')}`;
     default:
