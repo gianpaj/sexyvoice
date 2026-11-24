@@ -374,6 +374,8 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     .click();
   await expect(page).toHaveURL(/dashboard\/call\?conversation=[a-f0-9-]{36}$/);
   const threadUrl = page.url();
+  const chat = page.getByTestId('inworld-chat-view');
+  await expect(chat).toBeVisible();
   const composer = page.getByRole('textbox', { name: 'Message', exact: true });
   const send = page.getByRole('button', { name: 'Send', exact: true });
   const start = page.getByRole('button', { name: 'Start call', exact: true });
@@ -450,11 +452,28 @@ test('keeps the Inworld thread through a Python call on mobile', async ({
     const end = page.getByRole('button', { name: 'End call', exact: true });
     if (await end.isVisible()) await end.click();
   }
-  await expect(start).toBeEnabled({ timeout: 20_000 });
+  const summary = page.getByTestId('call-ended-view');
+  await expect(summary).toBeVisible();
+  await expect(composer).toHaveCount(0);
+  await expect(summary.getByRole('button', { name: 'Call again' })).toBeEnabled(
+    {
+      timeout: 20_000,
+    },
+  );
+  await summary.getByRole('button', { name: 'Chat', exact: true }).click();
+  await expect(chat).toBeVisible();
   await expect(
     page.getByRole('log').getByText(typed, { exact: true }),
   ).toHaveCount(1);
+  const followUp = 'Reply with just the word reconnected.';
+  const messageCount = await bubbles.count();
+  await composer.fill(followUp);
+  await expect(send).toBeEnabled();
+  await send.click();
+  await expect(bubbles).toHaveCount(messageCount + 2, { timeout: 25_000 });
+  await expect(bubbles.last()).toHaveText(/reconnected/i, { timeout: 25_000 });
   await page.reload();
+  await expect(chat).toBeVisible();
   await expect(
     page.getByRole('log').getByText(typed, { exact: true }),
   ).toHaveCount(1);

@@ -6,12 +6,18 @@ import { useTranslations } from 'next-intl';
 import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import type { Preset } from '@/data/presets';
+import type { CallRecordingFiles } from '@/hooks/use-call-recording';
 import { Link } from '@/lib/i18n/navigation';
+import { cn } from '@/lib/utils';
 import {
   CHAT_BALANCE_ERROR,
   CHAT_HISTORY_PAGE_SIZE,
   CHAT_ROUTE,
 } from '@/lib/voice-chat/protocol';
+import { CallEndedView, CallRecordingDownloads } from './call-ended-view';
+import { CharacterAvatar } from './character-avatar';
+import { InworldCallFrame } from './inworld-call-frame';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
   type VoiceChatMessage,
@@ -26,9 +32,14 @@ export interface VoiceChatCharacterPicker {
 }
 
 interface ChatProps extends VoiceChatCharacterPicker {
-  backToCharacters?: boolean;
   draft: string;
   error: string | null;
+  linked?: {
+    duration?: string;
+    onContinueChat: () => void;
+    preset: Preset;
+    recording?: CallRecordingFiles;
+  };
   onDraft: (text: string) => void;
   onRefresh: () => void;
   onRememberThread: (id: string) => void;
@@ -38,12 +49,12 @@ interface ChatProps extends VoiceChatCharacterPicker {
 
 export function VoiceChatThread({
   threadId,
-  backToCharacters,
   characterName,
   characters,
   startConversation,
   draft,
   error,
+  linked,
   onDraft,
   onStartCall,
   onRememberThread,
@@ -191,28 +202,90 @@ export function VoiceChatThread({
     }
   };
 
-  return (
-    <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-72 w-full max-w-2xl flex-col gap-4">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {backToCharacters && (
-            <Button asChild size="icon" variant="ghost">
-              <Link aria-label={t('backToCharacters')} href="/dashboard/call">
-                <ArrowLeft aria-hidden="true" />
-              </Link>
-            </Button>
+  const startCall = () => onStartCall(visibleMessages).catch(() => undefined);
+  const errors = (
+    <>
+      {error && (
+        <p className="px-4 py-2 text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      )}
+      {unavailable && (
+        <div
+          className="flex items-center justify-between gap-2 px-4 py-2"
+          role="alert"
+        >
+          <p className="text-destructive text-sm">
+            {t(lowCredits ? 'chatLowCredits' : 'chatError')}
+          </p>
+          <Button onClick={onRefresh} size="sm" variant="outline">
+            {t('refreshChat')}
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  if (linked?.duration !== undefined) {
+    return (
+      <CallEndedView
+        callDisabled={busy || unavailable}
+        connecting={false}
+        duration={linked.duration}
+        onCallAgain={startCall}
+        onChat={linked.onContinueChat}
+        preset={linked.preset}
+        recording={linked.recording}
+      >
+        {callActive && (
+          <p className="text-slate-400 text-sm" role="status">
+            {t('endingCall')}
+          </p>
+        )}
+        {errors}
+      </CallEndedView>
+    );
+  }
+
+  const body = (
+    <>
+      <header
+        className={cn(
+          'flex shrink-0 items-center justify-between gap-3',
+          linked && 'border-[#242c52] border-b px-4 py-3',
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          {linked && (
+            <>
+              <Button asChild size="icon" variant="ghost">
+                <Link aria-label={t('backToCharacters')} href="/dashboard/call">
+                  <ArrowLeft aria-hidden="true" />
+                </Link>
+              </Button>
+              <CharacterAvatar
+                image={linked.preset.image}
+                name={linked.preset.name}
+                seed={linked.preset.id}
+                size="sm"
+              />
+            </>
           )}
-          <h1 className="font-semibold text-xl">
+          <h1 className="truncate font-semibold text-xl">
             {characterName ?? t('title')}
           </h1>
         </div>
         <Button
           aria-label={t('call')}
+          className={
+            linked &&
+            'size-11 shrink-0 rounded-full bg-[#4c41a0] text-white hover:bg-[#5b50b1]'
+          }
           disabled={busy || unavailable}
-          onClick={() => onStartCall(visibleMessages).catch(() => undefined)}
+          onClick={startCall}
           size="icon"
         >
-          <Phone />
+          <Phone aria-hidden="true" />
         </Button>
       </header>
       {startConversation && (characters?.length || characterName) ? (
@@ -222,35 +295,36 @@ export function VoiceChatThread({
           startConversation={startConversation}
         />
       ) : null}
-      {error && (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
-        </p>
+      {linked?.recording && (
+        <CallRecordingDownloads recording={linked.recording} />
       )}
       <VoiceChatTranscript
+        inCall={Boolean(linked)}
         messages={visibleMessages}
         ref={transcript}
         revealReplyId={unavailable ? undefined : revealReplyId}
         status={status ? t(status) : undefined}
         streamingReply={hasReply && (chat.isLoading || chat.sessionGenerating)}
       />
-      {unavailable && (
-        <div className="flex items-center justify-between gap-2" role="alert">
-          <p className="text-destructive text-sm">
-            {t(lowCredits ? 'chatLowCredits' : 'chatError')}
-          </p>
-          <Button onClick={onRefresh} size="sm" variant="outline">
-            {t('refreshChat')}
-          </Button>
-        </div>
-      )}
+      {errors}
       <VoiceChatComposer
         draft={draft}
+        inCall={Boolean(linked)}
         onDraft={onDraft}
         onSend={() => send().catch(() => undefined)}
         placeholder={t('chatPlaceholder')}
         sendDisabled={busy || unavailable}
       />
+    </>
+  );
+
+  return linked ? (
+    <InworldCallFrame fitKeyboard testId="inworld-chat-view">
+      {body}
+    </InworldCallFrame>
+  ) : (
+    <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-72 w-full max-w-2xl flex-col gap-4">
+      {body}
     </section>
   );
 }

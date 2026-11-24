@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import type { Preset } from '@/data/presets';
+import type { CallRecordingFiles } from '@/hooks/use-call-recording';
+import { formatTime } from '@/hooks/use-call-timer';
 import { getCallerTime } from '@/lib/caller-time';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { VoiceChatComposer } from './voice-chat-composer';
@@ -85,6 +87,8 @@ export function LiveKitVoiceChat({
   }, []);
   const thread = useRef(conversationId);
   const [state, setState] = useState<State>('idle');
+  const linkedCallStartedAt = useRef<number | null>(null);
+  const [endedDuration, setEndedDuration] = useState<string>();
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const [changingMute, setChangingMute] = useState(false);
@@ -130,6 +134,13 @@ export function LiveKitVoiceChat({
         : [...previous, message];
       return next.sort((a, b) => a.timestamp - b.timestamp).slice(-100);
     });
+  const rememberEndedCall = () => {
+    const startedAt = linkedCallStartedAt.current;
+    if (startedAt === null) return;
+    linkedCallStartedAt.current = null;
+    setEndedDuration(formatTime(Math.floor((Date.now() - startedAt) / 1000)));
+  };
+
   const stop = async () => {
     const current = active.current;
     active.current = null;
@@ -137,6 +148,7 @@ export function LiveKitVoiceChat({
     agent.current = null;
     if (deadline.current) clearTimeout(deadline.current);
     setThinking(false);
+    rememberEndedCall();
     setState('idle');
     if (!pythonCall) setRoom(null);
     await current?.disconnect();
@@ -257,6 +269,7 @@ export function LiveKitVoiceChat({
           here.searchParams.set('conversation', assignedThread);
           window.history.replaceState(null, '', here);
         }
+        if (pythonCall) linkedCallStartedAt.current = Date.now();
         setState('connected');
       } catch {
         fail('connectError');
@@ -306,6 +319,7 @@ export function LiveKitVoiceChat({
       if (deadline.current) clearTimeout(deadline.current);
       if (mounted.current) {
         if (!pythonCall) setRoom(null);
+        rememberEndedCall();
         setState('idle');
         setThinking(false);
         setError(t('ended'));
@@ -474,24 +488,37 @@ export function LiveKitVoiceChat({
       setSending(false);
     }
   };
-  const idleChat = chatThreadId && state === 'idle' && (
-    <VoiceChatThread
-      backToCharacters={Boolean(pythonCall)}
-      characterName={characterName}
-      characters={characters}
-      draft={chatDraft}
-      error={error}
-      key={chatRevision}
-      onDraft={setChatDraft}
-      onRefresh={refreshChat}
-      onRememberThread={(id) => {
-        thread.current = id;
-      }}
-      onStartCall={start}
-      startConversation={startConversation}
-      threadId={thread.current ?? chatThreadId}
-    />
-  );
+  const idleChat = (recording?: CallRecordingFiles) =>
+    chatThreadId && (
+      <VoiceChatThread
+        characterName={characterName}
+        characters={characters}
+        draft={chatDraft}
+        error={
+          endedDuration !== undefined && error === t('ended') ? null : error
+        }
+        key={chatRevision}
+        linked={
+          pythonCall && {
+            duration: endedDuration,
+            onContinueChat: () => {
+              setEndedDuration(undefined);
+              setError(null);
+            },
+            preset: pythonCall.preset,
+            recording,
+          }
+        }
+        onDraft={setChatDraft}
+        onRefresh={refreshChat}
+        onRememberThread={(id) => {
+          thread.current = id;
+        }}
+        onStartCall={start}
+        startConversation={startConversation}
+        threadId={thread.current ?? chatThreadId}
+      />
+    );
   if (pythonCall && room) {
     const ready = state === 'connected';
     const readyStatus = callStatus(
@@ -528,18 +555,17 @@ export function LiveKitVoiceChat({
           }}
           preset={pythonCall.preset}
           ready={ready}
+          renderIdle={idleChat}
           sending={sending}
           status={status}
           thinking={thinking}
           transcriptRef={transcript}
           typing={typing}
-        >
-          {idleChat}
-        </InworldCallView>
+        />
       </RoomContext.Provider>
     );
   }
-  if (idleChat) return idleChat;
+  if (state === 'idle' && chatThreadId) return idleChat();
   return (
     <section className="mx-auto flex h-[calc(100dvh-10rem)] min-h-96 w-full max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">

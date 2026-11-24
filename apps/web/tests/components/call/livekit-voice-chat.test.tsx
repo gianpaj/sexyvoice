@@ -562,9 +562,16 @@ describe('Python Inworld call on the chat page', () => {
     await admitPythonAgent(room);
     expect(await screen.findByTestId('inworld-call-view')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+    expect(await screen.findByTestId('call-ended-view')).toBeVisible();
+    expect(screen.queryByRole('textbox', { name: 'Message' })).toBeNull();
     expect(
-      await screen.findByRole('button', { name: 'Start call' }),
-    ).toBeEnabled();
+      screen.getByRole('link', { name: 'Back to characters' }),
+    ).toHaveAttribute('href', '/en/dashboard/call');
+    expect(screen.getByRole('button', { name: 'Call again' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    expect(await screen.findByTestId('inworld-chat-view')).toBeVisible();
+    expect(screen.getByText('Earlier text')).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Message' })).toBeEnabled();
     expect(room.connect).toHaveBeenCalledOnce();
     window.history.replaceState(null, '', '/');
   });

@@ -60,9 +60,13 @@ migrated database. The Postgres tests cover shared history and admission.
 Paid, allowlisted local users can call an owned Inworld character from its
 card on `/dashboard/call`. The tap unlocks LiveKit audio before navigation.
 A one-use browser handoff dials the new thread after navigation. Opening a saved
-URL shows its chat with a phone button, and the character details panel also
-opens chat without dialing. Both call buttons dispatch `sexycall-inworld-chat`
-with the thread ID.
+URL shows the conversation in the Call layout, with a phone button. The
+character details panel also opens Chat. When an established call ends, the
+Call summary offers Call again, Chat, and Back to characters. Call again waits
+for the worker to finish saving the call and reuses the same thread. Chat
+retains the TanStack history and stream recovery, Streamdown formatting, and
+recording downloads. Both call buttons dispatch `sexycall-inworld-chat` with
+the thread ID.
 
 The keyboard button opens the full thread and composer and mutes the caller.
 The composer mic toggle preserves the draft and keyboard focus. Send requires
@@ -100,8 +104,6 @@ branch's migrations in a disposable local Supabase project.
 
 - [In-call interleaving first](../../rejected/feature/2026-11-16-in-call-text-and-microphone-mute.md)
   does not provide the user's selected chat entry flow or token-based pricing.
-- Muting browser playback alone still runs synthesis and leaves the microphone
-  live. The linked worker gates input and output alongside the browser controls.
 - An always-connected LiveKit chat opens the voice infrastructure before the
   user asks for a call and complicates microphone and billing boundaries.
 - Independent histories for the two modes lose the conversation at call start

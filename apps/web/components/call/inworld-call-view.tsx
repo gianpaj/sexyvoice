@@ -6,15 +6,20 @@ import {
 } from '@livekit/components-react';
 import { Keyboard, MessageSquare, Mic, MicOff, PhoneOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, type Ref, useLayoutEffect, useRef } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import { Button } from '@/components/ui/button';
 import type { Preset } from '@/data/presets';
-import { canRecordCalls, useCallRecording } from '@/hooks/use-call-recording';
+import {
+  type CallRecordingFiles,
+  canRecordCalls,
+  useCallRecording,
+} from '@/hooks/use-call-recording';
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
 import { AudioSettingsMenu, RecordButton } from './in-call-view';
+import { InworldCallFrame } from './inworld-call-frame';
 import { VoiceChatComposer } from './voice-chat-composer';
 import {
   type VoiceChatMessage,
@@ -25,7 +30,6 @@ import {
 interface InworldCallViewProps {
   active: boolean;
   changingMute: boolean;
-  children: ReactNode;
   draft: string;
   error: string | null;
   inputRef: Ref<HTMLTextAreaElement>;
@@ -39,6 +43,7 @@ interface InworldCallViewProps {
   onType: () => void;
   preset: Preset;
   ready: boolean;
+  renderIdle: (recording: CallRecordingFiles) => ReactNode;
   sending: boolean;
   status: string;
   thinking: boolean;
@@ -52,9 +57,9 @@ const control = `${round} border border-[#242c52] bg-[#161d3b] text-slate-100 ho
 
 export function InworldCallView({
   active,
-  children,
   preset,
   ready,
+  renderIdle,
   status,
   error,
   muted,
@@ -77,44 +82,7 @@ export function InworldCallView({
   const call = useTranslations('call.inCall');
   const { formattedTime } = useCallTimer(useConnectionState());
   const recording = useCallRecording(preset, active);
-  const callView = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    const view = callView.current;
-    const viewport = window.visualViewport;
-    if (!(active && typing && view && viewport)) return;
-    const fitAboveKeyboard = () => {
-      const top = Math.max(
-        viewport.offsetTop,
-        view.getBoundingClientRect().top,
-      );
-      const height = Math.max(0, viewport.height + viewport.offsetTop - top);
-      view.style.setProperty('--inworld-call-viewport', `${height}px`);
-    };
-    fitAboveKeyboard();
-    viewport.addEventListener('resize', fitAboveKeyboard);
-    viewport.addEventListener('scroll', fitAboveKeyboard);
-    return () => {
-      viewport.removeEventListener('resize', fitAboveKeyboard);
-      viewport.removeEventListener('scroll', fitAboveKeyboard);
-      view.style.removeProperty('--inworld-call-viewport');
-    };
-  }, [typing, active]);
-  if (!active) {
-    return (
-      <>
-        {children}
-        <div className="mx-auto flex max-w-2xl flex-wrap gap-2">
-          {Object.entries(recording.files).map(([kind, file]) => (
-            <Button asChild key={kind} size="sm" variant="outline">
-              <a download={file.filename} href={file.url}>
-                {file.filename}
-              </a>
-            </Button>
-          ))}
-        </div>
-      </>
-    );
-  }
+  if (!active) return renderIdle(recording.files);
 
   const disabled = !ready || changingMute;
   const hangUp = (
@@ -136,15 +104,14 @@ export function InworldCallView({
   );
 
   return (
-    <section
-      className={cn(
-        'mx-auto flex h-[calc(100dvh-7rem)] min-h-0 w-full max-w-md flex-col overflow-hidden rounded-3xl bg-[#060b22] text-slate-100',
+    <InworldCallFrame
+      className={
         typing
-          ? 'max-h-(--inworld-call-viewport)'
-          : 'px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5',
-      )}
-      data-testid="inworld-call-view"
-      ref={callView}
+          ? undefined
+          : 'px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5'
+      }
+      fitKeyboard={typing}
+      testId="inworld-call-view"
     >
       {typing ? (
         <header className="flex shrink-0 items-center justify-between gap-2 border-[#3c3270] border-b bg-[#1b1636] px-4 text-[#c3b6ff]">
@@ -267,6 +234,6 @@ export function InworldCallView({
         </div>
       )}
       <RoomAudioRenderer />
-    </section>
+    </InworldCallFrame>
   );
 }
