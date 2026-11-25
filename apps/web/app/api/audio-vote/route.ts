@@ -16,13 +16,12 @@ import { createClient } from '@/lib/supabase/server';
  * `POST /api/clone-voice` write the same `audio_files` row for the uploaded
  * result and return only its public URL, so the URL identifies the file.
  *
- * `record_audio_vote` does the write atomically: it locks the caller's
- * newest active row for the URL, reads the stored vote from `audio_votes`,
- * applies the delta to `total_votes`, and saves the vote in one transaction.
- * Votes key off `audio_file_id`, so a deleted-and-regenerated URL starts
- * unrated. Only the row owner may vote — the counter ranks
- * /api/popular-audios, so voting on someone else's audio would manipulate
- * global rankings.
+ * Voting is owner-only, so `audio_files.total_votes` is the owner's tri-state
+ * vote for now: `1` up, `-1` down, `0` cleared. Only the newest active row for
+ * the URL is used, so a deleted-and-regenerated URL starts unrated. If voting
+ * later becomes public, per-user vote rows and an aggregate counter will need
+ * a schema change; keeping those separate is unnecessary for the owner-only
+ * flow.
  *
  * The row is inserted in `after()` — after the generation response has
  * already reached the client — so POST retries briefly before reporting the
@@ -44,6 +43,35 @@ const voteRateLimit = new Ratelimit({
 const LOOKUP_DELAYS_MS = [250, 500, 1000, 2000, 4000] as const;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function voteValue(vote: 'down' | 'up' | null) {
+  if (vote === 'up') return 1;
+  if (vote === 'down') return -1;
+  return 0;
+}
+
+function storedVote(totalVotes: number | undefined) {
+  if (totalVotes === 1) return 'up';
+  if (totalVotes === -1) return 'down';
+  return null;
+}
+
+async function findNewestActiveAudioFile(
+  admin: ReturnType<typeof createAdminClient>,
+  audioUrl: string,
+  userId: string,
+) {
+  const { data, error } = await admin
+    .from('audio_files')
+    .select('id,total_votes')
+    .eq('url', audioUrl)
+    .match({ status: 'active', user_id: userId })
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+  return data[0] ?? null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -83,21 +111,28 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
     for (let attempt = 0; ; attempt++) {
-      const { data: totalVotes, error } = await admin.rpc('record_audio_vote', {
-        p_audio_url: audioUrl,
-        p_user_id: claims.sub,
-        p_vote: vote ?? undefined,
-      });
+      const audioFile = await findNewestActiveAudioFile(
+        admin,
+        audioUrl,
+        claims.sub,
+      );
 
-      if (error) throw error;
-      if (typeof totalVotes === 'number') {
+      if (audioFile) {
+        const totalVotes = voteValue(vote);
+        const { error } = await admin
+          .from('audio_files')
+          .update({ total_votes: totalVotes })
+          .eq('id', audioFile.id)
+          .eq('user_id', claims.sub);
+
+        if (error) throw error;
         return NextResponse.json(
           { success: true, totalVotes },
           { status: 200 },
         );
       }
 
-      // NULL means the caller owns no active row for the URL yet.
+      // The generation writes its row in after(); retry briefly before 404.
       const delay = LOOKUP_DELAYS_MS[attempt];
       if (delay === undefined) {
         return APIErrorResponse('Audio file not found', 404);
@@ -131,15 +166,16 @@ export async function GET(request: Request) {
     }
 
     const admin = createAdminClient();
-    const { data, error } = await admin.rpc('get_audio_vote', {
-      p_audio_url: audioUrl,
-      p_user_id: claims.sub,
-    });
-
-    if (error) throw error;
+    const audioFile = await findNewestActiveAudioFile(
+      admin,
+      audioUrl,
+      claims.sub,
+    );
 
     return NextResponse.json(
-      { vote: data === 'up' || data === 'down' ? data : null },
+      {
+        vote: storedVote(audioFile?.total_votes),
+      },
       { status: 200 },
     );
   } catch (error) {

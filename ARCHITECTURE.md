@@ -434,20 +434,19 @@ the endpoint retries the lookup briefly before returning 404. Errors use the
 standard `{ error }` shape: 401 unauthenticated, 400 invalid body, 429 rate
 limited, 404 unknown or unowned URL, 500 server failure.
 
-The `record_audio_vote` RPC does the write atomically: it locks the caller's
-newest active row for the URL (`SELECT ... FOR UPDATE`), reads the stored vote
-from `audio_votes` (one row per `audio_file_id` + `user_id`), applies the delta
-to `audio_files.total_votes`, and saves the vote in a single transaction. The
-lock serializes overlapping votes on the same audio, and keying votes to the
-row id — not the URL — means a deleted-and-regenerated URL starts unrated and
-deleting a row cascades its votes. Only the row owner may vote, since
-`total_votes` ranks `/api/popular-audios`. A partial index on
-`audio_files(url) WHERE status = 'active'` backs the lookup.
+Voting is currently owner-only, so `audio_files.total_votes` is the owner's
+tri-state vote: `1` up, `-1` down, `0` cleared. `POST` selects the caller's
+newest active row for the URL and writes that value directly; a
+deleted-and-regenerated URL therefore starts unrated. Only the row owner may
+vote, since `total_votes` ranks `/api/popular-audios`. If voting becomes
+public, per-user vote rows and a separately maintained aggregate will need a
+schema change.
 
-`GET /api/audio-vote?audioUrl=<url>` returns `{ vote: "up" | "down" | null }`
-through `get_audio_vote`, letting remounted controls restore the saved
-selection. `audio_votes` is RLS-enabled with no policies; both RPCs are
-`SECURITY INVOKER`, execute-granted to `service_role` only.
+`GET /api/audio-vote?audioUrl=<url>` reads the same row and returns
+`{ vote: "up" | "down" | null }`, letting remounted controls restore the saved
+selection. Writes use the service role because `audio_files` RLS is read-only,
+but every query is scoped to the authenticated owner's `user_id` and active
+rows.
 
 ## Real-time AI Voice Calls
 

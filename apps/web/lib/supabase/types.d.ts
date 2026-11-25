@@ -224,45 +224,6 @@ declare type Database = {
         };
         Relationships: [];
       };
-      audio_votes: {
-        Row: {
-          audio_file_id: string;
-          created_at: string;
-          updated_at: string;
-          user_id: string;
-          vote: string;
-        };
-        Insert: {
-          audio_file_id: string;
-          created_at?: string;
-          updated_at?: string;
-          user_id: string;
-          vote: string;
-        };
-        Update: {
-          audio_file_id?: string;
-          created_at?: string;
-          updated_at?: string;
-          user_id?: string;
-          vote?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'audio_votes_audio_file_id_fkey';
-            columns: ['audio_file_id'];
-            isOneToOne: false;
-            referencedRelation: 'audio_files';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'audio_votes_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       call_analysis_queue: {
         Row: {
           attempts: number;
@@ -918,10 +879,6 @@ declare type Database = {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: number;
       };
-      get_audio_vote: {
-        Args: { p_audio_url: string; p_user_id: string };
-        Returns: string;
-      };
       get_usage_summary: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };
         Returns: {
@@ -954,10 +911,6 @@ declare type Database = {
       };
       prune_agent_memories_over_cap: {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
-        Returns: number;
-      };
-      record_audio_vote: {
-        Args: { p_audio_url: string; p_user_id: string; p_vote?: string };
         Returns: number;
       };
       restore_inactive_user: {
