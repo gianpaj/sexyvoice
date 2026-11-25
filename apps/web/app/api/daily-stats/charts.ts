@@ -87,6 +87,23 @@ export function buildDailyChartRows(
   }));
 }
 
+/**
+ * Average of the last `baselineDays` daily totals, matching the report line
+ * the chart mirrors. The Calls section averages the days before yesterday;
+ * revenue, audio files and new profiles average a window that includes it.
+ */
+export function baselineAverage(
+  totals: number[],
+  baselineDays: number,
+  includesYesterday: boolean,
+): number {
+  const window = includesYesterday
+    ? totals.slice(-baselineDays)
+    : totals.slice(-1 - baselineDays, -1);
+  if (window.length === 0) return 0;
+  return window.reduce((sum, total) => sum + total, 0) / window.length;
+}
+
 /** Response of `GET /api/daily-stats/charts`. */
 export interface ChartsResponse {
   /** UTC days before yesterday that form each chart's average line. */

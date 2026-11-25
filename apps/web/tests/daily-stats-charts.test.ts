@@ -2,7 +2,10 @@ import { createHmac } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildDailyChartRows } from '@/app/api/daily-stats/charts';
+import {
+  baselineAverage,
+  buildDailyChartRows,
+} from '@/app/api/daily-stats/charts';
 import { GET } from '@/app/api/daily-stats/charts/route';
 import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
 import { TELEGRAM_ADMIN_CHAT_ID } from '@/lib/telegram';
@@ -93,6 +96,23 @@ describe('buildDailyChartRows', () => {
         revenueUsd: 7.5,
       },
     ]);
+  });
+});
+
+describe('baselineAverage', () => {
+  // Oldest first; the last value is yesterday.
+  const totals = [100, 1, 2, 3, 10];
+
+  it('averages the days before yesterday, like the Calls section', () => {
+    expect(baselineAverage(totals, 3, false)).toBe(2);
+  });
+
+  it('includes yesterday, like the revenue, audio and profile lines', () => {
+    expect(baselineAverage(totals, 3, true)).toBe(5);
+  });
+
+  it('returns 0 without data', () => {
+    expect(baselineAverage([], 14, true)).toBe(0);
   });
 });
 

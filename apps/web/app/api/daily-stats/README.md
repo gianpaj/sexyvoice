@@ -56,8 +56,10 @@ either message, so the cron check-in reports the failure.
 The page stacks five bar charts over the last 30 complete UTC days, excluding
 internal users: revenue, calls, call minutes, audio files (TTS and cloned voice
 stacked), and new profiles. Each chart highlights yesterday and draws a dashed
-line at the average of the `ROLLING_WINDOW_DAYS` (14) days before yesterday,
-the same baseline as the report. Revenue sums `metadata.dollarAmount` over
+line at the report's `ROLLING_WINDOW_DAYS` (14) day average for that metric:
+calls and call minutes average the 14 days before yesterday, like the Calls
+section; revenue, audio files and new profiles average the 14 days up to and
+including yesterday, like their report lines. Revenue sums `metadata.dollarAmount` over
 purchases, top-ups and refunds, like the report's `💰 Revenue` line.
 `charts.ts` builds the per-day rows.
 

@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from 'recharts';
 
-import type {
-  ChartsResponse,
-  DailyChartRow,
+import {
+  baselineAverage,
+  type ChartsResponse,
+  type DailyChartRow,
 } from '@/app/api/daily-stats/charts';
 import {
   type ChartConfig,
@@ -19,6 +20,8 @@ import {
 type Metric = Exclude<keyof DailyChartRow, 'date'>;
 
 interface ChartSpec {
+  /** Whether the report's average for this metric includes yesterday. */
+  baselineIncludesYesterday: boolean;
   format: (value: number) => string;
   /** Stacked bottom to top. */
   series: { color: string; key: Metric; label: string }[];
@@ -33,21 +36,25 @@ const formatUsd = (value: number) =>
 
 const CHARTS: ChartSpec[] = [
   {
+    baselineIncludesYesterday: true,
     format: formatUsd,
     series: [{ color: 'var(--chart-2)', key: 'revenueUsd', label: 'Revenue' }],
     title: 'Revenue',
   },
   {
+    baselineIncludesYesterday: false,
     format: formatNumber,
     series: [{ color: 'var(--chart-1)', key: 'calls', label: 'Calls' }],
     title: 'Calls',
   },
   {
+    baselineIncludesYesterday: false,
     format: (value) => `${formatNumber(value)} min`,
     series: [{ color: 'var(--chart-1)', key: 'callMinutes', label: 'Minutes' }],
     title: 'Call minutes',
   },
   {
+    baselineIncludesYesterday: true,
     format: formatNumber,
     series: [
       { color: 'var(--chart-3)', key: 'audio', label: 'TTS' },
@@ -56,6 +63,7 @@ const CHARTS: ChartSpec[] = [
     title: 'Audio files',
   },
   {
+    baselineIncludesYesterday: true,
     format: formatNumber,
     series: [{ color: 'var(--chart-5)', key: 'profiles', label: 'Profiles' }],
     title: 'New profiles',
@@ -84,9 +92,11 @@ function DailyChart({
   const total = (day: DailyChartRow) =>
     spec.series.reduce((sum, { key }) => sum + day[key], 0);
   const yesterday = days.at(-1);
-  const baseline = days.slice(-1 - baselineDays, -1);
-  const average =
-    baseline.reduce((sum, day) => sum + total(day), 0) / baseline.length;
+  const average = baselineAverage(
+    days.map(total),
+    baselineDays,
+    spec.baselineIncludesYesterday,
+  );
   const config: ChartConfig = Object.fromEntries(
     spec.series.map(({ color, key, label }) => [key, { color, label }]),
   );
@@ -165,7 +175,7 @@ export default function TelegramStatsPage() {
       <h1 className="font-semibold text-lg">SexyVoice stats</h1>
       <p className="text-muted-foreground text-sm">
         Last {state.days.length} UTC days, excluding internal users. Dashed
-        line: {state.baselineDays}-day average before yesterday.
+        line: the report's {state.baselineDays}-day average.
       </p>
       {CHARTS.map((spec) => (
         <DailyChart
