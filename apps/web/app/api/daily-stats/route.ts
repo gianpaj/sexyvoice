@@ -23,6 +23,7 @@ import { getContributionData } from './contribution-queries';
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const ROLLING_WINDOW_DAYS = 14;
 const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
+const CALLS_CHART_URL = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sexyvoice.ai'}/telegram/calls`;
 
 import {
   countActiveCustomerSubscriptions,
@@ -32,6 +33,7 @@ import {
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
+import { TELEGRAM_ADMIN_CHAT_ID } from '@/lib/telegram';
 import {
   type DailyStatsCallSession,
   getAllCreditTransactions,
@@ -650,7 +652,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true }, { headers: debugHeaders });
     }
     await fetch(webhook, {
-      body: JSON.stringify({ chat_id: '202637584', text: message }),
+      body: JSON.stringify({ chat_id: TELEGRAM_ADMIN_CHAT_ID, text: message }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     });
@@ -1436,7 +1438,14 @@ export async function GET(request: NextRequest) {
     }
     await fetch(webhook, {
       body: JSON.stringify({
-        chat_id: '202637584',
+        chat_id: TELEGRAM_ADMIN_CHAT_ID,
+        // Opens the Calls chart as a Mini App. Web app buttons work only in
+        // private chats.
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '📈 Calls chart', web_app: { url: CALLS_CHART_URL } }],
+          ],
+        },
         text: message,
       }),
       headers: { 'Content-Type': 'application/json' },

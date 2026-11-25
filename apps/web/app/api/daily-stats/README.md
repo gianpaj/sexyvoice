@@ -45,6 +45,28 @@ Call lines use `started_at` and exclude internal users. `AI usage (est.)` uses
 the cost windows in [Cost sources](#cost-sources), so its cost per minute is
 approximate around midnight.
 
+## Calls chart Mini App
+
+The report message has a `📈 Calls chart` button that opens
+`/telegram/calls` as a Telegram Mini App. The page charts calls per UTC day for
+the last 30 complete days, excluding internal users, with a dashed line at the
+Calls section's baseline: the average of the 14 days before yesterday.
+
+Telegram passes signed init data in the page's URL fragment. The page sends it
+to `calls-chart/route.ts` as `Authorization: tma <init data>`.
+`verifyTelegramInitData` in `apps/web/lib/telegram.ts` checks the signature
+with the bot token from `TELEGRAM_WEBHOOK_URL` and rejects data older than an
+hour. The route answers only `TELEGRAM_ADMIN_CHAT_ID`.
+
+- `/telegram/` has its own root layout and skips `proxy.ts`, so it has no locale
+  prefix or Supabase session.
+- Web app buttons work only in private chats.
+- The site CSP sets `frame-ancestors 'none'`, so Telegram Web, which embeds
+  Mini Apps in an iframe, cannot open the page. The native apps can.
+
+To try the page locally, sign init data with the bot token and open
+`/telegram/calls#tgWebAppData=<encoded init data>`.
+
 ## Usage contribution
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,

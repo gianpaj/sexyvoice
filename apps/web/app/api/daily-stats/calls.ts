@@ -175,3 +175,26 @@ export function formatCallsSection({
     `  - All-time: ${allTime.count.toLocaleString()} calls (avg ${formatDuration(allTime.avgSeconds)}) · Inworld voices: ${inworldVoices}`,
   ];
 }
+
+export interface DailyCallCount {
+  calls: number;
+  /** UTC day, `YYYY-MM-DD`. */
+  date: string;
+}
+
+/** Calls started on each UTC day from `start`, with zero for days without calls. */
+export function countCallsPerDay(
+  calls: Pick<Call, 'started_at'>[],
+  start: Date,
+  days: number,
+): DailyCallCount[] {
+  const counts = new Map<string, number>();
+  for (const call of calls) {
+    const date = new Date(call.started_at).toISOString().slice(0, 10);
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  return Array.from({ length: days }, (_, i) => {
+    const date = subtractDays(start, -i).toISOString().slice(0, 10);
+    return { calls: counts.get(date) ?? 0, date };
+  });
+}
