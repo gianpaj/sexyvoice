@@ -1,22 +1,27 @@
-# Agent Note: Telegram calls chart Mini App
+# Agent Note: Telegram charts Mini App
 
-Status: proposed — built and tested locally, not yet deployed
+Status: proposed — in review on PR #742, not yet deployed
 
 ## Problem
 
-The daily Telegram report shows the calls trend only as text, such as
-`📞 Calls: 20 · 47m ↓37% · avg 2m 21s`. The owner wants an actual chart of
-calls per day, as close to a real HTML chart as Telegram allows, reachable
-from the report.
+The daily Telegram report shows trends only as text, such as
+`📞 Calls: 20 · 47m ↓37% · avg 2m 21s`. Reading a trend means comparing
+yesterday with a 14-day average by hand. The owner wants actual charts, as
+close to real HTML charts as Telegram allows, reachable from the report.
 
 ## Proposal
 
-The report message carries an inline `web_app` button that opens
-`/telegram/calls` as a Mini App. The page renders a Recharts bar chart through
-the shadcn `ChartContainer`, with 30 days of calls and the report's 14-day
-baseline. `calls-chart/route.ts` serves the data and accepts only init data
-signed for the admin's Telegram user ID.
+After the report, the route sends a second message with an inline `web_app`
+button that opens `/telegram/stats` as a Mini App. The page stacks Recharts bar
+charts, through the shadcn `ChartContainer`, for revenue, calls, call minutes,
+audio files and new profiles over 30 days. Each chart highlights yesterday and
+draws the report's 14-day baseline. `charts/route.ts` serves one row per day
+and accepts only init data signed for the admin's Telegram user ID.
 
+- The button has its own message. Telegram rejects a whole `sendMessage` call
+  when a button is invalid, so a button on the report could block the report.
+- `sendTelegramMessage` throws on Telegram's `ok: false`, so a rejected
+  message fails the cron check-in instead of passing as `ok`.
 - Auth uses Telegram's Mini App init data, not a signed link in the message.
   Each tap carries fresh signed data tied to the user, links never need to
   expire, and the page always shows current data.
@@ -24,6 +29,10 @@ signed for the admin's Telegram user ID.
   `telegram-web-app.js`, which the CSP `script-src` does not allow.
 - The bot token comes from the existing `TELEGRAM_WEBHOOK_URL`, so the feature
   adds no environment variable.
+- The API returns `baselineDays` from `ROLLING_WINDOW_DAYS`, so the charts'
+  average line follows the report's baseline if it changes.
+- The page copy is English and skips `next-intl`: only the admin sees it, and
+  the report it extends is English.
 
 ## Alternatives considered
 
@@ -86,16 +95,18 @@ The widget is one SVG with no script. Bars use solid theme colours, not
 </div>
 ```
 
-Before sending it: build it from `countCallsPerDay` so it excludes internal
+Before sending it: build it from `buildDailyChartRows` so it excludes internal
 users, keep yesterday's label clear of the average line, and send it with
 `sendWidget` after the text report, ignoring `INPUT_MEDIA_WIDGET_NOT_ALLOWED`.
 
 ## Acceptance criteria
 
-- Tapping the button in the native Telegram app opens the chart with data
-  matching the report's Calls section.
+- Tapping the button in the native Telegram app opens the charts, and
+  yesterday's values match the report's revenue, calls, audio files and new
+  profiles.
 - The API returns 401 without init data, with init data for another user, with
-  a modified hash, and with init data older than an hour.
+  a modified hash, and with init data older than an hour or from the future.
+- A rejected report or charts message fails the cron check-in.
 
 ## Risks
 

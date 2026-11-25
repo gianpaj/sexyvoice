@@ -45,27 +45,38 @@ Call lines use `started_at` and exclude internal users. `AI usage (est.)` uses
 the cost windows in [Cost sources](#cost-sources), so its cost per minute is
 approximate around midnight.
 
-## Calls chart Mini App
+## Charts Mini App
 
-The report message has a `📈 Calls chart` button that opens
-`/telegram/calls` as a Telegram Mini App. The page charts calls per UTC day for
-the last 30 complete days, excluding internal users, with a dashed line at the
-Calls section's baseline: the average of the 14 days before yesterday.
+After the report, the route sends a second message, `📈 Charts for the last 30
+days`, with an `Open charts` button. The button opens `/telegram/stats` as a
+Telegram Mini App. The button has its own message so that Telegram rejecting it
+cannot block the report. `sendTelegramMessage` throws when Telegram rejects
+either message, so the cron check-in reports the failure.
+
+The page stacks five bar charts over the last 30 complete UTC days, excluding
+internal users: revenue, calls, call minutes, audio files (TTS and cloned voice
+stacked), and new profiles. Each chart highlights yesterday and draws a dashed
+line at the average of the `ROLLING_WINDOW_DAYS` (14) days before yesterday,
+the same baseline as the report. Revenue sums `metadata.dollarAmount` over
+purchases, top-ups and refunds, like the report's `💰 Revenue` line.
+`charts.ts` builds the per-day rows.
 
 Telegram passes signed init data in the page's URL fragment. The page sends it
-to `calls-chart/route.ts` as `Authorization: tma <init data>`.
+to `charts/route.ts` as `Authorization: tma <init data>`.
 `verifyTelegramInitData` in `apps/web/lib/telegram.ts` checks the signature
-with the bot token from `TELEGRAM_WEBHOOK_URL` and rejects data older than an
-hour. The route answers only `TELEGRAM_ADMIN_CHAT_ID`.
+with the bot token from `TELEGRAM_WEBHOOK_URL`. It rejects data older than an
+hour or dated more than a minute in the future. The route answers only
+`TELEGRAM_ADMIN_CHAT_ID`.
 
 - `/telegram/` has its own root layout and skips `proxy.ts`, so it has no locale
   prefix or Supabase session.
+- The page copy is English, like the report: only the admin sees it.
 - Web app buttons work only in private chats.
 - The site CSP sets `frame-ancestors 'none'`, so Telegram Web, which embeds
   Mini Apps in an iframe, cannot open the page. The native apps can.
 
 To try the page locally, sign init data with the bot token and open
-`/telegram/calls#tgWebAppData=<encoded init data>`.
+`/telegram/stats#tgWebAppData=<encoded init data>`.
 
 ## Usage contribution
 

@@ -125,6 +125,11 @@ export function formatCompactNumber(num: number): string {
   return num.toLocaleString();
 }
 
+/** UTC days before yesterday that the report's daily averages cover. */
+export const ROLLING_WINDOW_DAYS = 14;
+/** Complete UTC days the charts Mini App shows, up to yesterday. */
+export const CHART_DAYS = 30;
+
 export function startOfDay(date: Date): Date {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),

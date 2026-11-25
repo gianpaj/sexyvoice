@@ -1,0 +1,95 @@
+import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
+import type {
+  DailyStatsAudioFile,
+  DailyStatsCallSession,
+  DailyStatsCreditTransaction,
+  DailyStatsProfile,
+} from './queries';
+import { reduceAmountUsd, subtractDays } from './utils';
+
+/** One UTC day of the charts Mini App. */
+export interface DailyChartRow {
+  /** Audio files from models other than voice cloning. */
+  audio: number;
+  callMinutes: number;
+  calls: number;
+  /** Audio files from voice cloning models. */
+  clonedAudio: number;
+  /** `YYYY-MM-DD`. */
+  date: string;
+  profiles: number;
+  /** The report's revenue: `dollarAmount` of purchases, top-ups and refunds. */
+  revenueUsd: number;
+}
+
+export interface ChartSources {
+  audioFiles: Pick<DailyStatsAudioFile, 'created_at' | 'model'>[];
+  calls: Pick<DailyStatsCallSession, 'duration_seconds' | 'started_at'>[];
+  creditTransactions: Pick<
+    DailyStatsCreditTransaction,
+    'created_at' | 'metadata'
+  >[];
+  profiles: Pick<DailyStatsProfile, 'created_at'>[];
+}
+
+const utcDate = (timestamp: string | Date) =>
+  new Date(timestamp).toISOString().slice(0, 10);
+
+const round = (value: number, decimals: number) =>
+  Math.round(value * 10 ** decimals) / 10 ** decimals;
+
+/** Totals per UTC day from `start`, with zeros for days without activity. */
+export function buildDailyChartRows(
+  sources: ChartSources,
+  start: Date,
+  days: number,
+): DailyChartRow[] {
+  const rows = Array.from({ length: days }, (_, i) => ({
+    audio: 0,
+    callMinutes: 0,
+    calls: 0,
+    clonedAudio: 0,
+    date: utcDate(subtractDays(start, -i)),
+    profiles: 0,
+    revenueUsd: 0,
+  }));
+  const rowsByDate = new Map(rows.map((row) => [row.date, row]));
+  const rowFor = (timestamp: string | null) =>
+    timestamp ? rowsByDate.get(utcDate(timestamp)) : undefined;
+
+  for (const call of sources.calls) {
+    const row = rowFor(call.started_at);
+    if (row) {
+      row.calls += 1;
+      row.callMinutes += call.duration_seconds / 60;
+    }
+  }
+  for (const file of sources.audioFiles) {
+    const row = rowFor(file.created_at);
+    if (row) {
+      if (VOICE_CLONING_MODELS.includes(file.model)) row.clonedAudio += 1;
+      else row.audio += 1;
+    }
+  }
+  for (const profile of sources.profiles) {
+    const row = rowFor(profile.created_at);
+    if (row) row.profiles += 1;
+  }
+  for (const transaction of sources.creditTransactions) {
+    const row = rowFor(transaction.created_at);
+    if (row) row.revenueUsd = reduceAmountUsd(row.revenueUsd, transaction);
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    callMinutes: round(row.callMinutes, 1),
+    revenueUsd: round(row.revenueUsd, 2),
+  }));
+}
+
+/** Response of `GET /api/daily-stats/charts`. */
+export interface ChartsResponse {
+  /** UTC days before yesterday that form each chart's average line. */
+  baselineDays: number;
+  days: DailyChartRow[];
+}

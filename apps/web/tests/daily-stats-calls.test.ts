@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  countCallsPerDay,
-  formatCallsSection,
-} from '@/app/api/daily-stats/calls';
+import { formatCallsSection } from '@/app/api/daily-stats/calls';
 import { formatMinutes, formatTrend } from '@/app/api/daily-stats/utils';
 import { ModelId } from '@/data/models';
 
@@ -146,22 +143,5 @@ describe('formatCallsSection', () => {
     expect(lines[0]).toBe('📞 Calls: 0 · 0m ↓100%');
     expect(lines).toContain('  - Paying users: 0 · 0m');
     expect(lines).toContain('  - AI usage (est.): $0.00 · 14d avg $0.10/day');
-  });
-});
-
-describe('countCallsPerDay', () => {
-  it('counts calls per UTC day and fills days without calls', () => {
-    const start = new Date('2026-09-09T00:00:00Z');
-    const calls = [
-      { started_at: '2026-09-09T23:59:59+00:00' },
-      { started_at: '2026-09-09T01:00:00+00:00' },
-      { started_at: '2026-09-11T00:00:00+00:00' },
-    ];
-
-    expect(countCallsPerDay(calls, start, 3)).toEqual([
-      { calls: 2, date: '2026-09-09' },
-      { calls: 0, date: '2026-09-10' },
-      { calls: 1, date: '2026-09-11' },
-    ]);
   });
 });
