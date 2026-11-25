@@ -1,5 +1,5 @@
 import {
-  createPythonCallDispatch,
+  createPythonCallDispatchMetadata,
   DISPATCH_LIFETIME_MS,
   pythonCallDispatchSchema,
 } from '@sexyvoice/voice-chat/dispatch';
@@ -14,19 +14,16 @@ describe('LiveKit Python dispatch v1', () => {
     expect(z.toJSONSchema(pythonCallDispatchSchema)).toEqual(schema);
   });
 
-  it('builds versioned metadata for the dedicated Python agent', () => {
+  it('builds versioned metadata for a linked call', () => {
     const { userId, roomName, conversationId } = fixture.base;
     const first = Date.now();
-    const dispatch = createPythonCallDispatch({
+    const metadata = createPythonCallDispatchMetadata({
       userId,
       roomName,
       conversationId,
       resume: true,
     });
-    expect(dispatch.agentName).toBe('sexycall-inworld-chat');
-    const parsed = pythonCallDispatchSchema.parse(
-      JSON.parse(dispatch.metadata),
-    );
+    const parsed = pythonCallDispatchSchema.parse(JSON.parse(metadata));
     expect(parsed).toMatchObject({
       version: 1,
       userId,

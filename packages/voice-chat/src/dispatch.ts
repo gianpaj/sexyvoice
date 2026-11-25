@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-export const PYTHON_CALL_AGENT = 'sexycall-inworld-chat';
 export const PYTHON_CALL_RUNTIME = 'voice-chat-python';
 export const DISPATCH_LIFETIME_MS = 120_000;
 
@@ -22,12 +21,14 @@ type PythonCallSelection = Omit<
   'version' | 'runtime' | 'expiresAt'
 >;
 
-export function createPythonCallDispatch(selection: PythonCallSelection) {
+export function createPythonCallDispatchMetadata(
+  selection: PythonCallSelection,
+) {
   const payload = pythonCallDispatchSchema.parse({
     ...selection,
     version: 1,
     runtime: PYTHON_CALL_RUNTIME,
     expiresAt: Date.now() + DISPATCH_LIFETIME_MS,
   });
-  return { agentName: PYTHON_CALL_AGENT, metadata: JSON.stringify(payload) };
+  return JSON.stringify(payload);
 }

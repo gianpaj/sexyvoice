@@ -2,7 +2,7 @@ import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { captureException, logger } from '@sentry/nextjs';
 import { callerIdentity } from '@sexyvoice/voice-chat';
 import {
-  createPythonCallDispatch,
+  createPythonCallDispatchMetadata,
   PYTHON_CALL_RUNTIME,
 } from '@sexyvoice/voice-chat/dispatch';
 import { loadThreadCharacter } from '@sexyvoice/voice-chat/history';
@@ -363,17 +363,18 @@ export async function POST(request: Request) {
     // Create room configuration + dispatch agent
     at.roomConfig = new RoomConfiguration({
       agents: [
-        new RoomAgentDispatch(
-          linked
-            ? createPythonCallDispatch({
-                roomName,
-                userId: user.id,
-                conversationId,
-                resume: true,
-                audioReferenceId: voiceObj.id,
-              })
-            : { agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall' },
-        ),
+        new RoomAgentDispatch({
+          agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall',
+          ...(linked && {
+            metadata: createPythonCallDispatchMetadata({
+              roomName,
+              userId: user.id,
+              conversationId,
+              resume: true,
+              audioReferenceId: voiceObj.id,
+            }),
+          }),
+        }),
       ],
       ...(linked && { maxParticipants: 2, emptyTimeout: 30 }),
       name: roomName,

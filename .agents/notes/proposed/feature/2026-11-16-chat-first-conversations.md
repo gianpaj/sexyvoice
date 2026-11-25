@@ -66,8 +66,8 @@ Call summary offers Call again, Chat, and Back to characters. Call again waits
 for the worker to finish saving the call, then starts a new thread with the
 same character, language, and scene. Chat opens the finished thread and
 retains the TanStack history and stream recovery, Streamdown formatting, and
-recording downloads. Both call buttons dispatch `sexycall-inworld-chat` with
-the thread ID.
+recording downloads. Both call buttons send the thread ID in versioned
+dispatch metadata to the shared SexyCall worker.
 
 The keyboard button opens the full thread and composer and mutes the caller.
 The composer mic toggle preserves the draft and keyboard focus. Send requires
