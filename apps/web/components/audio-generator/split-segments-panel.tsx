@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { AudioFeedback } from '../audio-feedback';
 import { AudioPlayerWithContext } from '../audio-player-with-context';
 import {
   getSplitSegmentStatusLabelKey,
@@ -85,7 +86,7 @@ export function SplitSegmentsPanel({
             key={segment.id}
           >
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-start gap-2">
                 {segmentStatusIcon}
                 <p className="font-medium text-sm">
                   {t('split.segmentLabel').replace(
@@ -138,6 +139,12 @@ export function SplitSegmentsPanel({
                 >
                   <Download className="size-5" />
                 </Button>
+                {segment.audioFileId && (
+                  <AudioFeedback
+                    audioFileId={segment.audioFileId}
+                    key={segment.audioFileId}
+                  />
+                )}
               </div>
             )}
           </div>

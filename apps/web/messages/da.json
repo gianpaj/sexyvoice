@@ -1489,6 +1489,8 @@
     "vocalSounds": "Stemmelyde"
   },
   "feedback": {
+    "goodAudio": "God lyd",
+    "badAudio": "Dårlig lyd",
     "rateCall": "Bedøm opkald",
     "goodCall": "Godt opkald",
     "leaveFeedback": "Giv feedback",

@@ -1097,6 +1097,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
+      expect(json.audioFileId).toBe('test-audio-file-id');
       expect(json.url).toContain('files.sexyvoice.ai');
 
       // Verify audio was generated and saved
@@ -1110,6 +1111,22 @@ describe('Clone Voice API Route', () => {
         ),
         expect.stringContaining('files.sexyvoice.ai'),
       );
+    });
+
+    it('returns playable audio when its history row could not be saved', async () => {
+      vi.mocked(queries.saveAudioFile).mockResolvedValueOnce(undefined);
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          body: createFormDataWithAudio('Hello world'),
+          method: 'POST',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json).not.toHaveProperty('audioFileId');
     });
 
     it('should check generated output cache using deterministic filename', async () => {
@@ -1155,6 +1172,9 @@ describe('Clone Voice API Route', () => {
       const cachedOutputUrl = 'https://files.sexyvoice.ai/cached-output.wav';
 
       mockRedisGet.mockResolvedValueOnce(cachedOutputUrl);
+      vi.mocked(queries.getActiveOwnedAudioFileId).mockResolvedValueOnce(
+        'cached-audio-file-id',
+      );
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -1168,6 +1188,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json).toEqual({
+        audioFileId: 'cached-audio-file-id',
         creditsRemaining: 1000,
         creditsUsed: 0,
         url: cachedOutputUrl,
@@ -1177,6 +1198,11 @@ describe('Clone Voice API Route', () => {
         1,
         expect.stringContaining('cloned-audio-free/'),
       );
+      expect(queries.getActiveOwnedAudioFileId).toHaveBeenCalledWith({
+        filename: expect.stringContaining('cloned-audio-free/'),
+        url: cachedOutputUrl,
+        userId: 'test-user-id',
+      });
 
       // Cached generated output should be reused, so no uploads occur.
       expect(mockUploadFileToR2).not.toHaveBeenCalled();
@@ -2535,6 +2561,7 @@ describe('Saved voice generation', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(json.audioFileId).toBe('test-audio-file-id');
     expect(json.creditsUsed).toBe(132);
     expect(mockGetOwnedCallVoice).toHaveBeenCalledWith(
       savedVoiceId,

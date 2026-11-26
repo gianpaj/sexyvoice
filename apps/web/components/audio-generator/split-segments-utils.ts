@@ -8,7 +8,13 @@ const SPLIT_STORAGE_PREFIX = 'generate-split-segments-v1';
 
 export type SplitSegmentStatus = 'idle' | 'generating' | 'success' | 'failed';
 
+export interface SplitGeneratedAudio {
+  audioFileId?: string;
+  url: string;
+}
+
 export interface SplitSegmentItem {
+  audioFileId?: string;
   audioUrl: string;
   id: string;
   status: SplitSegmentStatus;
@@ -16,8 +22,9 @@ export interface SplitSegmentItem {
 }
 
 export interface PersistedSplitSegments {
-  generatedByText?: Record<string, string>;
+  generatedByText?: Record<string, string | SplitGeneratedAudio>;
   segments: Array<{
+    audioFileId?: string;
     audioUrl?: string;
     status: SplitSegmentStatus;
     text: string;

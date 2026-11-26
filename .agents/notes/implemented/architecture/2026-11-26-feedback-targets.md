@@ -28,3 +28,7 @@ Hard deletion of a call or audio row cascades to its feedback. The
 [account cleanup](../security/2026-11-13-account-content-cleanup.md) explicitly
 deletes the user's feedback for retained rows. A new target table needs a
 migration so its reference and deletion behavior stay enforceable in Postgres.
+
+Cache hits resolve the newest active row with the caller's user ID, storage key,
+and audio URL. Playback can still succeed without a matching row. An audio
+result can be rated when its generation response includes a saved file ID.

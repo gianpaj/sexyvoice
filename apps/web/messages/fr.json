@@ -1493,6 +1493,8 @@
     "vocalSounds": "Sons vocaux"
   },
   "feedback": {
+    "goodAudio": "Bon audio",
+    "badAudio": "Mauvais audio",
     "rateCall": "Évaluer l’appel",
     "goodCall": "Bon appel",
     "leaveFeedback": "Donner mon avis",

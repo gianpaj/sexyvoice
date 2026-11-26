@@ -440,6 +440,7 @@ vi.mock('@/lib/supabase/queries', async () => {
   );
   return {
     ...actual,
+    getActiveOwnedAudioFileId: vi.fn().mockResolvedValue(undefined),
     getCredits: vi.fn().mockResolvedValue(1000),
     getCreditsAdmin: vi.fn().mockResolvedValue(1000),
     getCreditTransactionAmounts: vi.fn().mockResolvedValue([]),
@@ -550,10 +551,7 @@ vi.mock('@/lib/supabase/queries', async () => {
     ),
     reserveCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(true),
     restoreCredits: vi.fn().mockResolvedValue(true),
-    saveAudioFile: vi.fn().mockResolvedValue({
-      data: { id: 'test-audio-file-id' },
-      error: null,
-    }),
+    saveAudioFile: vi.fn().mockResolvedValue('test-audio-file-id'),
     saveAudioFileAdmin: vi.fn().mockResolvedValue({
       data: { id: 'test-audio-file-id' },
       error: null,

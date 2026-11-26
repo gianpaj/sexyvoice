@@ -320,26 +320,65 @@ export async function saveAudioFile({
   duration: string;
   credits_used: number;
   usage?: Record<string, string | number | boolean>;
-}) {
-  const supabase = await createClient();
+}): Promise<string | undefined> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('audio_files')
+      .insert({
+        credits_used,
+        duration: Number.parseFloat(duration),
+        is_public: isPublic,
+        model,
+        prediction_id: predictionId,
+        storage_key: filename,
+        text_content: text,
+        url,
+        usage,
+        user_id: userId,
+        voice_id: voiceId,
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    return data?.id;
+  } catch (error) {
+    captureException(error, {
+      extra: { context: 'saveAudioFile', model, voiceId },
+      user: { id: userId },
+    });
+  }
+}
 
-  return supabase
-    .from('audio_files')
-    .insert({
-      credits_used,
-      duration: Number.parseFloat(duration),
-      is_public: isPublic,
-      model,
-      prediction_id: predictionId,
-      storage_key: filename,
-      text_content: text,
-      url,
-      usage,
-      user_id: userId,
-      voice_id: voiceId,
-    })
-    .select('id')
-    .single();
+export async function getActiveOwnedAudioFileId({
+  filename,
+  url,
+  userId,
+}: {
+  filename: string;
+  url: string;
+  userId: string;
+}): Promise<string | undefined> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('audio_files')
+      .select('id')
+      .eq('storage_key', filename)
+      .eq('url', url)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.id;
+  } catch (error) {
+    captureException(error, {
+      extra: { context: 'getActiveOwnedAudioFileId' },
+      user: { id: userId },
+    });
+  }
 }
 
 /**

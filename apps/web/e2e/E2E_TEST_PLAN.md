@@ -35,7 +35,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 
 | Area     | Route                    | Spec                         | POM                      | Mocking                                              |            Tests |
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
-| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
+| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts` and inline feedback mocks  | 19 _(1 skipped)_ |
 | Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
 | Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
@@ -101,6 +101,9 @@ Implemented mock/helper files:
 
 - page renders heading, voice selector, textarea, and generate button
 - successful audio generation with mocked `/api/generate-voice`
+- ratings for a saved result and for individual split segments using their
+  distinct audio IDs
+- playback on a cache hit without an owned file row
 - Grok TTS flow with a featured Grok voice
 - disabled state when text is empty
 - character count display

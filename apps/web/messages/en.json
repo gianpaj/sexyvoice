@@ -1491,6 +1491,8 @@
     "vocalSounds": "Vocal sounds"
   },
   "feedback": {
+    "goodAudio": "Good audio",
+    "badAudio": "Bad audio",
     "rateCall": "Rate call",
     "goodCall": "Good call",
     "leaveFeedback": "Leave feedback",

@@ -72,6 +72,9 @@ Apply these migrations before the web deployment that uses them. The
 production account-deletion action needs the erasure RPC and the feedback
 table.
 
+Apply `20261126184519_index_active_audio_file_lookup.sql` before deploying
+audio ratings. It supports finding the caller's saved audio row on cache hits.
+
 ## Deployment targets
 
 | Service       | Deployment configuration                                                        |

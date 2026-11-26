@@ -469,36 +469,67 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('should return cached result for Gemini voice without consuming credits', async () => {
-      const queries = await import('@/lib/supabase/queries');
-      const cachedUrl = 'https://example.com/cached-gpro-audio.wav';
+    it.each([false, true])(
+      'returns the owned cached ID with stream=%s',
+      async (stream) => {
+        const queries = await import('@/lib/supabase/queries');
+        const cachedUrl = 'https://example.com/cached-gpro-audio.wav';
 
-      // Mock Redis.get to return cached URL for this test
-      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+        mockRedisGet.mockResolvedValueOnce(cachedUrl);
+        vi.mocked(queries.getActiveOwnedAudioFileId).mockResolvedValueOnce(
+          'cached-audio-file-id',
+        );
 
-      const request = new Request('http://localhost/api/generate-voice', {
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
-        headers: {
-          'content-type': 'application/json',
-        },
-        method: 'POST',
-      });
+        const request = new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            stream,
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+          headers: {
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+        });
 
-      const response = await POST(request);
-      const json = await response.json();
+        streamingOverride.enabled = stream;
+        try {
+          const response = await POST(request);
+          expect(response.status).toBe(200);
+          const payload = {
+            audioFileId: 'cached-audio-file-id',
+            cached: true,
+            creditsUsed: 0,
+            url: cachedUrl,
+          };
+          if (stream) {
+            const body = await readSseBody(response);
+            expect(body).toMatch(/^event: done\ndata: [^\n]+\n\n$/);
+            expect(
+              JSON.parse(body.slice('event: done\ndata: '.length)),
+            ).toEqual(payload);
+          } else {
+            expect(await response.json()).toEqual(payload);
+          }
+        } finally {
+          streamingOverride.enabled = undefined;
+        }
+        expect(queries.getActiveOwnedAudioFileId).toHaveBeenCalledWith({
+          filename: expect.stringContaining('generated-audio-free/achernar-'),
+          url: cachedUrl,
+          userId: 'test-user-id',
+        });
 
-      expect(response.status).toBe(200);
-      expect(json).toEqual({ cached: true, creditsUsed: 0, url: cachedUrl });
+        // Verify no credits were consumed on cache hit
+        expect(queries.reduceCredits).not.toHaveBeenCalled();
+        expect(queries.saveAudioFile).not.toHaveBeenCalled();
 
-      // Verify no credits were consumed on cache hit
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
-
-      // Verify Redis.get was called with correct filename
-      expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('generated-audio-free/kore-'),
-      );
-    });
+        // Verify Redis.get was called with correct filename
+        expect(mockRedisGet).toHaveBeenCalledWith(
+          expect.stringContaining('generated-audio-free/achernar-'),
+        );
+      },
+    );
 
     it('should generate new audio when cache miss occurs', async () => {
       const queries = await import('@/lib/supabase/queries');
@@ -524,6 +555,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
+      expect(json.audioFileId).toBe('test-audio-file-id');
       expect(json.url).toContain('files.sexyvoice.ai');
 
       // Verify audio was generated and saved
@@ -538,6 +570,28 @@ describe('Generate Voice API Route', () => {
         expect.stringContaining('generated-audio-free/tara-'),
         expect.stringContaining('files.sexyvoice.ai'),
       );
+    });
+
+    it('returns playable audio when its history row could not be saved', async () => {
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
+      vi.mocked(saveAudioFile).mockResolvedValueOnce(undefined);
+
+      const response = await POST(
+        new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-tara-id',
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json).not.toHaveProperty('audioFileId');
     });
 
     it('should return cached result for Grok voice without consuming credits', async () => {
@@ -624,8 +678,6 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json).not.toHaveProperty('creditsRemaining');
 
-      // Duration parsing adds an extra async hop before persistence; wait for
-      // the after() callback to finish before asserting its side effects.
       await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
@@ -812,8 +864,6 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.url).toContain('.mp3');
 
-      // Duration parsing adds an extra async hop before persistence; wait for
-      // the after() callback to finish before asserting its side effects.
       await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 100,
@@ -2999,7 +3049,7 @@ describe('Generate Voice API Route', () => {
       },
     );
 
-    it.each(['success', 'post-reconciliation failure'])(
+    it.each(['success', 'history save failure', 'post-reconciliation failure'])(
       'only refunds unused reserved credits on %s',
       async (outcome) => {
         const { insertUsageEvent, restoreCredits, saveAudioFile } =
@@ -3014,6 +3064,9 @@ describe('Generate Voice API Route', () => {
           vi.mocked(insertUsageEvent).mockRejectedValueOnce(
             new Error('Usage logging failed'),
           );
+        }
+        if (outcome === 'history save failure') {
+          vi.mocked(saveAudioFile).mockResolvedValueOnce(undefined);
         }
         const response = await POST(
           new Request('http://localhost/api/generate-voice', {
@@ -3036,16 +3089,21 @@ describe('Generate Voice API Route', () => {
         expect(saveAudioFile).toHaveBeenCalledWith(
           expect.objectContaining({ credits_used: actualCredits }),
         );
-        if (outcome === 'success') {
-          expect(body).toContain('event: done');
-          expect(body).toContain(`"creditsUsed":${actualCredits}`);
-          expect(body).not.toContain('"creditsRemaining"');
-          expect(body).not.toContain('event: error');
-        } else {
+        if (outcome === 'post-reconciliation failure') {
           expect(body).toContain(
             'event: error\ndata: {"error":"Usage logging failed"}\n\n',
           );
           expect(body).not.toContain('event: done');
+        } else {
+          expect(body).toContain('event: done');
+          expect(body).toContain(`"creditsUsed":${actualCredits}`);
+          expect(body).not.toContain('"creditsRemaining"');
+          expect(body).not.toContain('event: error');
+          if (outcome === 'success') {
+            expect(body).toContain('"audioFileId":"test-audio-file-id"');
+          } else {
+            expect(body).not.toContain('"audioFileId"');
+          }
         }
       },
     );

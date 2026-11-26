@@ -45,6 +45,7 @@ import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getErrorStatusCode, getTtsProvider } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
+import { AudioFeedback } from './audio-feedback';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
@@ -154,12 +155,13 @@ interface SseAudioEvent {
 }
 
 interface SseDoneEvent {
+  audioFileId?: string;
   cached?: boolean;
   creditsUsed: number;
   url: string;
 }
 
-type GenerateVoiceResult = Pick<SseDoneEvent, 'cached' | 'url'>;
+type GenerateVoiceResult = Pick<SseDoneEvent, 'audioFileId' | 'cached' | 'url'>;
 
 interface SseErrorEvent {
   details?: unknown;
@@ -296,7 +298,8 @@ export function AudioGenerator({
   const [text, setText] = useState('');
   const [textImproved, setTextImproved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [audioURL, setAudioURL] = useState('');
+  const [audioResult, setAudioResult] = useState<GenerateVoiceResult>();
+  const audioURL = audioResult?.url;
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
@@ -482,7 +485,7 @@ export function AudioGenerator({
         );
       }
 
-      return { cached: data.cached === true, url: data.url as string };
+      return data as GenerateVoiceResult;
     },
     [
       t,
@@ -541,13 +544,13 @@ export function AudioGenerator({
             if (signal.aborted) return;
             pushStreamChunk(data, mimeType);
           },
-          onDone: ({ cached, url }) => {
+          onDone: (result) => {
             // Assemble the WAV and arrange the handoff; live playback continues
             // until the buffered tail finishes (see the hook). A cache hit sends
             // no audio chunks, so `finalize` is a no-op and the standard file
             // player handles the persisted URL instead.
             finalizeStream();
-            resolve({ cached, url });
+            resolve(result);
           },
           onError: (data) => {
             resetStream();
@@ -585,7 +588,7 @@ export function AudioGenerator({
       signal: AbortSignal,
       seed?: number,
       split = false,
-    ): Promise<string> => {
+    ): Promise<GenerateVoiceResult> => {
       // `auto` keeps the length-based heuristic; `on`/`off` are explicit
       // overrides. Streaming only applies to gpro31 in the non-split path.
       let shouldStream = segmentText.length > STREAM_TEXT_THRESHOLD;
@@ -606,7 +609,7 @@ export function AudioGenerator({
           ? await requestGenerateVoiceStream(segmentText, signal)
           : await requestGenerateVoiceJson(segmentText, signal, seed, split);
         cached = result.cached === true;
-        return result.url;
+        return result;
       } finally {
         // An aborted fetch cannot confirm settlement. Refreshing can race a refund;
         // skipping it can miss a late charge. See ARCHITECTURE.md#credit-balance-sync.
@@ -630,11 +633,11 @@ export function AudioGenerator({
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
-    const url = await requestGenerateVoice(
+    const result = await requestGenerateVoice(
       text,
       abortController.current.signal,
     );
-    setAudioURL(url);
+    setAudioResult(result);
     toast.success(t('success'));
   }, [requestGenerateVoice, selectedVoice, text, t]);
 
@@ -650,9 +653,7 @@ export function AudioGenerator({
     }
 
     abortController.current = new AbortController();
-    setAudioURL('');
-
-    let latestSegments = [...splitSegments];
+    setAudioResult(undefined);
     let encounteredFailure = false;
 
     // Only surface the progress toast when more than one segment will actually
@@ -661,7 +662,7 @@ export function AudioGenerator({
     // not show the progress modal.
     const pendingSegmentCount = currentSegmentTexts.reduce(
       (count, _segmentText, segmentIndex) => {
-        const existing = latestSegments[segmentIndex];
+        const existing = splitSegments[segmentIndex];
         const willSkip = existing?.status === 'success' && !!existing.audioUrl;
         return willSkip ? count : count + 1;
       },
@@ -671,17 +672,12 @@ export function AudioGenerator({
     let pendingProgressIndex = 0;
 
     for (let index = 0; index < currentSegmentTexts.length; index++) {
-      const existing = latestSegments[index];
+      const existing = splitSegments[index];
       if (existing?.status === 'success' && existing.audioUrl) {
         continue;
       }
       pendingProgressIndex += 1;
 
-      latestSegments = latestSegments.map((segment, segmentIndex) =>
-        segmentIndex === index
-          ? { ...segment, audioUrl: '', status: 'generating' }
-          : segment,
-      );
       markSegmentGenerating(index);
       const isLastPendingSegment = pendingProgressIndex === pendingSegmentCount;
       if (showProgress) {
@@ -689,19 +685,14 @@ export function AudioGenerator({
       }
 
       try {
-        const generatedUrl = await requestGenerateVoice(
+        const result = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
           undefined,
           true,
         );
 
-        latestSegments = latestSegments.map((segment, segmentIndex) =>
-          segmentIndex === index
-            ? { ...segment, audioUrl: generatedUrl, status: 'success' }
-            : segment,
-        );
-        markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
+        markSegmentSuccess(index, currentSegmentTexts[index], result);
         if (isLastPendingSegment && showProgress) {
           showGenerationProgressToast(
             pendingProgressIndex,
@@ -711,18 +702,10 @@ export function AudioGenerator({
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
-          latestSegments = latestSegments.map((segment, segmentIndex) =>
-            segmentIndex === index
-              ? { ...segment, audioUrl: '', status: 'idle' }
-              : segment,
-          );
           markSegmentIdle(index);
           throw error;
         }
 
-        latestSegments = latestSegments.map((segment, segmentIndex) =>
-          segmentIndex === index ? { ...segment, status: 'failed' } : segment,
-        );
         markSegmentFailed(index);
 
         if (error instanceof APIError) {
@@ -771,7 +754,7 @@ export function AudioGenerator({
 
     setIsGenerating(true);
     // Clear any previous result/streaming player before a new generation.
-    setAudioURL('');
+    setAudioResult(undefined);
     resetStream();
     try {
       if (shouldUseSplitMode) {
@@ -819,14 +802,14 @@ export function AudioGenerator({
       showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
 
       try {
-        const generatedUrl = await requestGenerateVoice(
+        const result = await requestGenerateVoice(
           segment.text,
           retryAbortController.current.signal,
           seed,
           true,
         );
 
-        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+        markSegmentSuccess(segmentIndex, segment.text, result);
         showGenerationProgressToast(
           segmentIndex + 1,
           splitSegments.length,
@@ -1284,7 +1267,7 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div className="flex justify-start gap-2 sm:w-full">
+          <div className="flex flex-wrap items-start justify-start gap-2 sm:w-full">
             {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
               <>
                 <StreamingWaveformPlayer
@@ -1352,6 +1335,12 @@ export function AudioGenerator({
                   </Button>
                 </>
               )}
+            {!shouldUseSplitMode && audioResult?.audioFileId && (
+              <AudioFeedback
+                audioFileId={audioResult.audioFileId}
+                key={audioResult.audioFileId}
+              />
+            )}
           </div>
         </div>
         {shouldUseSplitMode && (

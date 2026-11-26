@@ -35,6 +35,7 @@ import { CANCELLED_CHARGE_FLOW } from '@/lib/sentry/server-filters';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
+  getActiveOwnedAudioFileId,
   getCredits,
   getVoiceById,
   hasUserPaid,
@@ -596,28 +597,30 @@ export async function POST(request: Request) {
         stream: shouldStream,
         url: result,
       });
-      await sendPosthogEvent({
-        creditUsed: 0,
-        model: effectiveModel,
-        split: isSplit,
-        text,
-        userId: user.id,
-        voiceId: voiceObj.id,
-      });
+      const [audioFileId] = await Promise.all([
+        getActiveOwnedAudioFileId({ filename, url: result, userId: user.id }),
+        sendPosthogEvent({
+          creditUsed: 0,
+          model: effectiveModel,
+          split: isSplit,
+          text,
+          userId: user.id,
+          voiceId: voiceObj.id,
+        }),
+      ]);
 
+      const payload = {
+        audioFileId,
+        cached: true,
+        creditsUsed: 0,
+        url: result,
+      };
       if (shouldStream) {
-        const body = createSseEvent('done', {
-          cached: true,
-          creditsUsed: 0,
-          url: result,
-        });
+        const body = createSseEvent('done', payload);
         return new Response(body, { headers: SSE_HEADERS });
       }
 
-      return NextResponse.json(
-        { cached: true, creditsUsed: 0, url: result },
-        { status: 200 },
-      );
+      return NextResponse.json(payload, { status: 200 });
     }
 
     let replicateResponse: Prediction | undefined;
@@ -1070,60 +1073,41 @@ export async function POST(request: Request) {
       });
     }
 
+    const userId = user.id;
+    const duration = await resolveDurationString(
+      generatedAudioBuffer,
+      generatedAudioMimeType,
+    );
+    const audioFileId = await saveAudioFile({
+      credits_used: creditsDebited,
+      duration,
+      filename,
+      isPublic: false,
+      model: modelUsed,
+      predictionId: replicateResponse?.id,
+      text,
+      url: uploadUrl,
+      usage: {
+        ...usage,
+        split: isSplit,
+        textImproved,
+        userHasPaid,
+      },
+      userId,
+      voiceId: voiceObj.id,
+    });
+
     after(async () => {
-      if (!user) {
-        captureException(new Error('User not found'));
-        return;
-      }
-
-      const duration = await resolveDurationString(
-        generatedAudioBuffer,
-        generatedAudioMimeType,
-      );
-
-      const audioFileDBResult = await saveAudioFile({
-        credits_used: creditsDebited,
-        duration,
-        filename,
-        isPublic: false,
-        model: modelUsed,
-        predictionId: replicateResponse?.id,
-        text,
-        url: uploadUrl,
-        usage: {
-          ...usage,
-          split: isSplit,
-          textImproved,
-          userHasPaid,
-        },
-        userId: user.id,
-        voiceId: voiceObj.id,
-      });
-
-      if (audioFileDBResult.error) {
-        const errorObj = {
-          errorData: audioFileDBResult.error,
-          model: modelUsed,
-          text,
-          voice: voiceObj.name,
-        };
-        const error = new Error('Failed to insert audio file row');
-        captureException(error, {
-          extra: errorObj,
-        });
-        console.error(errorObj);
-      }
-
       // Insert usage event for tracking (non-blocking)
       await insertUsageEvent({
         creditsUsed: creditsDebited,
         inputChars: text.length,
         model: modelUsed,
         quantity: text.length,
-        sourceId: audioFileDBResult.data?.id,
+        sourceId: audioFileId,
         sourceType: 'tts',
         unit: 'chars',
-        userId: user.id,
+        userId,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
           ...usage,
@@ -1147,13 +1131,14 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         split: isSplit,
         text,
-        userId: user.id,
+        userId,
         voiceId: voiceObj.id,
       });
     });
 
     return NextResponse.json(
       {
+        audioFileId,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       },
@@ -1605,7 +1590,7 @@ function streamGeminiTtsResponse({
             }
           : { stream: true, userHasPaid };
 
-      const audioFileDBResult = await saveAudioFile({
+      const audioFileId = await saveAudioFile({
         credits_used: creditsDebited,
         duration,
         filename,
@@ -1618,15 +1603,6 @@ function streamGeminiTtsResponse({
         userId: user.id,
         voiceId: voiceObj.id,
       });
-
-      if (audioFileDBResult.error) {
-        captureException(
-          new Error('Failed to insert audio file row (stream)'),
-          {
-            extra: { error: audioFileDBResult.error, model: modelUsed },
-          },
-        );
-      }
 
       await insertUsageEvent({
         creditsUsed: creditsDebited,
@@ -1643,7 +1619,7 @@ function streamGeminiTtsResponse({
           voiceName: voiceObj.name,
         },
         quantity: text.length,
-        sourceId: audioFileDBResult.data?.id,
+        sourceId: audioFileId,
         sourceType: 'tts',
         unit: 'chars',
         userId: user.id,
@@ -1664,6 +1640,7 @@ function streamGeminiTtsResponse({
 
       completed = true;
       await enqueue('done', {
+        audioFileId,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       });

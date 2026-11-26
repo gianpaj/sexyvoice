@@ -69,6 +69,7 @@ import {
 } from '@/lib/supabase/call-voices';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
+  getActiveOwnedAudioFileId,
   getCredits,
   hasUserPaid,
   insertUsageEvent,
@@ -426,7 +427,7 @@ function isWebmMimeType(mimeType: string): boolean {
 function validateAudioDuration(
   duration: number | null,
   provider: CloneProvider | CallCloneProvider,
-): void {
+): asserts duration is number {
   if (duration === null) {
     throw createRouteError(
       'Could not determine audio duration.',
@@ -1135,38 +1136,65 @@ async function createCloneOutputFilename({
 }
 
 // ============================================================================
-// Background Tasks
+// Generated Audio Results
 // ============================================================================
 
-async function runBackgroundTasks(
+async function cachedCloneResponse({
+  currentAmount,
+  filename,
+  url,
+  userId,
+}: {
+  currentAmount: number;
+  filename: string;
+  url: string;
+  userId: string;
+}) {
+  const audioFileId = await getActiveOwnedAudioFileId({
+    filename,
+    url,
+    userId,
+  });
+  return NextResponse.json(
+    {
+      audioFileId,
+      creditsRemaining: currentAmount || 0,
+      creditsUsed: 0,
+      url,
+    } satisfies CloneSuccessResponse,
+    { status: 200 },
+  );
+}
+
+interface CloneAudioFileData {
+  baseCloneCredits: number;
+  duration: number;
+  filename: string;
+  locale: string;
+  modelUsed: string;
+  referenceAudioEnhanced: boolean;
+  referenceAudioEnhancementCredits: number;
+  referenceAudioEnhancementDollarAmount: number;
+  referenceAudioEnhancementDurationSeconds?: number | null;
+  referenceAudioEnhancementModel?: string | null;
+  referenceAudioEnhancementRequestId?: string | null;
+  referenceAudioFileMimeType: string;
+  referenceAudioOriginalDurationSeconds?: number | null;
+  referenceAudioProcessedMimeType: string;
+  referenceAudioTrimmed: boolean;
+  requestId: string;
+  savedVoiceId?: string;
+  text: string;
+  url: string;
+}
+
+async function finalizeGeneratedAudio(
   userId: string,
   creditsUsed: number,
   provider: CloneProvider | CallCloneProvider,
-  audioFileData: {
-    baseCloneCredits: number;
-    savedVoiceId?: string;
-    filename: string;
-    referenceAudioEnhancementCredits: number;
-    referenceAudioEnhancementDollarAmount: number;
-    referenceAudioEnhancementDurationSeconds?: number | null;
-    referenceAudioEnhancementModel?: string | null;
-    referenceAudioEnhancementRequestId?: string | null;
-    referenceAudioEnhanced: boolean;
-    referenceAudioOriginalDurationSeconds?: number | null;
-    referenceAudioTrimmed: boolean;
-    text: string;
-    url: string;
-    modelUsed: string;
-    requestId: string;
-    duration: number;
-    locale: string;
-    referenceAudioFileMimeType: string;
-    referenceAudioProcessedMimeType: string;
-  },
-): Promise<void> {
-  const userHasPaid = await hasUserPaid(userId);
-
-  const audioFileDBResult = await saveAudioFile({
+  audioFileData: CloneAudioFileData,
+) {
+  const audioFileId = await saveAudioFile({
     credits_used: creditsUsed,
     duration: audioFileData.duration.toFixed(3),
     filename: audioFileData.filename,
@@ -1182,22 +1210,17 @@ async function runBackgroundTasks(
     voiceId: CLONED_VOICE_ID,
   });
 
-  if (audioFileDBResult.error) {
-    const errorObj = {
-      errorData: audioFileDBResult.error,
-      generatedAudioUrl: audioFileData.url,
-      model: audioFileData.modelUsed,
-      text: audioFileData.text,
-    };
-    const error = new Error(
-      audioFileDBResult.error.message || 'Failed to insert audio file row',
-    );
-    captureException(error, {
-      extra: errorObj,
-      user: { id: userId },
-    });
-    console.error(errorObj);
-  }
+  after(() => runBackgroundTasks(userId, audioFileId, provider, audioFileData));
+  return audioFileId;
+}
+
+async function runBackgroundTasks(
+  userId: string,
+  audioFileId: string | undefined,
+  provider: CloneProvider | CallCloneProvider,
+  audioFileData: CloneAudioFileData,
+): Promise<void> {
+  const userHasPaid = await hasUserPaid(userId);
 
   // Insert usage event for tracking voice cloning (non-blocking)
   await insertUsageEvent({
@@ -1230,7 +1253,7 @@ async function runBackgroundTasks(
     model: audioFileData.modelUsed,
     quantity: 1,
     requestId: audioFileData.requestId,
-    sourceId: audioFileDBResult.data?.id,
+    sourceId: audioFileId,
     sourceType: 'voice_cloning',
     unit: 'operation',
     userId,
@@ -1269,7 +1292,7 @@ async function runBackgroundTasks(
       model: audioFileData.referenceAudioEnhancementModel ?? undefined,
       quantity: enhancementDurationSeconds,
       requestId: audioFileData.referenceAudioEnhancementRequestId ?? undefined,
-      sourceId: audioFileDBResult.data?.id,
+      sourceId: audioFileId,
       sourceType: 'audio_processing',
       unit: 'secs',
       userId,
@@ -1316,7 +1339,6 @@ export async function POST(request: Request) {
   let referenceAudioEnhanced = false;
   let text = '';
   let locale = '';
-  let duration: number | null = null;
   let modelUsed = '';
   let referenceAudioFile: File | null = null;
   let reservedCredits = 0;
@@ -1382,14 +1404,12 @@ export async function POST(request: Request) {
       const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.${extension}`;
       const cachedOutputUrl = await redis.get<string>(filename);
       if (cachedOutputUrl) {
-        return NextResponse.json(
-          {
-            creditsRemaining: currentAmount || 0,
-            creditsUsed: 0,
-            url: cachedOutputUrl,
-          } satisfies CloneSuccessResponse,
-          { status: 200 },
-        );
+        return await cachedCloneResponse({
+          currentAmount,
+          filename,
+          url: cachedOutputUrl,
+          userId: user.id,
+        });
       }
       await reserveCloneCredits({
         currentAmount,
@@ -1419,15 +1439,16 @@ export async function POST(request: Request) {
       const outputUrl = await uploadGeneratedAudio(buffer, filename, mimeType);
       const audioDuration = (await getAudioDuration(buffer, mimeType)) ?? 0;
       reservedCredits = 0;
-      const savedVoiceLocale = locale;
-      const savedVoiceModel = modelUsed;
-      after(async () => {
-        await runBackgroundTasks(user.id, estimate, provider, {
+      const audioFileId = await finalizeGeneratedAudio(
+        user.id,
+        estimate,
+        provider,
+        {
           baseCloneCredits: estimate,
           duration: audioDuration,
           filename,
-          locale: savedVoiceLocale,
-          modelUsed: savedVoiceModel,
+          locale,
+          modelUsed,
           referenceAudioEnhanced: false,
           referenceAudioEnhancementCredits: 0,
           referenceAudioEnhancementDollarAmount: 0,
@@ -1438,10 +1459,11 @@ export async function POST(request: Request) {
           savedVoiceId: voice.id,
           text,
           url: outputUrl,
-        });
-      });
+        },
+      );
       return NextResponse.json(
         {
+          audioFileId,
           creditsRemaining: (currentAmount || 0) - estimate,
           creditsUsed: estimate,
           url: outputUrl,
@@ -1548,14 +1570,12 @@ export async function POST(request: Request) {
 
     const cachedOutputUrl = await redis.get<string>(filename);
     if (cachedOutputUrl) {
-      return NextResponse.json(
-        {
-          creditsRemaining: currentAmount || 0,
-          creditsUsed: 0,
-          url: cachedOutputUrl,
-        } satisfies CloneSuccessResponse,
-        { status: 200 },
-      );
+      return await cachedCloneResponse({
+        currentAmount,
+        filename,
+        url: cachedOutputUrl,
+        userId: user.id,
+      });
     }
 
     if (formInput.enhanceReferenceAudio) {
@@ -1660,14 +1680,12 @@ export async function POST(request: Request) {
             userId: user.id,
           });
           reservedCredits = 0;
-          return NextResponse.json(
-            {
-              creditsRemaining: currentAmount || 0,
-              creditsUsed: 0,
-              url: fallbackCachedOutputUrl,
-            } satisfies CloneSuccessResponse,
-            { status: 200 },
-          );
+          return await cachedCloneResponse({
+            currentAmount,
+            filename,
+            url: fallbackCachedOutputUrl,
+            userId: user.id,
+          });
         }
 
         if (reservedCredits > estimate) {
@@ -1682,7 +1700,7 @@ export async function POST(request: Request) {
     }
 
     validateAudioDuration(cloneInputAudio.duration, provider);
-    duration = cloneInputAudio.duration;
+    const duration = cloneInputAudio.duration;
 
     if (reservedCredits === 0) {
       await reserveCloneCredits({
@@ -1744,12 +1762,14 @@ export async function POST(request: Request) {
       requestId = result.requestId;
     }
 
-    // Background tasks
     reservedCredits = 0;
-    after(async () => {
-      await runBackgroundTasks(user.id, creditsUsed, provider, {
+    const audioFileId = await finalizeGeneratedAudio(
+      user.id,
+      creditsUsed,
+      provider,
+      {
         baseCloneCredits: estimate,
-        duration: duration as number,
+        duration,
         filename,
         locale,
         modelUsed,
@@ -1766,11 +1786,12 @@ export async function POST(request: Request) {
         requestId,
         text,
         url: outputUrl,
-      });
-    });
+      },
+    );
 
     return NextResponse.json(
       {
+        audioFileId,
         creditsRemaining: (currentAmount || 0) - creditsUsed,
         creditsUsed,
         url: outputUrl,
