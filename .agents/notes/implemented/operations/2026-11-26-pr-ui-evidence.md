@@ -22,5 +22,6 @@ captures one-off interactions and states outside that coverage.
 
 ## Consequences
 
-Covered changes reuse the scheduled CI run. For a one-off comparison, the
-agent still needs equivalent data and browser settings on both revisions.
+When the PR's E2E run captures the affected state, its Argos build supplies
+the comparison. For a one-off comparison, the agent still needs equivalent
+data and browser settings on both revisions.
