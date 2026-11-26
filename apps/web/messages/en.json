@@ -1490,6 +1490,26 @@
     "pace": "Pace",
     "vocalSounds": "Vocal sounds"
   },
+  "feedback": {
+    "rateCall": "Rate call",
+    "goodCall": "Good call",
+    "leaveFeedback": "Leave feedback",
+    "whatWentWrong": "What went wrong?",
+    "reasons": {
+      "misheard": "Misheard me",
+      "interrupted": "Interrupted me",
+      "audio": "Audio sounded off",
+      "awkward": "Conversation felt awkward",
+      "dropped": "Call dropped",
+      "other": "Something else"
+    },
+    "optionalNote": "Add a note (optional)",
+    "sendFeedback": "Send feedback",
+    "thanks": "Thanks for the feedback",
+    "failed": "Could not save feedback. Try again.",
+    "ending": "The call is still ending. Try again in a moment.",
+    "close": "Close"
+  },
   "voiceChat": {
     "openChat": "Chat",
     "chatName": "Chat with {name}",

@@ -581,8 +581,9 @@ also required for browser acceptance. See the [worker runbook](../../voice-agent
 The same live configuration covers the Python-backed Inworld call page. It
 dials from a character card, resumes a chat in a call, toggles the microphone
 while the composer stays focused, and shows the Call summary on hang-up. It
-starts a fresh thread with Call again and checks that the original thread
-can still load its history and send another message.
+starts a fresh thread with Call again, submits both kinds of feedback to a
+mocked endpoint, and checks that the ratings refer to distinct rooms. The
+original thread can still load its history and send another message.
 
 Physical iOS/Android capture, keyboard/safe-area behavior, bandwidth limits,
 packet loss, background/resume, and deployed 30/60-minute calls are pending.

@@ -1488,6 +1488,26 @@
     "pace": "Tempo",
     "vocalSounds": "Stemmelyde"
   },
+  "feedback": {
+    "rateCall": "Bedøm opkald",
+    "goodCall": "Godt opkald",
+    "leaveFeedback": "Giv feedback",
+    "whatWentWrong": "Hvad gik galt?",
+    "reasons": {
+      "misheard": "Hørte mig forkert",
+      "interrupted": "Afbrød mig",
+      "audio": "Lyden lød forkert",
+      "awkward": "Samtalen føltes akavet",
+      "dropped": "Opkaldet blev afbrudt",
+      "other": "Noget andet"
+    },
+    "optionalNote": "Tilføj en note (valgfrit)",
+    "sendFeedback": "Send feedback",
+    "thanks": "Tak for din feedback",
+    "failed": "Feedbacken kunne ikke gemmes. Prøv igen.",
+    "ending": "Opkaldet er ved at blive afsluttet. Prøv igen om et øjeblik.",
+    "close": "Luk"
+  },
   "voiceChat": {
     "openChat": "Chat",
     "chatName": "Chat med {name}",

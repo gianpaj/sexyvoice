@@ -21,6 +21,7 @@ interface CallEndedViewProps {
   children?: ReactNode;
   connecting: boolean;
   duration: string;
+  feedback?: ReactNode;
   onBack?: () => void;
   onCallAgain: () => void;
   onChat?: () => void;
@@ -46,6 +47,7 @@ export function CallEndedView({
   children,
   connecting,
   duration,
+  feedback,
   onBack,
   onChat,
   onCallAgain,
@@ -73,6 +75,7 @@ export function CallEndedView({
       <h1 className="mt-2 font-bold text-[26px] leading-tight">
         {t('title', { duration, name })}
       </h1>
+      {feedback}
       {isOwn && onEdit && (
         <p className="max-w-[420px] text-[15px] text-slate-400">
           {t('editHint')}

@@ -94,8 +94,13 @@ export function LiveKitVoiceChat({
   }, []);
   const thread = useRef(conversationId);
   const [state, setState] = useState<State>('idle');
-  const linkedCallStartedAt = useRef<number | null>(null);
-  const [endedDuration, setEndedDuration] = useState<string>();
+  const linkedCall = useRef<{ roomName: string; startedAt: number } | null>(
+    null,
+  );
+  const [endedCall, setEndedCall] = useState<{
+    duration: string;
+    roomName: string;
+  }>();
   const [callingAgain, setCallingAgain] = useState(false);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
@@ -143,10 +148,13 @@ export function LiveKitVoiceChat({
       return next.sort((a, b) => a.timestamp - b.timestamp).slice(-100);
     });
   const rememberEndedCall = () => {
-    const startedAt = linkedCallStartedAt.current;
-    if (startedAt === null) return;
-    linkedCallStartedAt.current = null;
-    setEndedDuration(formatTime(Math.floor((Date.now() - startedAt) / 1000)));
+    const call = linkedCall.current;
+    if (!call) return;
+    linkedCall.current = null;
+    setEndedCall({
+      duration: formatTime(Math.floor((Date.now() - call.startedAt) / 1000)),
+      roomName: call.roomName,
+    });
   };
 
   const stop = async () => {
@@ -277,7 +285,12 @@ export function LiveKitVoiceChat({
           here.searchParams.set('conversation', assignedThread);
           window.history.replaceState(null, '', here);
         }
-        if (pythonCall) linkedCallStartedAt.current = Date.now();
+        if (pythonCall) {
+          linkedCall.current = {
+            roomName: current.name,
+            startedAt: Date.now(),
+          };
+        }
         setState('connected');
       } catch {
         fail('connectError');
@@ -525,17 +538,15 @@ export function LiveKitVoiceChat({
         characterName={characterName}
         characters={characters}
         draft={chatDraft}
-        error={
-          endedDuration !== undefined && error === t('ended') ? null : error
-        }
+        error={endedCall && error === t('ended') ? null : error}
         key={chatRevision}
         linked={
           pythonCall && {
             callingAgain,
-            duration: endedDuration,
+            endedCall,
             onCallAgain: callAgain,
             onContinueChat: () => {
-              setEndedDuration(undefined);
+              setEndedCall(undefined);
               setError(null);
             },
             preset: pythonCall.preset,
