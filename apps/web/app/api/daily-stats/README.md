@@ -45,6 +45,41 @@ Call lines use `started_at` and exclude internal users. `AI usage (est.)` uses
 the cost windows in [Cost sources](#cost-sources), so its cost per minute is
 approximate around midnight.
 
+## Charts Mini App
+
+After the report, the route sends a second message, `📈 Charts for the last 30
+days`, with an `Open charts` button. The button opens `/telegram/stats` as a
+Telegram Mini App. The button has its own message so that Telegram rejecting it
+cannot block the report. `sendTelegramMessage` throws when Telegram rejects
+either message, so the cron check-in reports the failure.
+
+The page stacks five bar charts over the last 30 complete UTC days, excluding
+internal users: revenue, calls, call minutes, audio files (TTS and cloned voice
+stacked), and new profiles. Each chart highlights yesterday and draws a dashed
+line at the report's `ROLLING_WINDOW_DAYS` (14) day average for that metric:
+calls and call minutes average the 14 days before yesterday, like the Calls
+section; revenue, audio files and new profiles average the 14 days up to and
+including yesterday, like their report lines. Revenue sums `metadata.dollarAmount` over
+purchases, top-ups and refunds, like the report's `💰 Revenue` line.
+`charts.ts` builds the per-day rows.
+
+Telegram passes signed init data in the page's URL fragment. The page sends it
+to `charts/route.ts` as `Authorization: tma <init data>`.
+`verifyTelegramInitData` in `apps/web/lib/telegram.ts` checks the signature
+with the bot token from `TELEGRAM_WEBHOOK_URL`. It rejects data older than an
+hour or dated more than a minute in the future. The route answers only
+`TELEGRAM_ADMIN_CHAT_ID`.
+
+- `/telegram/` has its own root layout and skips `proxy.ts`, so it has no locale
+  prefix or Supabase session.
+- The page copy is English, like the report: only the admin sees it.
+- Web app buttons work only in private chats.
+- The site CSP sets `frame-ancestors 'none'`, so Telegram Web, which embeds
+  Mini Apps in an iframe, cannot open the page. The native apps can.
+
+To try the page locally, sign init data with the bot token and open
+`/telegram/stats#tgWebAppData=<encoded init data>`.
+
 ## Usage contribution
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,
