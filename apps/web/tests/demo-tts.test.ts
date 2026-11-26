@@ -155,12 +155,35 @@ describe('/api/demo-tts', () => {
 
     expect(response.status).toBe(200);
     expect(json).toEqual({
-      audioUrl: 'https://files.sexyvoice.ai/demo-audio/poe-1700000000000.wav',
+      audioUrl:
+        'https://files.sexyvoice.ai/demo-audio/poe-test-demo-session-id.wav',
       remaining: 2,
     });
     expect(response.headers.get('set-cookie')).toContain(
       'demo_session_id=test-demo-session-id',
     );
+  });
+
+  it('gives each demo clip an unguessable object name', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const body = {
+      text: 'Hello world',
+      voiceId: 'voice-1',
+      altchaPayload: TEST_PAYLOAD,
+    };
+
+    await POST(makeRequest(body));
+    await POST(makeRequest(body));
+
+    const [first, second] = mockUploadFileToR2.mock.calls.map(
+      ([filename]) => filename as string,
+    );
+    const uuid =
+      '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
+    expect(first).toMatch(new RegExp(`^demo-audio/poe-${uuid}\\.wav$`));
+    expect(second).toMatch(new RegExp(`^demo-audio/poe-${uuid}\\.wav$`));
+    expect(first).not.toBe(second);
+    expect(first).not.toContain(String(Date.now()));
   });
 
   describe('single-use proofs with real ALTCHA verification', () => {

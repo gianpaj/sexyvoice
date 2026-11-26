@@ -240,7 +240,8 @@ export async function POST(request: Request) {
     }
 
     const audioBuffer = convertToWav(audioData, mimeType);
-    const filename = `demo-audio/${voice.name}-${Date.now()}.wav`;
+    // The bucket is public-read, so the name must not be guessable.
+    const filename = `demo-audio/${voice.name}-${crypto.randomUUID()}.wav`;
     const audioUrl = await uploadFileToR2(
       filename,
       audioBuffer,
