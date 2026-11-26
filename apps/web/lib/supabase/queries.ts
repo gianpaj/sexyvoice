@@ -415,7 +415,8 @@ export const getUserByIdWithError = async (userId: string) => {
 };
 
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
-  const supabase = await createClient();
+  // Stripe webhooks have no user session; profile reads are owner-only.
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from('profiles')

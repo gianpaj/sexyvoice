@@ -614,7 +614,10 @@ scripts import the same modules, so every path writes identical rows.
 
 ### Core PostgreSQL Tables
 
-- `profiles` stores application users linked to Supabase Auth.
+- `profiles` stores application users linked to Supabase Auth. `username` holds
+  the sign-up email, so profile reads are owner-only. Anonymous roles have no
+  table privileges. Owners can update only `avatar_url`; profile creation and
+  Stripe customer links are managed by trusted server code.
 - `voices` stores catalog voices for speech generation and calls, including the
   shared cloned-audio row used by legacy foreign keys.
 - `audio_references` stores owned saved voices, provider IDs, locales, and preview

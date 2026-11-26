@@ -8,6 +8,7 @@ import {
   hasOngoingSubscription,
   stripe,
 } from '@/lib/stripe/stripe-admin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 // Mock Stripe customers API
@@ -181,10 +182,11 @@ describe('createOrRetrieveCustomer()', () => {
       }),
     };
 
-    vi.mocked(createClient).mockResolvedValue(mockSupabase);
+    vi.mocked(createAdminClient).mockReturnValue(mockSupabase);
   });
 
   afterEach(() => {
+    expect(createClient).not.toHaveBeenCalled();
     vi.clearAllMocks();
   });
 
@@ -241,9 +243,6 @@ describe('createOrRetrieveCustomer()', () => {
 
   describe('With existing Stripe ID', () => {
     it('should return the stored customer without a redundant database write', async () => {
-      vi.mocked(createClient).mockRejectedValue(
-        new Error('Database connection failed'),
-      );
       const existingCustomer = {
         id: stripeCustomerId,
         metadata: {
@@ -263,7 +262,7 @@ describe('createOrRetrieveCustomer()', () => {
       expect(result).toBe(stripeCustomerId);
       expect(stripe.customers.retrieve).toHaveBeenCalledWith(stripeCustomerId);
       expect(stripe.customers.update).not.toHaveBeenCalled();
-      expect(createClient).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
@@ -292,7 +291,7 @@ describe('createOrRetrieveCustomer()', () => {
       expect(stripe.customers.update).toHaveBeenCalledWith(stripeCustomerId, {
         metadata: { supabaseUUID: userId },
       });
-      expect(createClient).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
     });
 
     it('should throw error when Stripe ID belongs to different user', async () => {
