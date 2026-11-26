@@ -37,7 +37,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
 | Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts` and inline feedback mocks  | 19 _(1 skipped)_ |
 | Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
-| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
+| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | inline clone generation and feedback mocks           |               16 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
 | History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
 | Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
@@ -263,6 +263,7 @@ The call spec also uses inline route handlers to mock:
 - generate button is disabled with incomplete form state
 - preview tab is disabled before generation
 - text input and character count are visible
+- a saved voice generates a preview that submits feedback against its audio ID
 
 #### Unauthenticated
 
@@ -270,8 +271,7 @@ The call spec also uses inline route handlers to mock:
 
 ### Current implementation notes
 
-This spec is intentionally UI-focused.
-It currently does **not** submit a real clone request and does **not** exercise the preview success state.
+The preview test mocks clone generation and feedback submission.
 
 In E2E mode the page reads entitlement from the `e2e-call-user` cookie, like
 the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
@@ -539,9 +539,8 @@ And it intentionally does **not** mean mocking every dashboard page.
    - currently skipped for performance reasons
    - could be re-enabled with a faster text-injection strategy
 
-2. **Clone success flow**
-   - current coverage focuses on static UI and validation state
-   - could be extended to mock clone submission and preview state
+2. **Live clone generation**
+   - the preview test uses a mocked provider response
 
 3. **Call interaction depth**
    - current coverage verifies page state and mocked token wiring

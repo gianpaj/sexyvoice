@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
+import { AudioFeedback } from '@/components/audio-feedback';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
 import { DeleteSavedVoiceDialog } from '@/components/call/delete-saved-voice-dialog';
@@ -83,10 +84,10 @@ import { CloneTextField } from './clone-text-field';
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
 function PreviewTabContent({
-  generatedAudioUrl,
+  generatedAudio,
   downloadAudio,
 }: {
-  generatedAudioUrl: string | null;
+  generatedAudio: CloneSuccessResponse | null;
   downloadAudio: () => Promise<void>;
 }) {
   const t = useTranslations('clone');
@@ -95,19 +96,25 @@ function PreviewTabContent({
     <div className="space-y-4">
       <h3 className="text-center font-medium text-xl">{t('previewTitle')}</h3>
 
-      <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
-        {generatedAudioUrl && (
+      {generatedAudio && (
+        <div className="mx-auto flex w-fit flex-wrap items-start justify-center gap-2 rounded-lg border bg-muted/30 p-4">
           <AudioPlayerWithContext
             autoPlay
             className="rounded-full"
             playAudioTitle={t('playAudio')}
             progressColor="#8b5cf6"
             showWaveform
-            url={generatedAudioUrl}
+            url={generatedAudio.url}
             waveColor="#888888"
           />
-        )}
-      </div>
+          {generatedAudio.audioFileId && (
+            <AudioFeedback
+              audioFileId={generatedAudio.audioFileId}
+              key={generatedAudio.audioFileId}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex justify-center gap-4">
         <Button className="flex items-center gap-2" onClick={downloadAudio}>
@@ -231,7 +238,7 @@ function NewVoiceClientInner({
     convertingMicAudio,
     errorMessage,
     ffmpegError,
-    generatedAudioUrl,
+    generatedAudio,
     legalConsentChecked,
     micBlob,
     micRecording,
@@ -472,6 +479,7 @@ function NewVoiceClientInner({
     dispatch({
       patch: {
         errorMessage: '',
+        generatedAudio: null,
         status: 'generating',
       },
       type: 'patch',
@@ -633,7 +641,7 @@ function NewVoiceClientInner({
       dispatch({
         patch: {
           activeTab: 'preview',
-          generatedAudioUrl: voiceResult.url,
+          generatedAudio: voiceResult,
           status: 'complete',
         },
         type: 'patch',
@@ -662,10 +670,10 @@ function NewVoiceClientInner({
   }, []);
 
   const downloadAudio = async () => {
-    if (!generatedAudioUrl) return;
+    if (!generatedAudio) return;
 
     try {
-      await downloadUrl(generatedAudioUrl, document.createElement('a'));
+      await downloadUrl(generatedAudio.url, document.createElement('a'));
     } catch {
       toast.error(t('errorCloning'));
     }
@@ -1021,7 +1029,7 @@ function NewVoiceClientInner({
           <TabsContent className="space-y-4 py-4" value="preview">
             <PreviewTabContent
               downloadAudio={downloadAudio}
-              generatedAudioUrl={generatedAudioUrl}
+              generatedAudio={generatedAudio}
             />
           </TabsContent>
         </Tabs>
