@@ -2,9 +2,12 @@
 
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useFeedback } from '@/hooks/use-feedback';
+import type { FeedbackRating } from '@/lib/feedback';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const ratings = [
   { Icon: ThumbsUp, label: 'goodAudio', value: 'up' },
@@ -17,6 +20,30 @@ export function AudioFeedback({ audioFileId }: { audioFileId: string }) {
     kind: 'audio',
     audioFileId,
   });
+  const [savedRating, setSavedRating] = useState<FeedbackRating>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function restoreRating() {
+      const { data } = await getSupabaseBrowserClient()
+        .from('feedback')
+        .select('rating')
+        .eq('audio_file_id', audioFileId)
+        .abortSignal(controller.signal)
+        .maybeSingle();
+      const stored = data?.rating;
+      if (
+        !controller.signal.aborted &&
+        (stored === 'up' || stored === 'down')
+      ) {
+        setSavedRating(stored);
+      }
+    }
+
+    restoreRating().catch(() => undefined);
+    return () => controller.abort();
+  }, [audioFileId]);
 
   return (
     <div className="space-y-1">
@@ -25,7 +52,7 @@ export function AudioFeedback({ audioFileId }: { audioFileId: string }) {
           <Button
             aria-disabled={pending}
             aria-label={t(label)}
-            aria-pressed={rating === value}
+            aria-pressed={(rating ?? savedRating) === value}
             className="size-11 text-muted-foreground aria-pressed:bg-blue-500/10 aria-pressed:text-blue-600 dark:aria-pressed:text-blue-400"
             key={value}
             onClick={() => submit({ rating: value })}
