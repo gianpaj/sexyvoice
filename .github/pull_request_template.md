@@ -12,9 +12,9 @@ List the main changes in this PR.
 Prefer 1-3 bullets with concrete details.
 -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## How to test
 
@@ -25,9 +25,9 @@ Use 1-5 steps.
 Do not claim tests or manual verification that were not actually performed.
 -->
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Scope
 
@@ -50,16 +50,19 @@ Do not claim tests or manual verification that were not actually performed.
 - [ ] I added or updated tests where needed
 - [ ] I updated translations for any user-facing text
 - [ ] I updated docs/comments where needed
-- [ ] I included screenshots/video for UI changes
+- [ ] I shared evidence for UI changes
 - [ ] I documented env vars, migrations, or rollout notes if needed
 
 ## Related issues
 
 <!-- Delete this section if not applicable. Example: Closes #123 -->
 
-## Screenshots / recordings
+## UI evidence
 
-<!-- Delete this section if not applicable. Add screenshots or short recordings for UI changes. -->
+<!--
+Link the relevant Argos comparison or share captures as described in AGENTS.md#pull-requests.
+Delete this section if it does not apply.
+-->
 
 ## Notes for reviewers
 
