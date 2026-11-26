@@ -186,9 +186,9 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
-   - Telegram cronjob
+   - Vercel Schedules
      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
-     - `CRON_SECRET` - For securing the cron API routes (`/api/daily-stats`, `/api/call-sessions/analyze/batch`) - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+     - `CRON_SECRET` - authenticates scheduled requests. See the [deployment guide](docs/devops.md#notifications-and-background-jobs).
    - Axiom logging (optional)
      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - API key security

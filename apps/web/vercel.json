@@ -1,14 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "ignoreCommand": "git log -1 --pretty=oneline --abbrev-commit | grep -E 'skip deploy|skip ci' && exit 0 || exit 1",
-  "crons": [
-    {
+  "schedules": {
+    "daily-stats": {
       "path": "/api/daily-stats",
-      "schedule": "0 7 * * *"
+      "schedule": "0 7 * * *",
+      "requestMethod": "GET"
     },
-    {
+    "call-analysis-batch": {
       "path": "/api/call-sessions/analyze/batch",
-      "schedule": "*/15 * * * *"
+      "schedule": "*/15 * * * *",
+      "requestMethod": "GET"
     }
-  ]
+  }
 }
