@@ -213,6 +213,20 @@ export function VoiceSettingsCard({
                 />
               </div>
             )}
+            <p className="mt-2 text-muted-foreground text-sm">
+              {t.rich('voiceSelector.geminiPromptTip', {
+                skill: (chunks) => (
+                  <a
+                    className="underline underline-offset-4 hover:text-foreground"
+                    href="https://www.skills.sh/memex-lab/product-launch-video-skill/gemini-tts"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </p>
           </div>
         )}
       </CardContent>
