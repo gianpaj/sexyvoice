@@ -16,7 +16,9 @@ before merging to `main` and after deploying.
 - Check CI for the current PR head, not an earlier commit. The unit-test workflow
   in `.github/workflows/tests.yml` runs `pnpm test:affected` for changed packages
   and their dependents. Inspect its selection with
-  `pnpm test:affected --dry=json` when needed.
+  `pnpm test:affected --dry=json` when needed. Its `test-db` job runs the
+  pgTAP suite against a fresh database built from all migrations, only when
+  `apps/web/supabase/` or the workflow changed.
 - The Playwright workflow in `.github/workflows/e2e-tests.yml` skips E2E unless
   the web app or a build input in its `changes` filter changed, so a docs-only
   PR shows `e2e` as skipped. A PR compares with `main`; a push to `main`
