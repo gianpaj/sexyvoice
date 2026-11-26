@@ -336,8 +336,8 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - Explain what changed and why.
 - Mention tests and checks run (`pnpm fixall`, `pnpm type-check`, `pnpm test`,
   and Playwright e2e when relevant).
-- Verify user-visible changes in the running app with test data. Reuse
-  Playwright fixtures and link the Argos comparison when it shows the change.
+- Verify user-visible changes in the running app with test data. Link the Argos
+  comparison when an existing Playwright test captures the affected state.
   For one-off evidence, use `agent-browser screenshot` at the same step on
   base and head with matching test data and viewport. Use `agent-browser record`
   for a short clip when the sequence matters. Use `gh pr comment --attach <file>`
