@@ -9,7 +9,7 @@ import {
   WaveformPeakAccumulator,
 } from '@/lib/pcm-wav';
 
-export type StreamingPlayerPhase = 'idle' | 'streaming' | 'file';
+type StreamingPlayerPhase = 'idle' | 'streaming' | 'file';
 
 export interface StreamingWaveformPlayer {
   /** Stream finished: assemble the WAV and arrange the live→file handoff. */

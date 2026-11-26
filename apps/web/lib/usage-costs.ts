@@ -58,6 +58,30 @@ export const GEMINI_MODELS = new Set([
   'gemini-3.8-flash-tts',
 ]);
 
+const PARTIAL_CALL_COMPONENTS = new Map<string, string[]>([
+  ['inworld_pipeline_usage', ['llm', 'stt', 'tts']],
+  ['inworld_realtime_usage', ['llm_input', 'llm_output', 'tts']],
+  ['mistral_pipeline_usage', ['llm', 'stt', 'tts']],
+]);
+
+function partialCallCost(metadata: unknown): UsageCost {
+  const providerCost = costMetadata(costMetadata(metadata).provider_cost);
+  const components =
+    typeof providerCost.strategy === 'string'
+      ? PARTIAL_CALL_COMPONENTS.get(providerCost.strategy)
+      : undefined;
+  const breakdown = costMetadata(providerCost.breakdown_usd);
+  const amount =
+    providerCost.status === 'unpriced' && components
+      ? components.reduce(
+          (sum, key) => sum + (dimension(breakdown[key]) ?? 0),
+          0,
+        )
+      : 0;
+  // Known components are a floor on spend; the complete call is still unpriced.
+  return { amount: Number.isFinite(amount) ? amount : 0, basis: 'unknown' };
+}
+
 export function resolveUsageCost(
   event: UsageEventCostInput,
   call?: CallSessionCostInput,
@@ -86,7 +110,7 @@ export function resolveUsageCost(
     if (rate !== undefined && seconds !== null && seconds > 0) {
       return { amount: (seconds / 60) * rate, basis: 'estimated' };
     }
-    return { amount: 0, basis: 'unknown' };
+    return partialCallCost(event.metadata);
   }
   const metadata = costMetadata(event.metadata);
   const model =

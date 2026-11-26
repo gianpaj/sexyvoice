@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Start with 10,000 free credits",
-      "title": "Ready to find your voice?",
-      "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
-      "action": "Create your first voice"
+      "title": "Your words, with feeling",
+      "subtitle": "Type a line and hear it laugh, sigh, or whisper. Or call a character and talk back.",
+      "action": "Try it free"
     },
     "voiceCall": {
       "hero": {
@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Call a character in your own voice",
         "subtitle": "Give them a personality, then pick one of our voices or clone one from 10 seconds of audio: yours, or one you have the rights to. Call them whenever you like, and they pick up in character every time.",
-        "note": "Unlock custom characters with a top-up or subscription.",
+        "note": "Unlock custom characters with a one-time purchase or subscription.",
         "action": "Create your character",
         "cloningLink": "See how voice cloning works"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Then call it",
         "subtitle": "Give your cloned voice to a character and talk to it live, in real time.",
-        "note": "Unlock cloned-voice calls with a top-up or subscription.",
+        "note": "Unlock cloned-voice calls with a one-time purchase or subscription.",
         "action": "Try a voice call"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "How is voice cloning priced?",
-              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
+              "answer": "Saving a voice is free once you have made a one-time purchase or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
@@ -284,8 +284,8 @@
               "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
-              "question": "Can I call a character in my own voice?",
-              "answer": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose \"Clone a voice\", or use \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice."
+              "question": "How do I make a voice call with a cloned voice?",
+              "answer": "Go to the Call page, create a character, and select your saved cloned voice. Save the character, then start the call. If you haven't saved a voice yet, choose \"Clone a voice\" in the character creator, or \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice. A one-time purchase or subscription payment unlocks custom characters and saved voices."
             },
             {
               "question": "How much does it cost?",
@@ -316,6 +316,18 @@
             {
               "question": "What can I use voice generation for?",
               "answer": "Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use."
+            },
+            {
+              "question": "Can I try it before paying?",
+              "answer": "New accounts receive 10,000 free credits. No credit card required."
+            },
+            {
+              "question": "Can I use the audio commercially?",
+              "answer": "Yes. You own the audio you generate and can use it commercially, provided you have the rights to the voices and content you use."
+            },
+            {
+              "question": "How long are generated audio files stored?",
+              "answer": "Generated audio is stored for 30 days on free accounts and 90 days on paid accounts. Download files you want to keep."
             }
           ]
         },
@@ -324,12 +336,28 @@
           "category": "Pricing & access",
           "questions": [
             {
-              "question": "How many credits do I need?",
-              "answer": "New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance."
+              "question": "Should I buy credits once or subscribe?",
+              "answer": "A one-time purchase adds credits without a subscription. Subscribe to receive credits every month, with a 15% subscription bonus."
             },
             {
-              "question": "Why choose SexyVoice.ai?",
-              "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+              "question": "How much can I do with my credits?",
+              "answer": "Live calls cost {count} credits per minute. Speech generation costs depend on the voice, model, and length. Generating speech with a cloned voice uses more credits than standard voices."
+            },
+            {
+              "question": "Do credits expire or roll over?",
+              "answer": "Paid credits don't expire. Unused paid credits carry over, including after you cancel your subscription."
+            },
+            {
+              "question": "When will my subscription renew?",
+              "answer": "Your subscription renews automatically each month until you cancel. Any first-month discount applies only to your first payment. Later payments use the regular monthly price shown at checkout."
+            },
+            {
+              "question": "Can I cancel, and will I lose my credits?",
+              "answer": "Cancel through the Stripe Customer Portal on the credits page. Your plan stays active until the end of your paid billing period, then monthly renewals stop. You can keep using the credits already in your account."
+            },
+            {
+              "question": "Can I buy more credits before my next renewal?",
+              "answer": "Yes. You can make a one-time credit purchase while subscribed, without waiting for your next monthly payment."
             }
           ]
         },
@@ -358,9 +386,14 @@
     "billing": {
       "forever": "(forever)",
       "monthly": "/month",
-      "oneTime": "One-time"
+      "oneTime": "One-time",
+      "oneTimeNote": "One payment. No subscription.",
+      "monthlyNote": "Renews monthly. Cancel anytime.",
+      "introductoryPrice": "{firstPrice} for your first month, then {renewalPrice}/month."
     },
     "plans": {
+      "pricePer1kCredits": "{price} per 1k credits",
+      "savePer1kCredits": "(save {amount}/1k)",
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
@@ -415,7 +448,7 @@
     },
     "topup": {
       "title": "Buy Credits",
-      "description": "Top up your credits instantly or subscribe and get more credits",
+      "description": "Add credits instantly or subscribe and get more credits",
       "buyCredits": "Buy Credits",
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
@@ -467,7 +500,7 @@
     "balanceError": "We couldn't load your credit balance. Please try again.",
     "retryBalance": "Retry",
     "title": "Credits",
-    "topupButton": "Top-up",
+    "topupButton": "Add credits",
     "totalCredits": "Total",
     "remainingCredits": "Remaining",
     "remainingTime": "Remaining time"
@@ -480,6 +513,7 @@
     "downloadAudio": "Download Audio",
     "enhanceTextTitle": "Enhance text with AI emotion tags",
     "error": "Failed to generate audio",
+    "GEMINI_OUTPUT_LIMIT": "The voice reached its audio output limit. Shorten the text and try again.",
     "errorEstimating": "Failed to estimate credits",
     "estimateCreditsButton": "Estimate credits",
     "fullscreenTitle": "Fullscreen",
@@ -778,7 +812,7 @@
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
       "showFewer": "Show fewer",
-      "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
+      "cloneLimit": "You have {max} voices. Delete one to save another."
     },
     "inCall": {
       "connecting": "Connecting…",
@@ -789,7 +823,11 @@
       "mute": "Mute",
       "unmute": "Unmute",
       "end": "End call",
-      "audioSettings": "Audio settings"
+      "audioSettings": "Audio settings",
+      "record": "Record",
+      "stopRecording": "Stop recording",
+      "recordVoice": "Voice only",
+      "recordVideo": "Voice and video"
     },
     "ended": {
       "title": "Call with {name} ended · {duration}",
@@ -797,7 +835,9 @@
       "callAgain": "Call again",
       "edit": "Edit {name}",
       "makeYourOwn": "Make your own version",
-      "back": "Back to characters"
+      "back": "Back to characters",
+      "downloadAudio": "Download audio",
+      "downloadVideo": "Download video"
     },
     "clone": {
       "title": "Clone a voice",
@@ -894,12 +934,14 @@
       "invalidFileType": "Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.",
       "missingLocale": "Please select a language.",
       "missingRequiredParameters": "Please enter text and select an audio file.",
+      "providerRequestRejected": "The voice provider couldn't use this recording or text. Please try a different one.",
       "referenceAudioEnhancementInputTooLarge": "The reference audio is too large to enhance. Please use a smaller file or turn off audio cleanup.",
       "referenceAudioEnhancementInputTooLong": "Reference audio cleanup supports clips up to __MAX__ seconds.",
       "textTooLong": "Text exceeds the maximum length of __MAX__ characters.",
       "unsupportedAudioFormat": "Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.",
       "unsupportedLocale": "This language is not supported for voice cloning.",
       "userNotFound": "Please sign in to clone a voice.",
+      "voiceConsentRequired": "Confirm you have permission to use this voice.",
       "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
       "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
       "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language.",
@@ -994,17 +1036,17 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete account",
-        "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
-        "alertTitle": "Confirm you want to delete your account",
+        "button": "Delete account or content",
+        "confirmTitle": "Delete content",
+        "confirmDescription": "Your account stays open. This deletes:\n• Generated audio files from storage and your history\n• Custom characters and their prompts\n• Call memories\n• Cloned voices\n\nYou will be signed out. You can sign back in with the same email and keep your profile and remaining credits. Your API keys will stop working. We keep usage records for billing and internal cost tracking. Deleted content cannot be restored.\n\nTo request full account deletion, email info@sexyvoice.ai or use the built-in chat.",
+        "alertTitle": "Delete content from your account",
         "cancel": "Cancel",
-        "continue": "Continue",
+        "continue": "Delete content",
         "errors": {
           "manageBilling": "Manage billing",
-          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
-          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again.",
-          "accountBillingBlocked": "Account deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
+          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your content.",
+          "subscriptionCheckFailed": "We could not check your subscription status. Your content has not been deleted. Please try again.",
+          "accountBillingBlocked": "Content deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
           "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
         }
       }
@@ -1029,7 +1071,7 @@
         "action": "Action"
       },
       "empty": "No API keys created yet.",
-      "unpaidEmpty": "Subscribe or top up your account to create API keys.",
+      "unpaidEmpty": "Subscribe or add credits to create API keys.",
       "never": "Never",
       "statusActive": "Active",
       "statusRevoked": "Revoked",
@@ -1074,7 +1116,7 @@
     "description": "Monitor API usage and requests over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls with realistic and emotional voices",
     "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to generate speech, reuse your saved voices, talk to AI characters, and manage your credit balance on SexyVoice.ai.",
@@ -1084,9 +1126,9 @@
     "titleVoiceCloning": "AI Voice Cloning",
     "descriptionVoiceCloning": "Clone a voice from 10 seconds of audio and hear it speak naturally in 28 languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
-    "titleTranscribe": "Free Audio Transcription – 99+ Languages",
+    "titleTranscribe": "Free Audio Transcription – 30+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
-    "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+    "descriptionTranscribe": "Transcribe audio and video to text in 30+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
     "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
@@ -1197,12 +1239,13 @@
     }
   },
   "footer": {
-    "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "tagline": "Expressive AI voices you can generate, clone, and call.",
     "featuresHeading": "Features",
     "toolsHeading": "Tools",
     "companyHeading": "Company",
     "legalHeading": "Legal",
     "statusPage": "Status page",
+    "docs": "Documentation",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved.",
@@ -1400,6 +1443,16 @@
       "join": "Join",
       "joining": "Joining...",
       "cancel": "Cancel"
+    },
+    "track": {
+      "trimStart": "Trim start",
+      "trimEnd": "Trim end",
+      "moveUp": "Move segment up",
+      "moveDown": "Move segment down",
+      "delete": "Delete segment",
+      "start": "Start: {time}",
+      "end": "End: {time}",
+      "duration": "Duration: {time}"
     },
     "progress": {
       "processing": "Processing"

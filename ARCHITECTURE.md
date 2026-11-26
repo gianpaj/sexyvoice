@@ -61,7 +61,7 @@ The repository has three main workspaces:
   external API keys.
 - **Vercel Edge Config** supplies default call instructions. Character prompts
   come from PostgreSQL and are resolved again when the server mints a token.
-- **Stripe** manages subscriptions, top-ups, and credit purchases.
+- **Stripe** manages subscriptions and one-time credit purchases.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
 
@@ -75,7 +75,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
 | Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
 | Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
-| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
+| Real-time calls          | `grok-voice-think-fast-2.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
@@ -252,25 +252,43 @@ mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
 `mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
 provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
 using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
-to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
-the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+to Mistral speech synthesis. Inworld clones carry the owner's user ID as their
+description, so a voice in the shared workspace names its owner.
+`saveCallVoiceProfile` uploads the generated sample (MP3 for Inworld, WAV for
+Mistral) to the dashboard R2 bucket under
+`call-voice-samples/<profile-id>/<random-id>.<mp3|wav>`,
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
 attempts to clean up the provider voice and any attempted R2 upload. The response contains
-`audioReferenceId` and `provider`. This action charges no speech
-credits; sample synthesis incurs provider costs. The reference is retained by
+`audioReferenceId` and `provider`. This action charges no speech credits. The
+platform pays for the sample: a zero-credit `voice_cloning` usage event with
+`metadata.operation = 'saved_voice_sample'` records its provider cost, which
+daily stats include. The user's Usage page lists it as a free cloning
+operation. The reference is retained by
 the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.
+
+Inworld failures map to clone error codes: 429 and 5xx return
+`PROVIDER_UNAVAILABLE`, 400 and 422 return `errors.providerRequestRejected`
+(try a different recording or text), and key or permission failures return
+`errors.internalError`.
 
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
 above the upload and recording form. Previews use the private sample endpoint.
 Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
-and `savedVoiceId`, the route checks ownership, and generation charges credits
-and records an `audio_files` row like a one-off clone. Clicking the selected
+`savedVoiceId`, and `voiceConsent=true`. The consent checkbox stays on the form,
+and the route rejects a saved voice request without consent
+(`errors.voiceConsentRequired`). The route checks ownership, and generation
+charges credits and records an `audio_files` row like a one-off clone. Inworld
+speech is stored as MP3 and Mistral speech as WAV. Clicking the selected
 voice again returns to the recording form. An Inworld voice speaks the chosen
 language, defaulting to its own, which the route checks with
-`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
-voice always speaks its saved locale. Newly saved voices join the list
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. Inworld
+voices also offer the regional accents in `INWORLD_ACCENTS`
+(`lib/clone/call-voice-config.ts`), such as `pt-PT` and `es-419`, when saving
+and generating. A bare code speaks Inworld's default accent, so the dropdown
+names `pt` as Portuguese (Brazil). One-off clones keep the base languages. A
+Mistral voice always speaks its saved locale. Newly saved voices join the list
 immediately. The dashboard form has no demo
 comparison card; the public voice-cloning page retains its examples.
 
@@ -278,7 +296,8 @@ Saved voice samples are served through
 `GET /api/audio-references/[id]/sample`. The route authenticates the user,
 checks ownership and a supported call provider, and returns audio with private,
 non-cacheable headers. Provider IDs and sample URLs stay on the server.
-Profiles with `sample_url` return the saved R2 WAV without provider calls.
+Profiles with `sample_url` return the stored R2 sample, typed by its
+extension, without provider calls.
 Reads accept only sample object keys under the owned profile's prefix, never
 arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
 reference WAV audio or Inworld's MP3 preview. Preview playback does not create
@@ -313,9 +332,9 @@ provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
 separately. Longer references are trimmed to 25 seconds for
 Voxtral or 10 seconds for Chatterbox when conversion permits.
 
-Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
-converted to WAV in the client; the route rejects unconverted WebM. The route
-normalizes other supported files to WAV. Only the Replicate path uploads a
+Accepted uploads include MP3, OGG/Opus, M4A, and WAV. The client converts M4A
+uploads to MP3 and browser-recorded WebM to WAV. The route rejects unconverted
+WebM and normalizes supported files to WAV. Only the Replicate path uploads a
 reference file to R2 because Chatterbox requires a fetchable URL; Mistral
 receives reference audio directly.
 
@@ -447,6 +466,14 @@ it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters
 and custom scenes require a paid account.
 
+Every call-token request captures the browser clock as `clientTime`, an ISO
+timestamp, and `timeZone`, an IANA zone such as `Europe/Rome`. The route validates
+these optional fields and forwards them as `client_time` and `time_zone` in
+LiveKit participant metadata. Invalid clock fields are ignored. SexyCall adds
+the caller's local date and time to the system prompt and exposes
+`get_current_time` for a fresh reading during the call. Clock context is
+independent of the selected language and long-term memory preference.
+
 Long-term memory is on by default for free and paid accounts. The Profile
 page's Voice Call Memory switch saves `call_memory_enabled` in Auth
 `user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
@@ -456,6 +483,16 @@ and cannot override a saved opt-out. The lookup overlaps voice and character
 resolution. A failed lookup logs a warning and starts the call without memory.
 An explicit request flag of `memory: false` also disables memory. This is a
 user preference, not an entitlement or authorization check.
+
+Call tokens send `memory_scope: "both"`. The agent retrieves shared user
+profiles under `__shared__` together with the active character's relationship
+and episode slots. `match_agent_memories_hybrid` returns each row's
+`character_id` and re-ranks its bounded candidate set with active-character
+and recency boosts. The migration resolves pgvector's installed schema for its argument type and
+cosine operators, supporting both `public` and `extensions` without relocating
+the extension. Both retrieval branches include shared rows for a character
+request; the agent makes one hybrid RPC call per search. Deploy the dual-scope
+agent before enabling the web metadata, with the RPC migration applied first.
 
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories
@@ -479,6 +516,12 @@ During a call the page shows the in-call view; when it ends it
 offers Call again and editing. The in-call timer starts when the agent first
 reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
 starts billing.
+
+The in-call Record button offers Voice only or Voice and video.
+`hooks/use-call-recording.ts` records in the browser: a stereo audio file (the
+user on the left, the character on the right) and, for video, a square video of
+the avatar, name and timer. A recording stops when the user stops it or the
+call ends. The ended view links the files for download. Nothing is uploaded.
 
 Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
@@ -514,7 +557,7 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 | Setting           | Current behavior                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
+| Model             | `grok-voice-think-fast-2.0`, `inworld-tts`, or `mistral-tts`                        |
 | Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
 | Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
 | Max output tokens | Nullable; defaults to the agent's model behavior                                    |
@@ -572,7 +615,9 @@ scripts import the same modules, so every path writes identical rows.
 ### Core PostgreSQL Tables
 
 - `profiles` stores application users linked to Supabase Auth. `username` holds
-  the sign-up email, so RLS lets users read only their own row.
+  the sign-up email, so profile reads are owner-only. Anonymous roles have no
+  table privileges. Owners can update only `avatar_url`; profile creation and
+  Stripe customer links are managed by trusted server code.
 - `voices` stores catalog voices for speech generation and calls, including the
   shared cloned-audio row used by legacy foreign keys.
 - `audio_references` stores owned saved voices, provider IDs, locales, and preview
@@ -658,8 +703,7 @@ The action's `finally` releases its reservation and block after cleanup succeeds
 or fails; token checks prevent stale requests from releasing another request's
 block.
 
-After the commit, account deletion deactivates the user's API keys and deletes
-their generated audio from R2. External API audio (`usage.sourceType` is
+After the commit, account deletion deletes the user's generated audio from R2. External API audio (`usage.sourceType` is
 `api_tts`) lives in `R2_SPEECH_API_BUCKET_NAME`. Other audio lives in
 `R2_BUCKET_NAME`, and its dashboard cache entries are evicted after deletion.
 
@@ -667,6 +711,17 @@ Auth users remain able to sign in and check out after deletion finishes.
 Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
 deleted files or characters.
+
+Account deletion clears `call_sessions.transcript` and revokes every owned API
+key through `lib/supabase/api-keys.ts`. Call-session metering fields and immutable
+`usage_events` remain available for billing and provider-cost reporting through
+`lib/usage-costs.ts`. API-key rows remain as audit references; setting
+`is_active = false` prevents them from authenticating external API requests.
+
+Transcript-derived `call_session_analysis` rows and aggregate reports remain as
+internal analytics. Deletion clears the transcript stored when cleanup runs.
+It does not end active calls or block later transcript writes. A running call
+can save its transcript again and trigger analysis.
 
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
@@ -747,6 +802,16 @@ and adds its credits in one transaction, so a failed balance update leaves no
 row behind to block the retry. It grants nothing for a payment intent
 (`credit_transactions.reference_id`) that is already recorded, so a retried
 event cannot grant twice.
+
+### Credit purchase information
+
+Paid credit validity and subscription renewal terms are defined in
+`apps/web/policies/terms.mdx`. Localized purchase questions live in the
+`landing.faq` message group `pricingAndAccess`. Both the landing FAQ and
+`CreditsFaq` on the credits page render that group. `FaqGroupAccordion` renders
+the individual questions for both `CreditsFaq` and `CallFaq`. `PricingCards` shows the
+billing commitment for the selected mode and displays the regular renewal
+price alongside an introductory monthly price.
 
 ### Credit balance sync
 

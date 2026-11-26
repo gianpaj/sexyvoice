@@ -36,7 +36,7 @@ export const VOXTRAL_EMOTIONS = [
   'wistful',
 ] as const;
 
-export const VOXTRAL_PACES = [
+const VOXTRAL_PACES = [
   'very-slow',
   'slow',
   'moderate',
@@ -44,7 +44,7 @@ export const VOXTRAL_PACES = [
   'very-fast',
 ] as const;
 
-export const VOXTRAL_DISFLUENCIES = [
+const VOXTRAL_DISFLUENCIES = [
   'um',
   'uh',
   'laugh',

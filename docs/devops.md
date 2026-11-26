@@ -16,7 +16,14 @@ before merging to `main` and after deploying.
 - Check CI for the current PR head, not an earlier commit. The unit-test workflow
   in `.github/workflows/tests.yml` runs `pnpm test:affected` for changed packages
   and their dependents. Inspect its selection with
-  `pnpm test:affected --dry=json` when needed.
+  `pnpm test:affected --dry=json` when needed. Its `test-db` job runs the
+  pgTAP suite against a fresh database built from all migrations, only when
+  `apps/web/supabase/` or the workflow changed.
+- The Playwright workflow in `.github/workflows/e2e-tests.yml` skips E2E unless
+  the web app or a build input in its `changes` filter changed, so a docs-only
+  PR shows `e2e` as skipped. A PR compares with `main`; a push to `main`
+  compares with the previous commit and never cancels another `main` run. Run
+  the workflow manually to test regardless of changes.
 - For deployable changes, verify the affected app's build and exercise the changed
   flow on its preview deployment. Check authentication, billing, generation, and
   storage when the change touches those integrations. For call dashboard
@@ -48,13 +55,16 @@ execution; test review changes after they reach the default branch.
 | LiveKit agent | External Python service on Fly.io, Paris CDG                                    |
 
 Use Node.js `24.x` and the pnpm version pinned in `package.json`. Root build
-commands use Turborepo. The docs app's build regenerates its OpenAPI reference;
-keep its custom domain and Vercel GitHub App connected to the deployment branch.
+commands use Turborepo. The docs app's build regenerates its OpenAPI reference
+from the committed spec; keep its custom domain and Vercel GitHub App connected to the deployment branch.
 
 The `ignoreCommand` in each app's `vercel.json` controls deployment skips:
 
 - Web: `skip deploy` or `skip ci` in the latest commit message.
-- Docs: `skip deploy`, `skip ci`, or `skip docs`.
+- Docs: `skip deploy`, `skip ci`, or `skip docs`. Otherwise `turbo-ignore`
+  skips the build when nothing in `apps/docs` or its dependencies changed
+  since the last successful deployment. Spec changes reach the docs through
+  the committed `openapi.json`, so they trigger a build.
 
 The [documentation commit rule](../AGENTS.md#documentation-rules) defines when to
 use `[skip deploy]`.
@@ -230,9 +240,12 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
-- `NEXT_PUBLIC_E2E_TEST_MODE`: build-time; `true` disables the browser Sentry
-  client. Set only in the E2E workflow's build step, never on Vercel. The
-  server and edge clients stay off when `E2E_TEST_MODE=true` at runtime.
+- Set `E2E_TEST_MODE=true` before building and starting a Playwright test
+  server. The build disables browser Sentry and omits the CSP
+  `upgrade-insecure-requests` directive so WebKit can load assets over HTTP.
+  At runtime the flag enables test fixtures and disables server and edge
+  Sentry. Keep the flag unset on Vercel. `VERCEL_ENV=production` disables
+  E2E mode.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
@@ -275,6 +288,21 @@ Verify migration compatibility and generated types before deploying code that
 uses a changed schema. Keep privileged keys server-only and preserve RLS.
 Application auth, retry, and cookie behavior is documented under
 [Supabase access boundaries](../ARCHITECTURE.md#supabase-access-boundaries).
+
+#### Profile privacy migration
+
+Deploy the service-role Stripe customer lookup and ID writer before an operator applies
+`20261118160059_restrict_profile_access.sql`. It removes public profile reads
+and replaces blanket profile grants with owner read and avatar-only update access plus
+privileged server access. Profile creation and email/Stripe identity updates
+are not granted to clients. It applies to existing databases and fresh installs;
+no email data is rewritten. Other tables' legacy bootstrap defaults are unchanged.
+
+After applying locally with `supabase migration up --local --workdir apps/web`,
+run `pnpm test:db`. Verify signed-out profile requests are denied, signed-in
+users see only their own profile, and signed Stripe webhooks still resolve the
+customer's profile without a user session. Production migration application
+remains a human-operated step.
 
 #### Local Supabase versions and data
 

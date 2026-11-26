@@ -17,9 +17,8 @@ usage-cost total without paid/free cohorts or a free-coverage ratio; data-qualit
 alerts and missing-cost counts identify gaps. The feature README documents
 allocation and estimate limitations.
 
-Cached activity reports refresh the contribution window's last 30 days of
-collections. Fresh reports reuse the all-time transaction read required by
-lifetime metrics.
+Contribution reuses the all-time transaction read required by lifetime
+metrics, fresh or from the local cache.
 
 Verification covers the November cutoff, rolling windows and year boundaries,
 idle call periods, contribution deductions, invalid baseline

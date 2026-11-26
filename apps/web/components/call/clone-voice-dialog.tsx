@@ -24,9 +24,13 @@ import {
   type CallCloneProvider,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
-import { CLONE_MIN_AUDIO_SECONDS } from '@/lib/clone/constants';
+import {
+  CLONE_AUDIO_FILE_ACCEPT,
+  CLONE_MIN_AUDIO_SECONDS,
+} from '@/lib/clone/constants';
 import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
+import { prepareReferenceUpload } from '@/lib/clone/prepare-reference-upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { PlayingBars } from './listen-button';
@@ -234,12 +238,20 @@ export function CloneVoiceDialog({
       ? language
       : 'en';
     try {
-      let audio = file;
+      let audio = file
+        ? await prepareReferenceUpload(file, ensureLoaded, convert)
+        : null;
       if (source === 'record' && recording) {
         await ensureLoaded();
         audio = await createMicrophoneReferenceAudioFile(recording, convert);
       }
+      if (!current()) return;
       if (!audio) throw new Error(t('needFile'));
+      if (audio.size > CLONING_FILE_MAX_SIZE) {
+        throw new Error(
+          t('fileTooLarge', { size: formatBytes(CLONING_FILE_MAX_SIZE) }),
+        );
+      }
       const form = new FormData();
       form.append(CLONE_FORM_FIELDS.file, audio);
       form.append(CLONE_FORM_FIELDS.locale, locale);
@@ -333,7 +345,7 @@ export function CloneVoiceDialog({
         })}
       </span>
       <input
-        accept="audio/*"
+        accept={CLONE_AUDIO_FILE_ACCEPT}
         className="absolute inset-0 cursor-pointer opacity-0"
         onChange={(event) => chooseFile(event.target.files?.[0])}
         type="file"

@@ -136,7 +136,7 @@ export function subtractDays(date: Date, days: number): Date {
   return new Date(date.getTime() - days * 86_400_000);
 }
 
-export function isInDateRange(value: string, start: Date, end: Date): boolean {
+function isInDateRange(value: string, start: Date, end: Date): boolean {
   const itemTime = new Date(value).getTime();
   return itemTime >= start.getTime() && itemTime < end.getTime();
 }
@@ -169,6 +169,39 @@ export function formatCurrencyChange(
   const arrow = diff >= 0 ? '↑' : '↓';
 
   return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(pct).toFixed(0)}%)`;
+}
+
+// Smaller changes are normal day-to-day noise at a few dozen calls a day.
+const ALERT_TREND_PCT = 25;
+
+/**
+ * A large change from a baseline as `↑61%` or `↓74%`, or `new` from zero.
+ * Empty below `minPct` (25% by default), so an arrow marks something worth
+ * reading.
+ */
+export function formatTrend(
+  current: number,
+  baseline: number,
+  minPct = ALERT_TREND_PCT,
+): string {
+  if (baseline === 0) {
+    return current === 0 ? '' : 'new';
+  }
+  // Compare before rounding, so 24.6% stays below a 25% threshold.
+  const pct = ((current - baseline) / baseline) * 100;
+  if (Math.abs(pct) < minPct) {
+    return '';
+  }
+  return `${pct > 0 ? '↑' : '↓'}${Math.round(Math.abs(pct))}%`;
+}
+
+/** Total time rounded to minutes, e.g. `47m` or `8h 10m`. */
+export function formatMinutes(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
 // Format duration in minutes

@@ -12,10 +12,11 @@ Use `GET /api/v1/voices` to retrieve the current list of voices and filter the r
 
 ```bash
 curl -X GET 'https://sexyvoice.ai/api/v1/voices' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}"
 ```
 
-The response includes each voice's `name`, `language`, and `model`. Pass the `name` as the `voice` parameter in speech requests.
+In the response's `data` array, find the voice you want. Pass its `name`
+as `voice` with `model: "xai"`, or pass its `id` as `voiceId` on its own.
 
 ## Speech Tags
 
@@ -26,40 +27,40 @@ Grok supports two kinds of speech tags that you embed directly in the `input` te
 
 ### Instant Tags
 
-| Tag | Description |
-| --- | --- |
-| `[pause]` | Short pause |
-| `[long-pause]` | Longer pause |
-| `[laugh]` | Laughter |
-| `[chuckle]` | Brief chuckle |
-| `[giggle]` | Giggle |
-| `[cry]` | Crying sound |
-| `[sigh]` | Sigh |
-| `[breath]` | Audible breath |
-| `[inhale]` | Inhale sound |
-| `[exhale]` | Exhale sound |
-| `[tsk]` | Tsk sound |
-| `[tongue-click]` | Tongue click |
-| `[lip-smack]` | Lip smack |
-| `[hum-tune]` | Humming |
+| Tag              | Description    |
+| ---------------- | -------------- |
+| `[pause]`        | Short pause    |
+| `[long-pause]`   | Longer pause   |
+| `[laugh]`        | Laughter       |
+| `[chuckle]`      | Brief chuckle  |
+| `[giggle]`       | Giggle         |
+| `[cry]`          | Crying sound   |
+| `[sigh]`         | Sigh           |
+| `[breath]`       | Audible breath |
+| `[inhale]`       | Inhale sound   |
+| `[exhale]`       | Exhale sound   |
+| `[tsk]`          | Tsk sound      |
+| `[tongue-click]` | Tongue click   |
+| `[lip-smack]`    | Lip smack      |
+| `[hum-tune]`     | Humming        |
 
 ### Wrapping Tags
 
-| Tag | Description |
-| --- | --- |
-| `<soft>...</soft>` | Soft, gentle delivery |
-| `<whisper>...</whisper>` | Whispered speech |
-| `<loud>...</loud>` | Louder, projected voice |
-| `<emphasis>...</emphasis>` | Emphatic stress |
-| `<slow>...</slow>` | Slower speech rate |
-| `<fast>...</fast>` | Faster speech rate |
-| `<higher-pitch>...</higher-pitch>` | Raised pitch |
-| `<lower-pitch>...</lower-pitch>` | Lowered pitch |
-| `<build-intensity>...</build-intensity>` | Gradually increasing intensity |
+| Tag                                            | Description                    |
+| ---------------------------------------------- | ------------------------------ |
+| `<soft>...</soft>`                             | Soft, gentle delivery          |
+| `<whisper>...</whisper>`                       | Whispered speech               |
+| `<loud>...</loud>`                             | Louder, projected voice        |
+| `<emphasis>...</emphasis>`                     | Emphatic stress                |
+| `<slow>...</slow>`                             | Slower speech rate             |
+| `<fast>...</fast>`                             | Faster speech rate             |
+| `<higher-pitch>...</higher-pitch>`             | Raised pitch                   |
+| `<lower-pitch>...</lower-pitch>`               | Lowered pitch                  |
+| `<build-intensity>...</build-intensity>`       | Gradually increasing intensity |
 | `<decrease-intensity>...</decrease-intensity>` | Gradually decreasing intensity |
-| `<laugh-speak>...</laugh-speak>` | Laughing while speaking |
-| `<sing-song>...</sing-song>` | Sing-song delivery |
-| `<singing>...</singing>` | Sung vocal style |
+| `<laugh-speak>...</laugh-speak>`               | Laughing while speaking        |
+| `<sing-song>...</sing-song>`                   | Sing-song delivery             |
+| `<singing>...</singing>`                       | Sung vocal style               |
 
 ## Examples
 
@@ -120,7 +121,7 @@ Grok voices support both `mp3` (default) and `wav`:
 
 Grok voices accept an optional `speed` multiplier in the `0.7`–`1.5` range (per the xAI
 TTS API). Values below `1.0` slow the delivery down and values above `1.0` speed it up.
-Omit it to use the default `1.0`.
+Omit it to use the provider default.
 
 ```json
 {
@@ -133,7 +134,6 @@ Omit it to use the default `1.0`.
 
 ## Notes
 
-- Tags count toward the character limit and are billed as input characters
-- Unsupported or misspelled tags pass through as plain text in the audio
-- Grok voices do not support the `style` parameter — use speech tags for expression instead
-- The `seed` parameter is not supported for Grok voices
+- Tags count toward the character limit and credit calculation.
+- The API forwards tags as part of `input`; the provider interprets them.
+- Grok ignores `style`, `seed`, and `temperature`. Use speech tags for expression.

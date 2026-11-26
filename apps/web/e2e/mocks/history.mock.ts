@@ -2,7 +2,7 @@ import type { Route } from '@playwright/test';
 
 import { E2E_USER_ID } from '@/lib/e2e-mocks-shared';
 
-export const mockAudioFiles = [
+const mockAudioFiles = [
   {
     created_at: '2025-01-15T10:30:00.000Z',
     id: 'file-001',

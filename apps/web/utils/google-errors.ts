@@ -35,25 +35,25 @@ function sanitizeJsonString(jsonStr: string): string {
  * Based on google/rpc/error_details.proto
  */
 
-export interface ErrorInfo {
+interface ErrorInfo {
   '@type': 'type.googleapis.com/google.rpc.ErrorInfo';
   domain?: string;
   metadata?: { [key: string]: string };
   reason: string;
 }
 
-export interface RetryInfo {
+interface RetryInfo {
   '@type': 'type.googleapis.com/google.rpc.RetryInfo';
   retryDelay: string; // e.g. "51820.638305887s"
 }
 
-export interface DebugInfo {
+interface DebugInfo {
   '@type': 'type.googleapis.com/google.rpc.DebugInfo';
   detail: string;
   stackEntries: string[];
 }
 
-export interface QuotaFailure {
+interface QuotaFailure {
   '@type': 'type.googleapis.com/google.rpc.QuotaFailure';
   violations: Array<{
     subject?: string;
@@ -67,7 +67,7 @@ export interface QuotaFailure {
   }>;
 }
 
-export interface PreconditionFailure {
+interface PreconditionFailure {
   '@type': 'type.googleapis.com/google.rpc.PreconditionFailure';
   violations: Array<{
     type: string;
@@ -76,13 +76,13 @@ export interface PreconditionFailure {
   }>;
 }
 
-export interface LocalizedMessage {
+interface LocalizedMessage {
   '@type': 'type.googleapis.com/google.rpc.LocalizedMessage';
   locale: string;
   message: string;
 }
 
-export interface BadRequest {
+interface BadRequest {
   '@type': 'type.googleapis.com/google.rpc.BadRequest';
   fieldViolations: Array<{
     field: string;
@@ -92,13 +92,13 @@ export interface BadRequest {
   }>;
 }
 
-export interface RequestInfo {
+interface RequestInfo {
   '@type': 'type.googleapis.com/google.rpc.RequestInfo';
   requestId: string;
   servingData: string;
 }
 
-export interface ResourceInfo {
+interface ResourceInfo {
   '@type': 'type.googleapis.com/google.rpc.ResourceInfo';
   description: string;
   owner: string;
@@ -106,7 +106,7 @@ export interface ResourceInfo {
   resourceType: string;
 }
 
-export interface Help {
+interface Help {
   '@type': 'type.googleapis.com/google.rpc.Help';
   links: Array<{
     description: string;
@@ -114,7 +114,7 @@ export interface Help {
   }>;
 }
 
-export type GoogleApiErrorDetail =
+type GoogleApiErrorDetail =
   | ErrorInfo
   | RetryInfo
   | DebugInfo

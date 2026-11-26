@@ -83,8 +83,6 @@ Implemented mock/helper files:
 
 - `mocks/google-ai.mock.ts` — used by generate tests
 - `mocks/usage.mock.ts` — used by usage tests
-- `mocks/call.mock.ts` — helper file exists, but current call spec uses inline route handlers
-- `mocks/clone.mock.ts` — helper file exists, but current clone spec is UI-focused and does not currently import it
 
 ---
 
@@ -183,7 +181,7 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, saved Mistral profiles for paid users, credit transactions, and
+call voices, saved Mistral and Inworld voices for paid users, credit transactions, and
 instruction config.
 Custom characters start empty. Authentication still runs.
 
@@ -272,7 +270,27 @@ The call spec also uses inline route handlers to mock:
 This spec is intentionally UI-focused.
 It currently does **not** submit a real clone request and does **not** exercise the preview success state.
 
-The existing `mocks/clone.mock.ts` helper file is available for future expansion, but the current spec does not import it.
+In E2E mode the page reads entitlement from the `e2e-call-user` cookie, like
+the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
+users and are empty for free users; custom characters are empty. The spec sets
+the paid cookie, so its screenshot shows the fixture saved voices.
+
+### Audio file pickers
+
+`e2e/audio-file-picker.spec.ts` covers the Call and Clone dashboards and the
+Audio Converter, Audio Joiner, and Transcription tools. The tests require
+explicit audio extensions in the rendered file filter, open each chooser from
+the page, and confirm the app accepts an MP3 fixture.
+
+CI runs this spec in Chromium, Firefox, and WebKit with an iPhone profile.
+E2E mode omits CSP's HTTPS upgrade directive so WebKit can load the local
+HTTP test server.
+Playwright supplies the file directly. Verify whether an MP3 can be tapped
+in the native Files picker separately on iPhone Safari.
+
+Run just these cases with `pnpm --filter @sexyvoice/web test:e2e audio-file-picker`.
+Let Playwright start Next.js, or set `E2E_TEST_MODE=true` before starting the
+server yourself.
 
 ---
 
@@ -459,9 +477,8 @@ apps/web/e2e/
 ├── auth/
 │   └── auth.setup.ts
 ├── mocks/
-│   ├── call.mock.ts
-│   ├── clone.mock.ts
 │   ├── google-ai.mock.ts
+│   ├── history.mock.ts
 │   └── usage.mock.ts
 ├── pages/
 │   ├── call.page.ts

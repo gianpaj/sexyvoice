@@ -364,7 +364,8 @@ export function createExternalApiOpenApiDocument() {
                   schema: ErrorResponseSchema,
                 },
               },
-              description: 'Content policy violation',
+              description:
+                'Content policy violation or audio output limit reached',
             },
             429: {
               content: {

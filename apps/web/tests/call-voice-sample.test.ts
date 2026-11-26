@@ -79,10 +79,14 @@ describe('saved voice sample', () => {
     expect(mocks.sample).not.toHaveBeenCalled();
   });
 
-  it.each(['inworld', 'mistral'])(
-    'serves the stored %s sample without provider synthesis',
-    async (provider) => {
-      const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+  it.each([
+    ['inworld', 'mp3', 'audio/mpeg'],
+    ['inworld', 'wav', 'audio/wav'],
+    ['mistral', 'wav', 'audio/wav'],
+  ])(
+    'serves the stored %s %s sample without provider synthesis',
+    async (provider, format, contentType) => {
+      const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.${format}`;
       mocks.owned.mockResolvedValue({
         id,
         provider,
@@ -93,7 +97,7 @@ describe('saved voice sample', () => {
       const response = await request();
       expect(response.status).toBe(200);
       expect(await response.text()).toBe('RIFFstored');
-      expect(response.headers.get('content-type')).toBe('audio/wav');
+      expect(response.headers.get('content-type')).toBe(contentType);
       expect(response.headers.get('cache-control')).toBe('private, no-store');
       expect(mockGetFileFromR2).toHaveBeenCalledWith(key);
       expect(mocks.sample).not.toHaveBeenCalled();
@@ -105,6 +109,8 @@ describe('saved voice sample', () => {
     'http://127.0.0.1/private',
     'https://files.sexyvoice.ai/call-voice-samples/other-profile/22222222-2222-4222-8222-222222222222.wav',
     `https://files.sexyvoice.ai/call-voice-samples/${id}/../../private.wav`,
+    `https://files.sexyvoice.ai/call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.toString`,
+    `https://files.sexyvoice.ai/call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.mp3.wav`,
   ])('rejects an unexpected stored path: %s', async (sample_url) => {
     mocks.owned.mockResolvedValue({ id, provider: 'inworld', sample_url });
     expect((await request()).status).toBe(502);

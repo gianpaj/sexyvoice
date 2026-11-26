@@ -32,7 +32,7 @@ const texts = {
   // Insert
 };
 
-export type SlashMenuItemType = keyof typeof texts;
+type SlashMenuItemType = keyof typeof texts;
 
 const getItemImplementations = () => {
   return {

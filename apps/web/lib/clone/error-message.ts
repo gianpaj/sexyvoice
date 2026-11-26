@@ -30,7 +30,7 @@ export const formatCloneMessage = (
     message,
   );
 
-export const getCloneErrorMessage = (
+const getCloneErrorMessage = (
   t: CloneTranslator,
   translateErrorCode: ErrorCodesTranslator,
   code?: CloneRouteErrorCode,

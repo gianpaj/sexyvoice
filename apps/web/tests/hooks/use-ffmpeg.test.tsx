@@ -101,6 +101,28 @@ describe('useFFmpeg', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
   });
+
+  it('keeps overlapping conversions in separate worker files', async () => {
+    const { result } = renderHook(() => useFFmpeg({ lazyLoad: true }));
+    await act(result.current.ensureLoaded);
+    const ffmpeg = ffmpegMocks.instances[0] as InstanceType<
+      typeof ffmpegMocks.FFmpegMock
+    >;
+    ffmpeg.readFile.mockResolvedValue(new Uint8Array([1, 2, 3]));
+
+    const file = new File(['audio'], 'reference.m4a');
+    await Promise.all([
+      result.current.convert(file, 'mp3'),
+      result.current.convert(file, 'mp3'),
+    ]);
+
+    const inputs = ffmpeg.writeFile.mock.calls.map(([name]) => name);
+    const outputs = ffmpeg.readFile.mock.calls.map(([name]) => name);
+    expect(new Set([...inputs, ...outputs]).size).toBe(4);
+    expect(ffmpeg.deleteFile.mock.calls.flat().sort()).toEqual(
+      [...inputs, ...outputs].sort(),
+    );
+  });
 });
 
 describe('cloneStateReducer', () => {

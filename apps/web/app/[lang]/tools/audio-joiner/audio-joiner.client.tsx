@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { DropZone } from './components/drop-zone';
 import { JoinControls } from './components/join-controls';
 import { TrackList } from './components/track-list';
+import { formatTime } from './format-time';
 import {
   type JoinerOutputFormat,
   useFFmpegJoiner,
@@ -23,14 +24,6 @@ interface TrackSegment {
   name: string;
   startSec: number;
   url: string;
-}
-
-function formatTime(valueSec: number): string {
-  const minutes = Math.floor(valueSec / 60);
-  const seconds = Math.floor(valueSec % 60);
-  const tenths = Math.floor((valueSec % 1) * 10);
-
-  return `${minutes}:${`${seconds}`.padStart(2, '0')}.${tenths}`;
 }
 
 function isInteractiveElement(target: EventTarget | null): boolean {

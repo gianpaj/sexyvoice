@@ -14,17 +14,10 @@ import { estimateGrokCredits } from '@/lib/utils';
  */
 
 /**
- * Mock base64-encoded WAV audio data
- * This is a minimal valid WAV file header that matches the vitest mock
- */
-export const mockAudioData =
-  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-
-/**
  * Mock response for generate-voice API
  * Matches the structure: { url, creditsUsed }
  */
-export const mockGenerateVoiceResponse = {
+const mockGenerateVoiceResponse = {
   creditsUsed: 12,
   url: 'https://files.sexyvoice.ai/generated-audio-free/test-audio-e2e.wav',
 };
@@ -33,7 +26,7 @@ export const mockGenerateVoiceResponse = {
  * Mock response for Gemini estimate-credits API.
  * Grok estimates are calculated dynamically to mirror the real bucketed logic.
  */
-export const mockGeminiEstimateCreditsResponse = {
+const mockGeminiEstimateCreditsResponse = {
   estimatedCredits: 15,
   tokens: 150,
 };
@@ -57,7 +50,7 @@ export const mockEnhancedText =
  * Mocks the Google Gemini voice generation API call.
  * Returns a successful response with audio URL and credit info.
  */
-export async function handleGenerateVoice(route: Route) {
+async function handleGenerateVoice(route: Route) {
   const request = route.request();
   const postData = request.postDataJSON();
 
@@ -83,7 +76,7 @@ export async function handleGenerateVoice(route: Route) {
  *
  * Mocks the Google token counting API for credit estimation.
  */
-export async function handleEstimateCredits(route: Route) {
+async function handleEstimateCredits(route: Route) {
   const request = route.request();
   const postData = request.postDataJSON();
 
@@ -112,7 +105,7 @@ export async function handleEstimateCredits(route: Route) {
  * Mocks the AI text enhancement (adds emotion tags).
  * Returns a simple text response (not streamed for simplicity).
  */
-export async function handleGenerateText(route: Route) {
+async function handleGenerateText(route: Route) {
   const request = route.request();
   const postData = request.postDataJSON();
 
@@ -160,34 +153,6 @@ export async function handleInsufficientCreditsError(route: Route) {
     }),
     contentType: 'application/json',
     status: 402,
-  });
-}
-
-/**
- * Handler for Google API quota exceeded error
- */
-export async function handleQuotaExceededError(route: Route) {
-  await route.fulfill({
-    body: JSON.stringify({
-      error: 'You exceeded your current quota',
-      errorCode: 'THIRD_P_QUOTA_EXCEEDED',
-    }),
-    contentType: 'application/json',
-    status: 429,
-  });
-}
-
-/**
- * Handler for prohibited content error
- */
-export async function handleProhibitedContentError(route: Route) {
-  await route.fulfill({
-    body: JSON.stringify({
-      error: 'Content was flagged as potentially harmful',
-      errorCode: 'PROHIBITED_CONTENT',
-    }),
-    contentType: 'application/json',
-    status: 400,
   });
 }
 

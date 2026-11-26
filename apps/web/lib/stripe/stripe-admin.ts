@@ -2,18 +2,9 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
-const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
-  'trialing',
-  'active',
-  'past_due',
-  'unpaid',
-  'paused',
-  'canceled',
-]);
-
 import { type CustomerData, setCustomerData } from '../redis/queries';
+import { createAdminClient } from '../supabase/admin';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
-import { createClient } from '../supabase/server';
 
 const { logger, captureException } = Sentry;
 
@@ -193,7 +184,7 @@ export async function createOrRetrieveCustomer(
 
 // Helper function to update stripe_id in database
 const updateStripeId = async (userId: string, stripeId: string) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('profiles')
     .update({ stripe_id: stripeId })
@@ -239,14 +230,6 @@ async function hasMatchingSubscriptionHistory(
       return false;
     }
   }
-}
-
-export function hasEverHadRealSubscription(
-  customerId: string | null | undefined,
-): Promise<boolean> {
-  return hasMatchingSubscriptionHistory(customerId, (subscription) =>
-    REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
-  );
 }
 
 export function hasAnySubscriptionHistory(

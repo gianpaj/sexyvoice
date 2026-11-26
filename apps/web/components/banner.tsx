@@ -121,7 +121,11 @@ export function Banner({
   const countdownEndDate = banner.countdown?.enabled
     ? banner.countdown.endDate
     : undefined;
-  const [isVisible, setIsVisible] = useState(inDashboard === true);
+  // Render visible so first-time visitors on static pages get no layout shift.
+  // Static pages cannot read cookies on the server, and cached dashboard
+  // navigation can restore stale props, so the effect below hides dismissed or
+  // expired banners after hydration.
+  const [isVisible, setIsVisible] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
@@ -129,11 +133,7 @@ export function Banner({
   useEffect(() => {
     let isCancelled = false;
 
-    // Fresh dashboard renders are server-filtered, but cached navigation can
-    // restore stale banner props. Recheck cookies without hiding valid banners.
-    setIsVisible(
-      inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
-    );
+    setIsVisible(!isBannerCountdownExpired(countdownEndDate));
 
     const resolveVisibility = async () => {
       if (!banner.dismissible) {
@@ -148,8 +148,9 @@ export function Banner({
       .then((visible) => {
         const shouldShow =
           visible && !isBannerCountdownExpired(countdownEndDate);
-        if (!(isCancelled || (inDashboard && shouldShow))) {
-          setIsVisible(shouldShow);
+        // Only hide: a late result must not undo a dismissal made meanwhile.
+        if (!(isCancelled || shouldShow)) {
+          setIsVisible(false);
         }
       })
       .catch(() => undefined);
@@ -157,12 +158,7 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [
-    banner.dismiss.cookieKey,
-    banner.dismissible,
-    countdownEndDate,
-    inDashboard,
-  ]);
+  }, [banner.dismiss.cookieKey, banner.dismissible, countdownEndDate]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
@@ -251,19 +247,21 @@ export function Banner({
             {banner.text}
           </p>
 
+          {/* Server HTML has no clock, so the digits start as placeholders
+              that hold the countdown's space until the first tick. */}
           {banner.countdown?.enabled &&
-            timeRemaining &&
-            !timeRemaining.expired && (
+            !Number.isNaN(Date.parse(banner.countdown.endDate)) &&
+            !timeRemaining?.expired && (
               <div className="flex items-center gap-4">
                 <p className="font-semibold text-sm text-white">
                   {banner.countdown.labels.prefix}
                 </p>
                 <div className="flex gap-0 font-mono text-xs sm:text-sm">
                   {[
-                    timeRemaining.days,
-                    timeRemaining.hours,
-                    timeRemaining.minutes,
-                    timeRemaining.seconds,
+                    timeRemaining?.days,
+                    timeRemaining?.hours,
+                    timeRemaining?.minutes,
+                    timeRemaining?.seconds,
                   ].map((num, index) => (
                     <Fragment key={`${banner.id}-${index}`}>
                       {index !== 0 && (
@@ -271,7 +269,9 @@ export function Banner({
                       )}
                       <div className="flex flex-col items-center">
                         <span className="font-bold text-lg sm:text-xl">
-                          {String(num).padStart(2, '0')}
+                          {num === undefined
+                            ? '--'
+                            : String(num).padStart(2, '0')}
                         </span>
                       </div>
                     </Fragment>
@@ -298,7 +298,16 @@ export function Banner({
             size="sm"
             variant="outline"
           >
-            <Link href={banner.ctaLink}>{banner.ctaText}</Link>
+            <Link
+              href={banner.ctaLink}
+              prefetch={
+                /^\/[a-z]{2}\/(login|signup)(?:\/|[?#]|$)/.test(banner.ctaLink)
+                  ? false
+                  : undefined
+              }
+            >
+              {banner.ctaText}
+            </Link>
           </Button>
 
           {banner.dismissible && (

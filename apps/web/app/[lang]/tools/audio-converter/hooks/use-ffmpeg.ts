@@ -32,6 +32,7 @@ async function loadFFmpegCore(): Promise<FFmpeg> {
 export function useFFmpeg(options?: UseFFmpegOptions) {
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const loadPromiseRef = useRef<Promise<FFmpeg> | null>(null);
+  const conversionId = useRef(0);
   const [isLoading, setIsLoading] = useState(options?.lazyLoad);
   const [error, setError] = useState<string | null>(null);
   const lazyLoad = options?.lazyLoad ?? false;
@@ -86,14 +87,9 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
     }
 
     const ffmpeg = ffmpegRef.current;
-    const inputName = 'input';
-    const outputName = `output.${outputFormat}`;
-
-    ffmpeg.on('progress', ({ progress }) => {
-      onProgress?.(progress);
-    });
-
-    await ffmpeg.writeFile(inputName, await fetchFile(file));
+    const id = conversionId.current++;
+    const inputName = `input-${id}`;
+    const outputName = `output-${id}.${outputFormat}`;
 
     const formatArgs: Record<AudioFormat, string[]> = {
       aac: ['-i', inputName, '-codec:a', 'aac', '-b:a', '192k', outputName],
@@ -105,9 +101,6 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
       wav: ['-i', inputName, '-codec:a', 'pcm_s16le', outputName],
     };
 
-    await ffmpeg.exec(formatArgs[outputFormat]);
-
-    const data = await ffmpeg.readFile(outputName);
     const mimeTypes: Record<AudioFormat, string> = {
       aac: 'audio/aac',
       flac: 'audio/flac',
@@ -118,14 +111,25 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
       wav: 'audio/wav',
     };
 
-    await ffmpeg.deleteFile(inputName);
-    await ffmpeg.deleteFile(outputName);
-
-    const arrayBuffer =
-      typeof data === 'string'
-        ? new TextEncoder().encode(data).buffer
-        : (data.buffer as ArrayBuffer);
-    return new Blob([arrayBuffer], { type: mimeTypes[outputFormat] });
+    const reportProgress = ({ progress }: { progress: number }) =>
+      onProgress?.(progress);
+    if (onProgress) ffmpeg.on('progress', reportProgress);
+    try {
+      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      await ffmpeg.exec(formatArgs[outputFormat]);
+      const data = await ffmpeg.readFile(outputName);
+      const arrayBuffer =
+        typeof data === 'string'
+          ? new TextEncoder().encode(data).buffer
+          : (data.buffer as ArrayBuffer);
+      return new Blob([arrayBuffer], { type: mimeTypes[outputFormat] });
+    } finally {
+      if (onProgress) ffmpeg.off('progress', reportProgress);
+      await Promise.allSettled([
+        ffmpeg.deleteFile(inputName),
+        ffmpeg.deleteFile(outputName),
+      ]);
+    }
   };
 
   return {

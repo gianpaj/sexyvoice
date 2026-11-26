@@ -15,7 +15,7 @@ import {
 /**
  * Mock usage event data matching the UsageEvent type
  */
-export const mockUsageEvents = [
+const mockUsageEvents = [
   {
     credits_used: 12,
     id: 'evt-001',
@@ -83,25 +83,12 @@ export const mockUsageEvents = [
  * Mock monthly summary data — shared with the server-side summary-card mock via
  * `lib/e2e-mocks-shared.ts` so the table and the cards can never drift apart.
  */
-export const mockMonthlySummary = E2E_MONTHLY_USAGE_SUMMARY_VALUES;
+const mockMonthlySummary = E2E_MONTHLY_USAGE_SUMMARY_VALUES;
 
 /**
  * Mock all-time summary data — shared source of truth (see above).
  */
-export const mockAllTimeSummary = E2E_ALL_TIME_USAGE_SUMMARY_VALUES;
-
-/**
- * Mock paginated response for /api/usage-events
- */
-export const mockUsageEventsResponse = {
-  allTimeSummary: mockAllTimeSummary,
-  data: mockUsageEvents,
-  monthlySummary: mockMonthlySummary,
-  page: 1,
-  pageSize: 20,
-  totalCount: mockUsageEvents.length,
-  totalPages: 1,
-};
+const mockAllTimeSummary = E2E_ALL_TIME_USAGE_SUMMARY_VALUES;
 
 /**
  * Handler for GET /api/usage-events
@@ -210,18 +197,4 @@ export async function handleUsageEventsError(route: Route) {
     contentType: 'application/json',
     status: 500,
   });
-}
-
-/**
- * Setup default usage mocks
- *
- * Convenience function to set up all usage-related mocks at once.
- */
-export async function setupUsageMocks(page: {
-  route: (
-    url: string,
-    handler: (route: Route) => Promise<void>,
-  ) => Promise<void>;
-}) {
-  await page.route('**/api/usage-events*', handleUsageEvents);
 }

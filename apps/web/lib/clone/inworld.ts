@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { getDollarCost } from '@/lib/utils';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { resolveBaseCloneLocale } from './constants';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
@@ -19,6 +20,17 @@ function toInworldLanguage(locale: string) {
   return language === 'no' ? 'nb' : language;
 }
 
+/** A request Inworld answered with an error; `status` is its HTTP status. */
+export class InworldRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'InworldRequestError';
+    this.status = status;
+  }
+}
+
 async function inworldRequest(path: string, init?: RequestInit) {
   const apiKey = process.env.INWORLD_API_KEY;
   if (!apiKey) throw new Error('INWORLD_API_KEY is not configured');
@@ -35,8 +47,9 @@ async function inworldRequest(path: string, init?: RequestInit) {
     !(response.ok || (init?.method === 'DELETE' && response.status === 404))
   ) {
     const reason = await inworldErrorMessage(response);
-    throw new Error(
+    throw new InworldRequestError(
       `Inworld voice request failed (${response.status})${reason ? `: ${reason}` : ''}`,
+      response.status,
     );
   }
   return response;
@@ -67,6 +80,8 @@ export async function saveInworldVoice(
     method: 'POST',
     body: JSON.stringify({
       displayName: name,
+      // Names the owner of a voice found in the shared workspace.
+      description: userId,
       languageCode: toInworldLanguage(locale),
       voiceSamples: [{ audioData: audio.toString('base64') }],
       audioProcessingConfig: { removeBackgroundNoise },
@@ -79,8 +94,13 @@ export async function saveInworldVoice(
     locale,
     userId,
     provider: 'inworld',
-    generateSample: () =>
-      synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
+    sample: {
+      format: 'mp3',
+      model: INWORLD_TTS_MODEL,
+      dollarCost: getDollarCost('inworld', 0, CALL_VOICE_SAMPLE_TEXT),
+      generate: () =>
+        synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
+    },
     deleteVoice: () => deleteInworldVoice(voice.voiceId),
   });
 }
@@ -99,8 +119,11 @@ export async function countInworldWorkspaceVoices() {
   return listVoicesResponse.parse(await response.json()).totalSize;
 }
 
+/** Inworld speech is MP3, several times smaller than WAV. */
+export const INWORLD_AUDIO_MIME_TYPE = 'audio/mpeg';
+
 /**
- * Speaks `text` in a workspace voice and returns a WAV file. Without
+ * Speaks `text` in a workspace voice and returns an MP3 file. Without
  * `locale`, Inworld detects the language from the text. A voice can speak
  * languages other than the one it was cloned in, without its accent.
  */
@@ -116,7 +139,7 @@ export async function synthesizeInworldSpeech(
       voiceId,
       ...(locale && { language: toInworldLanguage(locale) }),
       modelId: INWORLD_TTS_MODEL,
-      audioConfig: { audioEncoding: 'LINEAR16' },
+      audioConfig: { audioEncoding: 'MP3' },
     }),
   });
   const { audioContent } = previewResponse.parse(await speech.json());

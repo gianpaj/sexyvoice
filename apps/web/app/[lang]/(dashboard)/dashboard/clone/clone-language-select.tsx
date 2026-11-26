@@ -47,7 +47,7 @@ export function CloneLanguageSelect({
         value={selectedLocaleCode}
       >
         <SelectTrigger
-          className="w-32"
+          className="min-w-32"
           data-testid="clone-language-select"
           id="language"
         >

@@ -62,21 +62,23 @@ export class ProfilePage {
       .filter({ has: this.dangerZoneTitle })
       .first();
     this.dangerZoneAlert = page
-      .getByText(/permanently delete/i)
-      .or(page.getByText(/cannot be undone/i))
-      .or(page.getByText(/will be permanently/i))
+      .getByText('Delete content from your account', { exact: true })
       .first();
     this.deleteAccountButton = page.getByRole('button', {
-      name: /delete account/i,
+      name: 'Delete account or content',
+      exact: true,
     });
 
     // Confirmation dialog (appears when delete account is clicked)
     this.confirmationDialog = page.getByTestId('delete-account-dialog');
-    this.confirmationDialogTitle = this.confirmationDialog
-      .getByText(/are you absolutely sure/i)
-      .first();
+    this.confirmationDialogTitle = this.confirmationDialog.getByRole(
+      'heading',
+      {
+        name: 'Delete content',
+      },
+    );
     this.confirmationDialogDescription = this.confirmationDialog
-      .getByText(/this action cannot be undone/i)
+      .getByText(/this deletes:/i)
       .first();
     this.confirmationCancelButton = this.confirmationDialog.getByRole(
       'button',
@@ -84,7 +86,7 @@ export class ProfilePage {
     );
     this.confirmationContinueButton = this.confirmationDialog.getByRole(
       'button',
-      { name: /continue|confirm|delete/i },
+      { name: 'Delete content' },
     );
   }
 

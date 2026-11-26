@@ -30,6 +30,15 @@ function getCookieStore(): CookieStore | null {
   return null;
 }
 
+/** Decodes a cookie part, keeping it raw when it is not valid percent-encoding. */
+function decodeCookiePart(part: string): string {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    return part;
+  }
+}
+
 /**
  * Parse cookies from document.cookie
  */
@@ -45,9 +54,9 @@ function parseDocumentCookies(): Map<string, string> {
   for (const cookie of cookies) {
     const [rawName, ...valueParts] = cookie.trim().split('=');
     if (rawName) {
-      const name = decodeURIComponent(rawName);
+      const name = decodeCookiePart(rawName);
       const value = valueParts.join('=');
-      cookieMap.set(name, value ? decodeURIComponent(value) : '');
+      cookieMap.set(name, value ? decodeCookiePart(value) : '');
     }
   }
 

@@ -2,9 +2,9 @@
 
 Covers sexyvoice #650 and sexycall #101, which let paid users clone a voice
 and call a character that speaks with it. Related notes:
-[Inworld call voices](2026-10-25-inworld-call-voices.md),
-[saved voice samples](2026-10-25-saved-call-voice-samples.md),
-[clone saved voices](../frontend/2026-10-25-clone-saved-voices.md).
+[Inworld call voices](../../implemented/integration/2026-10-25-inworld-call-voices.md),
+[saved voice samples](../../implemented/integration/2026-10-25-saved-call-voice-samples.md),
+[clone saved voices](../../implemented/frontend/2026-10-25-clone-saved-voices.md).
 
 ## Decisions
 

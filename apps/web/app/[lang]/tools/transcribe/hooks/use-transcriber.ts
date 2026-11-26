@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, useRef } from 'react';
 
-export interface TranscriptChunk {
+interface TranscriptChunk {
   text: string;
   timestamp: [number, number | null];
 }

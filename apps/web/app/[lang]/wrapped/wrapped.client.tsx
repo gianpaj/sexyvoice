@@ -237,7 +237,9 @@ function CTASection() {
           className="bg-background font-semibold text-foreground hover:bg-background/90"
           size="lg"
         >
-          <Link href="/en/signup">Get Started Free</Link>
+          <Link href="/en/signup" prefetch={false}>
+            Get Started Free
+          </Link>
         </Button>
       </div>
     </section>

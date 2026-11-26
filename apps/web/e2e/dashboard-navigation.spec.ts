@@ -113,3 +113,42 @@ test.describe('Dashboard Navigation - Authenticated User', () => {
     });
   });
 });
+
+test.describe('Landing Auth Redirect - Authenticated User', () => {
+  for (const linkName of ['Log in', 'Sign up'] as const) {
+    test(`clicking ${linkName} on the landing page opens the dashboard instead of a blank screen`, async ({
+      page,
+    }) => {
+      const authPrefetchUrls: string[] = [];
+      page.on('request', (request) => {
+        const url = new URL(request.url());
+        if (
+          (url.pathname === '/en/login' || url.pathname === '/en/signup') &&
+          url.searchParams.has('_rsc')
+        ) {
+          authPrefetchUrls.push(request.url());
+        }
+      });
+
+      await page.goto('/en');
+      await waitForHydration(page, 'header a[href="/en/login"]');
+      await page.waitForLoadState('networkidle');
+
+      // Auth links must not prefetch on landing load; prefetching while signed
+      // in used to cache a stale (auth) route tree and stall on a blank screen.
+      expect(authPrefetchUrls).toEqual([]);
+
+      await page
+        .getByRole('navigation')
+        .getByRole('link', { exact: true, name: linkName })
+        .click();
+
+      await expect(page).toHaveURL('/en/dashboard/generate', {
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId('generate-textarea')).toBeVisible({
+        timeout: 15_000,
+      });
+    });
+  }
+});

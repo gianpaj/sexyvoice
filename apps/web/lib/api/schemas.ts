@@ -119,8 +119,6 @@ export const VoiceGenerationRequestSchema = z
     }
   });
 
-export const VoiceGenerationRequestOpenApiSchema = VoiceGenerationRequestSchema;
-
 export const VoiceGenerationResponseSchema = z.object({
   credits_remaining: z
     .number()
@@ -139,7 +137,7 @@ export const VoiceGenerationResponseSchema = z.object({
   }),
 });
 
-export const VoiceInfoSchema = z.object({
+const VoiceInfoSchema = z.object({
   formats: z.array(z.enum(['wav', 'mp3'])),
   id: z.string(),
   language: z.string(),
@@ -154,7 +152,7 @@ export const VoicesResponseSchema = z.object({
   data: z.array(VoiceInfoSchema),
 });
 
-export const ModelInfoSchema = z.object({
+const ModelInfoSchema = z.object({
   id: z.enum(['gpro', 'gpro31', 'gpro38', 'orpheus', 'xai']),
   max_input_length: z.number().int().positive(),
   name: z.string(),
@@ -165,7 +163,7 @@ export const ModelsResponseSchema = z.object({
   data: z.array(ModelInfoSchema),
 });
 
-export const BillingTransactionSchema = z.object({
+const BillingTransactionSchema = z.object({
   amount: z.number(),
   created_at: z.string(),
   description: z.string(),

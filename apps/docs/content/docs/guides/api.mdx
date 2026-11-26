@@ -1,7 +1,7 @@
 ---
-title: 'API Quickstart'
-description: 'How to authenticate, generate speech, and check billing with SexyVoice API'
-icon: 'code-xml'
+title: "API Quickstart"
+description: "How to authenticate, generate speech, and check billing with SexyVoice API"
+icon: "code-xml"
 ---
 
 Use the API when you want to generate speech from your own backend or app.
@@ -9,16 +9,22 @@ Use the API when you want to generate speech from your own backend or app.
 ## Prerequisites
 
 - A SexyVoice account
-- API key from **Dashboard -> API Keys**
-- A top-up or subscription payment to unlock API keys, plus enough credits to generate speech
+- API key from **Dashboard → API Keys**
+- A one-time purchase or subscription payment to unlock API keys, plus enough credits to generate speech
 
 ## 1. Authenticate
 
-Send your API key as a Bearer token:
+Set `SEXYVOICE_API_KEY` in your local shell or server environment. Send it as a
+Bearer token when listing voices, generating speech, or checking billing:
 
 ```bash
--H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+curl 'https://sexyvoice.ai/api/v1/voices' \
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}"
 ```
+
+The response has a `data` array. Pick a voice's `id` or its `name` and `model`
+from the list. The catalog contains public text-to-speech voices, not your
+private or cloned voices.
 
 ## 2. Generate Speech
 
@@ -35,7 +41,7 @@ default. `temperature` is ignored for non-Gemini voices.
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}" \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro",
@@ -60,11 +66,15 @@ Existing voice IDs and the `gpro` and `gpro31` models keep their behavior.
 
 ### Using G31 (Gemini 3.1 Flash TTS)
 
-Gemini 3.1 supports 70+ languages and inline audio expression tags like `[cheerfully]`, `[whispering]`, and `[pause]`. Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`; `gpro` voices stay on Gemini 2.5 Pro.
+Gemini 3.1 supports inline audio expression tags like `[cheerfully]`,
+`[whispering]`, and `[pause]`. Choose a voice listed as `gpro31` to use Gemini
+3.1, or `gpro` to use Gemini 2.5 Pro. Both can fall back to Gemini 2.5 Flash
+if the initial provider call fails. Check `usage.model` for the model that
+actually generated the audio.
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}" \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro31",
@@ -76,14 +86,17 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
 
 ### Using a `voiceId`
 
-Use `voiceId` when you want a stable identifier from `GET /api/v1/voices` or when the same voice name exists for more than one model. Do not include `voice` or `model` in the same request.
+Use `voiceId` when you want a stable identifier or when the same voice name
+exists for more than one model. Replace `VOICE_ID_FROM_CATALOG` below with
+the `id` you got from `GET /api/v1/voices`. Do not include `voice` or
+`model` in the same request.
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}" \
   -H 'Content-Type: application/json' \
   -d '{
-    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc",
+    "voiceId": "VOICE_ID_FROM_CATALOG",
     "input": "Hello from a voice ID",
     "style": "calm"
   }'
@@ -93,12 +106,12 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
 
 Grok voices support both MP3 (default) and WAV output via `response_format`. They also
 accept an optional `speed` multiplier (range `0.7`–`1.5`, per the xAI TTS API) to slow
-down or speed up delivery; omit it for the default `1.0`. `speed` is ignored for
+down or speed up delivery; omit it for the provider default. `speed` is ignored for
 non-Grok voices.
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}" \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "xai",
@@ -109,12 +122,31 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   }'
 ```
 
-Successful response includes:
+Each successful request generates fresh audio and returns HTTP `200` with
+JSON, not audio bytes. Download the audio separately from `url`.
 
-- `url`: generated audio URL
-- `credits_used`
-- `credits_remaining`
-- `usage`
+- `credits_used`: Credits charged for this request.
+- `credits_remaining`: Account credit balance after generation.
+- `usage.input_characters`: Length of the text sent to the provider. It
+  includes the style text and prompt formatting for `gpro` and `gpro31`,
+  but excludes separate style metadata for `gpro38`.
+- `usage.model`: The model that generated the audio. This can be a provider
+  model ID rather than the model alias you sent.
+
+### Speech Limits
+
+| Model                               | Maximum input on paid accounts | Allowed output     |
+| ----------------------------------- | ------------------------------ | ------------------ |
+| Gemini (`gpro`, `gpro31`, `gpro38`) | 1,000 characters               | WAV                |
+| Grok (`xai`)                        | 1,000 characters               | MP3 (default), WAV |
+| Orpheus (`orpheus`)                 | 500 characters                 | MP3                |
+
+Accounts without a purchase or credit top-up have a 500-character effective
+limit for all models. The API counts inline tags and Gemini style
+instructions toward the limit, including any formatting added to the
+`gpro` or `gpro31` prompt. For `gpro38`, the combined length of `input`
+and `style` is checked even though they are sent separately. An empty
+`input` or an `input` longer than 1,000 characters fails request validation.
 
 ## 3. Check credit balance
 
@@ -122,7 +154,7 @@ The API uses the same credit balance as your dashboard.
 
 ```bash
 curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
-  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  -H "Authorization: Bearer ${SEXYVOICE_API_KEY}"
 ```
 
 Response includes:
@@ -134,21 +166,11 @@ Response includes:
 
 ## 4. Handle Errors + Debugging
 
-- Every response includes a `request-id` header. Log it in your app.
-- On failures, inspect `error.code` and `error.type`.
-- See [Error Codes](/api-reference/error-codes) for the full list.
-
-## Useful Endpoints
-
-- `POST /api/v1/speech`
-- `GET /api/v1/billing`
-- `GET /api/v1/voices`
-- `GET /api/v1/models`
-- `GET /api/v1/openapi`
+- Log the `request-id` header from authenticated API endpoints when present.
+- On failures, inspect `error.code` and `error.type`. See [Error Codes](../api-reference/error-codes).
+- Authenticated endpoints share a [rate limit](../api-reference/api#rate-limits-and-request-ids) per key.
 
 ## Next Steps
 
-- Read full [API Reference](/api-reference/api)
-- Browse [Grok Voices & Speech Tags](/guides/grok-speech-tags) for the full tag reference
-- Retry any HTTP 503 response with backoff, regardless of `error.code`, and treat `429 provider_quota_exceeded` as temporary provider quota exhaustion
-- Store `request-id` with your logs for support and tracing
+- Read the [API reference](../api-reference/api) for every endpoint.
+- Browse [Grok Voices & Speech Tags](./grok-speech-tags) for the tag reference.

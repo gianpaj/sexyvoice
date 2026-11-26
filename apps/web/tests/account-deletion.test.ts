@@ -85,15 +85,17 @@ function createUpdateQuery(result: object) {
 
 function setupAccountDeletion({
   audioFiles = [{ id: 'audio-1', storage_key: 'audio/one.mp3', usage: null }],
-  apiKeys = [],
   usageResult = { count: 3, error: null },
   memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
+  transcriptResult = { data: [{ id: 'call-1' }], error: null },
+  apiKeysResult = { data: [{ id: 'key-1' }, { id: 'key-2' }], error: null },
   references = [],
 }: {
   audioFiles?: { id: string; storage_key: string; usage: object | null }[];
-  apiKeys?: { id: string }[];
   usageResult?: { count: number | null; error: Error | null };
   memoryResult?: { data: { id: number }[] | null; error: Error | null };
+  transcriptResult?: { data: { id: string }[] | null; error: Error | null };
+  apiKeysResult?: { data: { id: string }[] | null; error: Error | null };
   references?: {
     id: string;
     sample_url: string | null;
@@ -103,8 +105,17 @@ function setupAccountDeletion({
 } = {}) {
   const audioRead = createReadQuery({ data: audioFiles, error: null });
   const charactersRead = createReadQuery({ data: [], error: null });
-  const apiKeysUpdate = createUpdateQuery({ data: apiKeys, error: null });
+  const apiKeysUpdate = {
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(apiKeysResult),
+  };
   const usageRead = createReadQuery(usageResult);
+  const transcriptUpdate = {
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(transcriptResult),
+  };
   const memoryDelete = {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -142,7 +153,9 @@ function setupAccountDeletion({
     error: null,
   });
   const adminSupabase = {
-    from: vi.fn().mockReturnValue(audioUpdate),
+    from: vi.fn((table: string) =>
+      table === 'call_sessions' ? transcriptUpdate : audioUpdate,
+    ),
   };
 
   vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
@@ -153,6 +166,7 @@ function setupAccountDeletion({
     apiKeysUpdate,
     audioUpdate,
     memoryDelete,
+    transcriptUpdate,
     sessionSupabase,
     referenceRead,
     referenceUpdate,
@@ -379,42 +393,6 @@ describe('account deletion', () => {
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
-  it('deactivates every API key after the billing commit', async () => {
-    const { apiKeysUpdate } = setupAccountDeletion({
-      apiKeys: [{ id: 'key-1' }, { id: 'key-2' }],
-    });
-
-    await handleDeleteAccountAction({ lang: 'en' });
-
-    expect(apiKeysUpdate.update).toHaveBeenCalledWith({ is_active: false });
-    expect(apiKeysUpdate.eq.mock.calls).toEqual([['user_id', 'user-1']]);
-    expect(apiKeysUpdate.select).toHaveBeenCalledWith('id');
-    expect(
-      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
-    ).toBeLessThan(apiKeysUpdate.update.mock.invocationCallOrder[0]);
-    expect(logger.info).toHaveBeenCalledWith(
-      'User deleted',
-      expect.objectContaining({ apiKeysDeactivated: 2 }),
-    );
-  });
-
-  it('fails deletion when API keys cannot be deactivated', async () => {
-    const { apiKeysUpdate, sessionSupabase } = setupAccountDeletion();
-    apiKeysUpdate.select.mockResolvedValueOnce({
-      data: null,
-      error: new Error('Update failed'),
-    });
-
-    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
-      'User deletion failed',
-    );
-
-    expect(deleteFileFromR2).not.toHaveBeenCalled();
-    expect(evictAudioUrlCache).not.toHaveBeenCalled();
-    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
-    expect(releaseAccountBillingOperation).toHaveBeenCalled();
-  });
-
   it('deletes API audio from its bucket and evicts only dashboard cache keys', async () => {
     setupAccountDeletion({
       audioFiles: [
@@ -509,6 +487,80 @@ describe('account deletion', () => {
       expect.objectContaining({ deletedMemories: 0 }),
     );
     expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  it("clears only the authenticated user's transcripts and preserves call billing fields", async () => {
+    const { adminSupabase, transcriptUpdate, sessionSupabase } =
+      setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(adminSupabase.from).toHaveBeenCalledWith('call_sessions');
+    expect(sessionSupabase.from).not.toHaveBeenCalledWith('call_sessions');
+    expect(transcriptUpdate.update.mock.calls).toEqual([[{ transcript: [] }]]);
+    expect(transcriptUpdate.eq.mock.calls).toEqual([['user_id', 'user-1']]);
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(transcriptUpdate.update.mock.invocationCallOrder[0]);
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ clearedCallTranscripts: 1 }),
+    );
+  });
+
+  it('revokes every owned API key without changing immutable usage or credit records', async () => {
+    const { apiKeysUpdate, sessionSupabase } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(apiKeysUpdate.update.mock.calls).toEqual([[{ is_active: false }]]);
+    expect(apiKeysUpdate.eq.mock.calls).toEqual([['user_id', 'user-1']]);
+    expect(sessionSupabase.from).not.toHaveBeenCalledWith('credits');
+    expect(sessionSupabase.from).not.toHaveBeenCalledWith(
+      'credit_transactions',
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ apiKeysRevoked: 2, usageEventsRetained: 3 }),
+    );
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(apiKeysUpdate.update.mock.invocationCallOrder[0]);
+  });
+
+  it('fails deletion when API key revocation fails and releases billing', async () => {
+    const { sessionSupabase } = setupAccountDeletion({
+      apiKeysResult: { data: null, error: new Error('API key update failed') },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+    expect(evictAudioUrlCache).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('fails deletion when transcript erasure fails and releases billing', async () => {
+    const transcriptError = new Error('Transcript cleanup unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      transcriptResult: { data: null, error: transcriptError },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(transcriptError, {
+      extra: { context: 'call_transcript_account_cleanup' },
+      user: { id: 'user-1' },
+    });
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
   it('fails deletion when memory erasure fails and releases billing', async () => {

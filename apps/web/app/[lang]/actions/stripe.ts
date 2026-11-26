@@ -140,7 +140,7 @@ export interface TopupCheckoutMetadata extends CheckoutMetadataBase {
   type: 'topup';
 }
 
-export interface SubscriptionCheckoutMetadata extends CheckoutMetadataBase {
+interface SubscriptionCheckoutMetadata extends CheckoutMetadataBase {
   subscriptionDiscountCouponId?: string;
   type: 'subscription';
 }

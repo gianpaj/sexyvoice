@@ -1,10 +1,10 @@
 import type { Page, Response } from '@playwright/test';
 
 import type { ApiCharacterResponse } from '@/lib/characters';
-import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
 import de from '@/messages/de.json';
 import en from '@/messages/en.json';
 import { argosScreenshot } from './argos-screenshot';
+import { setE2ECallUser } from './e2e-call-user';
 import { expect, test } from './fixtures';
 import { CallPage } from './pages/call.page';
 
@@ -27,16 +27,7 @@ async function setupCallPage(
   user: 'free' | 'paid' = 'free',
   locale: 'en' | 'de' = 'en',
 ) {
-  if (!baseURL) {
-    throw new Error('Call dashboard tests require a Playwright baseURL');
-  }
-  await page.context().addCookies([
-    {
-      name: E2E_CALL_USER_COOKIE,
-      url: new URL('/', baseURL).href,
-      value: user,
-    },
-  ]);
+  await setE2ECallUser(page, baseURL, user);
   // Mock the call-token endpoint to prevent real LiveKit connections
   await page.route('**/api/call-token', async (route) => {
     await route.fulfill({

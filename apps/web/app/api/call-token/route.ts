@@ -138,6 +138,8 @@ export async function POST(request: Request) {
       selectedPresetId,
       selectedSceneId,
       memory,
+      clientTime,
+      timeZone,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
@@ -270,12 +272,15 @@ export async function POST(request: Request) {
     // Create metadata for agent to start with
     const metadata = {
       character_id: selectedPresetId,
+      client_time: clientTime,
+      time_zone: timeZone,
       initial_instruction: getInitialInstruction(selectedLanguage, model),
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
       // The account preference and an explicit per-call opt-out both apply.
       memory: memoryEnabled,
+      memory_scope: 'both',
       model,
       scene_id: selectedSceneId ?? null,
       scene_modified: sceneModified,

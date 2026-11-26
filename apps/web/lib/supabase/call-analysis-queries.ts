@@ -5,7 +5,7 @@ import type {
 import { toAnalysisRow } from '@/lib/ai/analyze-call';
 import type { TypedSupabaseClient } from './client';
 
-export type CallAnalysisQueueRow = Tables<'call_analysis_queue'>;
+type CallAnalysisQueueRow = Tables<'call_analysis_queue'>;
 export type CallAnalysisQueueStatus =
   | 'completed'
   | 'failed'

@@ -7,17 +7,43 @@ The refund line shows yesterday's and all-time dollar amounts from
 `metadata.dollarAmount`. Credit-only refunds and credit resets contribute $0;
 the report omits refund transaction counts.
 
-## Completed calls
+## Calls section
+
+`calls.ts` formats the Calls section. Daily lines compare yesterday with the
+average of the 14 days before it, shown on the `14d daily avg` line, so the
+report reads calls from yesterday back 15 days. An average that included
+yesterday would pull every change toward zero. The `7d vs prior 7d` line
+compares the last seven days with the seven before them, because one day of a
+few paid calls is noisy.
+
+Total minutes carry an arrow only for a change of 25% or more; `new` marks
+minutes on a zero baseline. Minutes drive AI cost and engagement, and counts
+mostly move with them. The `7d vs prior 7d`, `Free users` and `Paying users`
+lines also compare average call length, with `→` for a change under 10%. Counts,
+cost and the other average lengths show plain values.
+
+Calls split two ways, and both splits include every session status:
+
+- By user: `Free users` are calls with `call_sessions.free_call = true`, set
+  when the user had never paid at call start. Every other call is a paying
+  user's.
+- By experience: `Predefined characters` are calls whose `metadata.character_id`
+  names a character with `is_public = true`, whatever the voice. Every other
+  call is custom, including unsaved custom prompts with no character. Custom
+  calls split by `callVoiceProvider(call_sessions.model)` into saved cloned
+  voices (Inworld or Mistral) and Grok's built-in voices.
 
 The completed-call line matches the admin dashboard: `status = 'completed'`
-and `duration_seconds > 10`, regardless of end reason. It counts calls
-by `started_at` for yesterday and 14 complete UTC days. Total calls and usage
-costs include other sessions. Short calls alone do not establish a failure.
+and `duration_seconds > 10`, regardless of end reason. Short calls alone do not
+establish a failure.
 
-The Calls section's `Cloned voices` line counts sessions using saved Inworld
-or Mistral voices for yesterday and 14 complete UTC days. It uses
-`callVoiceProvider(call_sessions.model)` and includes every session status,
-matching total calls. Internal users are excluded from both counts.
+`New custom characters` counts private characters by `characters.created_at`.
+Predefined characters (`is_public = true`) are excluded; deleted characters
+are absent.
+
+Call lines use `started_at` and exclude internal users. `AI usage (est.)` uses
+the cost windows in [Cost sources](#cost-sources), so its cost per minute is
+approximate around midnight.
 
 ## Usage contribution
 
@@ -86,7 +112,20 @@ and skip link checks for sessions already matched to an in-window event.
 `apps/web/lib/usage-costs.ts` prefers positive recorded costs and uses supported
 model-specific estimates when data permits. Recorded costs are not necessarily
 invoice-verified. Unknown models, missing dimensions, and negative sentinels stay
-unpriced. Zero-duration calls can use a valid sub-second timestamp difference.
+unpriced. Incomplete Inworld and Mistral calls contribute their available
+component costs while remaining in the unpriced count. Those amounts are a
+lower bound on spend; missing components are not assumed free. Realtime
+subtotals are not added again to their component costs.
+Retried usage events for one call count once. A complete price takes precedence
+over an incomplete snapshot; equal-coverage snapshots use the latest event.
+The call agent's
+[`CallSessionStore.end_call_session`](https://github.com/gianpaj/sexycall/blob/main/src/call_session_store.py)
+writes one cumulative usage event per call, including replacement-session usage.
+Credit-metering heartbeats do not write usage events.
+Usage-event INSERT access is server-only; users retain their owner-scoped
+history read access. Apply `20261112123500_restrict_usage_event_writes.sql`
+before deploying call retry deduplication.
+Zero-duration calls can use a valid sub-second timestamp difference.
 Grok voice calls are estimated at $0.08 per minute. `grok-voice-think-fast-1.0`
 calls that started before 2026-09-13 06:00 UTC use $0.05, the rate xAI billed
 until it moved 1.0 to the 2.0 price.
@@ -105,8 +144,12 @@ in two short lines, with unpriced counts when present. Invoice
 provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
-Contribution uses fresh usage and collections even during local cached activity
-debugging. See [Query load](#query-load) for transaction read windows.
+The local cache stores contribution usage with the credit transactions read in
+the same run, so a cached report never pairs fresh usage with cached
+collections. The two reads run concurrently, not in one database transaction:
+a purchase committed between them can appear in one and not the other, fresh or
+cached. `?cache=off` reads both fresh. See [Query load](#query-load) for
+transaction read windows.
 
 ## Query load
 
@@ -154,10 +197,9 @@ One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered
 by the column it pages on.
 
-Fresh activity reports read credit transactions once for all time to supply
-lifetime and historical metrics, then slice them in memory for each window.
-Cached activity reports refresh only the last 30 days of transactions for
-contribution. Add reporting windows as in-memory filters over the shared read.
+Reports read credit transactions once for all time to supply lifetime,
+historical and contribution metrics, then slice them in memory for each window.
+Add reporting windows as in-memory filters over the shared read.
 
 Usage events carry no `profiles(username)` embed — PostgREST joins an embed per
 row, and the report labels only its top three users. Resolve names for the few

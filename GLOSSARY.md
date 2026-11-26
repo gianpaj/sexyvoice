@@ -122,19 +122,20 @@ An estimated generation charge deducted before work begins. The final charge
 is reconciled against it, and a failed generation releases the reservation.
 _Avoid_: Final charge, payment authorization
 
-**Top-up**:
-A one-time purchase that adds credits to a user's balance.
-_Avoid_: Subscription, renewal
+**One-time purchase**:
+A single payment that adds credits to a user's balance. The action that starts
+one is labeled "Add credits".
+_Avoid_: Top-up, recharge, subscription, renewal
 
 **Subscription**:
 A recurring monthly credit purchase that adds credits to the user's balance
 when each payment succeeds.
-_Avoid_: Top-up, paid status
+_Avoid_: One-time purchase, paid status
 
 **Paid user**:
-A user with at least one recorded credit purchase, through a top-up or a
-subscription payment. Paid status does not require an active subscription or
-a positive credit balance.
+A user with at least one recorded credit purchase, through a one-time purchase
+or a subscription payment. Paid status does not require an active subscription
+or a positive credit balance.
 _Avoid_: Subscriber, active subscriber, premium user
 
 **Free user**:

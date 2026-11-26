@@ -79,7 +79,7 @@ export async function getUserCallCharacters(userId: string) {
     )
     .eq('is_public', false)
     .eq('user_id', userId)
-    .order('sort_order');
+    .order('created_at', { ascending: false, nullsFirst: false });
   if (error) throw error;
   return data;
 }
@@ -414,9 +414,8 @@ export const getUserByIdWithError = async (userId: string) => {
   return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
-// Stripe webhooks and cron jobs have no user session, and RLS limits profile
-// reads to their owner.
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
+  // Stripe webhooks have no user session; profile reads are owner-only.
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -609,20 +608,6 @@ const updateUserCredits = async (userId: string, creditAmount: number) => {
   if (error) throw error;
 };
 
-export const getPaidTransactions = async (userId: string) => {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .in('type', ['purchase', 'topup'])
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-
-  return data;
-};
-
 // Deduplicated per server request: the dashboard layout and its pages both
 // check paid status.
 export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
@@ -667,9 +652,7 @@ export const getCreditTransactionAmounts = cache(
  * Get the total call duration in seconds for a user.
  * This sums up all duration_seconds from their call_sessions.
  */
-export const getTotalCallDurationSeconds = async (
-  userId: string,
-): Promise<number> => {
+const getTotalCallDurationSeconds = async (userId: string): Promise<number> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase

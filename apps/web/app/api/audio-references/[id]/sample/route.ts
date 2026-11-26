@@ -2,7 +2,10 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getCallVoiceSampleKey } from '@/lib/clone/call-voice-sample';
+import {
+  getCallVoiceSampleContentType,
+  getCallVoiceSampleKey,
+} from '@/lib/clone/call-voice-sample';
 import { getInworldVoiceSample } from '@/lib/clone/inworld';
 import { getMistralClient } from '@/lib/clone/mistral';
 import { APIErrorResponse } from '@/lib/error-ts';
@@ -28,7 +31,7 @@ export async function GET(
       const audio = await getFileFromR2(key);
       return new NextResponse(new Uint8Array(audio), {
         headers: {
-          'Content-Type': 'audio/wav',
+          'Content-Type': getCallVoiceSampleContentType(key),
           'Cache-Control': 'private, no-store',
         },
       });

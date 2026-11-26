@@ -3,6 +3,7 @@ import { CircleAlert, ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import { CreditsFaq } from '@/components/credits-faq';
 import PricingTable from '@/components/pricing-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -194,6 +195,8 @@ export async function CreditsBilling({
         lang={lang}
         shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}
       />
+
+      <CreditsFaq lang={lang} />
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">{t('history.title')}</h3>

@@ -3,7 +3,7 @@ import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
-loadEnvFile('.env.test');
+loadEnvFile(new URL('.env.test', import.meta.url));
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -51,5 +51,7 @@ export default defineConfig({
     server: { deps: { inline: ['next-intl'] } },
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 30_000, // 30 seconds default timeout for all tests
+    // Default to single-run so `vitest` and Turborepo `pnpm test` never hang in watch mode; opt in via `vitest --watch` / `pnpm test:watch`.
+    watch: false,
   },
 });

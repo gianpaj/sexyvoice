@@ -3,8 +3,23 @@ import { captureException } from '@sentry/nextjs';
 
 import { deleteFileFromR2, uploadFileToR2 } from '@/lib/storage/upload';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { insertUsageEvent } from '@/lib/supabase/queries';
 import type { CallCloneProvider } from './call-voice-config';
-import { createCallVoiceSampleKey } from './call-voice-sample';
+import {
+  CALL_VOICE_SAMPLE_TEXT,
+  type CallVoiceSampleFormat,
+  createCallVoiceSampleKey,
+  getCallVoiceSampleContentType,
+} from './call-voice-sample';
+
+/** The provider speaking `CALL_VOICE_SAMPLE_TEXT` in the new voice. */
+interface CallVoiceSample {
+  /** What the provider charges for the sample. */
+  dollarCost: number;
+  format: CallVoiceSampleFormat;
+  generate: () => Promise<Buffer>;
+  model: string;
+}
 
 export async function saveCallVoiceProfile({
   voiceId,
@@ -12,24 +27,47 @@ export async function saveCallVoiceProfile({
   locale,
   userId,
   provider,
+  sample,
   deleteVoice,
-  generateSample,
 }: {
   voiceId: string;
   name: string;
   locale: string;
   userId: string;
   provider: CallCloneProvider;
+  sample: CallVoiceSample;
   deleteVoice: () => Promise<unknown>;
-  generateSample: () => Promise<Buffer>;
 }) {
   const id = randomUUID();
   let sampleKey: string | undefined;
   try {
-    const sample = await generateSample();
-    if (!sample.length) throw new Error('Voice sample is empty');
-    sampleKey = createCallVoiceSampleKey(id);
-    const sampleUrl = await uploadFileToR2(sampleKey, sample, 'audio/wav');
+    const audio = await sample.generate();
+    // Saving is free, so the platform pays for the sample. The zero-credit
+    // event keeps that cost in usage reports. It stays when a later step
+    // fails, so `sourceId` can name a profile that was never saved.
+    await insertUsageEvent({
+      creditsUsed: 0,
+      dollarAmount: sample.dollarCost,
+      inputChars: CALL_VOICE_SAMPLE_TEXT.length,
+      metadata: {
+        operation: 'saved_voice_sample',
+        provider,
+        voiceName: name,
+      },
+      model: sample.model,
+      quantity: CALL_VOICE_SAMPLE_TEXT.length,
+      sourceId: id,
+      sourceType: 'voice_cloning',
+      unit: 'chars',
+      userId,
+    });
+    if (!audio.length) throw new Error('Voice sample is empty');
+    sampleKey = createCallVoiceSampleKey(id, sample.format);
+    const sampleUrl = await uploadFileToR2(
+      sampleKey,
+      audio,
+      getCallVoiceSampleContentType(sampleKey),
+    );
     // Users cannot write saved voices: provider and voice_id name a voice
     // the server deletes and speaks with its own API key.
     const { data, error } = await createAdminClient()

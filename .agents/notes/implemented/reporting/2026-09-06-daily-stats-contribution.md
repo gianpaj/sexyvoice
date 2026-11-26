@@ -16,9 +16,10 @@ Session-only estimates cover short calls and missing inserts. Cross-window ID
 lookups prevent duplicate session estimates. Customer status follows the first
 cash purchase timestamp; this does not track promotional-credit provenance.
 
-Contribution reads bypass the local activity cache to avoid mixing stale costs
-with newly recorded usage. Existing 14-day activity reads retain their window;
-the extra 30-day query avoids widening their untyped cache data.
+The local activity cache stores contribution usage with the credit transactions
+read alongside it, so a cached report never mixes stale costs with newly
+recorded usage. Existing 14-day activity reads retain their window; contribution
+keeps its own 30-day usage read rather than widening theirs.
 
 Provider references confirm explicit call model rates and Gemini token rates.
 Call duration estimates exclude text/tool charges; stored call costs can use

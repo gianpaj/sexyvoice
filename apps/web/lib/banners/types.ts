@@ -1,11 +1,11 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 export type BannerAudience = 'loggedIn' | 'loggedOut';
-export type BannerKind = 'announcement' | 'promo';
+type BannerKind = 'announcement' | 'promo';
 export type BannerPlacement = 'blog' | 'dashboard' | 'landing';
 export type BannerTheme = 'blue' | 'orange' | 'pink';
 
-export interface BannerArtworkImage {
+interface BannerArtworkImage {
   height: number;
   src: string;
   width: number;
@@ -20,7 +20,7 @@ export interface BannerArtwork {
   mobile: BannerArtworkImage;
 }
 
-export interface BannerCountdownLabels {
+interface BannerCountdownLabels {
   days: string;
   hours: string;
   minutes: string;

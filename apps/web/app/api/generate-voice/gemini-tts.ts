@@ -38,14 +38,6 @@ export function buildGeminiTtsConfig({
   };
 }
 
-export function extractGeminiInlineAudio(
-  response: GenerateContentResponse,
-): { data: string; mimeType: string } | null {
-  const part = response?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-  if (!(part?.data && part?.mimeType)) return null;
-  return { data: part.data, mimeType: part.mimeType };
-}
-
 export function extractGeminiStreamAudioChunk(
   chunk: GenerateContentResponse,
 ): { data: string; mimeType: string } | null {

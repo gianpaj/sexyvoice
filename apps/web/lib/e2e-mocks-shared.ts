@@ -69,7 +69,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     session_config: {
       maxOutputTokens: null,
-      model: 'grok-voice-think-fast-1.0',
+      model: 'grok-voice-think-fast-2.0',
       temperature: 0.8,
       voice: 'Ara',
     },
@@ -114,7 +114,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     session_config: {
       maxOutputTokens: null,
-      model: 'grok-voice-think-fast-1.0',
+      model: 'grok-voice-think-fast-2.0',
       temperature: 0.8,
       voice: 'Eve',
     },
@@ -159,7 +159,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     session_config: {
       maxOutputTokens: null,
-      model: 'grok-voice-think-fast-1.0',
+      model: 'grok-voice-think-fast-2.0',
       temperature: 0.8,
       voice: 'Rex',
     },

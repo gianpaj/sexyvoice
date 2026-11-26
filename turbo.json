@@ -3,7 +3,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["OPENROUTER_API_KEY", "OPENROUTER_MODEL"],
+      "env": [
+        "OPENROUTER_API_KEY",
+        "OPENROUTER_MODEL",
+        "E2E_TEST_MODE",
+        "VERCEL_ENV"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
@@ -17,11 +22,9 @@
     "check-translations": {
       "outputs": []
     },
-    "clean": {
-      "outputs": []
-    },
     "dev": {
       "cache": false,
+      "passThroughEnv": ["E2E_TEST_MODE", "VERCEL_ENV"],
       "persistent": true
     },
     "fixall": {

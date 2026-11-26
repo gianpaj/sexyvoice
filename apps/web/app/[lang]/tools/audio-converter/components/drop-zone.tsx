@@ -3,8 +3,12 @@
 import { FileAudio, Music, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
+import { AUDIO_FILE_ACCEPT, isAudioFile } from '@/lib/audio-file-picker';
 import { cn } from '@/lib/utils';
+
+const SUPPORTED_FORMATS = ['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'];
 
 interface Props {
   disabled?: boolean;
@@ -13,21 +17,28 @@ interface Props {
 
 export function DropZone({ onFileSelect, disabled = false }: Props) {
   const t = useTranslations('audioConverter.dropZone');
+  const tErrors = useTranslations('audioConverter.errors');
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith('audio/')) {
+  const selectFile = (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+    if (isAudioFile(file) || file.name.toLowerCase().endsWith('.mp4')) {
       onFileSelect(file);
+    } else {
+      toast.error(tErrors('unsupportedFormat'));
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    selectFile(e.dataTransfer.files[0]);
+  };
+
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file);
-    }
+    selectFile(e.target.files?.[0]);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -71,7 +82,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
       tabIndex={0}
     >
       <input
-        accept="audio/*"
+        accept={`${AUDIO_FILE_ACCEPT},.mp4`}
         className="hidden"
         id="file-input"
         onChange={handleFileInput}
@@ -114,7 +125,7 @@ export function DropZone({ onFileSelect, disabled = false }: Props) {
         </div>
 
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'].map((format) => (
+          {SUPPORTED_FORMATS.map((format) => (
             <span
               className="rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs"
               key={format}

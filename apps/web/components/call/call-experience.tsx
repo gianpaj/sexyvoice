@@ -17,6 +17,7 @@ import { defaultSessionConfig } from '@/data/default-config';
 import type { CustomCallDraft } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
+import { useCallRecording } from '@/hooks/use-call-recording';
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { useConnection } from '@/hooks/use-connection';
 import { useDeferredCharacterDelete } from '@/hooks/use-deferred-character-delete';
@@ -37,6 +38,7 @@ import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
+import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
 // Krisp touches browser-only APIs when it loads.
 const InCallView = dynamic(
@@ -122,6 +124,9 @@ function CallExperienceScreens({
   } | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
+  const [voiceToDeleteId, setVoiceToDeleteId] = useState<string | null>(null);
+  const voiceToDelete =
+    savedVoices.find(({ id }) => id === voiceToDeleteId) ?? null;
 
   const allPresets = helpers.getAllPresets(pgState);
   const findPreset = (id: string | null) =>
@@ -134,6 +139,7 @@ function CallExperienceScreens({
   const inCall =
     callPresetId !== null &&
     (shouldConnect || connectionState !== ConnectionState.Disconnected);
+  const recording = useCallRecording(findPreset(callPresetId), inCall);
   const lastDuration = useRef('');
   const reachedConnected = useRef(false);
   useEffect(() => {
@@ -258,7 +264,13 @@ function CallExperienceScreens({
 
   let screen: ReactNode;
   if (inCall && callPreset) {
-    screen = <InCallView elapsed={formattedTime} preset={callPreset} />;
+    screen = (
+      <InCallView
+        elapsed={formattedTime}
+        preset={callPreset}
+        recording={recording}
+      />
+    );
   } else if (ended && endedPreset) {
     screen = (
       <CallEndedView
@@ -273,6 +285,7 @@ function CallExperienceScreens({
             : undefined
         }
         preset={endedPreset}
+        recording={recording.files}
       />
     );
   } else if (view.name === 'creator') {
@@ -287,6 +300,10 @@ function CallExperienceScreens({
         }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
+        onDeleteVoice={(id) => {
+          player.stop();
+          setVoiceToDeleteId(id);
+        }}
         onSaved={handleSaved}
         onVoiceCreated={(voice) =>
           setSavedVoices((voices) => [voice, ...voices])
@@ -333,6 +350,23 @@ function CallExperienceScreens({
       data-testid="call-experience"
     >
       {screen}
+      <DeleteSavedVoiceDialog
+        onClose={() => setVoiceToDeleteId(null)}
+        onDeleted={(voice) =>
+          setSavedVoices((voices) => voices.filter(({ id }) => id !== voice.id))
+        }
+        usedBy={
+          voiceToDelete
+            ? pgState.customCharacters
+                .filter(
+                  ({ sessionConfig }) =>
+                    sessionConfig.audioReferenceId === voiceToDelete.id,
+                )
+                .map(({ name }) => name)
+            : []
+        }
+        voice={voiceToDelete}
+      />
       <CallPanel
         callVoices={callVoices}
         connecting={connecting}

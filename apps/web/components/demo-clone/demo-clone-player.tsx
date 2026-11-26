@@ -26,7 +26,7 @@ import {
 import { Link } from '@/lib/i18n/navigation';
 import { attemptPlayback } from '@/lib/media-playback';
 
-export interface DemoCloneLabels {
+interface DemoCloneLabels {
   audioError: string;
   backToClone: string;
   calmSlow: string;

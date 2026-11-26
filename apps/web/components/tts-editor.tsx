@@ -287,7 +287,7 @@ function createWrapperTagSuggestionItem(
 /**
  * EditorContent component that renders the actual editor
  */
-export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
+function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
   const { editor } = use(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
 

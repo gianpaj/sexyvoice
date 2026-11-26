@@ -168,8 +168,8 @@ export function CharacterPicker({
       <section aria-labelledby="call-own" className="flex flex-col gap-3.5">
         <SectionHeading id="call-own">{t('yourCharacters')}</SectionHeading>
         <div className={GRID}>
-          {createCard}
           {own.map((preset) => renderCard(preset, true))}
+          {createCard}
         </div>
       </section>
       {featured.length > 0 && (

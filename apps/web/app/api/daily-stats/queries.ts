@@ -10,7 +10,7 @@ import {
 } from './utils';
 
 // Internal users excluded from daily stats aggregations.
-export const INTERNAL_USER_EMAILS = [
+const INTERNAL_USER_EMAILS = [
   'gianpa@gmail.com',
   'alex.kostinskyi@gmail.com',
 ] as const;
@@ -40,6 +40,10 @@ export type DailyStatsAudioFile = Pick<
 export type DailyStatsProfile = Pick<
   Tables<'profiles'>,
   'created_at' | 'id' | 'username'
+>;
+export type DailyStatsCharacter = Pick<
+  Tables<'characters'>,
+  'created_at' | 'id'
 >;
 // `id` and `started_at` are not reported on; they carry the keyset cursor.
 export type DailyStatsCallSessionDuration = Pick<
@@ -175,6 +179,43 @@ export function getProfilesInRange(
   });
 }
 
+export function getCharactersInRange(
+  supabase: DailyStatsSupabaseClient,
+  start: Date,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+): Promise<DailyStatsCharacter[]> {
+  return fetchAllPages<DailyStatsCharacter>('created_at', (cursor) => {
+    let query = supabase
+      .from('characters')
+      .select('id, created_at')
+      .eq('is_public', false)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+    if (excludeUserIds.length > 0) {
+      query = query.notIn('user_id', excludeUserIds);
+    }
+    return applyPageCursor(query, cursor)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
+  });
+}
+
+// Predefined characters are a short curated list, so one unpaginated read covers it.
+export async function getPublicCharacterIds(
+  supabase: DailyStatsSupabaseClient,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('characters')
+    .select('id')
+    .eq('is_public', true);
+  if (error) throw error;
+  return ((data ?? []) as Pick<Tables<'characters'>, 'id'>[]).map(
+    (row) => row.id,
+  );
+}
+
 export function getCreditTransactionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
@@ -190,34 +231,6 @@ export function getCreditTransactionsInRange(
       .in('type', ['purchase', 'topup', 'refund'])
       .not('description', 'ilike', '%manual%')
       .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString());
-    if (excludeUserIds.length > 0) {
-      query = query.notIn('user_id', excludeUserIds);
-    }
-    return applyPageCursor(query, cursor)
-      .order('created_at', { ascending: true })
-      .order('id', { ascending: true })
-      .limit(PAGE_SIZE)
-      .then(({ data, error }) => ({
-        data: (data as DailyStatsCreditTransaction[] | null) ?? null,
-        error,
-      }));
-  });
-}
-
-export function getPurchaseTransactionsBefore(
-  supabase: DailyStatsSupabaseClient,
-  end: Date,
-  excludeUserIds: readonly string[] = [],
-): Promise<DailyStatsCreditTransaction[]> {
-  return fetchAllPages<DailyStatsCreditTransaction>('created_at', (cursor) => {
-    let query = supabase
-      .from('credit_transactions')
-      .select(
-        'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
-      )
-      .in('type', ['purchase', 'topup'])
-      .not('description', 'ilike', '%manual%')
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);
@@ -260,28 +273,32 @@ export function getCallSessionDurationsBefore(
   );
 }
 
+// The call agent (gianpaj/sexycall, `CallSessionStore`) stores the character
+// in `metadata`; `call_sessions` has no character column. Null for calls with
+// an unsaved custom prompt. If the agent stops writing the key, every call
+// counts as custom and `Predefined characters` drops to zero without an error.
+export type DailyStatsCallSession = Pick<
+  Tables<'call_sessions'>,
+  | 'id'
+  | 'started_at'
+  | 'duration_seconds'
+  | 'credits_used'
+  | 'status'
+  | 'free_call'
+  | 'model'
+> & { character_id: string | null };
+
 export function getCallSessionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
   end: Date,
   excludeUserIds: readonly string[] = [],
 ) {
-  return fetchAllPages<
-    Pick<
-      Tables<'call_sessions'>,
-      | 'id'
-      | 'started_at'
-      | 'duration_seconds'
-      | 'credits_used'
-      | 'status'
-      | 'free_call'
-      | 'model'
-    >
-  >('started_at', (cursor) => {
+  return fetchAllPages<DailyStatsCallSession>('started_at', (cursor) => {
     let query = supabase
       .from('call_sessions')
       .select(
-        'id, started_at, duration_seconds, credits_used, status, free_call, model',
+        'id, started_at, duration_seconds, credits_used, status, free_call, model, character_id:metadata->>character_id',
       )
       .gte('started_at', start.toISOString())
       .lt('started_at', end.toISOString());

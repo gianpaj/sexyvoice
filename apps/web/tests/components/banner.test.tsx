@@ -129,8 +129,51 @@ describe('Banner', () => {
     },
   );
 
-  it('keeps public banners hidden until the client checks dismissal cookies', () => {
-    expect(renderToString(<Banner banner={banner} />)).toBe('');
+  it('includes public banners in the initial markup to avoid layout shift', () => {
+    expect(renderToString(<Banner banner={banner} />)).toContain(banner.text);
+  });
+
+  it('reserves the countdown row in the initial markup', () => {
+    const html = renderToString(
+      <Banner
+        banner={{
+          ...banner,
+          countdown: { ...expiredCountdown, endDate: '2999-01-01T00:00:00Z' },
+        }}
+      />,
+    );
+
+    expect(html).toContain(expiredCountdown.labels.prefix);
+    expect(html).toContain('--');
+  });
+
+  it('hides a public banner when its dismissal cookie is already set', async () => {
+    await setCookie(DISMISS_COOKIE, 'true', { path: '/' });
+    const { container } = render(<Banner banner={banner} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-promo-theme]')).toBeNull();
+    });
+  });
+
+  it('keeps a banner dismissed while the cookie check is still pending', async () => {
+    let resolveCookie: (value: null) => void = () => undefined;
+    vi.stubGlobal('cookieStore', {
+      get: () =>
+        new Promise<null>((resolve) => {
+          resolveCookie = resolve;
+        }),
+      set: vi.fn().mockResolvedValue(undefined),
+    });
+    const user = userEvent.setup();
+    render(<Banner banner={banner} />);
+
+    await user.click(
+      screen.getByRole('button', { name: banner.ariaLabelDismiss }),
+    );
+    await act(async () => resolveCookie(null));
+
+    expect(screen.queryByText(banner.text)).toBeNull();
   });
 
   it('centers the dashboard message and CTA without a fixed overlay', async () => {

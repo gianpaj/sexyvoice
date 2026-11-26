@@ -154,9 +154,9 @@
     },
     "cta": {
       "freeCredits": "Commencez avec 10 000 crédits gratuits",
-      "title": "Prêt à trouver votre voix ?",
-      "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
-      "action": "Créez votre première voix"
+      "title": "Vos mots, avec émotion",
+      "subtitle": "Écrivez une phrase et écoutez-la rire, soupirer ou chuchoter. Ou appelez un personnage et répondez-lui.",
+      "action": "Essayez gratuitement"
     },
     "voiceCall": {
       "hero": {
@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Appelez un personnage avec votre propre voix",
         "subtitle": "Donnez-lui une personnalité, puis choisissez l'une de nos voix ou clonez-en une à partir de 10 secondes d'audio : la vôtre, ou une dont vous avez les droits. Appelez-le quand vous voulez : il reste dans son rôle à chaque fois.",
-        "note": "Débloquez vos propres personnages avec une recharge ou un abonnement.",
+        "note": "Débloquez vos propres personnages avec un achat unique ou un abonnement.",
         "action": "Créer votre personnage",
         "cloningLink": "Découvrir le clonage vocal"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Puis appelez-la",
         "subtitle": "Donnez votre voix clonée à un personnage et parlez-lui en direct, en temps réel.",
-        "note": "Débloquez les appels avec une voix clonée avec une recharge ou un abonnement.",
+        "note": "Débloquez les appels avec une voix clonée avec un achat unique ou un abonnement.",
         "action": "Essayer un appel vocal"
       },
       "cta": {
@@ -263,7 +263,7 @@
             },
             {
               "question": "Comment est tarifé le clonage vocal ?",
-              "answer": "Enregistrer une voix est gratuit après une recharge ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
+              "answer": "Enregistrer une voix est gratuit après un achat unique ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
             },
             {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
@@ -284,8 +284,8 @@
               "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
             },
             {
-              "question": "Puis-je appeler un personnage avec ma propre voix ?",
-              "answer": "Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage."
+              "question": "Comment passer un appel vocal avec une voix clonée ?",
+              "answer": "Allez sur la page des appels, créez un personnage et sélectionnez votre voix clonée enregistrée. Enregistrez le personnage, puis lancez l'appel. Si vous n'avez pas encore enregistré de voix, choisissez « Cloner une voix » lors de la création du personnage, ou « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix. Un achat unique ou un paiement d'abonnement débloque les personnages personnalisés et les voix enregistrées."
             },
             {
               "question": "Combien ça coûte ?",
@@ -316,6 +316,18 @@
             {
               "question": "À quoi sert la génération vocale ?",
               "answer": "Créez de l'audio pour des vidéos, podcasts, livres audio, jeux, cours et réseaux sociaux. Utilisez uniquement des voix et des contenus pour lesquels vous disposez des droits."
+            },
+            {
+              "question": "Puis-je essayer avant de payer ?",
+              "answer": "Les nouveaux comptes reçoivent 10 000 crédits gratuits. Aucune carte bancaire requise."
+            },
+            {
+              "question": "Puis-je utiliser le contenu audio à des fins commerciales ?",
+              "answer": "Oui. Vous êtes propriétaire du contenu audio que vous générez et pouvez en faire un usage commercial, à condition de détenir les droits sur les voix et les contenus utilisés."
+            },
+            {
+              "question": "Combien de temps les fichiers audio générés sont-ils conservés ?",
+              "answer": "Le contenu audio généré est conservé 30 jours pour les comptes gratuits et 90 jours pour les comptes payants. Téléchargez les fichiers que vous souhaitez garder."
             }
           ]
         },
@@ -324,12 +336,28 @@
           "category": "Tarifs et accès",
           "questions": [
             {
-              "question": "De combien de crédits ai-je besoin ?",
-              "answer": "Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits. La quantité de parole dépend de la voix, du modèle et du texte. Achetez des crédits avec une recharge ou recevez-en chaque mois avec un abonnement. La génération vocale et les appels utilisent le même solde."
+              "question": "Vaut-il mieux acheter des crédits une fois ou s'abonner ?",
+              "answer": "Un achat unique ajoute des crédits sans abonnement. Abonnez-vous pour recevoir des crédits chaque mois, avec un bonus de 15 %."
             },
             {
-              "question": "Pourquoi choisir SexyVoice.ai ?",
-              "answer": "Nous combinons une qualité vocale premium avec des outils simples et des prix équitables. Que vous soyez créateur ou entreprise, vous obtenez des résultats professionnels sans contrats ni configurations compliquées. Les crédits gratuits facilitent l'essai de tout."
+              "question": "Que puis-je faire avec mes crédits ?",
+              "answer": "Les appels en direct coûtent {count} crédits par minute. Le coût de la génération vocale dépend de la voix, du modèle et de la durée. Générer du son avec une voix clonée utilise plus de crédits que les voix standard."
+            },
+            {
+              "question": "Les crédits expirent-ils ou sont-ils reportés ?",
+              "answer": "Les crédits achetés n'expirent pas. Les crédits achetés non utilisés sont reportés, même après la résiliation de votre abonnement."
+            },
+            {
+              "question": "Quand mon abonnement est-il renouvelé ?",
+              "answer": "Votre abonnement se renouvelle automatiquement chaque mois jusqu'à sa résiliation. Toute remise du premier mois s'applique uniquement au premier paiement. Les paiements suivants utilisent le tarif mensuel habituel indiqué lors du paiement."
+            },
+            {
+              "question": "Puis-je résilier et conserver mes crédits ?",
+              "answer": "Résiliez depuis le portail client Stripe sur la page des crédits. Votre forfait reste actif jusqu'à la fin de la période payée, puis les renouvellements mensuels cessent. Vous pouvez continuer à utiliser les crédits de votre compte."
+            },
+            {
+              "question": "Puis-je acheter des crédits avant le prochain renouvellement ?",
+              "answer": "Oui. Vous pouvez effectuer un achat unique de crédits tout en étant abonné, sans attendre le prochain paiement mensuel."
             }
           ]
         },
@@ -358,9 +386,14 @@
     "billing": {
       "forever": "(pour toujours)",
       "monthly": "/mois",
-      "oneTime": "Achat unique"
+      "oneTime": "Achat unique",
+      "oneTimeNote": "Un seul paiement. Sans abonnement.",
+      "monthlyNote": "Renouvellement mensuel. Résiliation à tout moment.",
+      "introductoryPrice": "{firstPrice} le premier mois, puis {renewalPrice}/mois."
     },
     "plans": {
+      "pricePer1kCredits": "{price} pour 1 000 crédits",
+      "savePer1kCredits": "(économisez {amount}/1 000)",
       "popular": "Le plus populaire",
       "startFree": "Commencer gratuitement",
       "buyCredits": "Acheter des crédits",
@@ -417,7 +450,7 @@
     },
     "topup": {
       "title": "Acheter des crédits",
-      "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
+      "description": "Ajoutez des crédits instantanément ou abonnez-vous et obtenez plus de crédits",
       "buyCredits": "Acheter des crédits",
       "onetimePurchase": "Achat unique",
       "processing": "Traitement...",
@@ -469,7 +502,7 @@
     "balanceError": "Impossible de charger votre solde de crédits. Veuillez réessayer.",
     "retryBalance": "Réessayer",
     "title": "Crédits",
-    "topupButton": "Recharger",
+    "topupButton": "Ajouter des crédits",
     "totalCredits": "Total",
     "remainingCredits": "Restants",
     "remainingTime": "Temps restant"
@@ -482,6 +515,7 @@
     "downloadAudio": "Télécharger l'audio",
     "enhanceTextTitle": "Améliorer le texte avec des balises d'émotion IA",
     "error": "Échec de la génération de l'audio",
+    "GEMINI_OUTPUT_LIMIT": "La voix a atteint sa limite de sortie audio. Raccourcissez le texte et réessayez.",
     "errorEstimating": "Impossible d'estimer les crédits",
     "estimateCreditsButton": "Estimer les crédits",
     "fullscreenTitle": "Plein écran",
@@ -780,7 +814,7 @@
       "stop": "Arrêter l'extrait de {name}",
       "showAll": "Tout afficher ({count})",
       "showFewer": "Afficher moins",
-      "cloneLimit": "Vous avez {max} voix. Supprimez-en une sur la page Cloner pour en enregistrer une autre."
+      "cloneLimit": "Vous avez {max} voix. Supprimez-en une pour en enregistrer une autre."
     },
     "inCall": {
       "connecting": "Connexion…",
@@ -791,7 +825,11 @@
       "mute": "Couper le micro",
       "unmute": "Réactiver le micro",
       "end": "Raccrocher",
-      "audioSettings": "Paramètres audio"
+      "audioSettings": "Paramètres audio",
+      "record": "Enregistrer",
+      "stopRecording": "Arrêter l'enregistrement",
+      "recordVoice": "Voix seulement",
+      "recordVideo": "Voix et vidéo"
     },
     "ended": {
       "title": "Appel avec {name} terminé · {duration}",
@@ -799,7 +837,9 @@
       "callAgain": "Rappeler",
       "edit": "Modifier {name}",
       "makeYourOwn": "Créer votre propre version",
-      "back": "Retour aux personnages"
+      "back": "Retour aux personnages",
+      "downloadAudio": "Télécharger l'audio",
+      "downloadVideo": "Télécharger la vidéo"
     },
     "clone": {
       "title": "Cloner une voix",
@@ -896,12 +936,14 @@
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
       "missingRequiredParameters": "Veuillez entrer du texte et sélectionner un fichier audio.",
+      "providerRequestRejected": "Le fournisseur de voix n’a pas pu utiliser cet enregistrement ou ce texte. Veuillez en essayer un autre.",
       "referenceAudioEnhancementInputTooLarge": "L'audio de référence est trop volumineux pour être amélioré. Utilisez un fichier plus petit ou désactivez le nettoyage audio.",
       "referenceAudioEnhancementInputTooLong": "Le nettoyage de l'audio de référence prend en charge les clips jusqu'à __MAX__ secondes.",
       "textTooLong": "Le texte dépasse la longueur maximale de __MAX__ caractères.",
       "unsupportedAudioFormat": "Format audio non pris en charge pour le clonage vocal. Utilisez MP3, OGG/Opus, WebM ou WAV.",
       "unsupportedLocale": "Cette langue n'est pas prise en charge pour le clonage vocal.",
       "userNotFound": "Veuillez vous connecter pour cloner une voix.",
+      "voiceConsentRequired": "Confirmez que vous avez l’autorisation d’utiliser cette voix.",
       "voiceNameAndConsentRequired": "Saisissez un nom (50 caractères maximum) et confirmez que vous avez l’autorisation d’enregistrer cette voix.",
       "savedVoiceRequiresPaid": "Un compte payant est nécessaire pour enregistrer des voix.",
       "savedVoiceLocaleUnsupported": "Cette option de langue ne permet pas d’enregistrer une voix pour les appels. Choisissez une autre langue.",
@@ -996,17 +1038,17 @@
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
-        "button": "Supprimer le compte",
-        "confirmTitle": "Êtes-vous absolument sûr ?",
-        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
-        "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
+        "button": "Supprimer le compte ou le contenu",
+        "confirmTitle": "Supprimer le contenu",
+        "confirmDescription": "Votre compte reste actif. Cette action supprime :\n• Les fichiers audio générés du stockage et de votre historique\n• Les personnages personnalisés et leurs instructions\n• Les souvenirs des appels\n• Les voix clonées\n\nVous serez déconnecté. Vous pourrez vous reconnecter avec la même adresse e-mail et conserver votre profil et vos crédits restants. Vos clés API cesseront de fonctionner. Nous conservons les données d'utilisation pour la facturation et le suivi des coûts internes. Le contenu supprimé ne peut pas être récupéré.\n\nPour demander la suppression complète de votre compte, écrivez à info@sexyvoice.ai ou utilisez le chat intégré.",
+        "alertTitle": "Supprimez le contenu de votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer",
+        "continue": "Supprimer le contenu",
         "errors": {
           "manageBilling": "Gérer la facturation",
-          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
-          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer.",
-          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre contenu.",
+          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre contenu n'a pas été supprimé. Veuillez réessayer.",
+          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre contenu. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
           "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
         }
       }
@@ -1031,7 +1073,7 @@
         "action": "Action"
       },
       "empty": "Aucune clé API créée pour l'instant.",
-      "unpaidEmpty": "Abonnez-vous ou rechargez votre compte pour créer des clés API.",
+      "unpaidEmpty": "Abonnez-vous ou ajoutez des crédits pour créer des clés API.",
       "never": "Jamais",
       "statusActive": "Active",
       "statusRevoked": "Révoquée",
@@ -1076,7 +1118,7 @@
     "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel",
+    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel avec des voix réalistes et riches en émotions",
     "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.",
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour générer de la parole, réutiliser vos voix enregistrées, parler à des personnages IA et gérer votre solde de crédits.",
@@ -1101,11 +1143,11 @@
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",
     "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",
-    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 99+ Langues avec Whisper AI",
+    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 30+ Langues avec Whisper AI",
     "descriptionAudioConverter": "Convertisseur audio en ligne gratuit – Convertissez MP3, WAV, FLAC, OGG, AAC, MP4 et d'autres formats directement dans votre navigateur. Aucun téléversement requis, 100% privé et hors ligne. Propulsé par FFmpeg.",
-    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 99 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
+    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 30 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
     "keywordsAudioConverter": "convertisseur audio gratuit, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, convertisseur audio en ligne, convertisseur audio navigateur, convertisseur audio hors ligne, mp3 en wav, wav en mp3, convertisseur format audio, ffmpeg en ligne, convertisseur audio sans téléversement, convertisseur audio privé",
-    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription 99 langues, transcription privée",
+    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription multilingue, transcription privée",
     "keywordsLanding": "synthèse vocale, générateur de voix IA, clonage vocal, synthèse vocale IA, génération de voix, TTS gratuit, voix IA expressives, clone vocal IA, synthèse de la parole",
     "titleAudioJoiner": "Assembleur Audio Gratuit – Fusionner et Découper de l'Audio",
     "descriptionAudioJoiner": "Assemblez plusieurs fichiers audio et découpez chaque segment directement dans votre navigateur. Privé, gratuit et sans téléversement requis.",
@@ -1199,12 +1241,13 @@
     }
   },
   "footer": {
-    "tagline": "Génération vocale par IA. Créez un audio naturel et expressif en quelques secondes.",
+    "tagline": "Des voix IA expressives à générer, cloner et appeler.",
     "featuresHeading": "Fonctionnalités",
     "toolsHeading": "Outils",
     "companyHeading": "Entreprise",
     "legalHeading": "Juridique",
     "statusPage": "Page de statut",
+    "docs": "Documentation",
     "privacyPolicy": "Politique de confidentialité",
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
@@ -1402,6 +1445,16 @@
       "join": "Assembler",
       "joining": "Assemblage en cours...",
       "cancel": "Annuler"
+    },
+    "track": {
+      "trimStart": "Début du découpage",
+      "trimEnd": "Fin du découpage",
+      "moveUp": "Monter le segment",
+      "moveDown": "Descendre le segment",
+      "delete": "Supprimer le segment",
+      "start": "Début : {time}",
+      "end": "Fin : {time}",
+      "duration": "Durée : {time}"
     },
     "progress": {
       "processing": "Traitement en cours"

@@ -14,18 +14,25 @@ const mocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
   fetch: vi.fn<typeof fetch>(),
   from: vi.fn(),
-  getContributionData: vi.fn(),
+  getContributionData: vi.fn().mockResolvedValue({
+    audioUsage: {},
+    calls: [],
+    events: [],
+    linkedCallIds: [],
+  }),
   getUserIdByStripeCustomerId: vi.fn(),
   queries: {
     getAllCreditTransactions: vi.fn().mockResolvedValue([]),
     getAudioFilesInRange: vi.fn().mockResolvedValue([]),
     getCallSessionDurationsBefore: vi.fn().mockResolvedValue([]),
     getCallSessionsInRange: vi.fn().mockResolvedValue([]),
+    getCharactersInRange: vi.fn().mockResolvedValue([]),
     getClonedAudioFilesInRange: vi.fn().mockResolvedValue([]),
     getCreditTransactionsInRange: vi.fn().mockResolvedValue([]),
     getInternalUserIds: vi.fn().mockResolvedValue([]),
     getProfilesInRange: vi.fn().mockResolvedValue([]),
     getProfileUsernamesByIds: vi.fn().mockResolvedValue(new Map()),
+    getPublicCharacterIds: vi.fn().mockResolvedValue([]),
     getUsageEventsInRange: vi.fn().mockResolvedValue([]),
   },
   readFileSync: vi.fn(),
@@ -72,6 +79,30 @@ const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const REPORT_DATE = '2026-09-12';
 const WEBHOOK = 'https://telegram.invalid/daily-stats';
 
+// One recorded $4.31 call cost yesterday, so a dropped or emptied cache entry
+// changes the report.
+function callUsageContribution() {
+  return {
+    audioUsage: {},
+    calls: [],
+    events: [
+      {
+        dollar_amount: 4.31,
+        duration_seconds: 300,
+        id: 'call-usage',
+        input_chars: null,
+        metadata: {},
+        model: 'grok-voice-think-fast-2.0',
+        occurred_at: '2026-09-11T12:00:00Z',
+        source_id: 'call-1',
+        source_type: 'live_call',
+        user_id: 'customer',
+      },
+    ],
+    linkedCallIds: [],
+  };
+}
+
 function validCache() {
   const emptyResult = { count: 0, data: [], error: null };
   return {
@@ -82,17 +113,25 @@ function validCache() {
     audio14dResult: emptyResult,
     audioTotalCountResult: emptyResult,
     audioYesterdayResult: emptyResult,
-    callSessions14dResult: emptyResult,
+    callSessionsResult: emptyResult,
     callSessionsAllTimeDurationResult: emptyResult,
     callSessionsTotalCountResult: emptyResult,
     clonesResult: emptyResult,
+    characters14dResult: emptyResult,
+    contributionData: {
+      audioUsage: {},
+      calls: [],
+      events: [],
+      linkedCallIds: [],
+    },
     nextSubscriptionDueForPayment: null,
     profilesRecentResult: emptyResult,
     profilesTotalCountResult: emptyResult,
+    publicCharacterIds: [],
     reportDate: REPORT_DATE,
     subscriptionsMrr: null,
     usageEvents14dResult: emptyResult,
-    version: 5,
+    version: 9,
   };
 }
 
@@ -209,9 +248,22 @@ describe('GET /api/daily-stats cache', () => {
     },
   );
 
-  it('refreshes only 30 days of collections for cached activity', async () => {
+  it('reports contribution from the cache without fresh reads', async () => {
     const cached = {
       ...validCache(),
+      contributionData: callUsageContribution(),
+      allCreditTransactions: [
+        {
+          amount: 50_000,
+          created_at: '2026-09-11T12:00:00Z',
+          description: 'Purchase',
+          id: 'payment',
+          metadata: { dollarAmount: 25 },
+          profiles: null,
+          type: 'purchase',
+          user_id: 'customer',
+        },
+      ],
       audioYesterdayResult: {
         count: 2,
         data: [{ model: 'xai' }, { model: 'inworld-tts-2' }],
@@ -220,82 +272,62 @@ describe('GET /api/daily-stats cache', () => {
     };
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(JSON.stringify(cached));
-    mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
-    mocks.queries.getCreditTransactionsInRange.mockResolvedValueOnce([
-      {
-        amount: 50_000,
-        created_at: '2026-09-11T12:00:00Z',
-        description: 'Purchase',
-        id: 'payment',
-        metadata: { dollarAmount: 25 },
-        profiles: null,
-        type: 'purchase',
-        user_id: 'customer',
-      },
-    ]);
-    mocks.getContributionData.mockResolvedValueOnce({
-      audioUsage: {},
-      calls: [],
-      events: [],
-      linkedCallIds: [],
-    });
 
     const response = await GET(request());
     assert(response);
     expect(response.status).toBe(200);
     const report = await response.text();
     expect(report).toContain('$25.00 collected');
-    expect(report).toContain('AI usage (est.): $0.00 yesterday | 14d: $0.00');
-    expect(report).toContain('Cloned voices: 0 yesterday | 0 in 14d');
-    expect(report).not.toContain('Estimated usage cost:');
     expect(report).toContain(
-      '  - Inworld voices: 1,234 / 3,000 workspace limit',
+      '  - AI usage (est.): $4.31 · 14d avg $0.00/day\n',
     );
+    expect(report).toContain('  - Custom, cloned voice: 0 · 0m\n');
+    expect(report).not.toContain('Estimated usage cost:');
+    expect(report).toContain(' · Inworld voices: 1,234 / 3,000\n');
     // Inworld clones count under Cloned, not Top models.
     expect(report).toMatch(/Top models: (?!.*Inworld).*$/m);
-    expect(
-      mocks.queries.getCreditTransactionsInRange,
-    ).toHaveBeenCalledExactlyOnceWith(
-      mocks.createAdminClient.mock.results[0].value,
-      new Date('2026-08-13T00:00:00Z'),
-      new Date('2026-09-12T00:00:00Z'),
-      ['internal'],
-    );
+    expect(mocks.queries.getCreditTransactionsInRange).not.toHaveBeenCalled();
     expect(mocks.queries.getAllCreditTransactions).not.toHaveBeenCalled();
-    expect(mocks.getContributionData).toHaveBeenCalledOnce();
+    expect(mocks.getContributionData).not.toHaveBeenCalled();
     expect(mocks.writeFileSync).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
   it.each([false, true])(
-    'reports cloned voice calls for both periods with cached activity=%s',
+    'splits calls by character and voice with cached activity=%s',
     async (cached) => {
       const audio = [{ model: 'xai' }];
-      mocks.getContributionData.mockResolvedValueOnce({
-        audioUsage: {},
-        calls: [],
-        events: [],
-        linkedCallIds: [],
-      });
+      const publicCharacterIds = ['public-1'];
       const calls = [
         {
+          character_id: 'mine',
           model: ModelId.INWORLD_TTS,
           started_at: '2026-09-10T23:59:59.999Z',
           status: 'completed',
         },
         {
+          character_id: 'mine',
           model: ModelId.MISTRAL_TTS,
           started_at: '2026-09-11T00:00:00Z',
           status: 'completed',
         },
+        // An unsaved custom prompt has no character.
         {
+          character_id: null,
           model: ModelId.INWORLD_TTS,
           started_at: '2026-09-11T12:00:00Z',
           status: 'failed',
         },
         {
-          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          character_id: 'public-1',
+          model: 'grok-voice-think-fast-1.0',
           started_at: '2026-09-11T13:00:00Z',
+          status: 'completed',
+        },
+        {
+          character_id: 'mine',
+          model: ModelId.GROK_VOICE_THINK_FAST_2_0,
+          started_at: '2026-09-11T14:00:00Z',
           status: 'completed',
         },
       ].map((call, index) => ({
@@ -311,39 +343,138 @@ describe('GET /api/daily-stats cache', () => {
           JSON.stringify({
             ...validCache(),
             audioYesterdayResult: { data: audio, error: null },
-            callSessions14dResult: { data: calls, error: null },
+            callSessionsResult: { data: calls, error: null },
+            publicCharacterIds,
           }),
         );
       } else {
         mocks.queries.getAudioFilesInRange.mockResolvedValueOnce(audio);
         mocks.queries.getCallSessionsInRange.mockResolvedValueOnce(calls);
+        mocks.queries.getPublicCharacterIds.mockResolvedValueOnce(
+          publicCharacterIds,
+        );
       }
 
       const response = await GET(request());
       assert(response);
       expect(response.status).toBe(200);
       const report = await response.text();
-      expect(report).toContain('📞 Calls: 3');
-      expect(report).toContain('Cloned voices: 2 yesterday | 3 in 14d');
+      expect(report).toContain('📞 Calls: 4 · 0m · avg 0s\n');
+      expect(report).toContain('  - Predefined characters: 1 · 0m · avg 0s\n');
+      expect(report).toContain('  - Custom, Grok voice: 1 · 0m · avg 0s\n');
+      // The cloned call on the prior day stays out of yesterday's count.
+      expect(report).toContain('  - Custom, cloned voice: 2 · 0m · avg 0s\n');
       expect(mocks.fetch).not.toHaveBeenCalled();
+      if (!cached) {
+        // Yesterday plus the 14 days before it.
+        expect(
+          mocks.queries.getCallSessionsInRange,
+        ).toHaveBeenCalledExactlyOnceWith(
+          mocks.createAdminClient.mock.results[0].value,
+          new Date('2026-08-28T00:00:00Z'),
+          new Date('2026-09-12T00:00:00Z'),
+          [],
+        );
+      }
     },
   );
 
-  it('refreshes activity caches without call models', async () => {
+  it.each([false, true])(
+    'reports new custom characters with cached activity=%s',
+    async (cached) => {
+      const audio = [{ model: 'xai' }];
+      const characters = [
+        { id: 'earlier', created_at: '2026-09-10T23:59:59.999Z' },
+        { id: 'midnight', created_at: '2026-09-11T00:00:00Z' },
+        { id: 'later', created_at: '2026-09-11T23:59:59.999Z' },
+      ];
+      mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
+      if (cached) {
+        mocks.existsSync.mockReturnValue(true);
+        mocks.readFileSync.mockReturnValue(
+          JSON.stringify({
+            ...validCache(),
+            audioYesterdayResult: { data: audio, error: null },
+            characters14dResult: { data: characters, error: null },
+          }),
+        );
+      } else {
+        mocks.queries.getAudioFilesInRange.mockResolvedValueOnce(audio);
+        mocks.queries.getCharactersInRange.mockResolvedValueOnce(characters);
+      }
+
+      const response = await GET(request());
+      assert(response);
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('  - New custom characters: 2\n');
+      if (cached) {
+        expect(mocks.queries.getCharactersInRange).not.toHaveBeenCalled();
+      } else {
+        expect(
+          mocks.queries.getCharactersInRange,
+        ).toHaveBeenCalledExactlyOnceWith(
+          mocks.createAdminClient.mock.results[0].value,
+          new Date('2026-08-29T00:00:00Z'),
+          new Date('2026-09-12T00:00:00Z'),
+          ['internal'],
+        );
+      }
+    },
+  );
+
+  it('refreshes activity caches from an older version', async () => {
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(
-      JSON.stringify({ ...validCache(), version: 4 }),
+      JSON.stringify({ ...validCache(), version: 8 }),
     );
 
     const response = await GET(request());
     assert(response);
     expect(response.status).toBe(200);
     expectFreshQueries();
+    expect(mocks.queries.getCharactersInRange).toHaveBeenCalledOnce();
     expect(mocks.queries.getCallSessionsInRange).toHaveBeenCalledOnce();
+    expect(mocks.queries.getPublicCharacterIds).toHaveBeenCalledOnce();
     expect(mocks.writeFileSync).toHaveBeenCalledOnce();
   });
 
+  it('flags call health against the 14 days before yesterday', async () => {
+    const at = (day: string) => ({
+      character_id: null,
+      credits_used: 0,
+      duration_seconds: 60,
+      free_call: false,
+      id: `call-${day}-${Math.random()}`,
+      model: 'grok-voice-think-fast-2.0',
+      started_at: `${day}T12:00:00Z`,
+      status: 'completed',
+    });
+    // One call yesterday, one a day for the 13 days before it, and two on the
+    // 14th day back: a 15/14 baseline puts yesterday below trend. Averaging
+    // the 14 days up to and including yesterday would give 14/14 instead.
+    const priorDays = Array.from({ length: 13 }, (_, index) =>
+      at(new Date(Date.UTC(2026, 7, 29 + index)).toISOString().slice(0, 10)),
+    );
+    mocks.queries.getAudioFilesInRange.mockResolvedValueOnce([
+      { model: 'xai' },
+    ]);
+    mocks.queries.getCallSessionsInRange.mockResolvedValueOnce([
+      at('2026-08-28'),
+      at('2026-08-28'),
+      ...priorDays,
+      at('2026-09-11'),
+    ]);
+
+    const response = await GET(request('?cache=off'));
+    assert(response);
+    expect(await response.text()).toContain(
+      '- Calls: 🟡 below trend (1 calls, 1m 0s)',
+    );
+  });
+
   it('writes fresh results when the default cache is missing', async () => {
+    mocks.getContributionData.mockResolvedValueOnce(callUsageContribution());
+
     const response = await GET(request());
     assert(response);
 
@@ -362,10 +493,12 @@ describe('GET /api/daily-stats cache', () => {
       allCreditTransactions: [],
       audio14dResult: { count: 0 },
       audioYesterdayResult: { data: [], error: null },
+      publicCharacterIds: [],
       reportDate: REPORT_DATE,
       usageEvents14dResult: { data: [], error: null },
-      version: 5,
+      version: 9,
     });
+    expect(cached.contributionData).toEqual(callUsageContribution());
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
