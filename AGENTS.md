@@ -336,6 +336,13 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - Explain what changed and why.
 - Mention tests and checks run (`pnpm fixall`, `pnpm type-check`, `pnpm test`,
   and Playwright e2e when relevant).
+- Verify user-visible changes in the running app with test data. Reuse
+  Playwright fixtures and link the Argos comparison when it shows the change.
+  For one-off evidence, use `agent-browser screenshot` at the same step on
+  base and head with matching test data and viewport. Use `agent-browser record`
+  for a short clip when the sequence matters. Attach the captures to the PR.
+  State the browser, viewport, and any verification gaps. Keep PR-only media
+  out of Git.
 - Note documentation updates (`README.md`, `docs/devops.md`,
   `apps/docs/content/`, `AGENTS.md`).
 - Call out impact on credits, billing, generation, storage, or API contracts
