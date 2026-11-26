@@ -16,6 +16,7 @@ import {
   CHAT_ROUTE,
 } from '@/lib/voice-chat/protocol';
 import { CallEndedView, CallRecordingDownloads } from './call-ended-view';
+import { CallFeedbackMenu } from './call-feedback-menu';
 import { CharacterAvatar } from './character-avatar';
 import { InworldCallFrame } from './inworld-call-frame';
 import { VoiceChatComposer } from './voice-chat-composer';
@@ -36,7 +37,7 @@ interface ChatProps extends VoiceChatCharacterPicker {
   error: string | null;
   linked?: {
     callingAgain: boolean;
-    duration?: string;
+    endedCall?: { duration: string; roomName: string };
     onCallAgain: () => Promise<void>;
     onContinueChat: () => void;
     preset: Preset;
@@ -228,12 +229,18 @@ export function VoiceChatThread({
     </>
   );
 
-  if (linked?.duration !== undefined) {
+  if (linked?.endedCall) {
+    const { duration, roomName } = linked.endedCall;
     return (
       <CallEndedView
         callDisabled={busy || unavailable}
         connecting={linked.callingAgain}
-        duration={linked.duration}
+        duration={duration}
+        feedback={
+          roomName && !callActive && !chat.isHydrating ? (
+            <CallFeedbackMenu key={roomName} roomName={roomName} />
+          ) : null
+        }
         onCallAgain={() => linked.onCallAgain().catch(() => undefined)}
         onChat={linked.onContinueChat}
         preset={linked.preset}

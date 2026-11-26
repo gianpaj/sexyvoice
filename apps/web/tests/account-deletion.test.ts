@@ -70,6 +70,7 @@ function createReadQuery(result: object) {
 
 function setupAccountDeletion({
   conversationResult = { data: 2, error: null },
+  feedbackResult = { error: null },
   usageResult = { count: 3, error: null },
   memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
   transcriptResult = { data: [{ id: 'call-1' }], error: null },
@@ -77,6 +78,7 @@ function setupAccountDeletion({
   references = [],
 }: {
   conversationResult?: { data: number | null; error: Error | null };
+  feedbackResult?: { error: Error | null };
   usageResult?: { count: number | null; error: Error | null };
   memoryResult?: { data: { id: number }[] | null; error: Error | null };
   transcriptResult?: { data: { id: string }[] | null; error: Error | null };
@@ -146,10 +148,16 @@ function setupAccountDeletion({
   };
   audioUpdate.eq.mockReturnValue(audioUpdate);
   audioUpdate.update.mockReturnValue(audioUpdate);
+  const feedbackDelete = {
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockResolvedValue(feedbackResult),
+  };
   const adminSupabase = {
-    from: vi.fn((table: string) =>
-      table === 'call_sessions' ? transcriptUpdate : audioUpdate,
-    ),
+    from: vi.fn((table: string) => {
+      if (table === 'call_sessions') return transcriptUpdate;
+      if (table === 'feedback') return feedbackDelete;
+      return audioUpdate;
+    }),
     rpc: vi.fn().mockResolvedValue(conversationResult),
   };
 
@@ -160,6 +168,7 @@ function setupAccountDeletion({
     adminSupabase,
     apiKeysUpdate,
     audioUpdate,
+    feedbackDelete,
     memoryDelete,
     transcriptUpdate,
     sessionSupabase,
@@ -472,6 +481,40 @@ describe('account deletion', () => {
     });
     expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
     expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('erases feedback for the signed-in account after blocking late writes', async () => {
+    const { adminSupabase, feedbackDelete } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(adminSupabase.from).toHaveBeenCalledWith('feedback');
+    expect(feedbackDelete.delete).toHaveBeenCalledOnce();
+    expect(feedbackDelete.eq).toHaveBeenCalledExactlyOnceWith(
+      'user_id',
+      'user-1',
+    );
+    expect(adminSupabase.rpc.mock.invocationCallOrder[0]).toBeLessThan(
+      feedbackDelete.delete.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('fails account deletion if feedback erasure fails', async () => {
+    const error = new Error('Feedback cleanup unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      feedbackResult: { error },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(error, {
+      extra: { context: 'feedback_account_cleanup' },
+      user: { id: 'user-1' },
+    });
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 

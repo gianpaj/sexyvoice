@@ -1492,6 +1492,28 @@
     "pace": "Rythme",
     "vocalSounds": "Sons vocaux"
   },
+  "feedback": {
+    "goodAudio": "Bon audio",
+    "badAudio": "Mauvais audio",
+    "rateCall": "Évaluer l’appel",
+    "goodCall": "Bon appel",
+    "leaveFeedback": "Donner mon avis",
+    "whatWentWrong": "Qu’est-ce qui n’a pas marché ?",
+    "reasons": {
+      "misheard": "M’a mal compris",
+      "interrupted": "M’a interrompu",
+      "audio": "Le son était mauvais",
+      "awkward": "La conversation était gênante",
+      "dropped": "L’appel a été coupé",
+      "other": "Autre chose"
+    },
+    "optionalNote": "Ajouter une note (facultatif)",
+    "sendFeedback": "Envoyer mon avis",
+    "thanks": "Merci pour votre avis",
+    "failed": "Impossible d’enregistrer votre avis. Réessayez.",
+    "ending": "L’appel est en cours de clôture. Réessayez dans un instant.",
+    "close": "Fermer"
+  },
   "voiceChat": {
     "openChat": "Discuter",
     "chatName": "Discuter avec {name}",

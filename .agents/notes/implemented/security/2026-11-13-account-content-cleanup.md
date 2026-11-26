@@ -1,7 +1,7 @@
 # Account content cleanup
 
-Account deletion erases conversation history, clears stored call transcripts,
-and revokes API keys. The login,
+Account deletion erases conversation history and feedback, clears stored call
+transcripts, and revokes API keys. The login,
 profile, credit balance and internal cost history remain intact.
 
 ## Decisions
@@ -16,6 +16,8 @@ profile, credit balance and internal cost history remain intact.
 
 - Clear only `call_sessions.transcript`. Keep duration, model, timestamps and
   credit fields because `resolveUsageCost` uses them to estimate provider spend.
+- Erase all owned feedback after the conversation erasure records its deadline.
+  Feedback submissions take the same lock and check the deadline before writing.
 - Retain `usage_events`. It stores recorded dollar amounts and provider-cost
   metadata, and database triggers enforce an append-only audit history.
 - Revoke keys through the shared `revokeApiKeys` query. The dashboard's Delete

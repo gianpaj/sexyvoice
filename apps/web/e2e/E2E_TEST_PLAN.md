@@ -35,9 +35,9 @@ The current suite covers the main dashboard surfaces with a mix of:
 
 | Area     | Route                    | Spec                         | POM                      | Mocking                                              |            Tests |
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
-| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
+| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts` and inline feedback mocks  | 19 _(1 skipped)_ |
 | Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
-| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
+| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | inline clone generation and feedback mocks           |               16 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
 | History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
 | Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
@@ -101,6 +101,9 @@ Implemented mock/helper files:
 
 - page renders heading, voice selector, textarea, and generate button
 - successful audio generation with mocked `/api/generate-voice`
+- ratings for a saved result and for individual split segments using their
+  distinct audio IDs
+- playback on a cache hit without an owned file row
 - Grok TTS flow with a featured Grok voice
 - disabled state when text is empty
 - character count display
@@ -260,6 +263,7 @@ The call spec also uses inline route handlers to mock:
 - generate button is disabled with incomplete form state
 - preview tab is disabled before generation
 - text input and character count are visible
+- a saved voice generates a preview that submits feedback against its audio ID
 
 #### Unauthenticated
 
@@ -267,8 +271,7 @@ The call spec also uses inline route handlers to mock:
 
 ### Current implementation notes
 
-This spec is intentionally UI-focused.
-It currently does **not** submit a real clone request and does **not** exercise the preview success state.
+The preview test mocks clone generation and feedback submission.
 
 In E2E mode the page reads entitlement from the `e2e-call-user` cookie, like
 the call page. Saved call voices come from `E2E_SAVED_CALL_VOICES` for paid
@@ -536,9 +539,8 @@ And it intentionally does **not** mean mocking every dashboard page.
    - currently skipped for performance reasons
    - could be re-enabled with a faster text-injection strategy
 
-2. **Clone success flow**
-   - current coverage focuses on static UI and validation state
-   - could be extended to mock clone submission and preview state
+2. **Live clone generation**
+   - the preview test uses a mocked provider response
 
 3. **Call interaction depth**
    - current coverage verifies page state and mocked token wiring
@@ -581,8 +583,9 @@ also required for browser acceptance. See the [worker runbook](../../voice-agent
 The same live configuration covers the Python-backed Inworld call page. It
 dials from a character card, resumes a chat in a call, toggles the microphone
 while the composer stays focused, and shows the Call summary on hang-up. It
-starts a fresh thread with Call again and checks that the original thread
-can still load its history and send another message.
+starts a fresh thread with Call again, submits both kinds of feedback to a
+mocked endpoint, and checks that the ratings refer to distinct rooms. The
+original thread can still load its history and send another message.
 
 Physical iOS/Android capture, keyboard/safe-area behavior, bandwidth limits,
 packet loss, background/resume, and deployed 30/60-minute calls are pending.

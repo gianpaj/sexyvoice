@@ -705,8 +705,9 @@ Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
 deleted files or characters.
 
-Account deletion clears `call_sessions.transcript` and revokes every owned API
-key through `lib/supabase/api-keys.ts`. Call-session metering fields and immutable
+Account deletion clears `call_sessions.transcript`, erases the user's feedback,
+and revokes every owned API key through `lib/supabase/api-keys.ts`.
+Call-session metering fields and immutable
 `usage_events` remain available for billing and provider-cost reporting through
 `lib/usage-costs.ts`. API-key rows remain as audit references; setting
 `is_active = false` prevents them from authenticating external API requests.

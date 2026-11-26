@@ -61,14 +61,20 @@ then apply these migrations in timestamp order:
 8. `20261124200000_add_text_chat_usage.sql`
 9. `20261124200100_bill_voice_chat_runs.sql`
 10. `20261124200200_update_voice_chat_rates.sql`
+11. `20261126183738_create_feedback.sql`
 
 Apply the voice chat schema with erasure so messages, chat runs, and
 conversation leases retain their cascade rules. The billing migration schedules
 the `expire-voice-chat-runs` job in `pg_cron`. It runs every minute to release
 credit reservations for expired replies, regardless of web feature access.
 The LiveKit JS worker and voice chat page require a local database.
-The account-deletion action runs in production and fails when the erasure RPC
-is missing. Apply the migrations before the web deployment that calls it.
+Apply these migrations before the web deployment that uses them. The
+production account-deletion action needs the erasure RPC and the feedback
+table.
+
+Apply `20261126184519_index_active_audio_file_lookup.sql` before deploying
+audio ratings. The standalone migration builds the cache lookup index
+concurrently so audio history writes can continue during the build.
 
 ## Deployment targets
 

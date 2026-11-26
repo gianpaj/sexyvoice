@@ -49,6 +49,7 @@ export interface CloneErrorResponseBody {
 
 /** Shape of the JSON body returned by a successful clone-voice request. */
 export interface CloneSuccessResponse {
+  audioFileId?: string;
   creditsRemaining: number;
   creditsUsed: number;
   url: string;

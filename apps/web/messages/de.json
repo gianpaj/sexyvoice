@@ -1492,6 +1492,28 @@
     "pace": "Tempo",
     "vocalSounds": "Stimmliche Laute"
   },
+  "feedback": {
+    "goodAudio": "Guter Ton",
+    "badAudio": "Schlechter Ton",
+    "rateCall": "Anruf bewerten",
+    "goodCall": "Guter Anruf",
+    "leaveFeedback": "Feedback geben",
+    "whatWentWrong": "Was ist schiefgelaufen?",
+    "reasons": {
+      "misheard": "Hat mich falsch verstanden",
+      "interrupted": "Hat mich unterbrochen",
+      "audio": "Der Ton klang schlecht",
+      "awkward": "Das Gespräch fühlte sich unangenehm an",
+      "dropped": "Der Anruf wurde unterbrochen",
+      "other": "Etwas anderes"
+    },
+    "optionalNote": "Notiz hinzufügen (optional)",
+    "sendFeedback": "Feedback senden",
+    "thanks": "Danke für dein Feedback",
+    "failed": "Das Feedback konnte nicht gespeichert werden. Versuch es erneut.",
+    "ending": "Der Anruf wird noch beendet. Versuch es gleich noch einmal.",
+    "close": "Schließen"
+  },
   "voiceChat": {
     "openChat": "Chatten",
     "chatName": "Mit {name} chatten",

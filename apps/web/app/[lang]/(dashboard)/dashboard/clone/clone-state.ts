@@ -1,3 +1,5 @@
+import type { CloneSuccessResponse } from '@/lib/clone/api-types';
+
 type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 export interface CloneState {
@@ -5,7 +7,7 @@ export interface CloneState {
   convertingMicAudio: boolean;
   errorMessage: string;
   ffmpegError: string | null;
-  generatedAudioUrl: string | null;
+  generatedAudio: CloneSuccessResponse | null;
   legalConsentChecked: boolean;
   micBlob: Blob | null;
   micRecording: boolean;
@@ -25,7 +27,7 @@ export const initialCloneState: CloneState = {
   convertingMicAudio: false,
   errorMessage: '',
   ffmpegError: null,
-  generatedAudioUrl: null,
+  generatedAudio: null,
   legalConsentChecked: false,
   micBlob: null,
   micRecording: false,

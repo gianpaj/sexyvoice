@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import type { FeedbackSubmission } from '@/lib/feedback';
+
 // Explicit config only: this test uses real providers and an allowlisted account.
 test('continues one thread from chat through an audio call and back', async ({
   page,
@@ -456,6 +458,16 @@ test('resumes a saved Inworld thread and starts a fresh one on redial', async ({
   await expect(summary).toBeVisible();
   await expect(composer).toHaveCount(0);
   const callAgain = summary.getByRole('button', { name: 'Call again' });
+  const ratings: FeedbackSubmission[] = [];
+  await page.route('**/api/feedback', (route) => {
+    const feedback = route.request().postDataJSON() as FeedbackSubmission;
+    ratings.push(feedback);
+    return route.fulfill({ json: { rating: feedback.rating } });
+  });
+  const rateCall = summary.getByRole('button', { name: 'Rate call' });
+  await rateCall.click({ timeout: 20_000 });
+  await page.getByRole('menuitem', { name: 'Good call' }).click();
+  await expect(summary.getByText('Thanks for the feedback')).toBeVisible();
   await expect(callAgain).toBeEnabled({ timeout: 20_000 });
   await callAgain.click();
   try {
@@ -472,6 +484,22 @@ test('resumes a saved Inworld thread and starts a fresh one on redial', async ({
     const end = page.getByRole('button', { name: 'End call', exact: true });
     if (await end.isVisible()) await end.click();
   }
+
+  await rateCall.click({ timeout: 20_000 });
+  await page.getByRole('menuitem', { name: 'Leave feedback' }).click();
+  const feedbackForm = page.getByRole('dialog', { name: 'What went wrong?' });
+  await feedbackForm.getByText('Audio sounded off', { exact: true }).click();
+  await feedbackForm.getByRole('button', { name: 'Send feedback' }).click();
+  await expect(summary.getByText('Thanks for the feedback')).toBeVisible();
+  expect(ratings).toMatchObject([
+    { rating: 'up', target: { kind: 'call', roomName: expect.any(String) } },
+    {
+      rating: 'down',
+      reasonCode: 'audio',
+      target: { kind: 'call', roomName: expect.any(String) },
+    },
+  ]);
+  expect(ratings[0].target).not.toEqual(ratings[1].target);
 
   await page.goto(threadUrl);
   await expect(chat).toBeVisible();

@@ -102,6 +102,57 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await generatePage.expectSuccessToast();
   });
 
+  test('rates saved audio and hides ratings for a cache hit without an owned row', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const audioFileId = '16161616-1616-4161-8161-161616161616';
+    await page.route(
+      '**/api/generate-voice',
+      (route) =>
+        route.fulfill({
+          json: {
+            audioFileId,
+            creditsUsed: 12,
+            url: 'https://files.sexyvoice.ai/test-audio-e2e.wav',
+          },
+        }),
+      { times: 1 },
+    );
+    await page.route('**/api/feedback', (route) =>
+      route.fulfill({ json: { rating: 'up' } }),
+    );
+    await generatePage.enterText('Rate this saved result.');
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+
+    const goodAudio = page.getByRole('button', { name: 'Good audio' });
+    const [submission] = await Promise.all([
+      page.waitForRequest('**/api/feedback'),
+      goodAudio.press('Enter'),
+    ]);
+    expect(submission.postDataJSON()).toEqual({
+      rating: 'up',
+      target: { kind: 'audio', audioFileId },
+    });
+    await expect(goodAudio).toHaveAttribute('aria-pressed', 'true');
+
+    await page.route('**/api/generate-voice', (route) =>
+      route.fulfill({
+        json: {
+          cached: true,
+          creditsUsed: 0,
+          url: 'https://files.sexyvoice.ai/test-audio-e2e.wav',
+        },
+      }),
+    );
+    await generatePage.enterText('Play this cached result.');
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+    await generatePage.expectAudioPlayerVisible();
+    await expect(goodAudio).toHaveCount(0);
+  });
+
   test('should disable generate button when text is empty', async () => {
     // Zephyr is already selected by default
     // Don't enter any text
@@ -270,11 +321,16 @@ test.describe('Generate Dashboard - Split Mode', () => {
     page,
   }) => {
     const generatedUrls: string[] = [];
+    const audioFileIds = [
+      '11111111-1717-4171-8171-171717171717',
+      '22222222-1717-4171-8171-171717171717',
+    ];
     await page.unroute('**/api/generate-voice');
     await page.route('**/api/generate-voice', async (route) => {
       generatedUrls.push(route.request().postDataJSON()?.text ?? '');
       await route.fulfill({
         body: JSON.stringify({
+          audioFileId: audioFileIds[generatedUrls.length - 1],
           creditsUsed: 5,
           url: `https://files.sexyvoice.ai/segment-${generatedUrls.length}.wav`,
         }),
@@ -295,6 +351,21 @@ test.describe('Generate Dashboard - Split Mode', () => {
 
     expect(generatedUrls).toHaveLength(2);
     await generatePage.expectSuccessToast();
+    await page.route('**/api/feedback', (route) =>
+      route.fulfill({ json: { rating: 'down' } }),
+    );
+    const badAudio = page.getByRole('button', { name: 'Bad audio' });
+    await expect(badAudio).toHaveCount(2);
+    const [submission] = await Promise.all([
+      page.waitForRequest('**/api/feedback'),
+      badAudio.nth(1).click(),
+    ]);
+    expect(submission.postDataJSON()).toEqual({
+      rating: 'down',
+      target: { kind: 'audio', audioFileId: audioFileIds[1] },
+    });
+    await expect(badAudio.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(badAudio.first()).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('should generate Grok split segments for long text', async ({

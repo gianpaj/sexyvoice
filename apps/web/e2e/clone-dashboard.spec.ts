@@ -87,6 +87,40 @@ test.describe('Clone Dashboard - Authenticated User', () => {
     await clonePage.expectPreviewTabDisabled();
   });
 
+  test('rates the audio generated from a saved voice', async ({ page }) => {
+    const audioFileId = '15151515-1515-4151-8151-151515151515';
+    await page.route('**/api/clone-voice', (route) =>
+      route.fulfill({
+        json: {
+          audioFileId,
+          creditsRemaining: 4990,
+          creditsUsed: 10,
+          url: 'https://files.sexyvoice.ai/test-cloned-audio.wav',
+        },
+      }),
+    );
+    await page.route('**/api/feedback', (route) =>
+      route.fulfill({ json: { rating: 'down' } }),
+    );
+
+    await page.getByRole('radio', { name: /My saved voice/ }).check();
+    await clonePage.enterText('Rate the new speech from this voice.');
+    await clonePage.checkLegalConsent();
+    await clonePage.generateButton.click();
+    await expect(clonePage.previewTab).toHaveAttribute('data-state', 'active');
+
+    const badAudio = page.getByRole('button', { name: 'Bad audio' });
+    const [submission] = await Promise.all([
+      page.waitForRequest('**/api/feedback'),
+      badAudio.click(),
+    ]);
+    expect(submission.postDataJSON()).toEqual({
+      rating: 'down',
+      target: { kind: 'audio', audioFileId },
+    });
+    await expect(badAudio).toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('should display text input with character limit', async () => {
     await clonePage.expectTextInputVisible();
     await expect(clonePage.characterCount).toBeVisible();

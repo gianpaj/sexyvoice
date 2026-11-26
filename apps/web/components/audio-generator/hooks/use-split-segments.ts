@@ -6,6 +6,7 @@ import {
   buildSplitGeneratedByTextKey,
   buildSplitStorageKey,
   type PersistedSplitSegments,
+  type SplitGeneratedAudio,
   type SplitSegmentItem,
 } from '../split-segments-utils';
 
@@ -42,7 +43,7 @@ export function useSplitSegments({
 }: UseSplitSegmentsParams) {
   const [splitSegments, setSplitSegments] = useState<SplitSegmentItem[]>([]);
   const [splitGeneratedByText, setSplitGeneratedByText] = useState<
-    Record<string, string>
+    Record<string, SplitGeneratedAudio>
   >({});
 
   const [splitStorageKey, setSplitStorageKey] = useState('');
@@ -103,7 +104,12 @@ export function useSplitSegments({
       }
 
       const parsed = JSON.parse(raw) as PersistedSplitSegments;
-      const generatedByText = parsed.generatedByText || {};
+      const generatedByText = Object.fromEntries(
+        Object.entries(parsed.generatedByText ?? {}).map(([key, audio]) => [
+          key,
+          typeof audio === 'string' ? { url: audio } : audio,
+        ]),
+      );
       if (!parsed.segments || parsed.segments.length !== baseSegments.length) {
         setSplitSegments(baseSegments);
         setSplitGeneratedByText(generatedByText);
@@ -116,34 +122,25 @@ export function useSplitSegments({
           segment.text,
           generationContext,
         );
-        if (!persistedSegment || persistedSegment.text !== segment.text) {
-          const cachedUrl = generatedByText[generatedByTextKey];
-          if (cachedUrl) {
-            return {
-              ...segment,
-              audioUrl: cachedUrl,
-              status: 'success' as const,
-            };
-          }
-          return segment;
-        }
-
         if (
+          persistedSegment?.text === segment.text &&
           persistedSegment.status === 'success' &&
           persistedSegment.audioUrl
         ) {
           return {
             ...segment,
+            audioFileId: persistedSegment.audioFileId,
             audioUrl: persistedSegment.audioUrl,
             status: 'success' as const,
           };
         }
 
-        const cachedUrl = generatedByText[generatedByTextKey];
-        if (cachedUrl) {
+        const cached = generatedByText[generatedByTextKey];
+        if (cached?.url) {
           return {
             ...segment,
-            audioUrl: cachedUrl,
+            audioFileId: cached.audioFileId,
+            audioUrl: cached.url,
             status: 'success' as const,
           };
         }
@@ -176,6 +173,7 @@ export function useSplitSegments({
     const payload: PersistedSplitSegments = {
       generatedByText: splitGeneratedByText,
       segments: splitSegments.map((segment) => ({
+        audioFileId: segment.audioFileId,
         audioUrl: segment.audioUrl || undefined,
         status: segment.status,
         text: segment.text,
@@ -200,7 +198,12 @@ export function useSplitSegments({
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, audioUrl: '', status: 'generating' }
+          ? {
+              ...item,
+              audioFileId: undefined,
+              audioUrl: '',
+              status: 'generating',
+            }
           : item,
       ),
     );
@@ -209,18 +212,21 @@ export function useSplitSegments({
   const markSegmentSuccess = (
     index: number,
     textValue: string,
-    url: string,
+    { audioFileId, url }: SplitGeneratedAudio,
   ) => {
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, audioUrl: url, status: 'success' }
+          ? { ...item, audioFileId, audioUrl: url, status: 'success' }
           : item,
       ),
     );
     setSplitGeneratedByText((current) => ({
       ...current,
-      [buildSplitGeneratedByTextKey(textValue, generationContext)]: url,
+      [buildSplitGeneratedByTextKey(textValue, generationContext)]: {
+        audioFileId,
+        url,
+      },
     }));
   };
 
@@ -228,7 +234,7 @@ export function useSplitSegments({
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, audioUrl: '', status: 'idle' }
+          ? { ...item, audioFileId: undefined, audioUrl: '', status: 'idle' }
           : item,
       ),
     );
@@ -249,14 +255,15 @@ export function useSplitSegments({
           return item;
         }
 
-        const cachedUrl =
+        const cached =
           splitGeneratedByText[
             buildSplitGeneratedByTextKey(nextText, generationContext)
           ];
-        if (cachedUrl) {
+        if (cached?.url) {
           return {
             ...item,
-            audioUrl: cachedUrl,
+            audioFileId: cached.audioFileId,
+            audioUrl: cached.url,
             status: 'success',
             text: nextText,
           };
@@ -264,6 +271,7 @@ export function useSplitSegments({
 
         return {
           ...item,
+          audioFileId: undefined,
           audioUrl: '',
           status: 'idle',
           text: nextText,

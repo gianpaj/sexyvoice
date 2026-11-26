@@ -48,6 +48,7 @@ vi.mock('livekit-client', () => ({
     Disconnected: 'disconnected',
   },
   Room: class {
+    name = `voice-chat-test-${sdk.rooms.length + 1}`;
     listeners = new Map<string, (...args: any[]) => void>();
     remoteParticipants = new Map();
     localParticipant = {
@@ -613,6 +614,72 @@ describe('Python Inworld call on the chat page', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
     expect(await screen.findByText('Earlier text')).toBeVisible();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('keeps the ended room and note when call feedback needs a retry', async () => {
+    const { room } = await startPythonCall();
+    const previousFetch = vi.mocked(fetch).getMockImplementation();
+    const saveFeedback = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({}, { status: 409 }))
+      .mockResolvedValueOnce(Response.json({ rating: 'down' }))
+      .mockResolvedValueOnce(Response.json({ rating: 'up' }));
+    vi.mocked(fetch).mockImplementation((url, options) =>
+      url === '/api/feedback'
+        ? saveFeedback(JSON.parse(String(options?.body)))
+        : previousFetch?.(url, options),
+    );
+    await admitPythonAgent(room);
+    const roomName = room.name;
+    room.name = '';
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }));
+
+    const rateCall = await screen.findByRole('button', { name: 'Rate call' });
+    fireEvent.keyDown(rateCall, { key: 'Enter' });
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Leave feedback' }),
+    );
+    expect(
+      await screen.findByRole('dialog', { name: 'What went wrong?' }),
+    ).toBeVisible();
+    const submit = screen.getByRole('button', { name: 'Send feedback' });
+    expect(submit).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: 'Something else' }));
+    const note = screen.getByRole('textbox', { name: 'Add a note (optional)' });
+    fireEvent.change(note, { target: { value: 'The greeting repeated' } });
+    fireEvent.click(submit);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      messages.feedback.ending,
+    );
+    expect(note).toHaveValue('The greeting repeated');
+    fireEvent.click(submit);
+    await screen.findByText(messages.feedback.thanks);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(saveFeedback.mock.calls).toEqual([
+      [
+        {
+          note: 'The greeting repeated',
+          rating: 'down',
+          reasonCode: 'other',
+          target: { kind: 'call', roomName },
+        },
+      ],
+      [
+        {
+          note: 'The greeting repeated',
+          rating: 'down',
+          reasonCode: 'other',
+          target: { kind: 'call', roomName },
+        },
+      ],
+    ]);
+    fireEvent.keyDown(rateCall, { key: 'Enter' });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Good call' }));
+    expect(saveFeedback).toHaveBeenLastCalledWith({
+      rating: 'up',
+      target: { kind: 'call', roomName },
+    });
     window.history.replaceState(null, '', '/');
   });
 
