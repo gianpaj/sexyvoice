@@ -185,6 +185,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { data: voiceReferences, error: voiceReferencesError },
       { data: deletedMemories, error: memoriesDeleteError },
       { data: clearedCallTranscripts, error: transcriptsClearError },
+      { error: feedbackDeleteError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
       supabase
@@ -208,7 +209,16 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .update({ transcript: [] })
         .eq('user_id', user.id)
         .select('id'),
+      admin.from('feedback').delete().eq('user_id', user.id),
     ]);
+
+    if (feedbackDeleteError) {
+      captureException(feedbackDeleteError, {
+        extra: { context: 'feedback_account_cleanup' },
+        user: { id: user.id },
+      });
+      throw new Error('User deletion failed');
+    }
 
     if (transcriptsClearError) {
       captureException(transcriptsClearError, {

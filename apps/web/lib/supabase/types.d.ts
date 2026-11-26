@@ -777,6 +777,57 @@ declare type Database = {
           },
         ];
       };
+      feedback: {
+        Row: {
+          audio_file_id: string | null;
+          call_session_id: string | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          rating: string;
+          reason_code: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          audio_file_id?: string | null;
+          call_session_id?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          rating: string;
+          reason_code?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          audio_file_id?: string | null;
+          call_session_id?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          rating?: string;
+          reason_code?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_audio_file_id_fkey';
+            columns: ['audio_file_id'];
+            isOneToOne: false;
+            referencedRelation: 'audio_files';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'feedback_call_session_id_fkey';
+            columns: ['call_session_id'];
+            isOneToOne: false;
+            referencedRelation: 'call_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -1242,6 +1293,17 @@ declare type Database = {
       restore_inactive_user: {
         Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
         Returns: boolean;
+      };
+      save_feedback: {
+        Args: {
+          p_audio_file_id?: string;
+          p_call_room_name?: string;
+          p_note?: string;
+          p_rating: string;
+          p_reason_code?: string;
+          p_user_id: string;
+        };
+        Returns: string;
       };
       save_voice_chat_reply: {
         Args: {
