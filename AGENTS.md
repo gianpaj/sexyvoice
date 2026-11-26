@@ -342,7 +342,8 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   base and head with matching test data and viewport. Use `agent-browser record`
   for a short clip when the sequence matters. Use `gh pr comment --attach <file>`
   or link a CI artifact. State the browser, viewport, and any verification gaps,
-  including captures you could not share. Keep PR-only media out of Git.
+  including captures you could not share. Save PR-only media in the ignored
+  `test-results/pr-evidence/` directory at the repository root.
 - Note documentation updates (`README.md`, `docs/devops.md`,
   `apps/docs/content/`, `AGENTS.md`).
 - Call out impact on credits, billing, generation, storage, or API contracts
