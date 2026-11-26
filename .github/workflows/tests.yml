@@ -16,6 +16,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The pgTAP job runs only when the database or this workflow changed. A PR
+  # compares with its base branch; a push to main compares with the previous
+  # main commit.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # paths-filter lists PR files through the API.
+      pull-requests: read
+    outputs:
+      db: ${{ steps.filter.outputs.db }}
+    steps:
+      # Push events diff with git; PR events need no checkout.
+      - name: Checkout code
+        if: github.event_name == 'push'
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          # paths-filter fetches the previous main commit.
+          persist-credentials: true
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            db:
+              - "apps/web/supabase/**"
+              - ".github/workflows/tests.yml"
+
   test:
     runs-on: ubuntu-latest
 
@@ -53,3 +81,28 @@ jobs:
 
       - name: Check API error-code docs
         run: pnpm --filter @sexyvoice/web test api-v1-error-codes-docs
+
+  test-db:
+    needs: changes
+    if: needs.changes.outputs.db == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 2.113.0
+
+      # Runs Postgres without the API services and applies every migration.
+      - name: Start database
+        run: supabase db start --workdir apps/web
+
+      - name: Run pgTAP tests
+        run: supabase test db --workdir apps/web
