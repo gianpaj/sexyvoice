@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  Cell,
+  ReferenceLine,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import {
   baselineAverage,
@@ -27,6 +35,7 @@ interface ChartSpec {
   /** Stacked bottom to top. */
   series: { color: string; key: Metric; label: string }[];
   title: string;
+  tooltip?: (props: TooltipContentProps) => React.ReactNode;
   totalKey?: Metric;
 }
 
@@ -35,6 +44,20 @@ const formatNumber = (value: number) =>
 
 const formatUsd = (value: number) =>
   `$${value.toLocaleString('en', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+
+function CallMinutesTooltip({ active, label, payload }: TooltipContentProps) {
+  return (
+    <ChartTooltipContent
+      active={active}
+      label={label}
+      payload={payload.map((item) => ({
+        ...item,
+        value:
+          typeof item.value === 'number' ? formatNumber(item.value) : undefined,
+      }))}
+    />
+  );
+}
 
 const freeUsersSeries = { color: 'var(--chart-1)', label: 'Free users' };
 const payingUsersSeries = { color: 'var(--chart-2)', label: 'Paying users' };
@@ -65,6 +88,7 @@ const CHARTS: ChartSpec[] = [
       { ...payingUsersSeries, key: 'paidCallMinutes' },
     ],
     title: 'Call minutes',
+    tooltip: CallMinutesTooltip,
     totalKey: 'callMinutes',
   },
   {
@@ -137,7 +161,10 @@ function DailyChart({
             tickLine={false}
           />
           <YAxis axisLine={false} tickLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+          <ChartTooltip
+            content={spec.tooltip ?? <ChartTooltipContent />}
+            cursor={false}
+          />
           {spec.series.length > 1 && (
             <ChartLegend content={<ChartLegendContent />} />
           )}
