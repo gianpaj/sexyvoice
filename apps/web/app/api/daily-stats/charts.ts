@@ -5,7 +5,7 @@ import type {
   DailyStatsCreditTransaction,
   DailyStatsProfile,
 } from './queries';
-import { reduceAmountUsd, subtractDays } from './utils';
+import { isFreeUserCall, reduceAmountUsd, subtractDays } from './utils';
 
 /** One UTC day of the charts Mini App. */
 export interface DailyChartRow {
@@ -17,6 +17,10 @@ export interface DailyChartRow {
   clonedAudio: number;
   /** `YYYY-MM-DD`. */
   date: string;
+  freeCallMinutes: number;
+  freeCalls: number;
+  paidCallMinutes: number;
+  paidCalls: number;
   profiles: number;
   /** The report's revenue: `dollarAmount` of purchases, top-ups and refunds. */
   revenueUsd: number;
@@ -24,7 +28,10 @@ export interface DailyChartRow {
 
 export interface ChartSources {
   audioFiles: Pick<DailyStatsAudioFile, 'created_at' | 'model'>[];
-  calls: Pick<DailyStatsCallSession, 'duration_seconds' | 'started_at'>[];
+  calls: Pick<
+    DailyStatsCallSession,
+    'duration_seconds' | 'free_call' | 'started_at'
+  >[];
   creditTransactions: Pick<
     DailyStatsCreditTransaction,
     'created_at' | 'metadata'
@@ -46,10 +53,12 @@ export function buildDailyChartRows(
 ): DailyChartRow[] {
   const rows = Array.from({ length: days }, (_, i) => ({
     audio: 0,
-    callMinutes: 0,
-    calls: 0,
     clonedAudio: 0,
     date: utcDate(subtractDays(start, -i)),
+    freeCallSeconds: 0,
+    freeCalls: 0,
+    paidCallSeconds: 0,
+    paidCalls: 0,
     profiles: 0,
     revenueUsd: 0,
   }));
@@ -59,9 +68,13 @@ export function buildDailyChartRows(
 
   for (const call of sources.calls) {
     const row = rowFor(call.started_at);
-    if (row) {
-      row.calls += 1;
-      row.callMinutes += call.duration_seconds / 60;
+    if (!row) continue;
+    if (isFreeUserCall(call)) {
+      row.freeCalls += 1;
+      row.freeCallSeconds += call.duration_seconds;
+    } else {
+      row.paidCalls += 1;
+      row.paidCallSeconds += call.duration_seconds;
     }
   }
   for (const file of sources.audioFiles) {
@@ -80,9 +93,12 @@ export function buildDailyChartRows(
     if (row) row.revenueUsd = reduceAmountUsd(row.revenueUsd, transaction);
   }
 
-  return rows.map((row) => ({
+  return rows.map(({ freeCallSeconds, paidCallSeconds, ...row }) => ({
     ...row,
-    callMinutes: round(row.callMinutes, 1),
+    callMinutes: round((freeCallSeconds + paidCallSeconds) / 60, 1),
+    calls: row.freeCalls + row.paidCalls,
+    freeCallMinutes: freeCallSeconds / 60,
+    paidCallMinutes: paidCallSeconds / 60,
     revenueUsd: round(row.revenueUsd, 2),
   }));
 }

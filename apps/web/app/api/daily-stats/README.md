@@ -53,14 +53,15 @@ Telegram Mini App. The button has its own message so that Telegram rejecting it
 cannot block the report. `sendTelegramMessage` throws when Telegram rejects
 either message, so the cron check-in reports the failure.
 
-The page stacks five bar charts over the last 30 complete UTC days, excluding
-internal users: revenue, calls, call minutes, audio files (TTS and cloned voice
-stacked), and new profiles. Each chart highlights yesterday and draws a dashed
-line at the report's `ROLLING_WINDOW_DAYS` (14) day average for that metric:
-calls and call minutes average the 14 days before yesterday, like the Calls
-section; revenue, audio files and new profiles average the 14 days up to and
-including yesterday, like their report lines. Revenue sums `metadata.dollarAmount` over
-purchases, top-ups and refunds, like the report's `💰 Revenue` line.
+The page shows revenue, calls, call minutes, audio files and new profiles over
+the last 30 complete UTC days, excluding internal users. The Calls and Call
+minutes charts stack free and paying users in each day's bar, using the same
+split as the report. Audio files stack TTS and cloned voice. Each chart highlights
+yesterday and draws a dashed line at the report's 14-day average. Calls and
+call minutes average the 14 days before yesterday. Revenue, audio files and
+new profiles include yesterday in their 14-day averages. Revenue sums
+`metadata.dollarAmount` over purchases, top-ups and refunds, like the report's
+`💰 Revenue` line.
 `charts.ts` builds the per-day rows.
 
 Telegram passes signed init data in the page's URL fragment. The page sends it
