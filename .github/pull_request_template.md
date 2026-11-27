@@ -60,7 +60,8 @@ Do not claim tests or manual verification that were not actually performed.
 ## UI evidence
 
 <!--
-Link the relevant Argos comparison, screenshot comment, or CI artifact. If CI is pending, add the link when it finishes. See AGENTS.md#pull-requests for capture and upload steps.
+Say what you observed before and after, and link the evidence that shows it.
+Use the relevant Argos comparison, screenshot comment, or CI artifact. If CI is pending, add the link when it finishes. See AGENTS.md#pull-requests for capture and upload steps.
 Delete this section if it does not apply.
 -->
 
