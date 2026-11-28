@@ -70,6 +70,12 @@ vi.mock('@/components/audio-player-with-context', () => ({
   ),
 }));
 
+vi.mock('@/components/audio-vote-buttons', () => ({
+  AudioVoteButtons: ({ audioUrl }: { audioUrl: string }) => (
+    <div data-testid="audio-vote-buttons" data-url={audioUrl} />
+  ),
+}));
+
 vi.mock('@/components/streaming-waveform-player', () => ({
   StreamingWaveformPlayer: ({
     controller,

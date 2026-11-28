@@ -15,6 +15,7 @@ import {
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
+import { AudioVoteButtons } from '@/components/audio-vote-buttons';
 import { DeleteSavedVoiceDialog } from '@/components/call/delete-saved-voice-dialog';
 import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
@@ -109,11 +110,17 @@ function PreviewTabContent({
         )}
       </div>
 
-      <div className="flex justify-center gap-4">
+      <div className="flex items-center justify-center gap-4">
         <Button className="flex items-center gap-2" onClick={downloadAudio}>
           <Download className="h-4 w-4" />
           {t('downloadAudio')}
         </Button>
+        {generatedAudioUrl && (
+          <AudioVoteButtons
+            audioUrl={generatedAudioUrl}
+            key={generatedAudioUrl}
+          />
+        )}
       </div>
     </div>
   );

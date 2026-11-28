@@ -505,6 +505,11 @@
     "remainingCredits": "Remaining",
     "remainingTime": "Remaining time"
   },
+  "audioVote": {
+    "upvote": "Good audio",
+    "downvote": "Bad audio",
+    "error": "Failed to save your rating. Please try again."
+  },
   "generate": {
     "abortedCloning": "Voice generation aborted.",
     "cancel": "Cancel generation",

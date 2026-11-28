@@ -417,6 +417,37 @@ login, signup, OAuth, and email confirmation. Other signup redirects use the
 default callback. The public cloning page ends with a section that links to
 `/[lang]/voice-call`, and the voice call page links back to it.
 
+## Audio Rating
+
+Endpoints: `POST /api/audio-vote`, `GET /api/audio-vote`
+
+Session-authenticated dashboard endpoints backing the thumbs up/down controls
+on the Generate, split-segment, and Clone result views. Both
+`/api/generate-voice` and `/api/clone-voice` return only the uploaded result's
+public URL, so the URL identifies the caller's `audio_files` row.
+
+`POST /api/audio-vote` takes `{ audioUrl: string, vote: "up" | "down" | null }`
+— `null` clears the vote — and answers `{ success: true, totalVotes: number }`.
+A per-user Upstash sliding-window limit of 60 requests/minute applies.
+`audio_files` rows are written in `after()` after the generation response, so
+the endpoint retries the lookup briefly before returning 404. Errors use the
+standard `{ error }` shape: 401 unauthenticated, 400 invalid body, 429 rate
+limited, 404 unknown or unowned URL, 500 server failure.
+
+Voting is currently owner-only, so `audio_files.total_votes` is the owner's
+tri-state vote: `1` up, `-1` down, `0` cleared. `POST` selects the caller's
+newest active row for the URL and writes that value directly; a
+deleted-and-regenerated URL therefore starts unrated. Only the row owner may
+vote, since `total_votes` ranks `/api/popular-audios`. If voting becomes
+public, per-user vote rows and a separately maintained aggregate will need a
+schema change.
+
+`GET /api/audio-vote?audioUrl=<url>` reads the same row and returns
+`{ vote: "up" | "down" | null }`, letting remounted controls restore the saved
+selection. Writes use the service role because `audio_files` RLS is read-only,
+but every query is scoped to the authenticated owner's `user_id` and active
+rows.
+
 ## Real-time AI Voice Calls
 
 Endpoint: `POST /api/call-token`

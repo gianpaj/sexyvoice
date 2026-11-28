@@ -503,6 +503,11 @@
     "remainingCredits": "Resterende",
     "remainingTime": "Resterende tid"
   },
+  "audioVote": {
+    "upvote": "God lyd",
+    "downvote": "Dårlig lyd",
+    "error": "Din vurdering kunne ikke gemmes. Prøv igen."
+  },
   "generate": {
     "abortedCloning": "Stemmegenerering afbrudt.",
     "cancel": "Annuller generering",

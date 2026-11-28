@@ -90,6 +90,10 @@ vi.mock('@/components/audio-player-with-context', () => ({
   AudioPlayerWithContext: () => <div data-testid="audio-player" />,
 }));
 
+vi.mock('@/components/audio-vote-buttons', () => ({
+  AudioVoteButtons: () => <div data-testid="audio-vote-buttons" />,
+}));
+
 vi.mock('@/components/audio/microphone-main', () => ({
   MicrophoneMain: (props: unknown) => {
     mockMicrophone(props);
