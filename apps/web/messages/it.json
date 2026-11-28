@@ -412,35 +412,24 @@
           "Clona la tua voce con soli 10 secondi di audio"
         ]
       },
+      "paidFeatures": {
+        "title": "Incluso in tutti i piani a pagamento",
+        "customCharacters": "Personaggi personalizzati per le chiamate vocali",
+        "longerText": "Fino al doppio del testo per ogni generazione vocale",
+        "apiAccess": "Accesso alle API"
+      },
       "starter": {
-        "name": "Starter",
-        "description": "Per utenti occasionali che esplorano l'audio IA.",
-        "features": [
-          "Tutto in Gratuito",
-          "Generazione di testo 2× più lungo",
-          "Accesso API"
-        ]
+        "name": "Starter"
       },
       "standard": {
         "name": "Standard",
-        "description": "Per hobbisti che creano progetti con audio AI e voci personalizzate.",
         "creditsWithAudio": "{numCredits} crediti (~11 min di audio)",
-        "creditsWithPromo": "{numCredits} crediti",
-        "features": [
-          "Tutto in Gratuito",
-          "Generazione di testo 2× più lungo",
-          "Chiamata vocale: Personaggi personalizzati"
-        ]
+        "creditsWithPromo": "{numCredits} crediti"
       },
       "pro": {
         "name": "Pro",
-        "description": "Per esigenze creative più grandi e contenuti più audaci.",
         "creditsWithAudio": "{numCredits} crediti (~125 minuti di audio)",
-        "creditsWithPromo": "{numCredits} crediti",
-        "features": [
-          "Tutto in Gratuito",
-          "Chiamata vocale: Personaggi personalizzati"
-        ]
+        "creditsWithPromo": "{numCredits} crediti"
       }
     },
     "subscriptionScheduledToCancel": {

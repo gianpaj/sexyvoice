@@ -2,6 +2,7 @@ import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
   AudioLines,
+  Gift,
   Globe2,
   Mic2,
   PhoneCall,
@@ -356,9 +357,20 @@ export default async function LandingPage(props: {
             </div>
 
             <div className="flex flex-col">
-              <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
+              <h2 className="mx-auto mb-3 text-pretty font-semibold text-2xl">
                 {messages.credits.pricingPlan}
               </h2>
+              <Button
+                asChild
+                className="mb-2 min-w-44 self-center rounded-full border-[#3a5e98] bg-[#14284b] font-semibold text-[#e6efff] shadow-none hover:border-[#5479b2] hover:bg-[#1a365f] hover:text-white focus-visible:ring-blue-300"
+                size="lg"
+                variant="outline"
+              >
+                <Link href="/signup" prefetch={false}>
+                  <Gift aria-hidden />
+                  {messages.credits.plans.startFree}
+                </Link>
+              </Button>
               <PricingTable className="py-4 pb-16 xl:px-10" lang={lang} />
             </div>
 

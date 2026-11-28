@@ -395,7 +395,7 @@
       "pricePer1kCredits": "{price} per 1k credits",
       "savePer1kCredits": "(save {amount}/1k)",
       "popular": "Most Popular",
-      "startFree": "Start for Free",
+      "startFree": "Start free",
       "buyCredits": "Buy credits",
       "subscribe": "Subscribe",
       "x_credits": "{numCredits} credits",
@@ -412,33 +412,24 @@
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
+      "paidFeatures": {
+        "title": "Included in every paid plan",
+        "customCharacters": "Custom characters for voice calls",
+        "longerText": "Up to 2× as much text per speech generation",
+        "apiAccess": "API access"
+      },
       "starter": {
-        "name": "Starter",
-        "description": "For casual users exploring AI audio.",
-        "features": [
-          "Everything in Free",
-          "2× longer text generation",
-          "API Access"
-        ]
+        "name": "Starter"
       },
       "standard": {
         "name": "Standard",
-        "description": "For hobbyists creating projects with AI audio and custom voices.",
         "creditsWithAudio": "{numCredits} credits (~11 min of audio)",
-        "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Free",
-          "2× longer text generation",
-          "Voice Call: Custom Characters",
-          "API Access"
-        ]
+        "creditsWithPromo": "{numCredits} credits"
       },
       "pro": {
         "name": "Pro",
-        "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
-        "creditsWithPromo": "{numCredits} credits",
-        "features": ["Everything in Standard, just cheaper"]
+        "creditsWithPromo": "{numCredits} credits"
       }
     },
     "subscriptionScheduledToCancel": {

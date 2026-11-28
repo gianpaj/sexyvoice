@@ -412,35 +412,24 @@
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
         ]
       },
+      "paidFeatures": {
+        "title": "In allen kostenpflichtigen Tarifen enthalten",
+        "customCharacters": "Eigene Charaktere für Sprachanrufe",
+        "longerText": "Bis zu doppelt so viel Text pro Sprachgenerierung",
+        "apiAccess": "API-Zugriff"
+      },
       "starter": {
-        "name": "Starter",
-        "description": "Für Gelegenheitsnutzer, die KI-Audio erkunden.",
-        "features": [
-          "Alles im kostenlosen Plan",
-          "2× längere Textgenerierung",
-          "API-Zugang"
-        ]
+        "name": "Starter"
       },
       "standard": {
         "name": "Standard",
-        "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
         "creditsWithAudio": "{numCredits} Credits (~11 Min. Audio)",
-        "creditsWithPromo": "{numCredits} Credits",
-        "features": [
-          "Alles im kostenlosen Plan, plus",
-          "2× längere Textgenerierung",
-          "Sprachanruf: Benutzerdefinierte Charaktere"
-        ]
+        "creditsWithPromo": "{numCredits} Credits"
       },
       "pro": {
         "name": "Pro",
-        "description": "Für größere kreative Bedürfnisse und mutigere Inhalte.",
         "creditsWithAudio": "{numCredits} Credits (~125 Min. Audio)",
-        "creditsWithPromo": "{numCredits} Credits",
-        "features": [
-          "Alles im kostenlosen Plan",
-          "Sprachanruf: Benutzerdefinierte Charaktere"
-        ]
+        "creditsWithPromo": "{numCredits} Credits"
       }
     },
     "subscriptionScheduledToCancel": {

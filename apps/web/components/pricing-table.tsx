@@ -68,8 +68,6 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: topupPackages.starter.baseCreditsLocale,
       }),
-      description: pPlans.starter.description,
-      features: pPlans.starter.features,
       id: 'starter',
       name: pPlans.starter.name,
       price: topupPackages.starter.dollarAmount,
@@ -86,8 +84,6 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: topupPackages.standard.baseCreditsLocale,
       }),
-      description: pPlans.standard.description,
-      features: pPlans.standard.features,
       id: 'standard',
       isPopular: true,
       name: pPlans.standard.name,
@@ -111,8 +107,6 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: topupPackages.pro.baseCreditsLocale,
       }),
-      description: pPlans.pro.description,
-      features: pPlans.pro.features,
       id: 'pro',
       name: pPlans.pro.name,
       price: topupPackages.pro.dollarAmount,
@@ -136,17 +130,11 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: subscriptionPackages.starter.baseCreditsLocale,
       }),
-      description: pPlans.starter.description,
-      features: pPlans.starter.features,
       id: 'starter',
       name: pPlans.starter.name,
       price: subscriptionPackages.starter.dollarAmount,
       recurringPrice: subscriptionPackages.starter.recurringDollarAmount,
-      pricePer1kCredits: (
-        (subscriptionPackages.starter.dollarAmount /
-          subscriptionPackages.starter.baseCredits) *
-        1000
-      ).toFixed(2),
+      pricePer1kCredits: subscriptionPackages.starter.pricePer1kCredits,
       subscriptionBonusCredits: (
         subscriptionPackages.starter.credits -
         subscriptionPackages.starter.baseCredits
@@ -158,8 +146,6 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: subscriptionPackages.standard.baseCreditsLocale,
       }),
-      description: pPlans.standard.description,
-      features: pPlans.standard.features,
       id: 'standard',
       isPopular: true,
       name: pPlans.standard.name,
@@ -169,9 +155,7 @@ async function PricingTable({
       saveFromPrevPlanPer1kCredits: hideFreePlan
         ? Number(
             (
-              (subscriptionPackages.starter.dollarAmount /
-                subscriptionPackages.starter.baseCredits) *
-                1000 -
+              Number(subscriptionPackages.starter.pricePer1kCredits) -
               Number(subscriptionPackages.standard.pricePer1kCredits)
             ).toFixed(2),
           )
@@ -187,8 +171,6 @@ async function PricingTable({
       creditsText: plansT('x_credits', {
         numCredits: subscriptionPackages.pro.baseCreditsLocale,
       }),
-      description: pPlans.pro.description,
-      features: pPlans.pro.features,
       id: 'pro',
       name: pPlans.pro.name,
       price: subscriptionPackages.pro.dollarAmount,

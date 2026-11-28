@@ -43,6 +43,9 @@ describe('subscription pricing', () => {
     expect(packages.starter.dollarAmount).toBe(3.75);
     expect(packages.standard.dollarAmount).toBe(7.5);
     expect(packages.pro.dollarAmount).toBe(56.25);
+    expect(packages.starter.pricePer1kCredits).toBe('0.33');
+    expect(packages.standard.pricePer1kCredits).toBe('0.26');
+    expect(packages.pro.pricePer1kCredits).toBe('0.16');
     expect(packages.starter.recurringDollarAmount).toBe(5);
     expect(packages.standard.recurringDollarAmount).toBe(10);
     expect(packages.pro.recurringDollarAmount).toBe(75);

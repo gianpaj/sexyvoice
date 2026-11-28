@@ -395,7 +395,7 @@
       "pricePer1kCredits": "{price} por 1.000 créditos",
       "savePer1kCredits": "(ahorra {amount}/1.000)",
       "popular": "Más Popular",
-      "startFree": "Comenzar Gratis",
+      "startFree": "Comenzar gratis",
       "buyCredits": "Comprar créditos",
       "subscribe": "Suscribirse",
       "x_credits": "{numCredits} créditos",
@@ -412,35 +412,24 @@
           "Clona tu voz con tan solo 10 segundos de audio"
         ]
       },
+      "paidFeatures": {
+        "title": "Incluido en todos los planes de pago",
+        "customCharacters": "Personajes personalizados para llamadas de voz",
+        "longerText": "Hasta el doble de texto por generación de voz",
+        "apiAccess": "Acceso a la API"
+      },
       "starter": {
-        "name": "Inicial",
-        "description": "Para usuarios casuales que exploran el audio de IA.",
-        "features": [
-          "Todo lo incluido en el plan Gratis",
-          "Generación de texto 2× más largo",
-          "Acceso a la API"
-        ]
+        "name": "Inicial"
       },
       "standard": {
         "name": "Standard",
-        "description": "Para aficionados que crean proyectos con audio de IA y voces personalizadas.",
         "creditsWithAudio": "{numCredits} créditos (~11 min de audio)",
-        "creditsWithPromo": "{numCredits} créditos",
-        "features": [
-          "Todo lo incluido en el plan Gratis",
-          "Generación de texto 2× más largo",
-          "Llamada de voz: Personajes personalizados"
-        ]
+        "creditsWithPromo": "{numCredits} créditos"
       },
       "pro": {
         "name": "Pro",
-        "description": "Para necesidades creativas más grandes y contenido más atrevido.",
         "creditsWithAudio": "{numCredits} créditos (~125 min de audio)",
-        "creditsWithPromo": "{numCredits} créditos",
-        "features": [
-          "Todo lo incluido en el plan Gratis",
-          "Llamada de voz: Personajes personalizados"
-        ]
+        "creditsWithPromo": "{numCredits} créditos"
       }
     },
     "subscriptionScheduledToCancel": {

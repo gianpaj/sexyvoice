@@ -174,6 +174,9 @@ export const getSubscriptionPackages = (
         topup.starter.dollarAmount * firstMonthDiscountMultiplier,
       ),
       priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
+      get pricePer1kCredits() {
+        return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
+      },
       promoBonus: topup.starter.promoBonus,
       recurringDollarAmount: topup.starter.dollarAmount,
       get subscriptionBonus() {
