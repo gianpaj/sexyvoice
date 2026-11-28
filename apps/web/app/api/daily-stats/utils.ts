@@ -88,6 +88,10 @@ export function formatPurchaseSummary(
   return `${formatDollarAmount(total)} = ${components.join(' + ')}; ${statuses.join(' + ')}`;
 }
 
+export const isFreeUserCall = (
+  call: Pick<Tables<'call_sessions'>, 'free_call'>,
+) => call.free_call === true;
+
 // Matches the admin dashboard's completed-call metric.
 export function isCompletedUserCall(
   call: Pick<Tables<'call_sessions'>, 'status' | 'duration_seconds'>,
@@ -124,6 +128,11 @@ export function formatCompactNumber(num: number): string {
   }
   return num.toLocaleString();
 }
+
+/** UTC days before yesterday that the report's daily averages cover. */
+export const ROLLING_WINDOW_DAYS = 14;
+/** Complete UTC days the charts Mini App shows, up to yesterday. */
+export const CHART_DAYS = 30;
 
 export function startOfDay(date: Date): Date {
   return new Date(
