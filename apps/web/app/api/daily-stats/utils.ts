@@ -88,6 +88,10 @@ export function formatPurchaseSummary(
   return `${formatDollarAmount(total)} = ${components.join(' + ')}; ${statuses.join(' + ')}`;
 }
 
+export const isFreeUserCall = (
+  call: Pick<Tables<'call_sessions'>, 'free_call'>,
+) => call.free_call === true;
+
 // Matches the admin dashboard's completed-call metric.
 export function isCompletedUserCall(
   call: Pick<Tables<'call_sessions'>, 'status' | 'duration_seconds'>,

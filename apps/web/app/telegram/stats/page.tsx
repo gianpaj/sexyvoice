@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  Cell,
+  ReferenceLine,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import {
   baselineAverage,
@@ -23,9 +31,12 @@ interface ChartSpec {
   /** Whether the report's average for this metric includes yesterday. */
   baselineIncludesYesterday: boolean;
   format: (value: number) => string;
+  heightClassName?: string;
   /** Stacked bottom to top. */
   series: { color: string; key: Metric; label: string }[];
   title: string;
+  tooltip?: (props: TooltipContentProps) => React.ReactNode;
+  totalKey?: Metric;
 }
 
 const formatNumber = (value: number) =>
@@ -33,6 +44,23 @@ const formatNumber = (value: number) =>
 
 const formatUsd = (value: number) =>
   `$${value.toLocaleString('en', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+
+function CallMinutesTooltip({ active, label, payload }: TooltipContentProps) {
+  return (
+    <ChartTooltipContent
+      active={active}
+      label={label}
+      payload={payload.map((item) => ({
+        ...item,
+        value:
+          typeof item.value === 'number' ? formatNumber(item.value) : undefined,
+      }))}
+    />
+  );
+}
+
+const freeUsersSeries = { color: 'var(--chart-1)', label: 'Free users' };
+const payingUsersSeries = { color: 'var(--chart-2)', label: 'Paying users' };
 
 const CHARTS: ChartSpec[] = [
   {
@@ -44,14 +72,24 @@ const CHARTS: ChartSpec[] = [
   {
     baselineIncludesYesterday: false,
     format: formatNumber,
-    series: [{ color: 'var(--chart-1)', key: 'calls', label: 'Calls' }],
+    heightClassName: 'h-51',
+    series: [
+      { ...freeUsersSeries, key: 'freeCalls' },
+      { ...payingUsersSeries, key: 'paidCalls' },
+    ],
     title: 'Calls',
   },
   {
     baselineIncludesYesterday: false,
     format: (value) => `${formatNumber(value)} min`,
-    series: [{ color: 'var(--chart-1)', key: 'callMinutes', label: 'Minutes' }],
+    heightClassName: 'h-51',
+    series: [
+      { ...freeUsersSeries, key: 'freeCallMinutes' },
+      { ...payingUsersSeries, key: 'paidCallMinutes' },
+    ],
     title: 'Call minutes',
+    tooltip: CallMinutesTooltip,
+    totalKey: 'callMinutes',
   },
   {
     baselineIncludesYesterday: true,
@@ -90,7 +128,9 @@ function DailyChart({
   spec: ChartSpec;
 }) {
   const total = (day: DailyChartRow) =>
-    spec.series.reduce((sum, { key }) => sum + day[key], 0);
+    spec.totalKey
+      ? day[spec.totalKey]
+      : spec.series.reduce((sum, { key }) => sum + day[key], 0);
   const yesterday = days.at(-1);
   const average = baselineAverage(
     days.map(total),
@@ -108,7 +148,10 @@ function DailyChart({
         Yesterday {spec.format(yesterday ? total(yesterday) : 0)} ·{' '}
         {baselineDays}d avg {spec.format(average)}
       </p>
-      <ChartContainer className="mt-2 aspect-auto h-44" config={config}>
+      <ChartContainer
+        className={`mt-2 aspect-auto ${spec.heightClassName ?? 'h-44'}`}
+        config={config}
+      >
         <BarChart data={days} margin={{ left: -16, right: 4 }}>
           <XAxis
             axisLine={false}
@@ -118,7 +161,10 @@ function DailyChart({
             tickLine={false}
           />
           <YAxis axisLine={false} tickLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+          <ChartTooltip
+            content={spec.tooltip ?? <ChartTooltipContent />}
+            cursor={false}
+          />
           {spec.series.length > 1 && (
             <ChartLegend content={<ChartLegendContent />} />
           )}

@@ -6,6 +6,7 @@ import {
   formatMinutes,
   formatTrend,
   isCompletedUserCall,
+  isFreeUserCall,
   subtractDays,
 } from './utils';
 
@@ -137,8 +138,8 @@ export function formatCallsSection({
     matches: (call: Call) => boolean,
     averageTrend: boolean,
   ][] = [
-    ['Free users', (call) => call.free_call === true, true],
-    ['Paying users', (call) => call.free_call !== true, true],
+    ['Free users', isFreeUserCall, true],
+    ['Paying users', (call) => !isFreeUserCall(call), true],
     ['Predefined characters', isPublic, false],
     [
       'Custom, Grok voice',

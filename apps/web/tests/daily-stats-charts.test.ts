@@ -44,8 +44,26 @@ describe('buildDailyChartRows', () => {
           { created_at: null, model: 'gpro' },
         ],
         calls: [
-          { duration_seconds: 90, started_at: '2026-09-09T23:59:59+00:00' },
-          { duration_seconds: 30, started_at: '2026-09-11T00:00:00+00:00' },
+          {
+            duration_seconds: 90,
+            free_call: true,
+            started_at: '2026-09-09T23:59:59+00:00',
+          },
+          {
+            duration_seconds: 31,
+            free_call: false,
+            started_at: '2026-09-10T00:30:00+01:00',
+          },
+          {
+            duration_seconds: 0,
+            free_call: false,
+            started_at: '2026-09-09T18:00:00+00:00',
+          },
+          {
+            duration_seconds: 30,
+            free_call: null,
+            started_at: '2026-09-11T00:00:00+00:00',
+          },
         ],
         creditTransactions: [
           {
@@ -70,10 +88,14 @@ describe('buildDailyChartRows', () => {
     expect(rows).toEqual([
       {
         audio: 1,
-        callMinutes: 1.5,
-        calls: 1,
+        callMinutes: 2,
+        calls: 3,
         clonedAudio: 1,
         date: '2026-09-09',
+        freeCallMinutes: 1.5,
+        freeCalls: 1,
+        paidCallMinutes: 31 / 60,
+        paidCalls: 2,
         profiles: 0,
         revenueUsd: 0,
       },
@@ -83,6 +105,10 @@ describe('buildDailyChartRows', () => {
         calls: 0,
         clonedAudio: 0,
         date: '2026-09-10',
+        freeCallMinutes: 0,
+        freeCalls: 0,
+        paidCallMinutes: 0,
+        paidCalls: 0,
         profiles: 1,
         revenueUsd: 0,
       },
@@ -92,6 +118,10 @@ describe('buildDailyChartRows', () => {
         calls: 1,
         clonedAudio: 0,
         date: '2026-09-11',
+        freeCallMinutes: 0,
+        freeCalls: 0,
+        paidCallMinutes: 0.5,
+        paidCalls: 1,
         profiles: 0,
         revenueUsd: 7.5,
       },
