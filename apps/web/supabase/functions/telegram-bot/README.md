@@ -1,20 +1,15 @@
 # Telegram Bot
 
-A Telegram bot for SexyVoice.ai platform that provides real-time statistics and platform information.
-
-## Features
-
-- 📊 Daily platform statistics
-- 🤖 Interactive menu system
-- 📈 Real-time database insights
-- 🎵 Audio files, user profiles, and credit transaction analytics
+A Telegram bot for the SexyVoice.ai platform. It answers basic commands and
+reads no platform data. The daily report comes from the `/api/daily-stats`
+cron, not from this bot.
 
 ## Commands
 
 - `/start` - Welcome message
 - `/ping` - Test bot responsiveness
-- `/stats` - Get daily platform statistics
-- `/menu` - Show interactive menu with callback options
+- `/menu` - Show the interactive menu (Help and About)
+- `/help` - List the commands
 
 ## Setup
 
@@ -25,17 +20,7 @@ The following environment variables are required:
 ```bash
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 FUNCTION_SECRET=your_webhook_secret_here
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_SECRET_KEYS='{"default":"sb_secret_xxx"}'
 ```
-
-Supabase-hosted Edge Functions receive `SUPABASE_URL` and
-`SUPABASE_SECRET_KEYS` by default. `SUPABASE_SECRET_KEYS` is a JSON dictionary,
-and this function uses its `default` key.
-
-For local development or Deno Deploy, set `SUPABASE_SECRET_KEYS` to the same
-JSON shape shown above. The `default` value must be a non-empty Supabase secret
-key.
 
 ### Deployment
 
@@ -58,15 +43,5 @@ This sets the webhook URL that Telegram will send updates to when users interact
 ## Architecture
 
 - **Framework**: Grammy (Telegram Bot framework for Deno)
-- **Database**: Supabase with admin client access
 - **Runtime**: Deno Deploy
 - **Authentication**: Webhook secret validation
-
-## Statistics
-
-The `/stats` command provides:
-- Audio files generated (yesterday vs previous day comparison)
-- New user profiles created
-- Credit transactions and revenue
-- Weekly totals and averages
-- Voice cloning usage statistics

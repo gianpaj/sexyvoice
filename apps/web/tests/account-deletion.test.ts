@@ -1,9 +1,10 @@
 import { captureException, logger } from '@sentry/nextjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleDeleteAccountAction } from '@/app/actions';
 import { deleteInworldVoice } from '@/lib/clone/inworld';
 import { deleteMistralVoice } from '@/lib/clone/mistral';
+import { evictAudioUrlCache } from '@/lib/redis/audio-url-cache';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
   AccountBillingError,
@@ -22,6 +23,9 @@ import { encodedRedirect } from '@/lib/utils';
 
 vi.mock('@/lib/storage/upload', () => ({
   deleteFileFromR2: vi.fn(),
+}));
+vi.mock('@/lib/redis/audio-url-cache', () => ({
+  evictAudioUrlCache: vi.fn(),
 }));
 vi.mock('@/lib/clone/inworld', () => ({ deleteInworldVoice: vi.fn() }));
 vi.mock('@/lib/clone/mistral', () => ({ deleteMistralVoice: vi.fn() }));
@@ -68,13 +72,26 @@ function createReadQuery(result: object) {
   return query;
 }
 
+function createUpdateQuery(result: object) {
+  const query = {
+    eq: vi.fn(),
+    select: vi.fn().mockResolvedValue(result),
+    update: vi.fn(),
+  };
+  query.eq.mockReturnValue(query);
+  query.update.mockReturnValue(query);
+  return query;
+}
+
 function setupAccountDeletion({
+  audioFiles = [{ id: 'audio-1', storage_key: 'audio/one.mp3', usage: null }],
   usageResult = { count: 3, error: null },
   memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
   transcriptResult = { data: [{ id: 'call-1' }], error: null },
   apiKeysResult = { data: [{ id: 'key-1' }, { id: 'key-2' }], error: null },
   references = [],
 }: {
+  audioFiles?: { id: string; storage_key: string; usage: object | null }[];
   usageResult?: { count: number | null; error: Error | null };
   memoryResult?: { data: { id: number }[] | null; error: Error | null };
   transcriptResult?: { data: { id: string }[] | null; error: Error | null };
@@ -86,10 +103,7 @@ function setupAccountDeletion({
     voice_id?: string;
   }[];
 } = {}) {
-  const audioRead = createReadQuery({
-    data: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
-    error: null,
-  });
+  const audioRead = createReadQuery({ data: audioFiles, error: null });
   const charactersRead = createReadQuery({ data: [], error: null });
   const apiKeysUpdate = {
     update: vi.fn().mockReturnThis(),
@@ -134,16 +148,10 @@ function setupAccountDeletion({
     }),
   };
 
-  const audioUpdate = {
-    eq: vi.fn(),
-    select: vi.fn().mockResolvedValue({
-      data: [{ id: 'audio-1' }],
-      error: null,
-    }),
-    update: vi.fn(),
-  };
-  audioUpdate.eq.mockReturnValue(audioUpdate);
-  audioUpdate.update.mockReturnValue(audioUpdate);
+  const audioUpdate = createUpdateQuery({
+    data: audioFiles.map(({ id }) => ({ id })),
+    error: null,
+  });
   const adminSupabase = {
     from: vi.fn((table: string) =>
       table === 'call_sessions' ? transcriptUpdate : audioUpdate,
@@ -183,6 +191,10 @@ describe('account deletion', () => {
       error: null,
     } as never);
     vi.mocked(hasOngoingSubscription).mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('blocks subscribers before any account or file changes', async () => {
@@ -381,6 +393,70 @@ describe('account deletion', () => {
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
+  it('deletes API audio from its bucket and evicts only dashboard cache keys', async () => {
+    setupAccountDeletion({
+      audioFiles: [
+        {
+          id: 'audio-1',
+          storage_key: 'generated-audio/tts.mp3',
+          usage: { sourceType: 'tts' },
+        },
+        {
+          id: 'audio-2',
+          storage_key: 'generated-audio/eve-1.wav',
+          usage: { sourceType: 'api_tts' },
+        },
+        { id: 'audio-3', storage_key: 'clone/output.wav', usage: null },
+      ],
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(vi.mocked(deleteFileFromR2).mock.calls).toEqual([
+      ['generated-audio/tts.mp3'],
+      ['generated-audio/eve-1.wav', 'test-speech-bucket'],
+      ['clone/output.wav'],
+    ]);
+    expect(evictAudioUrlCache).toHaveBeenCalledExactlyOnceWith(
+      ['generated-audio/tts.mp3', 'clone/output.wav'],
+      { email: 'user@example.com', id: 'user-1' },
+    );
+    expect(
+      Math.max(...vi.mocked(deleteFileFromR2).mock.invocationCallOrder),
+    ).toBeLessThan(vi.mocked(evictAudioUrlCache).mock.invocationCallOrder[0]);
+  });
+
+  it('reports API audio it cannot delete without the API bucket name', async () => {
+    vi.stubEnv('R2_SPEECH_API_BUCKET_NAME', undefined);
+    setupAccountDeletion({
+      audioFiles: [
+        { id: 'audio-1', storage_key: 'audio/one.mp3', usage: null },
+        {
+          id: 'audio-2',
+          storage_key: 'generated-audio/eve-1.wav',
+          usage: { sourceType: 'api_tts' },
+        },
+      ],
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(deleteFileFromR2).toHaveBeenCalledExactlyOnceWith('audio/one.mp3');
+    expect(captureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('R2_SPEECH_API_BUCKET_NAME'),
+      }),
+      expect.objectContaining({
+        extra: { file: expect.objectContaining({ id: 'audio-2' }) },
+      }),
+    );
+    expect(evictAudioUrlCache).toHaveBeenCalledWith(
+      ['audio/one.mp3'],
+      expect.any(Object),
+    );
+    expect(encodedRedirect).toHaveBeenCalledWith('success', '/en/', '');
+  });
+
   it('erases all memory scopes for only the authenticated user', async () => {
     const { sessionSupabase, memoryDelete } = setupAccountDeletion();
 
@@ -461,6 +537,8 @@ describe('account deletion', () => {
       'User deletion failed',
     );
 
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+    expect(evictAudioUrlCache).not.toHaveBeenCalled();
     expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
     expect(encodedRedirect).not.toHaveBeenCalled();
     expect(releaseAccountBillingOperation).toHaveBeenCalled();

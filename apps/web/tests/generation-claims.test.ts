@@ -250,6 +250,10 @@ describe('Generation route claims authentication', () => {
       } else {
         expect(body.error).toBe('User not found');
       }
+      if (name === 'call-token') {
+        // Request headers carry auth cookies, so the log line has no context.
+        expect(logger.error).toHaveBeenCalledExactlyOnceWith('User not found');
+      }
       expect(mocks.getClaims).toHaveBeenCalledOnce();
       expect(mocks.getUser).not.toHaveBeenCalled();
       for (const query of [

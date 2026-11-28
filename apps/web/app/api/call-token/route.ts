@@ -66,9 +66,8 @@ export async function POST(request: Request) {
     const claims = await getVerifiedClaims(supabase);
 
     if (!claims?.sub) {
-      logger.error('User not found', {
-        headers: Object.fromEntries(request.headers.entries()),
-      });
+      // Request headers carry the Supabase auth cookies; never log them.
+      logger.error('User not found');
       return APIErrorResponse('User not found', 401);
     }
 

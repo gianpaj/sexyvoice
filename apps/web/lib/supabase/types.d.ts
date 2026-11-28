@@ -887,6 +887,18 @@ declare type Database = {
           total_credits: number;
         }[];
       };
+      grant_purchased_credits: {
+        Args: {
+          p_amount: number;
+          p_description: string;
+          p_metadata: Json;
+          p_reference_id: string;
+          p_subscription_id?: string;
+          p_type: Database['public']['Enums']['credit_transaction_type'];
+          p_user_id: string;
+        };
+        Returns: boolean;
+      };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
