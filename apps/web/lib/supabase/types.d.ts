@@ -35,6 +35,21 @@ declare type Database = {
   };
   public: {
     Tables: {
+      account_conversation_erasures: {
+        Row: {
+          blocked_until: string;
+          user_id: string;
+        };
+        Insert: {
+          blocked_until?: string;
+          user_id: string;
+        };
+        Update: {
+          blocked_until?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       agent_memories: {
         Row: {
           character_id: string;
@@ -372,6 +387,7 @@ declare type Database = {
       call_sessions: {
         Row: {
           billed_minutes: number;
+          conversation_id: string | null;
           created_at: string | null;
           credits_used: number;
           duration_seconds: number;
@@ -380,6 +396,7 @@ declare type Database = {
           free_call: boolean | null;
           id: string;
           last_metered_at: string;
+          livekit_room_name: string | null;
           max_output_tokens: number | null;
           metadata: Json | null;
           model: string;
@@ -392,6 +409,7 @@ declare type Database = {
         };
         Insert: {
           billed_minutes?: number;
+          conversation_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
@@ -400,6 +418,7 @@ declare type Database = {
           free_call?: boolean | null;
           id?: string;
           last_metered_at?: string;
+          livekit_room_name?: string | null;
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model: string;
@@ -412,6 +431,7 @@ declare type Database = {
         };
         Update: {
           billed_minutes?: number;
+          conversation_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
@@ -420,6 +440,7 @@ declare type Database = {
           free_call?: boolean | null;
           id?: string;
           last_metered_at?: string;
+          livekit_room_name?: string | null;
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model?: string;
@@ -431,6 +452,13 @@ declare type Database = {
           voice_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'call_sessions_conversation_owner_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
           {
             foreignKeyName: 'call_sessions_voice_id_fkey';
             columns: ['voice_id'];
@@ -556,6 +584,116 @@ declare type Database = {
             columns: ['old_api_key_id'];
             isOneToOne: false;
             referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      conversation_messages: {
+        Row: {
+          call_session_id: string | null;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          parts: Json;
+          position: number;
+          revision: number;
+          role: string;
+          source: string;
+          source_item_id: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          call_session_id?: string | null;
+          conversation_id: string;
+          created_at?: string;
+          id: string;
+          parts?: Json;
+          position: number;
+          revision?: number;
+          role: string;
+          source: string;
+          source_item_id?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          call_session_id?: string | null;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          parts?: Json;
+          position?: number;
+          revision?: number;
+          role?: string;
+          source?: string;
+          source_item_id?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_messages_call_fkey';
+            columns: ['call_session_id', 'conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'call_sessions';
+            referencedColumns: ['id', 'conversation_id'];
+          },
+          {
+            foreignKeyName: 'conversation_messages_conversation_id_fkey';
+            columns: ['conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          character_id: string | null;
+          character_name: string;
+          created_at: string;
+          id: string;
+          language: string;
+          revision: number;
+          scene_id: string | null;
+          scene_instructions: string;
+          updated_at: string;
+          user_id: string;
+          uses_default_character: boolean;
+        };
+        Insert: {
+          character_id?: string | null;
+          character_name: string;
+          created_at?: string;
+          id?: string;
+          language: string;
+          revision?: number;
+          scene_id?: string | null;
+          scene_instructions?: string;
+          updated_at?: string;
+          user_id: string;
+          uses_default_character?: boolean;
+        };
+        Update: {
+          character_id?: string | null;
+          character_name?: string;
+          created_at?: string;
+          id?: string;
+          language?: string;
+          revision?: number;
+          scene_id?: string | null;
+          scene_instructions?: string;
+          updated_at?: string;
+          user_id?: string;
+          uses_default_character?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_character_id_fkey';
+            columns: ['character_id'];
+            isOneToOne: false;
+            referencedRelation: 'characters';
             referencedColumns: ['id'];
           },
         ];
@@ -774,6 +912,128 @@ declare type Database = {
           },
         ];
       };
+      voice_chat_rates: {
+        Row: {
+          cached_credits_per_million: number;
+          cached_usd_per_million: number;
+          effective_at: string;
+          input_credits_per_million: number;
+          input_token_limit: number;
+          input_usd_per_million: number;
+          model: string;
+          output_credits_per_million: number;
+          output_token_limit: number;
+          output_usd_per_million: number;
+          version: string;
+        };
+        Insert: {
+          cached_credits_per_million: number;
+          cached_usd_per_million: number;
+          effective_at: string;
+          input_credits_per_million: number;
+          input_token_limit: number;
+          input_usd_per_million: number;
+          model: string;
+          output_credits_per_million: number;
+          output_token_limit: number;
+          output_usd_per_million: number;
+          version: string;
+        };
+        Update: {
+          cached_credits_per_million?: number;
+          cached_usd_per_million?: number;
+          effective_at?: string;
+          input_credits_per_million?: number;
+          input_token_limit?: number;
+          input_usd_per_million?: number;
+          model?: string;
+          output_credits_per_million?: number;
+          output_token_limit?: number;
+          output_usd_per_million?: number;
+          version?: string;
+        };
+        Relationships: [];
+      };
+      voice_chat_runs: {
+        Row: {
+          assistant_position: number;
+          conversation_id: string;
+          expires_at: string;
+          id: string;
+          rate_version: string | null;
+          reserved_credits: number;
+          status: string;
+          usage: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          assistant_position: number;
+          conversation_id: string;
+          expires_at: string;
+          id: string;
+          rate_version?: string | null;
+          reserved_credits?: number;
+          status?: string;
+          usage?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          assistant_position?: number;
+          conversation_id?: string;
+          expires_at?: string;
+          id?: string;
+          rate_version?: string | null;
+          reserved_credits?: number;
+          status?: string;
+          usage?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_chat_runs_conversation_id_user_id_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'voice_chat_runs_rate_version_fkey';
+            columns: ['rate_version'];
+            isOneToOne: false;
+            referencedRelation: 'voice_chat_rates';
+            referencedColumns: ['version'];
+          },
+        ];
+      };
+      voice_conversation_leases: {
+        Row: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          expires_at: string;
+          room_name: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          expires_at?: string;
+          room_name?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_conversation_leases_conversation_id_user_id_fkey';
+            columns: ['conversation_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
+      };
       voices: {
         Row: {
           created_at: string | null;
@@ -871,6 +1131,22 @@ declare type Database = {
       };
     };
     Functions: {
+      append_voice_call_message: {
+        Args: {
+          p_conversation_id: string;
+          p_interrupted: boolean;
+          p_item_id: string;
+          p_role: string;
+          p_room_name: string;
+          p_text: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
+      conversation_text_parts_valid: {
+        Args: { parts: Json };
+        Returns: boolean;
+      };
       decrement_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
@@ -879,6 +1155,11 @@ declare type Database = {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: number;
       };
+      erase_account_conversations: {
+        Args: { p_user_id: string };
+        Returns: number;
+      };
+      expire_voice_chat_runs: { Args: never; Returns: number };
       get_usage_summary: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };
         Returns: {
@@ -887,6 +1168,7 @@ declare type Database = {
           total_credits: number;
         }[];
       };
+      has_active_voice_call: { Args: { p_user_id: string }; Returns: boolean };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
@@ -909,12 +1191,75 @@ declare type Database = {
           vector_rank: number;
         }[];
       };
+      open_voice_call: {
+        Args: {
+          p_conversation_id: string;
+          p_resume: boolean;
+          p_room_name: string;
+          p_user_id: string;
+        };
+        Returns: {
+          character_id: string | null;
+          character_name: string;
+          created_at: string;
+          id: string;
+          language: string;
+          revision: number;
+          scene_id: string | null;
+          scene_instructions: string;
+          updated_at: string;
+          user_id: string;
+          uses_default_character: boolean;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'conversations';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       prune_agent_memories_over_cap: {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
       };
+      read_conversation_context: {
+        Args: { p_conversation_id: string; p_user_id: string };
+        Returns: {
+          content: string;
+          id: string;
+          interrupted: boolean;
+          role: string;
+        }[];
+      };
+      read_voice_chat: {
+        Args: { p_run_id: string; p_user_id: string };
+        Returns: {
+          reply: string;
+          status: string;
+          thread_id: string;
+        }[];
+      };
       restore_inactive_user: {
         Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
+        Returns: boolean;
+      };
+      save_voice_chat_reply: {
+        Args: {
+          p_run_id: string;
+          p_status: string;
+          p_text: string;
+          p_usage: Json;
+          p_user_id: string;
+        };
+        Returns: boolean;
+      };
+      start_voice_chat: {
+        Args: {
+          p_conversation_id: string;
+          p_run_id: string;
+          p_text: string;
+          p_user_id: string;
+        };
         Returns: boolean;
       };
       update_api_key_last_used: {
@@ -931,8 +1276,9 @@ declare type Database = {
         | 'live_call'
         | 'audio_processing'
         | 'api_tts'
-        | 'api_voice_cloning';
-      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation';
+        | 'api_voice_cloning'
+        | 'text_chat';
+      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation' | 'tokens';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1075,8 +1421,9 @@ declare const Constants = {
         'audio_processing',
         'api_tts',
         'api_voice_cloning',
+        'text_chat',
       ],
-      usage_unit_type: ['chars', 'mins', 'secs', 'operation'],
+      usage_unit_type: ['chars', 'mins', 'secs', 'operation', 'tokens'],
     },
   },
 } as const;

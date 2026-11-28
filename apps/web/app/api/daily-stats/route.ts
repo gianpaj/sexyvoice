@@ -1042,6 +1042,7 @@ export async function GET(request: NextRequest) {
     api_voice_cloning: 'API Cloning',
     audio_processing: 'Processing',
     live_call: 'Calls',
+    text_chat: 'Text Chat',
     tts: 'TTS',
     voice_cloning: 'Cloning',
   };

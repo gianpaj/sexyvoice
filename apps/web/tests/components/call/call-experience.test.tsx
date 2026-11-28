@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CallExperience } from '@/components/call/call-experience';
@@ -33,6 +33,10 @@ const toastMock = vi.hoisted(() =>
   }),
 );
 const routerPush = vi.hoisted(() => vi.fn());
+const handOff = vi.hoisted(() => vi.fn());
+vi.mock('@/components/call/voice-chat-room', () => ({
+  prepareCallFromCard: () => ({ discard: vi.fn(), handOff }),
+}));
 const convertAudio = vi.hoisted(() => vi.fn());
 
 vi.mock('@livekit/components-react', () => ({
@@ -149,10 +153,14 @@ let fetchMock: ReturnType<typeof vi.fn>;
 function renderExperience({
   customCharacters = [own],
   isPaidUser = true,
+  openConversation,
   returnFromClone = null,
+  savedVoices = [savedVoice],
 }: {
   customCharacters?: Preset[];
   isPaidUser?: boolean;
+  openConversation?: ComponentProps<typeof CallExperience>['openConversation'];
+  savedVoices?: SavedCallVoice[];
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
@@ -165,8 +173,9 @@ function renderExperience({
         <CallExperience
           callVoices={callVoices}
           isPaidUser={isPaidUser}
+          openConversation={openConversation}
           returnFromClone={returnFromClone}
-          savedVoices={[savedVoice]}
+          savedVoices={savedVoices}
         >
           <p>Footer</p>
         </CallExperience>
@@ -198,6 +207,7 @@ beforeEach(() => {
   toastMock.success.mockClear();
   toastMock.error.mockClear();
   routerPush.mockClear();
+  handOff.mockClear();
   window.scrollTo = vi.fn();
   fetchMock = vi.fn(async (url: string, init: RequestInit) => {
     if (url === '/api/clone-voice') {
@@ -245,6 +255,44 @@ describe('CallExperience picker', () => {
       within(featuredSection).getByRole('button', { name: 'Call Lily' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Footer')).toBeInTheDocument();
+  });
+
+  it('starts a conversation call from an eligible Inworld card', async () => {
+    const openConversation = vi.fn().mockResolvedValue('linked-thread');
+    const clonedCharacter = {
+      ...own,
+      name: 'Inworld companion',
+      sessionConfig: {
+        ...own.sessionConfig,
+        model: ModelId.INWORLD_TTS,
+        audioReferenceId: savedVoice.id,
+      },
+    };
+    renderExperience({
+      customCharacters: [clonedCharacter],
+      openConversation,
+      savedVoices: [{ ...savedVoice, provider: 'inworld' }],
+    });
+    const featuredCall = screen.getByRole('button', { name: 'Call Lily' });
+    const listen = screen.getByRole('button', { name: 'Listen to Lily' });
+    expect(featuredCall.closest('article')).toBe(listen.closest('article'));
+    expect(featuredCall.compareDocumentPosition(listen)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Call Inworld companion' }),
+    );
+    await waitFor(() =>
+      expect(routerPush).toHaveBeenCalledWith(
+        '/dashboard/call?conversation=linked-thread',
+      ),
+    );
+    expect(openConversation).toHaveBeenCalledWith(
+      expect.objectContaining({ characterId: clonedCharacter.id }),
+    );
+    expect(handOff).toHaveBeenCalledExactlyOnceWith('linked-thread');
+    expect(microphone.request).not.toHaveBeenCalled();
+    expect(connection.connect).not.toHaveBeenCalled();
   });
 
   it('offers an upgrade instead of the creator to free users', () => {

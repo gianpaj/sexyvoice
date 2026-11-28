@@ -14,7 +14,8 @@ import {
 import { toast } from 'sonner';
 
 import { defaultSessionConfig } from '@/data/default-config';
-import type { CustomCallDraft } from '@/data/playground-state';
+import { ModelId } from '@/data/models';
+import type { CustomCallDraft, PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { useCallRecording } from '@/hooks/use-call-recording';
@@ -34,11 +35,13 @@ import {
 } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
+import { useRouter } from '@/lib/i18n/navigation';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
+import { prepareCallFromCard } from './voice-chat-room';
 
 // Krisp touches browser-only APIs when it loads.
 const InCallView = dynamic(
@@ -56,6 +59,11 @@ interface CallExperienceProps {
   isPaidUser: boolean;
   /** Credits summary shown above the picker on small screens. */
   mobileCredits?: ReactNode;
+  openConversation?: (selection: {
+    characterId: string;
+    language: PlaygroundState['language'];
+    scene: string | null;
+  }) => Promise<string | null>;
   /**
    * Set when the Clone page links back with `?custom=1&voice=<id>`: open the
    * creator with that saved voice. The page reads the query on the server
@@ -98,6 +106,7 @@ function returnedCloneDraft(
 function CallExperienceScreens({
   callCloneProvider = 'inworld',
   callVoices,
+  openConversation,
   children,
   e2eFixtures,
   isPaidUser,
@@ -106,6 +115,8 @@ function CallExperienceScreens({
   savedVoices: initialSavedVoices,
 }: CallExperienceProps) {
   const t = useTranslations('call');
+  const chat = useTranslations('voiceChat');
+  const router = useRouter();
   const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
   const { connect, shouldConnect } = useConnection();
   const connectionState = useConnectionState();
@@ -129,6 +140,20 @@ function CallExperienceScreens({
     savedVoices.find(({ id }) => id === voiceToDeleteId) ?? null;
 
   const allPresets = helpers.getAllPresets(pgState);
+  const chatCharacterIds =
+    openConversation && isPaidUser
+      ? pgState.customCharacters.flatMap(
+          ({ id, instructions, sessionConfig }) =>
+            sessionConfig.model === ModelId.INWORLD_TTS &&
+            instructions.trim() &&
+            savedVoices.some(
+              ({ id, provider }) =>
+                id === sessionConfig.audioReferenceId && provider === 'inworld',
+            )
+              ? [id]
+              : [],
+        )
+      : [];
   const findPreset = (id: string | null) =>
     allPresets.find((preset) => preset.id === id);
   const canCreate =
@@ -195,9 +220,43 @@ function CallExperienceScreens({
     if (findPreset(presetId)) setPanelOpen(true);
   }, []);
 
+  const openLinkedConversation = async (presetId: string, dial: boolean) => {
+    if (connecting || !openConversation) return;
+    setConnecting(true);
+    player.stop();
+    let prepared: ReturnType<typeof prepareCallFromCard> | undefined;
+    let handedOff = false;
+    try {
+      prepared = dial ? prepareCallFromCard() : undefined;
+      const id = await openConversation({
+        characterId: presetId,
+        language: pgState.language,
+        scene: pgState.sceneInstructions ?? null,
+      });
+      if (!id) {
+        toast.error(chat('chatError'));
+        return;
+      }
+      prepared?.handOff(id);
+      handedOff = true;
+      router.push(`/dashboard/call?conversation=${id}`);
+    } catch {
+      toast.error(chat('chatError'));
+    } finally {
+      if (!handedOff) {
+        prepared?.discard();
+        setConnecting(false);
+      }
+    }
+  };
+
   const startCall = async () => {
     if (connecting) return;
     const presetId = pgState.selectedPresetId;
+    if (presetId && chatCharacterIds.includes(presetId)) {
+      await openLinkedConversation(presetId, false);
+      return;
+    }
     setConnecting(true);
     try {
       if (!(await microphone.request())) {
@@ -223,6 +282,10 @@ function CallExperienceScreens({
   const callCharacter = (presetId: string) => {
     if (connecting || pendingCallId) return;
     selectPreset(presetId);
+    if (chatCharacterIds.includes(presetId)) {
+      openLinkedConversation(presetId, true).catch(() => undefined);
+      return;
+    }
     setPendingCallId(presetId);
   };
   const startPendingCall = useEffectEvent(() => {
@@ -369,6 +432,9 @@ function CallExperienceScreens({
       />
       <CallPanel
         callVoices={callVoices}
+        chatEnabled={Boolean(
+          selected && chatCharacterIds.includes(selected.id),
+        )}
         connecting={connecting}
         isPaidUser={isPaidUser}
         microphone={microphone.status}

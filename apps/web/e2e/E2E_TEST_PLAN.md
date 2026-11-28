@@ -564,3 +564,26 @@ When updating dashboard UI or flows, update the following together:
 - this document if scope or behavior meaningfully changes
 
 Treat this file as the source of truth for **implemented E2E coverage**, not proposed coverage.
+
+## Internal JS call experiment
+
+`/{lang}/dashboard/voice-spike` is gated by `VOICE_CHAT_USER_IDS` in local
+Next.js development. Component tests cover worker selection, startup cancellation,
+streamed transcripts, typed turns, and mute across reconnect.
+
+`voice-chat.live.config.ts` tests the chat-to-call-to-chat flow with real
+providers in Chromium, Firefox, desktop WebKit, and mobile WebKit. It uses an
+authenticated local account. The test drops the first SSE stream, checks that
+both modes remember the same conversation, plays Inworld audio, toggles mute,
+and verifies that the saved thread reloads after hangup. Real Safari devices are
+also required for browser acceptance. See the [worker runbook](../../voice-agent/README.md).
+
+The same live configuration covers the Python-backed Inworld call page. It
+dials from a character card, resumes a chat in a call, toggles the microphone
+while the composer stays focused, and shows the Call summary on hang-up. It
+starts a fresh thread with Call again and checks that the original thread
+can still load its history and send another message.
+
+Physical iOS/Android capture, keyboard/safe-area behavior, bandwidth limits,
+packet loss, background/resume, and deployed 30/60-minute calls are pending.
+Do not treat the local 390px viewport check as those device/network results.

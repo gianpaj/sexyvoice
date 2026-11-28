@@ -16,6 +16,7 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   api_voice_cloning: 'bg-rose-500',
   audio_processing: 'bg-orange-500',
   live_call: 'bg-green-500',
+  text_chat: 'bg-cyan-500',
   tts: 'bg-purple-500',
   voice_cloning: 'bg-blue-500',
 };

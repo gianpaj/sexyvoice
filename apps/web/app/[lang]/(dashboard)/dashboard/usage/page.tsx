@@ -59,6 +59,7 @@ export default async function UsagePage(props: {
     api_voice_cloning: t('summary.byType.api_voice_cloning'),
     audio_processing: t('summary.byType.audio_processing'),
     live_call: t('summary.byType.live_call'),
+    text_chat: t('summary.byType.text_chat'),
     tts: t('summary.byType.tts'),
     voice_cloning: t('summary.byType.voice_cloning'),
   };

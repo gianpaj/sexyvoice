@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
       'tts',
       'voice_cloning',
       'live_call',
+      'text_chat',
       'audio_processing',
       'api_tts',
       'api_voice_cloning',

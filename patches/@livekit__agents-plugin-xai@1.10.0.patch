@@ -1,0 +1,63 @@
+diff --git a/dist/stt.cjs b/dist/stt.cjs
+--- a/dist/stt.cjs
++++ b/dist/stt.cjs
+@@ -131,6 +131,7 @@ class SpeechStream extends import_agents.stt.SpeechStream {
+     let ws;
+     while (!this.input.closed && !this.closed) {
+       const streamURL = new URL(XAI_WEBSOCKET_URL);
++      streamURL.searchParams.set("model", this.#opts.model ?? "grok-voice-transcribe-2.0");
+       streamURL.searchParams.set("encoding", "pcm");
+       streamURL.searchParams.set("sample_rate", String(this.#opts.sampleRate));
+       streamURL.searchParams.set(
+diff --git a/dist/stt.d.cts b/dist/stt.d.cts
+--- a/dist/stt.d.cts
++++ b/dist/stt.d.cts
+@@ -1,6 +1,8 @@
+ import { type APIConnectOptions, type AudioBuffer, stt } from '@livekit/agents';
+ export type STTLanguages = 'ar' | 'cs' | 'da' | 'nl' | 'en' | 'fil' | 'fr' | 'de' | 'hi' | 'id' | 'it' | 'ja' | 'ko' | 'mk' | 'ms' | 'fa' | 'pl' | 'pt' | 'ro' | 'ru' | 'es' | 'sv' | 'th' | 'tr' | 'vi';
+ export interface STTOptions {
++  /** Explicit transcription model sent to xAI. */
++  model?: string;
+     apiKey?: string;
+     interimResults: boolean;
+     sampleRate: number;
+diff --git a/dist/stt.d.ts b/dist/stt.d.ts
+--- a/dist/stt.d.ts
++++ b/dist/stt.d.ts
+@@ -1,6 +1,8 @@
+ import { type APIConnectOptions, type AudioBuffer, stt } from '@livekit/agents';
+ export type STTLanguages = 'ar' | 'cs' | 'da' | 'nl' | 'en' | 'fil' | 'fr' | 'de' | 'hi' | 'id' | 'it' | 'ja' | 'ko' | 'mk' | 'ms' | 'fa' | 'pl' | 'pt' | 'ro' | 'ru' | 'es' | 'sv' | 'th' | 'tr' | 'vi';
+ export interface STTOptions {
++  /** Explicit transcription model sent to xAI. */
++  model?: string;
+     apiKey?: string;
+     interimResults: boolean;
+     sampleRate: number;
+diff --git a/dist/stt.js b/dist/stt.js
+--- a/dist/stt.js
++++ b/dist/stt.js
+@@ -120,6 +120,7 @@ class SpeechStream extends stt.SpeechStream {
+     let ws;
+     while (!this.input.closed && !this.closed) {
+       const streamURL = new URL(XAI_WEBSOCKET_URL);
++      streamURL.searchParams.set("model", this.#opts.model ?? "grok-voice-transcribe-2.0");
+       streamURL.searchParams.set("encoding", "pcm");
+       streamURL.searchParams.set("sample_rate", String(this.#opts.sampleRate));
+       streamURL.searchParams.set(
+diff --git a/src/stt.ts b/src/stt.ts
+--- a/src/stt.ts
++++ b/src/stt.ts
+@@ -57,4 +57,6 @@ export type STTLanguages =
+ export interface STTOptions {
++  /** Explicit transcription model sent to xAI. */
++  model?: string;
+   apiKey?: string;
+   interimResults: boolean;
+   sampleRate: number;
+@@ -209,5 +211,6 @@ export class SpeechStream extends stt.SpeechStream {
+     while (!this.input.closed && !this.closed) {
+       const streamURL = new URL(XAI_WEBSOCKET_URL);
++      streamURL.searchParams.set("model", this.#opts.model ?? "grok-voice-transcribe-2.0");
+       streamURL.searchParams.set('encoding', 'pcm');
+       streamURL.searchParams.set('sample_rate', String(this.#opts.sampleRate));
+       streamURL.searchParams.set(

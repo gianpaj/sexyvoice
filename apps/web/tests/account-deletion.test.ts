@@ -69,12 +69,14 @@ function createReadQuery(result: object) {
 }
 
 function setupAccountDeletion({
+  conversationResult = { data: 2, error: null },
   usageResult = { count: 3, error: null },
   memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
   transcriptResult = { data: [{ id: 'call-1' }], error: null },
   apiKeysResult = { data: [{ id: 'key-1' }, { id: 'key-2' }], error: null },
   references = [],
 }: {
+  conversationResult?: { data: number | null; error: Error | null };
   usageResult?: { count: number | null; error: Error | null };
   memoryResult?: { data: { id: number }[] | null; error: Error | null };
   transcriptResult?: { data: { id: string }[] | null; error: Error | null };
@@ -148,6 +150,7 @@ function setupAccountDeletion({
     from: vi.fn((table: string) =>
       table === 'call_sessions' ? transcriptUpdate : audioUpdate,
     ),
+    rpc: vi.fn().mockResolvedValue(conversationResult),
   };
 
   vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
@@ -430,6 +433,46 @@ describe('account deletion', () => {
       'User deleted',
       expect.objectContaining({ clearedCallTranscripts: 1 }),
     );
+  });
+
+  it('erases only the signed-in account history after the billing check', async () => {
+    const { adminSupabase, sessionSupabase } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(adminSupabase.rpc).toHaveBeenCalledExactlyOnceWith(
+      'erase_account_conversations',
+      { p_user_id: 'user-1' },
+    );
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(adminSupabase.rpc.mock.invocationCallOrder[0]);
+    expect(adminSupabase.rpc.mock.invocationCallOrder[0]).toBeLessThan(
+      sessionSupabase.auth.signOut.mock.invocationCallOrder[0],
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedConversations: 2 }),
+    );
+  });
+
+  it('fails account deletion if erasing conversations fails', async () => {
+    const error = new Error('Conversation cleanup unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      conversationResult: { data: null, error },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(error, {
+      extra: { context: 'conversation_account_cleanup' },
+      user: { id: 'user-1' },
+    });
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
   it('revokes every owned API key without changing immutable usage or credit records', async () => {

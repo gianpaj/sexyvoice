@@ -160,6 +160,18 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `XAI_API_KEY` - Your xAI API key for Grok speech generation and call transcript analysis
      - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
      - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
+   - Internal voice chat
+     - Remote devices need HTTPS and a reachable Supabase API. Set `NEXT_PUBLIC_SITE_URL` to the trusted dev origin and `NEXT_PUBLIC_SUPABASE_URL` to the reachable local API; see [Tailscale setup](apps/voice-agent/README.md#access-from-another-device).
+     - `VOICE_CHAT_USER_IDS` - Optional comma-separated Supabase test user IDs; empty disables the preview/development experiments. See the [JS browser call](apps/voice-agent/README.md) and [Next.js probe](apps/web/lib/voice-websocket/README.md).
+     - `VOICE_CHAT_LOCAL_SUPABASE_URL` - Loopback Supabase API for chat persistence when the browser uses a Tailnet proxy. Next.js also needs `XAI_API_KEY` for chat.
+     - `VOICE_CHAT_WORKER_ENABLED` - Worker only; set to `true` in `apps/voice-agent/.env.local` for the internal JS call. The worker also needs the LiveKit, xAI, and Inworld credentials from its `.env.example`; it runs separately from Next.js.
+     - Configure the worker with isolated local Supabase credentials and an optional OpenAI key for [hybrid memory recall](apps/voice-agent/README.md#supabase-memory).
+     - The local `/dashboard/call` pilot offers **Chat** for a paid test account's
+       custom character with a saved Inworld voice. The phone button uses the
+       same thread with the [named SexyCall Python worker](https://github.com/gianpaj/sexycall#inworld-voices).
+       Run it against the same local Supabase and LiveKit project.
+       `PLAYWRIGHT_LINKED_CALL_CHARACTER_NAME` selects the character for the
+       Python call test in the [live browser matrix](apps/voice-agent/README.md#live-browser-matrix).
    - Real-time Calls (LiveKit)
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`

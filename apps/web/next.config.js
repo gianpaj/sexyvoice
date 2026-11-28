@@ -36,7 +36,13 @@ const cspHeader = `
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
-  allowedDevOrigins: ['sv.dev', '*.sv.dev'],
+  allowedDevOrigins: [
+    'sv.dev',
+    '*.sv.dev',
+    ...(process.env.NEXT_PUBLIC_SITE_URL
+      ? [new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname]
+      : []),
+  ],
   experimental: {
     // Enable filesystem caching for `next dev`
     // turbopackFileSystemCacheForDev: true,

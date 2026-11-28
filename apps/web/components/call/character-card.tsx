@@ -90,13 +90,6 @@ export function CharacterCard({
         </span>
       </button>
       <div className="flex items-center justify-between gap-2">
-        <ListenButton
-          ariaLabel={t(playing ? 'stopName' : 'listenTo', { name })}
-          disabled={!getPresetSampleUrl(preset)}
-          label={t(playing ? 'stop' : 'listen')}
-          onClick={onListen}
-          playing={playing}
-        />
         <button
           aria-label={t('callName', { name })}
           className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-55"
@@ -111,6 +104,13 @@ export function CharacterCard({
           )}
           {connecting ? tCall('connecting') : t('call')}
         </button>
+        <ListenButton
+          ariaLabel={t(playing ? 'stopName' : 'listenTo', { name })}
+          disabled={!getPresetSampleUrl(preset)}
+          label={t(playing ? 'stop' : 'listen')}
+          onClick={onListen}
+          playing={playing}
+        />
       </div>
       {menu && (
         <DropdownMenu>

@@ -1,3 +1,4 @@
+import type { RoomConfiguration } from '@livekit/protocol';
 import { logger } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,23 +25,42 @@ const mocks = vi.hoisted(() => ({
   token: vi.fn(),
   reference: vi.fn(),
   referenceEq: vi.fn(),
+  roomConfig: vi.fn<(config: RoomConfiguration | undefined) => void>(),
+  thread: vi.fn(),
+  threadCharacter: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({
     auth: { getClaims: mocks.getClaims, getUser: mocks.getUser },
-    from: () => ({ select: () => ({ eq: mocks.referenceEq }) }),
+    from: (table: string) => ({
+      select: () => ({
+        eq:
+          table === 'conversations'
+            ? () => ({
+                eq: () => ({ maybeSingle: mocks.thread }),
+              })
+            : mocks.referenceEq,
+      }),
+    }),
   })),
 }));
+
+vi.mock('@sexyvoice/voice-chat/history', () => ({
+  loadThreadCharacter: mocks.threadCharacter,
+}));
+vi.mock('@/lib/voice-chat/chat', () => ({ createChatDb: vi.fn() }));
 
 vi.mock('ai', () => ({ streamText: mocks.streamText }));
 vi.mock('livekit-server-sdk', () => ({
   AccessToken: class {
+    roomConfig?: RoomConfiguration;
     constructor(...args: unknown[]) {
       mocks.token(...args);
     }
     addGrant() {}
     toJwt() {
+      mocks.roomConfig(this.roomConfig);
       return Promise.resolve('call-token');
     }
   },
@@ -512,6 +532,79 @@ describe('Generation route claims authentication', () => {
         });
         expect(JSON.stringify(metadata)).not.toContain('provider-voice');
       } else expect(mocks.token).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([undefined, 'sexycall-local'])(
+    'dispatches regular and linked calls to the same worker (%s)',
+    async (agentName) => {
+      const userId = '48691368-7fb6-4c34-87eb-47a73a0b8bf2';
+      const conversationId = '56d661f9-13e3-45ea-8c88-9d15c82c4622';
+      const audioReferenceId = '63765019-12dc-46b6-85e3-dd8b5238c9a0';
+      vi.stubEnv('LIVEKIT_AGENT_NAME', agentName);
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VERCEL_ENV', 'development');
+      vi.stubEnv('VOICE_CHAT_USER_IDS', userId);
+      mocks.getClaims.mockResolvedValue({
+        data: { claims: { sub: userId } },
+        error: null,
+      });
+      vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+      const regular = await callToken(jsonRequest('call-token', callBody));
+      expect(regular.status).toBe(200);
+      expect(mocks.roomConfig.mock.lastCall?.[0]?.agents).toMatchObject([
+        { agentName: agentName ?? 'sexycall', metadata: '' },
+      ]);
+
+      mocks.thread.mockResolvedValue({
+        data: {
+          character_id: presetId,
+          language: 'en',
+          scene_instructions: null,
+        },
+        error: null,
+      });
+      mocks.threadCharacter.mockResolvedValue({
+        sessionConfig: { model: 'inworld-tts', audioReferenceId },
+      });
+      mocks.reference.mockResolvedValue({
+        data: {
+          id: audioReferenceId,
+          name: 'My voice',
+          voice_id: 'provider-voice',
+          provider: 'inworld',
+        },
+        error: null,
+      });
+      vi.mocked(queries.resolveCharacterPrompt).mockResolvedValue({
+        ...character,
+        user_id: userId,
+      });
+      const linked = await callToken(
+        jsonRequest('call-token', {
+          ...callBody,
+          conversationId,
+          selectedPresetId: presetId,
+          sessionConfig: {
+            ...callBody.sessionConfig,
+            model: 'inworld-tts',
+            audioReferenceId,
+          },
+        }),
+      );
+      expect(linked.status).toBe(200);
+      const config = mocks.roomConfig.mock.lastCall?.[0];
+      expect(config?.agents).toHaveLength(1);
+      const dispatch = config?.agents[0];
+      expect(dispatch?.agentName).toBe(agentName ?? 'sexycall');
+      expect(JSON.parse(dispatch?.metadata ?? '{}')).toMatchObject({
+        version: 1,
+        runtime: 'voice-chat-python',
+        conversationId,
+        userId,
+        audioReferenceId,
+        roomName: config?.name,
+      });
     },
   );
 

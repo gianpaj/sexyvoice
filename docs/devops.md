@@ -29,9 +29,8 @@ before merging to `main` and after deploying.
   storage when the change touches those integrations. For call dashboard
   screenshots, follow the [fixture and local-server requirements](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
 - Review pending migrations, generated database types, environment changes, and
-  secret-rotation dependencies. Migrations require a human operator; agents must
-  not apply them. Run `pnpm test:db` against a local database with pending
-  migrations already applied when migrations or pgTAP tests change.
+  secret-rotation dependencies. Apply and test pending migrations locally. A
+  human operator applies production migrations.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
@@ -45,6 +44,33 @@ not a merge gate.
 Claude GitHub App authentication requires the workflow content to match the
 default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
 execution; test review changes after they reach the default branch.
+
+### Conversation and account-deletion migration order
+
+Deploy [SexyCall's admission conflict handler](../packages/voice-chat/contracts/README.md#thread-history-and-admission)
+before running `supabase db push`. The push installs the admission trigger
+on the production `call_sessions` table along with the erasure and history
+RPCs. Verify that `20261118090000_restrict_call_session_writes.sql` is applied,
+then apply these migrations in timestamp order:
+
+1. `20261118130000_create_conversations.sql`
+2. `20261118170000_create_voice_conversation_leases.sql`
+3. `20261123140000_create_voice_chat_runs.sql`
+4. `20261123150000_erase_account_conversations.sql`
+5. `20261123160000_bound_conversation_erasure.sql`
+6. `20261123180000_read_conversation_context.sql`
+7. `20261123190000_share_conversation_admission.sql`
+8. `20261124200000_add_text_chat_usage.sql`
+9. `20261124200100_bill_voice_chat_runs.sql`
+10. `20261124200200_update_voice_chat_rates.sql`
+
+Apply the voice chat schema with erasure so messages, chat runs, and
+conversation leases retain their cascade rules. The billing migration schedules
+the `expire-voice-chat-runs` job in `pg_cron`. It runs every minute to release
+credit reservations for expired replies, regardless of web feature access.
+The LiveKit JS worker and voice chat page require a local database.
+The account-deletion action runs in production and fails when the erasure RPC
+is missing. Apply the migrations before the web deployment that calls it.
 
 ## Deployment targets
 
@@ -191,13 +217,63 @@ without the column, the call page fails to load.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
 
+### Next.js WebSocket voice comparison
+
+`VOICE_CHAT_USER_IDS` is an optional comma-separated list of Supabase test
+user UUIDs. Leave it empty in production; the handler also rejects production
+regardless of this value. The development/preview probe reuses `XAI_API_KEY` and
+`INWORLD_API_KEY`. It charges no customer credits and must remain internal.
+
+For a preview test, add the allowlist with
+`vercel env add VOICE_CHAT_USER_IDS preview` from `apps/web`. Do not put provider
+keys in public variables. Local WebSocket tests require Vercel CLI 54.14.2+ and
+`vercel dev`; `next dev` cannot run the upgrade helper. The probe uses a
+300-second function limit and 10–240 second leases. It does not resume after a
+lease expires. See [the runbook](../apps/web/lib/voice-websocket/README.md) and
+[the long-call experiments](../plans/2026-11-16-nextjs-voice-websocket.md).
+
+### LiveKit voice chat
+
+The internal `/dashboard/voice-spike` chat uses `XAI_API_KEY` in Next.js
+and requires a loopback Supabase API. Set `VOICE_CHAT_LOCAL_SUPABASE_URL`
+to that API when the browser uses a Tailnet proxy.
+
+For a browser on another device, bind Next.js to `0.0.0.0` and use a private
+HTTPS proxy. Set `NEXT_PUBLIC_SITE_URL` to its web origin and
+`NEXT_PUBLIC_SUPABASE_URL` to a reachable HTTPS proxy for the local API;
+keep the isolated project's keys. Next.js permits the configured hostname for
+dev assets. The JS token handler accepts the exact configured origin only in
+development, alongside the direct request origin, so a TLS-terminating proxy
+can pass the origin check without trusting arbitrary forwarded headers. See
+[remote access](../apps/voice-agent/README.md#access-from-another-device).
+
+`/{lang}/dashboard/voice-spike` uses the same `VOICE_CHAT_USER_IDS` gate in
+Next.js and its persistent `apps/voice-agent` worker. Set
+`VOICE_CHAT_WORKER_ENABLED=true` only on that worker. Both services need matching
+`LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`; the worker also needs
+`XAI_API_KEY` and `INWORLD_API_KEY`. The token route dispatches
+`sexyvoice-voice-chat` independently of `LIVEKIT_AGENT_NAME`. Run Next.js and
+the worker locally with the same isolated Supabase project.
+The worker uses `NEXT_PUBLIC_SUPABASE_URL` with the local loopback API origin
+and the same local project's `SUPABASE_SECRET_KEY` for thread persistence.
+Optional `OPENAI_API_KEY` on the voice worker enables embeddings for hybrid
+memory recall. Without it, the worker uses full-text recall.
+
+The browser uses LiveKit media directly, so the agent requires persistent Node
+hosting. Local calls have a five-minute cap and use Ashley or an owned Inworld
+voice. Chat and call turns share a saved thread and opted-in memory recall.
+Chat records token usage and calls log projected credits. A hosted pilot
+requires a dedicated worker deployment, a server-side allowlist, and a decision
+on credit settlement and spend limits. If pilot accounts can also use the
+Python call path, enforce one active interaction across both runtimes. See the
+[runbook](../apps/voice-agent/README.md).
+
 ### LiveKit and call analysis
 
 - `LIVEKIT_URL`: server URL returned by `/api/call-token`.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`: server-only token-signing credentials.
-- `LIVEKIT_AGENT_NAME`: agent dispatch name, default `sexycall`. Match the
-  name registered by the deployed SexyCall worker; a different name leaves
-  calls waiting for an agent.
+- `LIVEKIT_AGENT_NAME`: dispatch name for regular and linked Python calls.
+  Defaults to `sexycall`. Match the name registered by the SexyCall worker.
 - `CALL_SUMMARY_SECRET`: authenticates the call-analysis webhook. Store the same
   value in Supabase Vault as `call_summary_secret`, alongside `app_base_url`, so
   the `pg_net` trigger can call `/api/call-sessions/analyze`.
