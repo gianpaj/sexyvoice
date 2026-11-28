@@ -1158,6 +1158,12 @@
     "profile": "Profilo",
     "signOut": "Esci",
     "freeTools": "Strumenti Gratuiti",
+    "changelog": "Registro delle modifiche",
+    "changelogDescription": "Aggiornamenti recenti, nuove funzionalità e correzioni",
+    "changelogViewAll": "Vedi tutte le versioni",
+    "changelogAdded": "Aggiunto",
+    "changelogChanged": "Modificato",
+    "changelogFixed": "Corretto",
     "subscriptionDiscount": "Ottieni il {extraCredits}% di crediti extra e il {discount}% di sconto sul primo mese!"
   },
   "header": {

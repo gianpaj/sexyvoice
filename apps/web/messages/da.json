@@ -1154,6 +1154,12 @@
     "profile": "Profil",
     "signOut": "Log ud",
     "freeTools": "Gratis værktøjer",
+    "changelog": "Ændringslog",
+    "changelogDescription": "Seneste opdateringer, nye funktioner og rettelser",
+    "changelogViewAll": "Se alle udgivelser",
+    "changelogAdded": "Tilføjet",
+    "changelogChanged": "Ændret",
+    "changelogFixed": "Rettet",
     "subscriptionDiscount": "Få {extraCredits}% ekstra kreditter og {discount}% rabat den første måned!"
   },
   "header": {
