@@ -835,7 +835,7 @@ describe('Generate Voice API Route', () => {
 
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 100,
-        dollarAmount: 0.000_055,
+        dollarAmount: 0.000_195,
         inputChars: 13,
         metadata: {
           codec: 'mp3',

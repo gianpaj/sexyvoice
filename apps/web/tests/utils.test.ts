@@ -191,7 +191,7 @@ describe('calculateGrokTtsDollarAmount', () => {
   });
 
   test('calculates Grok TTS cost per character', () => {
-    expect(calculateGrokTtsDollarAmount('Hello [laugh]')).toBe(0.000_055);
+    expect(calculateGrokTtsDollarAmount('Hello [laugh]')).toBe(0.000_195);
   });
 });
 

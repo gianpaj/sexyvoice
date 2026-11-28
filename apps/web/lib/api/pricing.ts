@@ -52,10 +52,6 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perInputChar: 0.000_015,
   },
   'api_voice_cloning:replicate:*': {},
-  // Dashboard text-to-speech
-  'tts:xai:xai': {
-    perInputChar: 0.000_004_2,
-  },
 };
 
 function getPriceConfig({
