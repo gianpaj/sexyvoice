@@ -336,6 +336,28 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - Explain what changed and why.
 - Mention tests and checks run (`pnpm fixall`, `pnpm type-check`, `pnpm test`,
   and Playwright e2e when relevant).
+- Verify user-visible changes in the running app with test data. Check
+  `apps/web/e2e/` for an existing Playwright screenshot of the affected state.
+  - If Playwright covers it, open the PR and use its `argos` check to find the
+    comparison once CI finishes. Add the comparison link under **UI evidence**
+    in the PR description.
+  - If there is no screenshot test for the state, capture it before opening the
+    PR. If CI finishes without a relevant comparison, capture it then. Use
+    `agent-browser screenshot` at the same step on base and head with matching
+    test data and viewport. Use `agent-browser record` for a short clip when the
+    sequence matters. Save PR-only media under the ignored
+    `test-results/pr-evidence/` directory at the repository root.
+  - Attach local captures after opening the PR. With a GitHub CLI that supports
+    `--attach` and push access to the repository, run this from the repo root,
+    substituting the PR number and your saved paths:
+
+    ```bash
+    gh pr comment PR_NUMBER --attach test-results/pr-evidence/before.png --attach test-results/pr-evidence/after.png
+    ```
+
+    Link the comment or an existing CI artifact with the captures under **UI
+    evidence**. State the browser, viewport, and any verification gaps, including
+    captures you could not share.
 - Note documentation updates (`README.md`, `docs/devops.md`,
   `apps/docs/content/`, `AGENTS.md`).
 - Call out impact on credits, billing, generation, storage, or API contracts
